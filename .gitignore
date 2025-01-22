@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Models and data (if large)
+# Uncomment if you don't want to track model files
+# models/*.pth
+# models/*.pkl
+# data/
+
+# Forecast cache
+forecast_cache/
+*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+clear_and_regenerate_cache.py
+*.png
+*QUICK_START*
+clear_and_regenerate_cache.py
+*.png
+*QUICK_START*
+.venv_new/
+.git-rewrite/

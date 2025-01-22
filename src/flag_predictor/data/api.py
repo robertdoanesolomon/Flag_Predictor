@@ -1,0 +1,399 @@
+"""
+API data fetching for river levels and rainfall.
+
+Functions for fetching real-time data from:
+- Environment Agency Flood Monitoring API (river levels, rainfall)
+- Open-Meteo API (rainfall forecasts)
+"""
+
+import pandas as pd
+import requests
+from typing import Dict, List, Optional, Tuple
+from tqdm import tqdm
+
+from ..config import (
+    API_URLS,
+    RAINFALL_API_URLS,
+    RAINFALL_STATION_NAMES,
+    RAINFALL_STATION_COORDINATES,
+    WALLINGFORD_RAINFALL_API_URLS,
+    WALLINGFORD_RAINFALL_STATION_NAMES,
+    WALLINGFORD_RAINFALL_STATION_COORDINATES,
+)
+
+
+def _process_level_api_response(data: dict) -> pd.DataFrame:
+    """
+    Process API response from flood monitoring service for water levels.
+    
+    Args:
+        data: JSON response from API
+        
+    Returns:
+        DataFrame with timestamp index and 'level' column
+    """
+    if 'items' not in data or not data['items']:
+        return pd.DataFrame()
+    
+    temp_df = pd.DataFrame(data['items'])
+    if 'dateTime' not in temp_df.columns or 'value' not in temp_df.columns:
+        return pd.DataFrame()
+    
+    temp_df = temp_df[['dateTime', 'value']]
+    temp_df.rename(columns={'dateTime': 'timestamp', 'value': 'level'}, inplace=True)
+    temp_df['timestamp'] = pd.to_datetime(temp_df['timestamp'])
+    df = temp_df.set_index('timestamp')
+    return df
+
+
+def _process_rainfall_api_response(data: dict) -> pd.DataFrame:
+    """
+    Process API response from flood monitoring service for rainfall.
+    
+    Args:
+        data: JSON response from API
+        
+    Returns:
+        DataFrame with timestamp index and 'rainfall' column
+    """
+    if 'items' not in data or not data['items']:
+        return pd.DataFrame()
+    
+    temp_df = pd.DataFrame(data['items'])
+    if 'dateTime' not in temp_df.columns or 'value' not in temp_df.columns:
+        return pd.DataFrame()
+    
+    temp_df = temp_df[['dateTime', 'value']]
+    temp_df.rename(columns={'dateTime': 'timestamp', 'value': 'rainfall'}, inplace=True)
+    temp_df['timestamp'] = pd.to_datetime(temp_df['timestamp'])
+    df = temp_df.set_index('timestamp')
+    return df
+
+
+def fetch_river_level_data(verbose: bool = True) -> Dict[str, pd.DataFrame]:
+    """
+    Fetch all river level data from Environment Agency API.
+    
+    Args:
+        verbose: Whether to print progress
+        
+    Returns:
+        Dictionary mapping station names to DataFrames
+    """
+    if verbose:
+        print("Fetching river level data...")
+    
+    results = {}
+    for name, url in API_URLS.items():
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            df = _process_level_api_response(response.json())
+            results[name] = df
+            if verbose:
+                print(f"  ✓ {name}: {len(df)} records")
+        except Exception as e:
+            if verbose:
+                print(f"  ✗ {name}: {e}")
+            results[name] = pd.DataFrame()
+    
+    return results
+
+
+def fetch_rainfall_data(location: Optional[str] = None, verbose: bool = True) -> pd.DataFrame:
+    """
+    Fetch rainfall data from all stations via Environment Agency API.
+    
+    Args:
+        location: Location name ('wallingford' uses additional stations, others use default)
+        verbose: Whether to print progress
+        
+    Returns:
+        DataFrame with all stations as columns, timestamp index
+    """
+    if verbose:
+        print("Fetching rainfall data...")
+    
+    # Get base stations
+    api_urls = list(RAINFALL_API_URLS)
+    station_names = list(RAINFALL_STATION_NAMES)
+    
+    # Filter out stations for specific locations
+    if location:
+        location_lower = location.lower()
+        
+        # Exclude Bicester and Grimsbury for Godstow
+        if location_lower == 'godstow':
+            godstow_excluded = {'Bicester', 'Grimsbury'}
+            filtered_pairs = [(url, name) for url, name in zip(api_urls, station_names) 
+                            if name not in godstow_excluded]
+            api_urls, station_names = zip(*filtered_pairs) if filtered_pairs else ([], [])
+            api_urls = list(api_urls)
+            station_names = list(station_names)
+            if verbose:
+                print(f"  Excluding Bicester and Grimsbury for Godstow")
+        
+        # Add Wallingford-specific stations if location is wallingford
+        if location_lower == 'wallingford':
+            api_urls.extend(WALLINGFORD_RAINFALL_API_URLS)
+            station_names.extend(WALLINGFORD_RAINFALL_STATION_NAMES)
+            if verbose:
+                print(f"  Including {len(WALLINGFORD_RAINFALL_STATION_NAMES)} Wallingford-specific stations")
+    
+    rainfall_dfs = {}
+    for url, name in zip(api_urls, station_names):
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            df = _process_rainfall_api_response(response.json())
+            if not df.empty:
+                df.rename(columns={'rainfall': name}, inplace=True)
+                rainfall_dfs[name] = df
+                if verbose:
+                    print(f"  ✓ {name}: {len(df)} records")
+        except Exception as e:
+            if verbose:
+                print(f"  ✗ {name}: {e}")
+    
+    if not rainfall_dfs:
+        return pd.DataFrame()
+    
+    combined = pd.concat(rainfall_dfs.values(), axis=1)
+    if verbose:
+        print(f"\n✓ Combined rainfall API data: {combined.shape}")
+        print(f"  Date range: {combined.index.min()} to {combined.index.max()}")
+    
+    return combined
+
+
+def fetch_all_api_data(location: Optional[str] = None, verbose: bool = True) -> Tuple[Dict[str, pd.DataFrame], pd.DataFrame]:
+    """
+    Fetch all API data (river levels and rainfall).
+    
+    Args:
+        location: Location name (for location-specific rainfall stations)
+        verbose: Whether to print progress
+        
+    Returns:
+        Tuple of (river_levels_dict, rainfall_df)
+    """
+    river_levels = fetch_river_level_data(verbose=verbose)
+    rainfall = fetch_rainfall_data(location=location, verbose=verbose)
+    return river_levels, rainfall
+
+
+def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Calculate ISIS differential from river level data.
+    
+    Formula:
+        isis_diff = 0.71 * (osney_downstream - iffley_upstream - 2.14) +
+                    0.29 * (kings_mill_downstream - iffley_upstream - 0.73)
+    
+    Args:
+        river_levels: Dictionary of river level DataFrames
+        
+    Returns:
+        DataFrame with 'differential' column
+    """
+    osney_ds = river_levels['osney_downstream']['level']
+    iffley_us = river_levels['iffley_upstream']['level']
+    kings_mill_ds = river_levels['kings_mill_downstream']['level']
+    
+    isis_contrib = 0.71 * (osney_ds - iffley_us - 2.14)
+    cherwell_contrib = 0.29 * (kings_mill_ds - iffley_us - 0.73)
+    differential = isis_contrib + cherwell_contrib
+    
+    return pd.DataFrame({'differential': differential})
+
+
+def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Calculate Godstow differential from river level data.
+    
+    Formula:
+        godstow_diff = godstow_downstream - osney_upstream - 1.63
+    
+    Args:
+        river_levels: Dictionary of river level DataFrames
+        
+    Returns:
+        DataFrame with 'differential' column
+    """
+    godstow_ds = river_levels['godstow_downstream']['level']
+    osney_us = river_levels['osney_upstream']['level']
+    
+    differential = godstow_ds - osney_us - 1.63
+    
+    return pd.DataFrame({'differential': differential})
+
+def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Calculate Wallingford differential from river level data.
+    
+    Formula:
+        wallingford_diff = benson_downstream - cleeve_upstream - 2.13
+    
+    Args:
+        river_levels: Dictionary of river level DataFrames
+        
+    Returns:
+        DataFrame with 'differential' column
+    """
+    benson_ds = river_levels['benson_downstream']['level']
+    cleeve_us = river_levels['cleeve_upstream']['level']
+    
+    differential = benson_ds - cleeve_us - 2.13
+    
+    return pd.DataFrame({'differential': differential})
+
+def get_rainfall_forecast(
+    locations: Optional[Dict] = None,
+    location: Optional[str] = None,
+    forecast_days: int = 10
+) -> pd.DataFrame:
+    """
+    Fetch rainfall forecast from Open-Meteo API.
+    
+    Args:
+        locations: Dictionary of location names and coordinates
+                  (defaults to RAINFALL_STATION_COORDINATES or Wallingford-specific)
+        location: Location name ('wallingford' uses additional stations)
+        forecast_days: Number of days to forecast
+        
+    Returns:
+        DataFrame with hourly precipitation forecasts
+    """
+    if locations is None:
+        if location and location.lower() == 'wallingford':
+            # Combine default and Wallingford-specific stations
+            locations = {**RAINFALL_STATION_COORDINATES, **WALLINGFORD_RAINFALL_STATION_COORDINATES}
+        elif location and location.lower() == 'godstow':
+            # Exclude Bicester and Grimsbury for Godstow
+            locations = {k: v for k, v in RAINFALL_STATION_COORDINATES.items() 
+                        if k not in {'Bicester', 'Grimsbury'}}
+        else:
+            locations = RAINFALL_STATION_COORDINATES
+    
+    location_names = list(locations.keys())
+    latitudes = [loc['latitude'] for loc in locations.values()]
+    longitudes = [loc['longitude'] for loc in locations.values()]
+
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": latitudes,
+        "longitude": longitudes,
+        "hourly": "precipitation",
+        "forecast_days": forecast_days
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+
+        forecast_dfs = []
+        for i, location_data in enumerate(data):
+            df = pd.DataFrame(location_data['hourly'])
+            df['timestamp'] = pd.to_datetime(df['time'])
+            df = df.set_index('timestamp')
+            df = df[['precipitation']]
+            df = df.rename(columns={'precipitation': location_names[i]})
+            forecast_dfs.append(df)
+        
+        combined_df = pd.concat(forecast_dfs, axis=1)
+        print("✓ Successfully fetched rainfall forecast")
+        return combined_df
+
+    except requests.exceptions.RequestException as e:
+        print(f"✗ API request failed: {e}")
+        return pd.DataFrame()
+    except (KeyError, TypeError) as e:
+        print(f"✗ Failed to parse API response: {e}")
+        return pd.DataFrame()
+
+
+def get_rainfall_forecast_ensemble(
+    locations: Optional[Dict] = None,
+    location: Optional[str] = None,
+    ensemble_model: str = 'ecmwf_ifs025',
+    n_members: Optional[int] = None,
+    forecast_days: int = 10
+) -> pd.DataFrame:
+    """
+    Fetch ensemble rainfall forecast from Open-Meteo Ensemble API.
+    
+    Returns ALL ensemble members for probabilistic forecasting.
+    
+    Args:
+        locations: Dictionary of location names and coordinates
+        location: Location name ('wallingford' uses additional stations)
+        ensemble_model: Model to use ('icon_seamless', 'ecmwf_ifs025', 'gfs_seamless')
+        n_members: Number of members to return (None = all)
+        forecast_days: Number of days to forecast (default 10)
+        
+    Returns:
+        DataFrame with columns like 'Osney_member_0', 'Osney_member_1', etc.
+    """
+    if locations is None:
+        if location and location.lower() == 'wallingford':
+            # Combine default and Wallingford-specific stations
+            locations = {**RAINFALL_STATION_COORDINATES, **WALLINGFORD_RAINFALL_STATION_COORDINATES}
+        elif location and location.lower() == 'godstow':
+            # Exclude Bicester and Grimsbury for Godstow
+            locations = {k: v for k, v in RAINFALL_STATION_COORDINATES.items() 
+                        if k not in {'Bicester', 'Grimsbury'}}
+        else:
+            locations = RAINFALL_STATION_COORDINATES
+    
+    location_names = list(locations.keys())
+    latitudes = [loc['latitude'] for loc in locations.values()]
+    longitudes = [loc['longitude'] for loc in locations.values()]
+
+    url = "https://ensemble-api.open-meteo.com/v1/ensemble"
+    params = {
+        "latitude": latitudes,
+        "longitude": longitudes,
+        "hourly": "precipitation",
+        "forecast_days": forecast_days,
+        "models": ensemble_model
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+
+        all_dfs = []
+        for i, location_data in enumerate(data):
+            df = pd.DataFrame(location_data['hourly'])
+            df['timestamp'] = pd.to_datetime(df['time'])
+            df = df.set_index('timestamp')
+            
+            # Get precipitation columns (ensemble members)
+            precip_cols = [col for col in df.columns if col.startswith('precipitation')]
+            
+            if n_members is not None:
+                precip_cols = precip_cols[:n_members]
+            
+            # Rename columns to station_member_N format
+            df_members = df[precip_cols].copy()
+            df_members.columns = [
+                f"{location_names[i]}_member_{j}" 
+                for j in range(len(precip_cols))
+            ]
+            all_dfs.append(df_members)
+        
+        combined_df = pd.concat(all_dfs, axis=1)
+        
+        n_actual_members = len([c for c in combined_df.columns if '_member_0' in c or c.endswith('_member_0')])
+        print(f"✓ Successfully fetched ensemble forecast: {len(location_names)} stations × {len(precip_cols)} members")
+        
+        return combined_df
+
+    except requests.exceptions.RequestException as e:
+        print(f"✗ API request failed: {e}")
+        return pd.DataFrame()
+    except (KeyError, TypeError) as e:
+        print(f"✗ Failed to parse API response: {e}")
+        return pd.DataFrame()
