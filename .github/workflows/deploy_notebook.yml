@@ -1,0 +1,78 @@
+name: Deploy Notebook to GitHub Pages
+
+on:
+  schedule:
+    # Run every 3 hours
+    - cron: '0 */3 * * *'
+  workflow_dispatch:  # Allow manual triggering
+  push:
+    branches:
+      - main
+    paths:
+      - 'notebooks/all_locations_visualization.ipynb'
+      - '.github/workflows/deploy_notebook.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Execute notebook and convert to HTML
+      env:
+        MPLBACKEND: Agg  # Non-interactive backend for matplotlib
+      run: |
+        # Execute the notebook and convert to HTML
+        jupyter nbconvert --to html \
+          --execute \
+          --ExecutePreprocessor.timeout=3600 \
+          --ExecutePreprocessor.kernel_name=python3 \
+          --output-dir=docs \
+          --output=all_locations_visualization.html \
+          notebooks/all_locations_visualization.ipynb
+        
+        # Create an index.html that redirects to the notebook
+        echo '<!DOCTYPE html>
+        <html>
+        <head>
+          <meta http-equiv="refresh" content="0; url=all_locations_visualization.html">
+          <title>Flag Predictor Visualizations</title>
+        </head>
+        <body>
+          <p>Redirecting to <a href="all_locations_visualization.html">visualization notebook</a>...</p>
+        </body>
+        </html>' > docs/index.html
+        
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './docs'
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
