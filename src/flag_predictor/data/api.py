@@ -8,8 +8,10 @@ Functions for fetching real-time data from:
 
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
 from typing import Dict, List, Optional, Tuple
 from tqdm import tqdm
+from urllib3.util.retry import Retry
 
 from ..config import (
     API_URLS,
@@ -20,6 +22,31 @@ from ..config import (
     WALLINGFORD_RAINFALL_STATION_NAMES,
     WALLINGFORD_RAINFALL_STATION_COORDINATES,
 )
+
+_DEFAULT_HTTP_TIMEOUT = (10, 180)  # (connect_timeout_s, read_timeout_s)
+
+
+def _requests_session_with_retries() -> requests.Session:
+    """
+    Build a requests Session with retries/backoff.
+
+    GitHub Actions runners can intermittently time out when calling external APIs.
+    This makes Open-Meteo calls much more reliable without changing call sites.
+    """
+    retry = Retry(
+        total=5,
+        connect=5,
+        read=5,
+        backoff_factor=1.0,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=("GET",),
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session = requests.Session()
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
 
 
 def _process_level_api_response(data: dict) -> pd.DataFrame:
@@ -288,7 +315,13 @@ def get_rainfall_forecast(
     }
 
     try:
-        response = requests.get(url, params=params, timeout=30)
+        session = _requests_session_with_retries()
+        response = session.get(
+            url,
+            params=params,
+            timeout=_DEFAULT_HTTP_TIMEOUT,
+            headers={"User-Agent": "Flag_Predictor/1.0 (+GitHubActions)"},
+        )
         response.raise_for_status()
         data = response.json()
 
@@ -360,7 +393,13 @@ def get_rainfall_forecast_ensemble(
     }
 
     try:
-        response = requests.get(url, params=params, timeout=60)
+        session = _requests_session_with_retries()
+        response = session.get(
+            url,
+            params=params,
+            timeout=_DEFAULT_HTTP_TIMEOUT,
+            headers={"User-Agent": "Flag_Predictor/1.0 (+GitHubActions)"},
+        )
         response.raise_for_status()
         data = response.json()
 

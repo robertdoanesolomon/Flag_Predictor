@@ -11,6 +11,8 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to push commits back to the repo
 
     steps:
       - name: Check out repository
