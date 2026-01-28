@@ -253,15 +253,6 @@ data/
 
 **Note**: The CSV files are large (50-57MB each for rainfall data). The download scripts handle pagination automatically and may take several minutes to complete.
 
-## Flag Color Thresholds
-
-| Color  | Differential (m) | Conditions |
-|--------|------------------|------------|
-| Blue   | ≤ 0.15           | Safe for all |
-| Yellow | 0.15 - 0.30      | Some caution |
-| Orange | 0.30 - 0.50      | Restricted |
-| Red    | > 0.50           | River closed |
-
 ## Development
 
 ```bash
