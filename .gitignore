@@ -54,10 +54,10 @@ Thumbs.db
 # Logs
 *.log
 clear_and_regenerate_cache.py
-*.png
-*QUICK_START*
-clear_and_regenerate_cache.py
-*.png
 *QUICK_START*
 .venv_new/
 .git-rewrite/
+
+# Images (ignore all PNGs except those in docs/ for GitHub Pages)
+*.png
+!docs/*.png
