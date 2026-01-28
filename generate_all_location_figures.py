@@ -112,10 +112,25 @@ def generate_spaghetti_figure(
     # STEP 2: Load model (use location-specific latest files)
     # ------------------------------------------------------------------
     models_dir = project_root / "models"
-    model, scaler, model_config = load_model(
-        models_dir=str(models_dir),
-        location=location,
-    )
+
+    # Use the 2026-01 experiment models for all locations, matching the
+    # notebook `USE_EXPERIMENT_MODEL = True` behaviour.
+    model_path = models_dir / f"multihorizon_model_experiment_2026_01_{location}.pth"
+    scaler_path = models_dir / f"scaler_experiment_2026_01_{location}.pkl"
+    config_path = models_dir / f"config_experiment_2026_01_{location}.pkl"
+
+    try:
+        model, scaler, model_config = load_model(
+            model_path=str(model_path),
+            scaler_path=str(scaler_path),
+            config_path=str(config_path),
+        )
+    except FileNotFoundError as exc:
+        # If the experiment artefacts for this location are not present in the
+        # repo (e.g. not committed to GitHub), skip this location instead of
+        # failing the whole workflow.
+        print(f"\n[WARNING] Skipping location '{location}' – {exc}")
+        return
 
     feature_columns = model_config["feature_columns"]
     sequence_length = model_config["sequence_length"]
