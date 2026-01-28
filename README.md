@@ -1,6 +1,17 @@
 # Flag Predictor 
 
-A multi-horizon LSTM model that predicts river differential levels, a proxy for flow speed. It works for Oxford's Isis and Godstow stretches, and the Wallingford stretches, using rainfall forecasts and history. The system generates 10-day probabilistic forecasts to help determine the OURCs flag conditions (if applicable).
+An LSTM model that predicts river differential levels, a proxy for the river flow speed. It works for the Isis and Godstow stretches, and the Wallingford stretch, using rainfall forecasts and historical rainfall. The system generates 10-day probabilistic forecasts to help determine the OURCs flags from the differential. Please consider this experimental and a work in progress!
+
+## Latest Forecast Plots
+
+### Isis
+![Isis forecast](docs/spaghetti_rain_isis.png)
+
+### Godstow
+![Godstow forecast](docs/spaghetti_rain_godstow.png)
+
+### Wallingford
+![Wallingford forecast](docs/spaghetti_rain_wallingford.png)
 
 ## Features
 
@@ -267,39 +278,6 @@ ruff check src/
 # Type checking
 mypy src/
 ```
-
-## GitHub Pages Deployment
-
-The visualization notebook (`notebooks/all_locations_visualization.ipynb`) is automatically executed and deployed to GitHub Pages every 3 hours.
-
-### Setup Instructions
-
-1. **Enable GitHub Pages**:
-   - Go to your repository settings on GitHub
-   - Navigate to "Pages" in the left sidebar
-   - Under "Source", select "GitHub Actions" as the source
-   - Save the changes
-
-2. **The workflow will automatically**:
-   - Run every 3 hours (cron schedule: `0 */3 * * *`)
-   - Execute the notebook with all outputs
-   - Convert it to HTML
-   - Deploy to GitHub Pages
-
-3. **Manual Trigger**:
-   - You can also manually trigger the workflow by going to the "Actions" tab
-   - Select "Deploy Notebook to GitHub Pages"
-   - Click "Run workflow"
-
-4. **Access the deployed notebook**:
-   - After the first successful run, your notebook will be available at:
-   - `https://yourusername.github.io/Flag_Predictor/all_locations_visualization.html`
-
-### Requirements
-
-- The workflow requires that all necessary data files and model files are committed to the repository
-- Ensure that the notebook can run successfully in a headless environment (no interactive widgets)
-- The workflow has a 1-hour timeout for notebook execution
 
 ## License
 Anyone can do whatever they'd like with it!
