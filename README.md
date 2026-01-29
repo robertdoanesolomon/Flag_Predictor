@@ -1,6 +1,6 @@
 # Flag Predictor 
 
-An LSTM model that predicts river differential levels, a proxy for the river flow speed. It works for the Isis and Godstow stretches, and the Wallingford stretch, using rainfall forecasts and historical rainfall. The system generates 10-day probabilistic forecasts to help determine the OURCs flags from the differential. Please consider this experimental and a work in progress!
+This is an LSTM AI model that predicts the river differential levels along the Thames, which acts a proxy for the river flow speed. The differential is the difference in river height between the upstream and downstream locks for a given stretch, which is how the OURCs flag is set at Godstow and usually closely tracks the flag on the Isis. This model has been trained on upstream rainfall data for the Isis, Godstow and the Wallingford stretches. Predictions are made using rainfall forecasts and features derived from recent rainfall. The model generates 10-day probablistic forecasts to help determine the differential. Please consider this experimental and a work in progress!
 
 ## Latest Forecast Plots
 
@@ -16,11 +16,9 @@ An LSTM model that predicts river differential levels, a proxy for the river flo
 ## Features
 
 - **Multi-location support**: Train and predict for Isis or Godstow or Wallingford Stretches
-- **10-day forecasts**: Predictions from 2 hours to 240 hours ahead
-- **Ensemble predictions**: Probabilistic forecasts using multiple rainfall scenarios
-- **Flag color probabilities**: Automatic conversion to flags
-- **Real-time data integration**: Fetches latest river levels and rainfall from Environment Agency API
-- **Rainfall forecast integration**: Uses Open-Meteo ensemble forecasts from ECMWF-IFS ensemble.
+- **10-day forecasts**: Predicts from 2 hours to 240 hours ahead
+- **Ensemble predictions**: Probabilistic forecasts using multiple rainfall scenarios from different rainfall ensemble members
+
 
 ## Installation
 
@@ -52,11 +50,15 @@ pip install -e ".[dev,notebook]"
 ### Command Line Interface
 
 ```bash
-# Train a model for ISIS lock
+# Train a model for the Isis
 flag-predictor train --location isis
 
-# Train a model for Godstow lock
+# Train a model for Godstow
 flag-predictor train --location godstow
+
+# Train a model for Wallingford
+flag-predictor train --location wallingford
+
 
 # Run an ensemble forecast
 flag-predictor forecast --location isis --ensemble
@@ -140,7 +142,7 @@ flag_predictor/
 
 ### Switching Locations
 
-The system supports both ISIS and Godstow locks. Configuration is handled automatically:
+The system supports both Isis, Godstow, and and Wallingford.
 
 ```python
 from flag_predictor.config import get_location_config
