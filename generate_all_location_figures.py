@@ -18,6 +18,7 @@ import os
 import sys
 from pathlib import Path
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -194,7 +195,6 @@ def generate_spaghetti_figure(
     plot_stats = pd.DataFrame(
         {
             "mean": plot_df.mean(axis=1),
-            "median": plot_df.median(axis=1),
             "std": plot_df.std(axis=1),
             "min": plot_df.min(axis=1),
             "max": plot_df.max(axis=1),
@@ -287,20 +287,20 @@ def generate_spaghetti_figure(
     member_totals_daily = member_totals.resample("1D").sum()
 
     # Calculate rainfall ensemble statistics
-    forecast_rain_median = member_totals_daily.median(axis=1)
+    forecast_rain_mean = member_totals_daily.mean(axis=1)
     forecast_rain_p10 = member_totals_daily.quantile(0.10, axis=1)
     forecast_rain_p90 = member_totals_daily.quantile(0.90, axis=1)
 
-    # Error bars: distance from median to percentiles
-    error_lower = forecast_rain_median - forecast_rain_p10
-    error_upper = forecast_rain_p90 - forecast_rain_median
+    # Error bars: distance from mean to percentiles
+    error_lower = forecast_rain_mean - forecast_rain_p10
+    error_upper = forecast_rain_p90 - forecast_rain_mean
 
     print(
         f"  Historical rainfall: {len(historical_rainfall_daily)} daily bars "
         f"(avg across stations)"
     )
     print(
-        f"  Forecast rainfall: {len(forecast_rain_median)} daily bars "
+        f"  Forecast rainfall: {len(forecast_rain_mean)} daily bars "
         f"with ensemble spread (P10-P90)"
     )
 
@@ -320,8 +320,8 @@ def generate_spaghetti_figure(
 
     # Forecast rainfall bars with error bars showing ensemble spread
     ax_rain.bar(
-        forecast_rain_median.index,
-        forecast_rain_median.values,
+        forecast_rain_mean.index,
+        forecast_rain_mean.values,
         width=bar_width,
         color="cornflowerblue",
         alpha=0.5,
@@ -333,7 +333,7 @@ def generate_spaghetti_figure(
             "alpha": 0.7,
             "color": "navy",
         },
-        label="Forecast Rainfall (median ± P10-P90)",
+        label="Forecast Rainfall (mean ± 10th-90th percentile)",
         zorder=2,
     )
 
@@ -420,22 +420,16 @@ def generate_spaghetti_figure(
         linewidth=3,
         label="Ensemble Mean",
         zorder=102,
-        alpha=0.95,
-    )
-
-    # Also plot the ensemble MEDIAN
-    ax.plot(
-        plot_df.index,
-        plot_stats["median"].values,
-        color="darkgreen",
-        linewidth=2.5,
-        linestyle="--",
-        label="Ensemble Median",
-        zorder=103,
-        alpha=0.85,
+        alpha=1,
     )
 
     # ============= FORMATTING =============
+    # X-axis: "Wed 4 May" style (weekday, day, month)
+    def _short_date(x, pos=None):
+        d = mdates.num2date(x)
+        return d.strftime("%a ") + str(d.day) + " " + d.strftime("%b")
+
+    ax.xaxis.set_major_formatter(mdates.FuncFormatter(_short_date))
     ax.set_xlabel("Date", fontsize=20, fontweight="bold")
     ax.set_ylabel("Height Differential (m)", fontsize=20, fontweight="bold", color="black")
     ax_rain.set_ylabel(
