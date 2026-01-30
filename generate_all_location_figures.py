@@ -306,11 +306,12 @@ def generate_spaghetti_figure(
     )
 
     # ============= PLOT RAINFALL BARS =============
-    bar_width = 0.8  # Width in days
+    bar_width = 0.8  # Width in days; bars centered at midday (12h offset from midnight index)
+    bar_center_offset = pd.Timedelta(hours=12)
 
     # Historical rainfall bars (gray)
     ax_rain.bar(
-        historical_rainfall_daily.index,
+        historical_rainfall_daily.index + bar_center_offset,
         historical_rainfall_daily.values,
         width=bar_width,
         color="gray",
@@ -321,7 +322,7 @@ def generate_spaghetti_figure(
 
     # Forecast rainfall bars with error bars showing ensemble spread
     ax_rain.bar(
-        forecast_rain_mean.index,
+        forecast_rain_mean.index + bar_center_offset,
         forecast_rain_mean.values,
         width=bar_width,
         color="cornflowerblue",
@@ -425,11 +426,18 @@ def generate_spaghetti_figure(
     )
 
     # ============= FORMATTING =============
-    # X-axis: "Wed 4 May" style (weekday, day, month)
+    # X-axis: "Wed 4 May" style; ticks/labels at midday (12h) to match rainfall bars
     def _short_date(x, pos=None):
         d = mdates.num2date(x)
         return d.strftime("%a ") + str(d.day) + " " + d.strftime("%b")
 
+    class _MiddayLocator(mdates.DayLocator):
+        """Place ticks at midday (12h) instead of midnight."""
+        def tick_values(self, vmin, vmax):
+            ticks = super().tick_values(vmin, vmax)
+            return [t + 0.5 for t in ticks]  # 0.5 days = 12h
+
+    ax.xaxis.set_major_locator(_MiddayLocator(interval=1))
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(_short_date))
     ax.set_xlabel("Date", fontsize=20, fontweight="bold")
     ax.set_ylabel("Height Differential (m)", fontsize=20, fontweight="bold", color="black")
