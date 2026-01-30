@@ -20,6 +20,7 @@ from pathlib import Path
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import pandas as pd
 
 
@@ -429,7 +430,7 @@ def generate_spaghetti_figure(
         d = mdates.num2date(x)
         return d.strftime("%a ") + str(d.day) + " " + d.strftime("%b")
 
-    ax.xaxis.set_major_formatter(mdates.FuncFormatter(_short_date))
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(_short_date))
     ax.set_xlabel("Date", fontsize=20, fontweight="bold")
     ax.set_ylabel("Height Differential (m)", fontsize=20, fontweight="bold", color="black")
     ax_rain.set_ylabel(
