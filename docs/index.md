@@ -16,4 +16,4 @@ These are 10-day forecasts of the river height differential (related to the flow
 The Environment Agency's API provides the historical rainfall and the historical differential levels which the model has been trained on. This is also where the data from the last 10 days, as shown on the plots, comes from. The rainfall forecasts come from the European Center for Medium Range Weather Forecasts AI Forecasting System (ECWMF-AIFS). If you wish to clone the GitHub repo, you can very easily change the forecast data source.
 
 ### Are there any known issues?
-The forecast is definitely not perfect! Occasionally I write about issues with the model and improvements I am hoping to make here: https://robertdoanesolomon.substack.com. If there are any other problems, feel free to open an issue on GitHub.
+The forecast is definitely not perfect! Occasionally I write about issues with the model and improvements I am hoping to make here: https://robertdoanesolomon.substack.com/. If there are any other problems, feel free to open an issue on GitHub.
