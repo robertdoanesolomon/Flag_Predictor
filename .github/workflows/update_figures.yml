@@ -1,12 +1,17 @@
 name: Update forecast figures
 
 on:
-  # Run every 6 hours (UTC): 00:00, 06:00, 12:00, 18:00
+  # Run every hour on the hour (UTC): 00:00, 01:00, ..., 23:00
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 * * * *"
 
   # Allow manual runs from the Actions tab
   workflow_dispatch:
+
+# Prevent overlapping runs (scheduled/manual) from racing on git push
+concurrency:
+  group: update-forecast-figures
+  cancel-in-progress: true
 
 jobs:
   build-and-publish:
@@ -20,6 +25,8 @@ jobs:
         with:
           # Required so the workflow can push back to the repo
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Needed so we can rebase on origin/main
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -47,5 +54,17 @@ jobs:
 
           git add docs/
           git commit -m "Update forecast figures [skip ci]" || exit 0
-          git push
+
+          # Remote may advance (e.g. another run). Rebase + retry push.
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || (git rebase --abort && exit 1)
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push failed (attempt $i), retrying..."
+            sleep $((i * 5))
+          done
+          echo "Failed to push after retries"
+          exit 1
 

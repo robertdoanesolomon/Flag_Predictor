@@ -349,7 +349,7 @@ def get_rainfall_forecast(
 def get_rainfall_forecast_ensemble(
     locations: Optional[Dict] = None,
     location: Optional[str] = None,
-    ensemble_model: str = 'ecmwf_ifs025',
+    ensemble_model: str = 'ecmwf_aifs025',
     n_members: Optional[int] = None,
     forecast_days: int = 10
 ) -> pd.DataFrame:
@@ -361,7 +361,7 @@ def get_rainfall_forecast_ensemble(
     Args:
         locations: Dictionary of location names and coordinates
         location: Location name ('wallingford' uses additional stations)
-        ensemble_model: Model to use ('icon_seamless', 'ecmwf_ifs025', 'gfs_seamless')
+        ensemble_model: Model to use ('ecmwf_ifs', 'ecmwf_aifs025',)
         n_members: Number of members to return (None = all)
         forecast_days: Number of days to forecast (default 10)
         
