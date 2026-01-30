@@ -2,6 +2,8 @@
 
 This is an LSTM AI model that predicts the river differential levels along the Thames, which acts a proxy for the river flow speed. The differential is the difference in river height between the upstream and downstream locks for a given stretch, which is how the OURCs flag is set at Godstow and usually closely tracks the flag on the Isis. This model has been trained on upstream rainfall data for the Isis, Godstow and the Wallingford stretches. Predictions are made using rainfall forecasts and features derived from recent rainfall. The model generates 10-day probablistic forecasts to help determine the differential. Please consider this experimental and a work in progress!
 
+Each location shows 50 different possible future differential trajectories (blue lines). The mean of all the predictions is shown in purple. Since we don't know the future rainfall perfectly, there is some spread in the forecast, but a trajectory like the purple line is most likely.
+
 ## Latest Forecast Plots
 
 ### Isis
