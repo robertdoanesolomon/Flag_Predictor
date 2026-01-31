@@ -1,4 +1,4 @@
-# Latest Forecast Plots
+# Latest Forecasts (Experimental)
 
 ## Isis
 ![Isis forecast](spaghetti_rain_isis.png)
