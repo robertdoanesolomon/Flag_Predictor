@@ -81,6 +81,20 @@ def _ensure_timezone_naive(index: pd.Index) -> pd.Index:
     return index
 
 
+def calculate_flag_probabilities(
+    ensemble_df: pd.DataFrame, thresholds: dict
+) -> pd.DataFrame:
+    """Calculate probability of each flag color at each timestep."""
+    n_members = ensemble_df.shape[1]
+    probs_df = pd.DataFrame(index=ensemble_df.index)
+
+    for flag, (lower, upper) in thresholds.items():
+        count = ((ensemble_df >= lower) & (ensemble_df < upper)).sum(axis=1)
+        probs_df[f"p_{flag}"] = count / n_members
+
+    return probs_df
+
+
 def generate_spaghetti_figure(
     location: str,
     output_dir: Path,
@@ -496,6 +510,89 @@ def generate_spaghetti_figure(
     plt.close(fig)
 
     print(f"\n✓ Spaghetti + rainfall figure saved to: {output_path}")
+
+    # ------------------------------------------------------------------
+    # STEP 6: Flag probabilities figure (skip for Wallingford - no flags)
+    # ------------------------------------------------------------------
+    if location.lower() != "wallingford":
+        flag_probabilities = calculate_flag_probabilities(plot_df, flag_thresholds)
+
+        print(f"✓ Flag probabilities calculated for {len(flag_probabilities)} timesteps")
+
+        # Show flag probabilities at key horizons
+        print("\n" + "="*70)
+        print("FLAG PROBABILITIES AT KEY HORIZONS")
+        print("="*70)
+        print(f"{'Hour':<8} {'Green':>8} {'Lt Blue':>10} {'Dk Blue':>10} {'Amber':>8} {'Red':>8}")
+        print("-"*70)
+
+        for hours_ahead in [0, 6, 12, 24, 48, 72, 120, 168, 240]:
+            if hours_ahead < len(flag_probabilities):
+                row = flag_probabilities.iloc[hours_ahead]
+                print(f"{hours_ahead:<8} {row['p_green']*100:>7.1f}% {row['p_light_blue']*100:>9.1f}% "
+                      f"{row['p_dark_blue']*100:>9.1f}% {row['p_amber']*100:>7.1f}% {row['p_red']*100:>7.1f}%")
+
+        # Create stacked area plot for flag probabilities
+        fig_prob, ax_prob = plt.subplots(figsize=(22, 8))  # bigger figure
+
+        ax_prob.stackplot(
+            flag_probabilities.index,
+            [flag_probabilities['p_green'],
+             flag_probabilities['p_light_blue'],
+             flag_probabilities['p_dark_blue'],
+             flag_probabilities['p_amber'],
+             flag_probabilities['p_red']],
+            labels=['Green', 'Light Blue', 'Dark Blue', 'Amber', 'Red'],
+            colors=[FLAG_COLORS['green'],
+                    FLAG_COLORS['light_blue'],
+                    FLAG_COLORS['dark_blue'],
+                    FLAG_COLORS['amber'],
+                    FLAG_COLORS['red']],
+            alpha=0.8,
+        )
+
+        # Improved date axis formatting
+        ax_prob.xaxis.set_major_locator(_MiddayLocator(interval=1))
+        ax_prob.xaxis.set_major_formatter(mticker.FuncFormatter(_short_date))
+        ax_prob.set_xlabel("Date", fontsize=26, fontweight="bold")   # made bigger
+
+        ax_prob.set_ylabel('Flag Probability', fontsize=24, fontweight="bold")
+        simple_display_name = " ".join(config.display_name.split()[::2])
+        ax_prob.set_title(f'{simple_display_name} Flag Probability Forecast', fontsize=30, fontweight='bold', pad=14)
+        ax_prob.set_xlim(flag_probabilities.index[0], flag_probabilities.index[-1])
+        ax_prob.set_ylim(0, 1)
+
+        # Enlarge tick label font sizes
+        ax_prob.tick_params(axis='both', labelsize=19)
+        # Make y-tick labels bold too
+        for label in ax_prob.get_yticklabels():
+            label.set_fontweight('bold')
+        for label in ax_prob.get_xticklabels():
+            label.set_fontweight('bold')
+
+        # Add vertical lines for day markers (at forecast 0h + N days from plot start, now at midnight)
+        for i in range(1, 11):
+            day_time = (flag_probabilities.index[0].normalize() + pd.Timedelta(days=i))
+            if day_time <= flag_probabilities.index[-1]:
+                ax_prob.axvline(x=day_time, color='black', linestyle='-', alpha=0.8)
+
+        plt.setp(ax_prob.xaxis.get_majorticklabels(), rotation=0, ha='center', fontsize=18, fontweight='bold')
+        plt.tight_layout()
+        prob_output_path = output_dir / f"flag_probabilities_{location.lower()}.png"
+        fig_prob.savefig(prob_output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig_prob)
+
+        print(f"\n✓ Flag probabilities figure saved to: {prob_output_path}")
+
+    else:
+        # For Wallingford, create empty flag_probabilities DataFrame to avoid errors
+        flag_probabilities = pd.DataFrame(index=plot_df.index)
+        flag_probabilities['p_green'] = 0
+        flag_probabilities['p_light_blue'] = 0
+        flag_probabilities['p_dark_blue'] = 0
+        flag_probabilities['p_amber'] = 0
+        flag_probabilities['p_red'] = 0
+        print("✓ Skipping flag probabilities for Wallingford (white flags - no flags)")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
