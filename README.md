@@ -99,7 +99,7 @@ from flag_predictor.models import train_model, load_model
 from flag_predictor.prediction import predict_ensemble, compute_flag_probabilities
 
 # Load data
-river_levels, rainfall = fetch_all_api_data()
+river_levels, rainfall, flow = fetch_all_api_data()
 
 # Load trained model
 model, scaler, config = load_model(models_dir='models')
@@ -165,7 +165,6 @@ MODEL_CONFIG = {
     'sequence_length': 120,      # 5 days of history
     'hidden_sizes': [192, 128, 64],
     'dropout_rate': 0.3,
-    'catchment_lag': 18,         # Hours for rain to affect river
 }
 
 TRAINING_CONFIG = {

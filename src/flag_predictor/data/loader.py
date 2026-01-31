@@ -354,6 +354,9 @@ def load_all_historical_data(
     location: str = "isis",
     project_root: Optional[Path] = None,
     use_extra_sources: bool = True,
+    use_flow: bool = True,
+    use_level: bool = False,
+    use_groundwater: bool = False,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Load all historical data for a location.
@@ -361,6 +364,10 @@ def load_all_historical_data(
     Args:
         location: Location name ('isis' or 'godstow')
         project_root: Root directory of project
+        use_extra_sources: If False, no flow/level/groundwater
+        use_flow: Include Farmoor flow (upstream guide)
+        use_level: Include level data
+        use_groundwater: Include groundwater data
         
     Returns:
         Tuple of (differential_df, rainfall_df, flow_df, level_df, groundwater_df)
@@ -371,14 +378,19 @@ def load_all_historical_data(
     differential_df = load_historical_differential(config, project_root)
     rainfall_df = load_historical_rainfall(project_root=project_root, location=location)
 
-    if use_extra_sources:
+    if use_extra_sources and use_flow:
         flow_df = load_historical_flow(project_root=project_root)
+    else:
+        flow_df = pd.DataFrame()
+    
+    if use_extra_sources and use_level:
         level_df = load_historical_level(project_root=project_root)
+    else:
+        level_df = pd.DataFrame()
+    
+    if use_extra_sources and use_groundwater:
         groundwater_df = load_historical_groundwater(project_root=project_root)
     else:
-        # Empty frames mean "no extra sources" downstream
-        flow_df = pd.DataFrame()
-        level_df = pd.DataFrame()
         groundwater_df = pd.DataFrame()
     
     # Ensure all dataframes have consistent timezones (UTC) before alignment

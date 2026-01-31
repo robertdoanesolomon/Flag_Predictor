@@ -3,6 +3,7 @@
 from .api import (
     fetch_river_level_data,
     fetch_rainfall_data,
+    fetch_flow_data,
     fetch_all_api_data,
     get_rainfall_forecast,
     get_rainfall_forecast_ensemble,

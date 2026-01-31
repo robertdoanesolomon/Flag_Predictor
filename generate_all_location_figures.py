@@ -265,8 +265,15 @@ def generate_spaghetti_figure(
     # includes Wallingford-specific for wallingford)
     station_names_list = get_location_station_names(location)
 
-    # Filter to only location-specific stations
-    rainfall_cols = [col for col in last_8_days.columns if col in station_names_list]
+    # Filter to only rainfall stations (explicitly exclude flow, level, groundwater)
+    rainfall_cols = [
+        col
+        for col in last_8_days.columns
+        if col in station_names_list
+        and not col.startswith("flow_m3s_")
+        and not col.startswith("level_m_")
+        and not col.startswith("groundwater_mAOD_")
+    ]
     historical_rainfall_hourly = last_8_days[rainfall_cols].mean(axis=1)  # Average across stations
     historical_rainfall_daily = historical_rainfall_hourly.resample("1D").sum()  # Daily totals
 

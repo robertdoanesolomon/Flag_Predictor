@@ -13,14 +13,11 @@ import numpy as np
 import pandas as pd
 from typing import List, Optional, Tuple
 
-from ..config import MODEL_CONFIG
-
 
 def create_features_with_future_rainfall(
     df: pd.DataFrame,
     future_rainfall_df: Optional[pd.DataFrame] = None,
     differential_column: str = 'differential',
-    catchment_lag: int = MODEL_CONFIG['catchment_lag']
 ) -> pd.DataFrame:
     """
     Create comprehensive feature set including future rainfall forecasts.
@@ -37,8 +34,6 @@ def create_features_with_future_rainfall(
         df: DataFrame with historical differential and rainfall data (hourly)
         future_rainfall_df: DataFrame with future rainfall forecasts (optional)
         differential_column: Name of the differential column
-        catchment_lag: Hours for rain to affect river levels
-        
     Returns:
         DataFrame with all engineered features
     """
@@ -65,7 +60,7 @@ def create_features_with_future_rainfall(
     
     # === Future Rainfall Features ===
     if future_rainfall_df is not None:
-        df = _create_future_rainfall_features(df, future_rainfall_df, catchment_lag)
+        df = _create_future_rainfall_features(df, future_rainfall_df)
     
     # === River Differential Features ===
     df = _create_differential_features(df, differential_column)
@@ -176,10 +171,12 @@ def _create_rainfall_features(df: pd.DataFrame) -> pd.DataFrame:
 def _create_future_rainfall_features(
     df: pd.DataFrame,
     future_rainfall_df: pd.DataFrame,
-    catchment_lag: int
 ) -> pd.DataFrame:
-    """Create features from future rainfall forecasts."""
-    
+    """Create features from future rainfall forecasts.
+
+    Provide rainfall at various horizons and windows; the model learns the
+    effective catchment lag from data (rain at 6h, 12h, 18h, etc. can all matter).
+    """
     # Ensure timezone alignment
     if future_rainfall_df.index.tz is None and df.index.tz is not None:
         future_rainfall_df = future_rainfall_df.tz_localize(df.index.tz)
@@ -190,18 +187,16 @@ def _create_future_rainfall_features(
     future_rainfall_aligned = future_rainfall_df.reindex(df.index)
     catchment_future = future_rainfall_aligned.sum(axis=1)
     
-    # Future rainfall at different horizons (accounting for catchment lag)
+    # Future rainfall at different windows: "rainfall in the next N hours"
     for window in [6, 12, 24, 48, 72, 120, 240]:
-        shift = -window if window > catchment_lag else -window - catchment_lag
         df[f'rainfall_future_{window}h'] = (
-            catchment_future.rolling(window=window).sum().shift(shift)
+            catchment_future.rolling(window=window).sum().shift(-window)
         )
     
     # Horizon-aligned future rainfall
     for h in [2, 4, 8, 10, 14, 16, 18, 20, 22, 30, 36, 42]:
-        effective_shift = max(h, catchment_lag)
         df[f'rainfall_future_{h}h'] = (
-            catchment_future.rolling(window=h).sum().shift(-effective_shift)
+            catchment_future.rolling(window=h).sum().shift(-h)
         )
     
     # Future dry detection
@@ -278,37 +273,60 @@ def _create_differential_features(df: pd.DataFrame, differential_column: str) ->
 
 
 def _create_flow_features(df: pd.DataFrame, flow_cols: List[str]) -> pd.DataFrame:
-    """Create features from flow data (e.g., Farmoor flow)."""
-    
-    # For each flow column, create similar features to differential
+    """
+    Create features from flow data (e.g., Farmoor upstream flow).
+
+    Flow obeys different statistics than differential (0-1.5m) and rainfall (mm).
+    Flow is typically 20-200+ m³/s, continuous, with different scale and distribution.
+    We use scale-invariant and bounded transforms so flow features sit in a
+    comparable range and don't dominate the model.
+
+    - Log transform: compresses range, flow often log-normal
+    - Percentile features: bounded 0-1, comparable to differential
+    - Rate of change as fraction: scale-invariant
+    - Travel-time lags: Farmoor is upstream; flow takes 6-24h to reach downstream
+    """
     for flow_col in flow_cols:
         station_name = flow_col.replace('flow_m3s_', '')
-        
-        # Lagged values
-        for lag in [1, 3, 6, 12, 24]:
-            df[f'{flow_col}_lag_{lag}h'] = df[flow_col].shift(lag)
-        
-        # Rolling statistics
-        for window in [6, 24, 72]:
-            df[f'{flow_col}_rolling_mean_{window}h'] = (
-                df[flow_col].rolling(window=window).mean()
+        flow = df[flow_col]
+
+        # --- Scale-invariant transforms (handle different statistics) ---
+        # Log transform: compresses 20-200 m³/s into ~3-5.3, more comparable to other features
+        flow_log = np.log1p(flow.clip(lower=0))
+
+        # Normalized within 720h window: bounded 0-1, "how high is flow vs recent range"
+        rmin = flow.rolling(720, min_periods=24).min()
+        rmax = flow.rolling(720, min_periods=24).max()
+        df[f'{flow_col}_norm_720h'] = (
+            (flow - rmin) / (rmax - rmin + 1e-6)
+        ).clip(0, 1)
+
+        # --- Upstream lag features (travel time to downstream locations) ---
+        # Farmoor flow propagates downstream; key lags 6, 12, 18, 24h
+        for lag in [6, 12, 18, 24]:
+            df[f'{flow_col}_lag_{lag}h'] = flow_log.shift(lag)
+
+        # --- Scale-invariant rate of change ---
+        # Fractional change: (flow - flow_6h) / flow_6h instead of m³/s per hour
+        for i in [6, 12, 24]:
+            lagged = flow.shift(i).replace(0, np.nan)
+            df[f'{flow_col}_frac_change_{i}h'] = (
+                (flow - lagged) / (lagged + 1.0)
+            ).clip(-2, 2)  # Cap extreme ratios
+
+        # Rising / falling as binary (scale-invariant)
+        df[f'{flow_col}_is_rising_6h'] = (flow.diff(6) > 0).astype(float)
+        df[f'{flow_col}_is_rising_24h'] = (flow.diff(24) > 0).astype(float)
+
+        # --- Rolling stats on log-scale (more stable) ---
+        for window in [24, 72, 168]:
+            df[f'{flow_col}_log_rolling_mean_{window}h'] = (
+                flow_log.rolling(window=window, min_periods=6).mean()
             )
-            df[f'{flow_col}_rolling_std_{window}h'] = (
-                df[flow_col].rolling(window=window).std()
-            )
-        
-        # Rate of change (velocity)
-        for i in [1, 3, 6, 12]:
-            df[f'{flow_col}_velocity_{i}h'] = df[flow_col].diff(periods=i) / i
-        
-        # Acceleration
-        for i in [3, 6]:
-            velocity = df[flow_col].diff(periods=i)
-            df[f'{flow_col}_acceleration_{i}h'] = velocity.diff(periods=i) / i
-        
-        # Rising flag
-        df[f'{flow_col}_is_rising_6h'] = (df[f'{flow_col}_velocity_6h'] > 0).astype(float)
-    
+
+        # Anomaly: current vs 7-day baseline (log space)
+        baseline = flow_log.rolling(window=168, min_periods=24).mean()
+        df[f'{flow_col}_log_anomaly'] = (flow_log - baseline).clip(-2, 2)
     return df
 
 
@@ -447,11 +465,23 @@ def create_target_and_features(
         df_with_features[target_col] = df_with_features[differential_column].shift(-horizon)
         targets.append(target_col)
     
-    # Define features (exclude targets and differential)
+    # Define features (exclude targets, differential, and raw flow/level/groundwater)
+    # Raw flow (m³/s) has very different statistics; we use only derived features.
+    def is_raw_source(col: str) -> bool:
+        if col.startswith('flow_m3s_'):
+            return not any(s in col for s in ['_lag_', '_norm_', '_frac_change_', '_is_rising_', '_log_', '_anomaly'])
+        if col.startswith('level_m_') and 'level_diff_' not in col:
+            return not any(s in col for s in ['_lag_', '_velocity_', '_rolling_', '_is_rising_'])
+        if col.startswith('groundwater_mAOD_'):
+            return not any(s in col for s in ['_lag_', '_rolling_'])
+        return False
+
+    raw_source_cols = [col for col in df_with_features.columns if is_raw_source(col)]
     exclude_cols = (
         targets +
         [differential_column] +
-        [col for col in df_with_features.columns if 'target_' in col]
+        [col for col in df_with_features.columns if 'target_' in col] +
+        raw_source_cols
     )
     features = [col for col in df_with_features.columns if col not in exclude_cols]
     

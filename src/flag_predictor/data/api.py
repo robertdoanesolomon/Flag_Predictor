@@ -15,6 +15,7 @@ from urllib3.util.retry import Retry
 
 from ..config import (
     API_URLS,
+    FLOW_API_BASE,
     RAINFALL_API_URLS,
     RAINFALL_STATION_NAMES,
     RAINFALL_STATION_COORDINATES,
@@ -93,6 +94,32 @@ def _process_rainfall_api_response(data: dict) -> pd.DataFrame:
     temp_df = temp_df[['dateTime', 'value']]
     temp_df.rename(columns={'dateTime': 'timestamp', 'value': 'rainfall'}, inplace=True)
     temp_df['timestamp'] = pd.to_datetime(temp_df['timestamp'])
+    df = temp_df.set_index('timestamp')
+    return df
+
+
+def _process_flow_api_response(data: dict, column_name: str = 'flow_m3s_Farmoor') -> pd.DataFrame:
+    """
+    Process API response from Hydrology API for flow (same structure as rainfall).
+    
+    Args:
+        data: JSON response with 'items' array containing dateTime, value
+        column_name: Column name for the flow values
+        
+    Returns:
+        DataFrame with timestamp index and flow column
+    """
+    if 'items' not in data or not data['items']:
+        return pd.DataFrame()
+    
+    temp_df = pd.DataFrame(data['items'])
+    if 'dateTime' not in temp_df.columns or 'value' not in temp_df.columns:
+        return pd.DataFrame()
+    
+    temp_df = temp_df[['dateTime', 'value']]
+    temp_df.rename(columns={'dateTime': 'timestamp', 'value': column_name}, inplace=True)
+    temp_df['timestamp'] = pd.to_datetime(temp_df['timestamp'])
+    temp_df[column_name] = pd.to_numeric(temp_df[column_name], errors='coerce')
     df = temp_df.set_index('timestamp')
     return df
 
@@ -193,20 +220,60 @@ def fetch_rainfall_data(location: Optional[str] = None, verbose: bool = True) ->
     return combined
 
 
-def fetch_all_api_data(location: Optional[str] = None, verbose: bool = True) -> Tuple[Dict[str, pd.DataFrame], pd.DataFrame]:
+def fetch_flow_data(verbose: bool = True, min_days_back: int = 90) -> pd.DataFrame:
     """
-    Fetch all API data (river levels and rainfall).
+    Fetch recent Farmoor flow data from Hydrology API.
+    
+    Same pattern as rainfall: returns DataFrame with flow_m3s_Farmoor column,
+    timestamp index. Used for training and forecasting to get recent flow
+    (API data overrides historical CSV for overlapping dates).
+    
+    Hydrology API returns oldest-first by default, so we use min-date to fetch
+    only recent data (last min_days_back days).
+    
+    Args:
+        verbose: Whether to print progress
+        min_days_back: Fetch data from this many days ago to present (default 90)
+        
+    Returns:
+        DataFrame with flow_m3s_Farmoor column, or empty DataFrame on error
+    """
+    if verbose:
+        print("Fetching flow data...")
+    
+    try:
+        min_date = (pd.Timestamp.utcnow() - pd.Timedelta(days=min_days_back)).strftime('%Y-%m-%d')
+        url = f"{FLOW_API_BASE}?_limit=20000&min-date={min_date}"
+        response = requests.get(url, timeout=60)
+        response.raise_for_status()
+        df = _process_flow_api_response(response.json(), column_name='flow_m3s_Farmoor')
+        if not df.empty and verbose:
+            print(f"  ✓ Farmoor flow: {len(df)} records")
+            print(f"  Date range: {df.index.min()} to {df.index.max()}")
+        return df
+    except Exception as e:
+        if verbose:
+            print(f"  ✗ Farmoor flow: {e}")
+        return pd.DataFrame()
+
+
+def fetch_all_api_data(
+    location: Optional[str] = None, verbose: bool = True
+) -> Tuple[Dict[str, pd.DataFrame], pd.DataFrame, pd.DataFrame]:
+    """
+    Fetch all API data (river levels, rainfall, and flow).
     
     Args:
         location: Location name (for location-specific rainfall stations)
         verbose: Whether to print progress
         
     Returns:
-        Tuple of (river_levels_dict, rainfall_df)
+        Tuple of (river_levels_dict, rainfall_df, flow_df)
     """
     river_levels = fetch_river_level_data(verbose=verbose)
     rainfall = fetch_rainfall_data(location=location, verbose=verbose)
-    return river_levels, rainfall
+    flow = fetch_flow_data(verbose=verbose)
+    return river_levels, rainfall, flow
 
 
 def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:

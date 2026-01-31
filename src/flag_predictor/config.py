@@ -96,6 +96,13 @@ API_URLS = {
 
 }
 
+# Farmoor flow (upstream) - Hydrology API, same structure as rainfall (items with dateTime, value)
+# Measure ID from download_flow.py. Use min-date in fetch to get RECENT data (API returns oldest first).
+FLOW_API_BASE = (
+    'https://environment.data.gov.uk/hydrology/id/measures/'
+    '6b80bd1c-6c19-4c26-875d-108bf8ef1a84-flow-i-900-m3s-qualified/readings.json'
+)
+
 RAINFALL_API_URLS = [
     'http://environment.data.gov.uk/flood-monitoring/id/measures/256230TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
     'http://environment.data.gov.uk/flood-monitoring/id/measures/254336TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
@@ -185,7 +192,6 @@ MODEL_CONFIG = {
     'sequence_length': 100,      
     'hidden_sizes': [192, 128, 64],
     'dropout_rate': 0.3,
-    'catchment_lag': 18,         # hours - rain at time T affects river at T+18h
 }
 
 TRAINING_CONFIG = {

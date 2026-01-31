@@ -91,8 +91,8 @@ def predict_single(
         freq='1h'
     )
     
-    # Pad rainfall forecast to start immediately after historical data
-    # Fill any gap with zeros (no rain)
+    # Pad rainfall forecast and extend other columns to future timestamps
+    last_values = recent_history.iloc[-1]
     for col in combined_df.columns:
         if col in rainfall_forecast_df.columns:
             # Create a full future timeline for this column
@@ -117,6 +117,15 @@ def predict_single(
                 index=required_future_index
             )
             combined_df = pd.concat([combined_df, future_diff])
+        elif col.startswith('flow_m3s_'):
+            # Flow: no forecast available; use persistence (last known value)
+            last_flow = last_values.get(col, np.nan)
+            if pd.notna(last_flow):
+                future_flow = pd.DataFrame(
+                    {col: [last_flow] * len(required_future_index)},
+                    index=required_future_index
+                )
+                combined_df = pd.concat([combined_df, future_flow])
     
     # Remove any duplicate indices
     combined_df = combined_df[~combined_df.index.duplicated(keep='first')]

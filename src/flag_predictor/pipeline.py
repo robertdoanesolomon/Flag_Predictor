@@ -66,17 +66,15 @@ def prepare_training_data(
         print(f"Preparing training data for {config.display_name}")
         print(f"{'='*70}")
     
-    # Load historical data
-    # NOTE: we currently disable flow/level/groundwater for training to
-    # reproduce the original (rainfall‑only) setup.
+    # Load historical data (flow from Farmoor acts as upstream guide for all locations)
     hist_diff_df, hist_rainfall_df, hist_flow_df, hist_level_df, hist_groundwater_df = load_all_historical_data(
         location=location,
         project_root=project_root,
-        use_extra_sources=False,
+        use_extra_sources=True,
     )
     
-    # Fetch API data (with location-specific rainfall stations)
-    river_levels, api_rainfall = fetch_all_api_data(location=location, verbose=verbose)
+    # Fetch API data (with location-specific rainfall stations and flow)
+    river_levels, api_rainfall, api_flow = fetch_all_api_data(location=location, verbose=verbose)
     
     # Calculate differential from API data
     if location == 'isis':
@@ -98,6 +96,7 @@ def prepare_training_data(
         hist_rainfall_df=hist_rainfall_df,
         api_diff_df=api_diff_df,
         api_rainfall_df=api_rainfall,
+        api_flow_df=api_flow,
         hist_flow_df=hist_flow_df,
         hist_level_df=hist_level_df,
         hist_groundwater_df=hist_groundwater_df,
@@ -125,7 +124,14 @@ def prepare_training_data(
         print(f"  Date range: {merged_df.index.min()} to {merged_df.index.max()}")
     
     # Create features and targets
-    rainfall_cols = [col for col in merged_df.columns if col != 'differential']
+    # Only rainfall columns go into future_rainfall_df (exclude flow, level, groundwater)
+    rainfall_cols = [
+        col for col in merged_df.columns
+        if col != 'differential'
+        and not col.startswith('flow_m3s_')
+        and not col.startswith('level_m_')
+        and not col.startswith('groundwater_mAOD_')
+    ]
     historical_rainfall = merged_df[rainfall_cols].copy()
     
     X, y_multi, mask, horizons = create_target_and_features(

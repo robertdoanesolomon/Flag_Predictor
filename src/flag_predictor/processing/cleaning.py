@@ -15,6 +15,7 @@ def merge_and_clean_data(
     hist_rainfall_df: pd.DataFrame,
     api_diff_df: Optional[pd.DataFrame] = None,
     api_rainfall_df: Optional[pd.DataFrame] = None,
+    api_flow_df: Optional[pd.DataFrame] = None,
     hist_flow_df: Optional[pd.DataFrame] = None,
     hist_level_df: Optional[pd.DataFrame] = None,
     hist_groundwater_df: Optional[pd.DataFrame] = None,
@@ -38,6 +39,7 @@ def merge_and_clean_data(
         hist_rainfall_df: Historical rainfall data
         api_diff_df: Recent differential from API (optional)
         api_rainfall_df: Recent rainfall from API (optional)
+        api_flow_df: Recent flow from API (optional, overrides historical for overlap)
         hist_flow_df: Historical flow data (optional)
         hist_level_df: Historical level data (optional)
         hist_groundwater_df: Historical groundwater data (optional)
@@ -109,6 +111,10 @@ def merge_and_clean_data(
         df = df.combine_first(api_rainfall_df)
     if api_diff_df is not None:
         df = df.combine_first(api_diff_df)
+    if api_flow_df is not None and not api_flow_df.empty:
+        if api_flow_df.index.tz is None and df.index.tz is not None:
+            api_flow_df = api_flow_df.tz_localize('UTC')
+        df = df.combine_first(api_flow_df)
     
     # Resample to hourly frequency
     aggregation_rules = {}
