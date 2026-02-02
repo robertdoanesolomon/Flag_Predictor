@@ -1,3 +1,4 @@
+<script defer src="https://cloud.umami.is/script.js" data-website-id="346b17d1-de0e-46d3-ae12-be38907f1ef9"></script>
 # Latest Forecasts
 
 ## Isis
