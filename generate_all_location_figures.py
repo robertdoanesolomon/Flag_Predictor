@@ -81,6 +81,240 @@ def _ensure_timezone_naive(index: pd.Index) -> pd.Index:
     return index
 
 
+def _short_date(x, pos=None):
+    """Format date as 'Wed 4 May' style with newline."""
+    d = mdates.num2date(x)
+    return d.strftime("%a ") + str(d.day) + "\n " + d.strftime("%b")
+
+
+class _MiddayLocator(mdates.DayLocator):
+    """Place ticks at midday (12h) instead of midnight."""
+    def tick_values(self, vmin, vmax):
+        ticks = super().tick_values(vmin, vmax)
+        return [t + 0.5 for t in ticks]  # 0.5 days = 12h
+
+
+def calculate_flag_probabilities(ensemble_df: pd.DataFrame, thresholds: dict) -> pd.DataFrame:
+    """Calculate the probability of each flag at every time point."""
+    n_members = len(ensemble_df.columns)
+    flag_probs = pd.DataFrame(index=ensemble_df.index)
+    for flag_name, (lower, upper) in thresholds.items():
+        in_range = ((ensemble_df >= lower) & (ensemble_df < upper)).sum(axis=1)
+        flag_probs[flag_name] = in_range / n_members
+    return flag_probs
+
+
+def generate_combined_figure(
+    location: str,
+    output_dir: Path,
+    plot_df: pd.DataFrame,
+    plot_stats: pd.DataFrame,
+    historical_df: pd.DataFrame,
+    historical_rainfall_daily: pd.Series,
+    forecast_rain_mean: pd.Series,
+    forecast_rain_p10: pd.Series,
+    forecast_rain_p90: pd.Series,
+    flag_thresholds: dict,
+    n_members_used: int,
+) -> None:
+    """
+    Generate combined spaghetti + probability figure with aligned axes.
+    
+    This matches the notebook's plot_location_figures() output.
+    """
+    forecast_start_time = plot_df.index[0]
+    
+    # Extend historical data to forecast start if needed
+    historical_to_plot = historical_df.copy()
+    if historical_to_plot.index[-1] < forecast_start_time:
+        gap_times = pd.date_range(
+            start=historical_to_plot.index[-1] + pd.Timedelta(hours=1),
+            end=forecast_start_time,
+            freq="1h",
+        )
+        gap_data = pd.Series(
+            [historical_to_plot["differential"].iloc[-1]] * len(gap_times),
+            index=gap_times,
+        )
+        historical_to_plot = pd.concat([
+            historical_to_plot,
+            pd.DataFrame({"differential": gap_data}),
+        ])
+    elif historical_to_plot.index[-1] > forecast_start_time:
+        historical_to_plot = historical_to_plot[historical_to_plot.index <= forecast_start_time]
+
+    # Determine x-limits
+    xlim = (historical_df.index[0], plot_df.index[-1])
+    
+    # Calculate the fraction where "Now" falls in the x-axis
+    total_duration = (plot_df.index[-1] - historical_df.index[0]).total_seconds()
+    now_fraction = (forecast_start_time - historical_df.index[0]).total_seconds() / total_duration
+
+    # Rainfall error bars
+    error_lower = forecast_rain_mean - forecast_rain_p10
+    error_upper = forecast_rain_p90 - forecast_rain_mean
+
+    # ------------------------------------------------------------------
+    # Create figures
+    # ------------------------------------------------------------------
+    show_prob_plot = location.lower() != "wallingford"
+    
+    if show_prob_plot:
+        fig, (ax, ax_prob) = plt.subplots(2, 1, figsize=(22, 15), height_ratios=[2, 1])
+    else:
+        fig, ax = plt.subplots(figsize=(20, 12))
+        ax_prob = None
+
+    ax_rain = ax.twinx()
+
+    # ============= SPAGHETTI PLOT =============
+    # Flag boundaries
+    if location.lower() != "wallingford":
+        ax.axhspan(-4, flag_thresholds["light_blue"][0], color=FLAG_COLORS["green"], alpha=0.08, zorder=0)
+        ax.axhspan(flag_thresholds["light_blue"][0], flag_thresholds["dark_blue"][0], color=FLAG_COLORS["light_blue"], alpha=0.08, zorder=0)
+        ax.axhspan(flag_thresholds["dark_blue"][0], flag_thresholds["amber"][0], color=FLAG_COLORS["dark_blue"], alpha=0.08, zorder=0)
+        ax.axhspan(flag_thresholds["amber"][0], flag_thresholds["red"][0], color=FLAG_COLORS["amber"], alpha=0.08, zorder=0)
+        ax.axhspan(flag_thresholds["red"][0], 4, color=FLAG_COLORS["red"], alpha=0.08, zorder=0)
+
+    # Rainfall bars
+    bar_width = 0.8
+    bar_center_offset = pd.Timedelta(hours=12)
+
+    ax_rain.bar(
+        historical_rainfall_daily.index + bar_center_offset,
+        historical_rainfall_daily.values,
+        width=bar_width, color="gray", alpha=0.4,
+        label="Historical Rainfall", zorder=1,
+    )
+
+    ax_rain.bar(
+        forecast_rain_mean.index + bar_center_offset,
+        forecast_rain_mean.values,
+        width=bar_width, color="cornflowerblue", alpha=0.5,
+        yerr=[error_lower.values, error_upper.values],
+        error_kw={"elinewidth": 1.5, "capsize": 3, "capthick": 1, "alpha": 0.7, "color": "navy"},
+        label="Forecast Rainfall (mean ± P10-P90)", zorder=2,
+    )
+
+    # Historical differential
+    ax.plot(
+        historical_to_plot.index,
+        historical_to_plot["differential"].values,
+        color="black", linewidth=3,
+        label="Historical Differential", zorder=100, alpha=0.9,
+    )
+
+    # Current time marker
+    ax.axvline(x=forecast_start_time, color="red", linestyle="--", linewidth=2.5, alpha=0.8, label="Now", zorder=101)
+
+    # Ensemble spaghetti
+    for idx, col in enumerate(plot_df.columns):
+        label = f"Ensemble Predictions (n={n_members_used})" if idx == 0 else None
+        ax.plot(plot_df.index, plot_df[col].values, color="steelblue", linewidth=1.2, alpha=0.5, label=label, zorder=50)
+
+    # Ensemble mean
+    ax.plot(plot_df.index, plot_stats["mean"].values, color="darkviolet", linewidth=3, label="Ensemble Mean", zorder=102, alpha=1)
+
+    # Formatting
+    ax.set_ylabel("Height Differential (m)", fontsize=20, fontweight="bold", color="black")
+    ax_rain.set_ylabel("Rainfall (mm/day, avg across stations)", fontsize=20, fontweight="bold", color="cornflowerblue")
+    ax.tick_params(axis="both", labelsize=16, labelcolor="black")
+    ax_rain.tick_params(axis="y", labelsize=16, labelcolor="cornflowerblue")
+    ax.set_ylim(-0.1, max(1.1, plot_stats["max"].max() + 0.1))
+    max_rain = max(historical_rainfall_daily.max(), forecast_rain_p90.max()) if len(forecast_rain_p90) > 0 else historical_rainfall_daily.max()
+    ax_rain.set_ylim(0, max_rain * 1.3)
+    ax.set_title(f"{location.upper()}", fontsize=32, fontweight="bold", pad=20)
+    ax.grid(True, alpha=0.3, linestyle=":", linewidth=0.8)
+
+    # Collect legend handles for later placement
+    lines1, labels1 = ax.get_legend_handles_labels()
+    lines2, labels2 = ax_rain.get_legend_handles_labels()
+    legend_handles = lines1 + lines2
+    legend_labels = labels1 + labels2
+
+    # Day markers
+    for i in range(1, 11):
+        day_time = forecast_start_time + pd.Timedelta(days=i)
+        if day_time <= plot_df.index[-1]:
+            ax.axvline(x=day_time, color="gray", linestyle=":", alpha=0.3, zorder=0)
+
+    # ============= FLAG PROBABILITY PLOT =============
+    if show_prob_plot and ax_prob is not None:
+        flag_probs = calculate_flag_probabilities(plot_df, flag_thresholds)
+        
+        if location.lower() == "godstow":
+            flag_order = ["green", "amber", "red"]
+        else:
+            flag_order = ["green", "light_blue", "dark_blue", "amber", "red"]
+        
+        colors = [FLAG_COLORS[f] for f in flag_order]
+        probs = [flag_probs[f].values for f in flag_order]
+        
+        ax_prob.stackplot(
+            flag_probs.index,
+            *probs,
+            labels=[f.replace("_", " ").title() for f in flag_order],
+            colors=colors,
+            alpha=0.8,
+        )
+        
+        ax_prob.axvline(x=forecast_start_time, color="red", linestyle=":", linewidth=2.5, alpha=0.8, zorder=101)
+        
+        ax_prob.set_ylabel("Future Flag Probability", fontsize=20, fontweight="bold", labelpad=20, va="center")
+        ax_prob.set_ylim(0, 1)
+        ax_prob.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+        ax_prob.set_yticklabels(["0%", "25%", "50%", "75%", "100%"], fontweight="bold")
+        ax_prob.tick_params(axis="both", labelsize=16)
+        ax_prob.grid(True, alpha=0.3, linestyle=":", linewidth=0.8, axis="y")
+        
+        # Add vertical lines at midnight to delineate days
+        first_midnight = forecast_start_time.normalize() + pd.Timedelta(days=1)
+        for i in range(15):
+            midnight = first_midnight + pd.Timedelta(days=i)
+            if midnight > plot_df.index[-1]:
+                break
+            ax_prob.axvline(x=midnight, color="black", linestyle="--", linewidth=1, alpha=0.5, zorder=50)
+
+    # X-axis formatting for spaghetti plot
+    ax.xaxis.set_major_locator(_MiddayLocator(interval=1))
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(_short_date))
+    ax.tick_params(axis='x', pad=13)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha="center", fontweight="bold")
+    ax.set_xlim(xlim)
+    
+    # X-axis formatting for probability plot - ticks but no date labels
+    if ax_prob is not None:
+        ax_prob.set_xlim(forecast_start_time, plot_df.index[-1])
+        ax_prob.xaxis.set_major_locator(_MiddayLocator(interval=1))
+        ax_prob.xaxis.set_major_formatter(plt.NullFormatter())
+        ax_prob.tick_params(axis='x', which='major', top=True, bottom=False)
+
+    plt.tight_layout()
+    
+    # Manually reposition probability plot to align axes box with "Now" line
+    if ax_prob is not None:
+        fig.canvas.draw()
+        
+        top_bbox = ax.get_position()
+        now_x = top_bbox.x0 + now_fraction * top_bbox.width
+        bottom_bbox = ax_prob.get_position()
+        new_width = top_bbox.x0 + top_bbox.width - now_x
+        
+        ax_prob.set_position([now_x, bottom_bbox.y0 + 0.005, new_width, bottom_bbox.height])
+        
+        # Place legend in the whitespace
+        fig.legend(legend_handles, legend_labels, fontsize=20,
+                   loc="upper left", bbox_to_anchor=(top_bbox.x0 + 0.025, bottom_bbox.y0 + bottom_bbox.height - 0.04),
+                   bbox_transform=fig.transFigure, framealpha=1, ncol=1)
+
+    # Save figure
+    output_path = output_dir / f"combined_spaghetti_probability_{location.lower()}.png"
+    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+    print(f"✓ Combined figure saved to: {output_path}")
+
+
 def generate_spaghetti_figure(
     location: str,
     output_dir: Path,
@@ -503,6 +737,27 @@ def generate_spaghetti_figure(
     plt.close(fig)
 
     print(f"\n✓ Spaghetti + rainfall figure saved to: {output_path}")
+
+    # ------------------------------------------------------------------
+    # STEP 6: Generate combined spaghetti + probability figure
+    # ------------------------------------------------------------------
+    print(f"\n{'=' * 70}")
+    print(f"STEP 6: Generating combined figure for {location.upper()}")
+    print(f"{'=' * 70}")
+
+    generate_combined_figure(
+        location=location,
+        output_dir=output_dir,
+        plot_df=plot_df,
+        plot_stats=plot_stats,
+        historical_df=last_8_days,
+        historical_rainfall_daily=historical_rainfall_daily,
+        forecast_rain_mean=forecast_rain_mean,
+        forecast_rain_p10=forecast_rain_p10,
+        forecast_rain_p90=forecast_rain_p90,
+        flag_thresholds=flag_thresholds,
+        n_members_used=n_members_used,
+    )
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
