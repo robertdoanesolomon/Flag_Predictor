@@ -17,7 +17,7 @@ Each location shows 50 different possible future differential trajectories (blue
 
 ## Features
 
-- **Multi-location support**: Train and predict for Isis or Godstow or Wallingford Stretches
+- **3 stretches on the Thames**: Train and predict for Isis or Godstow or Wallingford Stretches
 - **10-day forecasts**: Predicts from 2 hours to 240 hours ahead
 - **Ensemble predictions**: Probabilistic forecasts using multiple rainfall scenarios from different rainfall ensemble members
 
@@ -144,7 +144,7 @@ flag_predictor/
 
 ### Switching Locations
 
-The system supports both Isis, Godstow, and and Wallingford.
+The system predicts for Isis, Godstow, and Wallingford.
 
 ```python
 from flag_predictor.config import get_location_config
