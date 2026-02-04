@@ -4,7 +4,7 @@ title: Flag Predictor
 description: A website that runs an AI model to predict the differential and OURCs Flags for rowing in Oxford
 ---
 
-# Latest Forecasts
+# Latest Experimental Forecasts
 
 ## Isis
 ![Isis forecast](combined_spaghetti_probability_isis.png)
@@ -25,4 +25,4 @@ The Environment Agency's API provides the historical rainfall and the historical
 Normally this is just because of a temporary glitch in the data stream: often one of the river sensors will go offline briefly. This usually resolves quickly but can take a while: it will just display the most recently created forecast in the meantime. Also, the code to update the forecasts sometimes can sit in a queue for a while on the GitHub servers, which is why it doesn't update exactly on the hour every hour.
 
 ### Are there any known issues?
-The forecast is definitely not perfect, please treat it as experimental! The biggest issue with the model currently (01/02/2026) is the weird jump it often displays at the start of the forecast. Occasionally I write about issues with the model and improvements I am hoping to make here: https://robertdoanesolomon.substack.com/. If there are any other problems, if you have ideas of fixes, or other things that might be good to see, feel free to open an issue on GitHub.
+The forecast is definitely not perfect, please treat it as experimental! The biggest issue with the model currently (01/02/2026) is the weird jump it often displays at the start of the forecast. Occasionally I write about issues with the model and improvements I am hoping to make here: https://robertdoanesolomon.substack.com - if there are any other problems, if you have ideas of fixes, or other things that might be good to see, feel free to open an issue on GitHub.
