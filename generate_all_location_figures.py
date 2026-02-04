@@ -224,7 +224,8 @@ def generate_combined_figure(
     ax.set_ylim(-0.1, max(1.1, plot_stats["max"].max() + 0.1))
     max_rain = max(historical_rainfall_daily.max(), forecast_rain_p90.max()) if len(forecast_rain_p90) > 0 else historical_rainfall_daily.max()
     ax_rain.set_ylim(0, max_rain * 1.3)
-    ax.set_title(f"{location.upper()}", fontsize=32, fontweight="bold", pad=20)
+    forecast_time_str = forecast_start_time.strftime("%H:%M, %a %-d %b")
+    ax.set_title(f"{location.upper()} - Forecast at {forecast_time_str}", fontsize=32, fontweight="bold", pad=20)
     ax.grid(True, alpha=0.3, linestyle=":", linewidth=0.8)
 
     # Collect legend handles for later placement
@@ -708,8 +709,9 @@ def generate_spaghetti_figure(
     )
     ax_rain.set_ylim(0, max_rain * 1.3)
 
+    forecast_time_str = forecast_start_time.strftime("%H:%M, %a %-d %b")
     ax.set_title(
-        f"{location.upper()}",
+        f"{location.upper()} - Forecast at {forecast_time_str}",
         fontsize=32,
         fontweight="bold",
         pad=20,
