@@ -1,3 +1,5 @@
 theme: minima
 title: Flag Predictor
 description: A website that runs an AI model to predict the differential and OURCs Flags for rowing in Oxford
+url: "https://robertdoanesolomon.github.io"
+baseurl: "/Flag_Predictor"
