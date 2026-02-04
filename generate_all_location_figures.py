@@ -143,11 +143,12 @@ def generate_combined_figure(
     elif historical_to_plot.index[-1] > forecast_start_time:
         historical_to_plot = historical_to_plot[historical_to_plot.index <= forecast_start_time]
 
-    # Determine x-limits
-    xlim = (historical_df.index[0], plot_df.index[-1])
+    # Determine x-limits (end at midnight after last rainfall forecast day)
+    forecast_end = forecast_rain_mean.index[-1].normalize() + pd.Timedelta(days=1)
+    xlim = (historical_df.index[0], forecast_end)
     
     # Calculate the fraction where "Now" falls in the x-axis
-    total_duration = (plot_df.index[-1] - historical_df.index[0]).total_seconds()
+    total_duration = (forecast_end - historical_df.index[0]).total_seconds()
     now_fraction = (forecast_start_time - historical_df.index[0]).total_seconds() / total_duration
 
     # Rainfall error bars
@@ -235,7 +236,7 @@ def generate_combined_figure(
     # Day markers
     for i in range(1, 11):
         day_time = forecast_start_time + pd.Timedelta(days=i)
-        if day_time <= plot_df.index[-1]:
+        if day_time <= forecast_end:
             ax.axvline(x=day_time, color="gray", linestyle=":", alpha=0.3, zorder=0)
 
     # ============= FLAG PROBABILITY PLOT =============
@@ -271,7 +272,7 @@ def generate_combined_figure(
         first_midnight = forecast_start_time.normalize() + pd.Timedelta(days=1)
         for i in range(15):
             midnight = first_midnight + pd.Timedelta(days=i)
-            if midnight > plot_df.index[-1]:
+            if midnight > forecast_end:
                 break
             ax_prob.axvline(x=midnight, color="black", linestyle="--", linewidth=1, alpha=0.5, zorder=50)
 
@@ -282,12 +283,13 @@ def generate_combined_figure(
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha="center", fontweight="bold")
     ax.set_xlim(xlim)
     
-    # X-axis formatting for probability plot - ticks but no date labels
+    # X-axis formatting for probability plot
     if ax_prob is not None:
-        ax_prob.set_xlim(forecast_start_time, plot_df.index[-1])
+        ax_prob.set_xlim(forecast_start_time, forecast_end)
         ax_prob.xaxis.set_major_locator(_MiddayLocator(interval=1))
-        ax_prob.xaxis.set_major_formatter(plt.NullFormatter())
-        ax_prob.tick_params(axis='x', which='major', top=True, bottom=False)
+        ax_prob.xaxis.set_major_formatter(mticker.FuncFormatter(_short_date))
+        ax_prob.tick_params(axis='x', which='major', top=True, bottom=True, labeltop=False, labelbottom=True)
+        plt.setp(ax_prob.xaxis.get_majorticklabels(), rotation=0, ha="center", fontweight="bold")
 
     plt.tight_layout()
     
