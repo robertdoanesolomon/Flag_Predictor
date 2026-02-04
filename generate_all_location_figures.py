@@ -308,6 +308,9 @@ def generate_combined_figure(
         fig.legend(legend_handles, legend_labels, fontsize=20,
                    loc="upper left", bbox_to_anchor=(top_bbox.x0 + 0.025, bottom_bbox.y0 + bottom_bbox.height - 0.04),
                    bbox_transform=fig.transFigure, framealpha=1, ncol=1)
+    else:
+        # For locations without probability plot (e.g., Wallingford), place legend in upper left
+        ax.legend(legend_handles, legend_labels, fontsize=14, loc="upper left", framealpha=0.9)
 
     # Save figure
     output_path = output_dir / f"combined_spaghetti_probability_{location.lower()}.png"
