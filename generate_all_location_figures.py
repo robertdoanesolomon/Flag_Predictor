@@ -493,7 +493,9 @@ def generate_spaghetti_figure(
     hist_merged = merged_df.copy()
     hist_merged.index = _ensure_timezone_naive(hist_merged.index)
 
-    last_8_days = hist_merged.iloc[-24 * 8 :].copy()
+    # Get last 8 full calendar days (starting at midnight)
+    history_start = hist_merged.index[-1].normalize() - pd.Timedelta(days=7)
+    last_8_days = hist_merged[hist_merged.index >= history_start].copy()
 
     # Get location-specific station names (excludes Bicester and Grimsbury for godstow,
     # includes Wallingford-specific for wallingford)
