@@ -1,13 +1,13 @@
 # Latest Forecasts
 
 ## Isis
-![Isis forecast](spaghetti_rain_isis.png)
+![Isis forecast](combined_spaghetti_probability_isis.png)
 
 ## Godstow
-![Godstow forecast](spaghetti_rain_godstow.png)
+![Godstow forecast](combined_spaghetti_probability_godstow.png)
 
 ## Wallingford
-![Wallingford forecast](spaghetti_rain_wallingford.png)
+![Wallingford forecast](combined_spaghetti_probability_wallingford.png)
 
 ### How do I understand the plots?
 These are 10-day forecasts of the river height differential (related to the flow speed) for the Isis, Godstow, and Wallingford stretches. The river is most likely to follow the purple (mean) trajectory, but we could end up on any of the blue ones depending on how much rain we actually get. Plots update automatically every hour, with new rainfall forecasts incorporated as soon as they are released.
