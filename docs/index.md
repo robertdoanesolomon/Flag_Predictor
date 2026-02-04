@@ -1,16 +1,16 @@
 # Latest Forecasts
 
 ## Isis
-![Isis forecast](spaghetti_rain_isis.png)
+![Isis forecast](combined_spaghetti_probability_isis.png)
 
 ## Godstow
-![Godstow forecast](spaghetti_rain_godstow.png)
+![Godstow forecast](combined_spaghetti_probability_godstow.png)
 
 ## Wallingford
-![Wallingford forecast](spaghetti_rain_wallingford.png)
+![Wallingford forecast](combined_spaghetti_probability_wallingford.png)
 
 ### How do I understand the plots?
-These are 10-day forecasts of the river height differential (related to the flow speed) for the Isis, Godstow, and Wallingford stretches. The river is most likely to follow the purple (mean) trajectory, but we could end up on any of the blue ones depending on how much rain we actually get. Plots update automatically every hour, with new rainfall forecasts incorporated as soon as they are released.
+The top plots are 10-day forecasts of the river height differential (related to the flow speed) for the Isis, Godstow, and Wallingford stretches. The river is most likely to follow the purple (mean) trajectory, but we could end up on any of the blue ones depending on how much rain we actually get. Plots update automatically every hour, with new rainfall forecasts incorporated as soon as they are released. The lower right plot shows the probabilities associated with being in each flag 'band' at each point in the forecast.
 
 ### Where is the data from?
 The Environment Agency's API provides the historical rainfall and the historical differential levels on which the model has been trained. This is also where the data from the last 10 days comes from, as shown on the plots. The rainfall forecasts come from the European Center for Medium Range Weather Forecasts' AI Forecasting System (ECMWF-AIFS). If you wish to clone the GitHub repo, you can very easily change the forecast data source to others also provided by the Open-Meteo API.
