@@ -4,17 +4,6 @@ This is an LSTM AI model that predicts the river differential levels along the T
 
 Each location shows 50 different possible future differential trajectories (blue lines). The mean of all the predictions is shown in purple. Since we don't know the future rainfall perfectly, there is some spread in the forecast, but a trajectory like the purple line is most likely.
 
-## Latest Forecast Plots
-
-### Isis
-![Isis forecast](docs/spaghetti_rain_isis.png)
-
-### Godstow
-![Godstow forecast](docs/spaghetti_rain_godstow.png)
-
-### Wallingford
-![Wallingford forecast](docs/spaghetti_rain_wallingford.png)
-
 ## Features
 
 - **3 stretches on the Thames**: Train and predict for Isis or Godstow or Wallingford Stretches
