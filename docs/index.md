@@ -1,5 +1,4 @@
 ---
-layout: minima
 title: Flag Predictor
 description: A website that runs an AI model to predict the differential and OURCs Flags for rowing in Oxford
 ---
