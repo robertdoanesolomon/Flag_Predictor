@@ -3,7 +3,7 @@ name: Update forecast figures
 on:
   # Run every hour on the half hour (UTC)
   schedule:
-    - cron: "30 * * * *"
+    - cron: "*/15 * * * *"
 
   # Allow manual runs from the Actions tab
   workflow_dispatch:
