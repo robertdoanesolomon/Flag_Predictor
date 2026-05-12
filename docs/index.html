@@ -320,16 +320,27 @@
       align-items: center;
       gap: 12px;
     }
-    .panel .summary-line {
-      margin: 6px 0 4px 0;
-      color: var(--text);
-      font-size: 16px;
-      font-weight: 500;
-      line-height: 1.5;
+    /* Primary narrative — visible above charts */
+    .forecast-callout {
+      margin: 10px 0 22px 0;
+      padding: 22px 24px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      border-left: 5px solid var(--accent);
+      box-shadow: var(--shadow-sm);
     }
-    .panel .summary-line strong {
+    .forecast-callout .summary-line {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(1.05rem, 2.6vw, 1.35rem);
+      font-weight: 600;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+    }
+    .forecast-callout .summary-line strong {
       color: var(--accent);
-      font-weight: 700;
+      font-weight: 800;
     }
     .panel .sub {
       margin: 0 0 18px 0;
@@ -365,6 +376,11 @@
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 12px;
       margin-bottom: 20px;
+    }
+    /* Stats sit after charts, before page-level “About” */
+    .stats-grid.stats-grid--below-charts {
+      margin-top: 22px;
+      margin-bottom: 0;
     }
     .stat {
       background: var(--surface-soft);
@@ -720,6 +736,7 @@
       .chart-title { font-size: 14px; }
       .plot { min-height: 320px; }
       .plot.prob { min-height: 200px; }
+      .forecast-callout { padding: 18px 16px; }
       details.about { padding: 16px 14px; }
     }
 
@@ -1130,6 +1147,8 @@
           <div id="prob-${key}" class="plot prob"></div>
         </div>`;
 
+      const peakInfo = computePeak(loc);
+
       return `
         <section class="pane ${i === 0 ? 'active' : ''}" id="pane-${key}" role="tabpanel">
           <div class="panel">
@@ -1137,17 +1156,35 @@
               ${loc.display_name}
               ${stale}
             </h2>
-            ${(() => { const s = summariseForecast(loc); return s ? `<p class="summary-line">${s}</p>` : ''; })()}
+            ${(() => {
+              const s = summariseForecast(loc);
+              return s
+                ? `<div class="forecast-callout" role="status" aria-live="polite"><p class="summary-line">${s}</p></div>`
+                : '';
+            })()}
             <p class="meta">Forecast generated at <strong>${fmtShortDateTime(loc.forecast_start)}</strong> · ${loc.n_members}-member ensemble.</p>
 
-            <div class="stats-grid">
+            <div class="chart-block">
+              <div class="chart-legend" data-plot="plot-${key}">
+                <button type="button" class="item" data-target="Historical Differential"><span class="swatch line" style="background:#0b1d18;"></span>Historical Differential</button>
+                <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:#4682b4;"></span>Ensemble Predictions (n=${loc.n_members})</button>
+                <button type="button" class="item" data-target="Ensemble Mean"><span class="swatch line" style="background:#8a39d0;"></span>Ensemble Mean</button>
+                <button type="button" class="item" data-target="Historical Rainfall"><span class="swatch square" style="background:#999;opacity:0.5;"></span>Historical Rainfall</button>
+                <button type="button" class="item" data-target="Forecast Rainfall"><span class="swatch square" style="background:#6495ed;opacity:0.6;"></span>Forecast Rainfall (mean &plusmn; P10&ndash;P90)</button>
+              </div>
+              <div id="plot-${key}" class="plot"></div>
+            </div>
+
+            ${probPlotHtml}
+
+            <div class="stats-grid stats-grid--below-charts">
               <div class="stat">
                 <div class="label">Now</div>
                 <div class="value">${fmtDiff(loc.current.differential)}<small>m</small></div>
               </div>
               <div class="stat">
                 <div class="label">Estimated 10-day peak</div>
-                <div class="value" style="font-size:16px;">${fmtDiff(computePeak(loc).value)}m <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;">on ${computePeak(loc).time ? fmtShortDate(computePeak(loc).time) : '—'}</small></div>
+                <div class="value" style="font-size:16px;">${fmtDiff(peakInfo.value)}m <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;">on ${peakInfo.time ? fmtShortDate(peakInfo.time) : '—'}</small></div>
               </div>
               <div class="stat">
                 <div class="label">Rain last 24 h</div>
@@ -1166,20 +1203,6 @@
                 <div class="value">${fmtMm(loc.summary.next_7d_rain_mm ?? loc.summary.next_3d_rain_mm)}<small>mm</small></div>
               </div>
             </div>
-
-
-            <div class="chart-block">
-              <div class="chart-legend" data-plot="plot-${key}">
-                <button type="button" class="item" data-target="Historical Differential"><span class="swatch line" style="background:#0b1d18;"></span>Historical Differential</button>
-                <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:#4682b4;"></span>Ensemble Predictions (n=${loc.n_members})</button>
-                <button type="button" class="item" data-target="Ensemble Mean"><span class="swatch line" style="background:#8a39d0;"></span>Ensemble Mean</button>
-                <button type="button" class="item" data-target="Historical Rainfall"><span class="swatch square" style="background:#999;opacity:0.5;"></span>Historical Rainfall</button>
-                <button type="button" class="item" data-target="Forecast Rainfall"><span class="swatch square" style="background:#6495ed;opacity:0.6;"></span>Forecast Rainfall (mean &plusmn; P10&ndash;P90)</button>
-              </div>
-              <div id="plot-${key}" class="plot"></div>
-            </div>
-
-            ${probPlotHtml}
           </div>
         </section>
       `;
