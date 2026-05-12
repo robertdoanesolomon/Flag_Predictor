@@ -1569,7 +1569,7 @@
     if (anyStale) pill.classList.add('stale');
     else pill.classList.remove('stale');
     const base = `Updated ${relativeTime(bundle.generated_at)}`;
-    text.textContent = anyStale ? `${base} · sensors offline` : base;
+    text.textContent = anyStale ? `${base} · some sensors offline` : base;
 
     // Plot every location.
     bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
