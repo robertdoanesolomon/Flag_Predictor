@@ -38,6 +38,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Large EA rainfall dumps live in data/rainfall_training_data/ (gitignored to keep repo small).
+      # The forecasting script still merges these files with API data; runners start with an empty tree.
+      - name: Weekly cache slug for rainfall CSVs
+        id: rainfall-week
+        run: echo "w=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore cached EA rainfall CSVs
+        uses: actions/cache@v4
+        id: rainfall-cache
+        with:
+          path: data/rainfall_training_data
+          key: ea-rain-${{ runner.os }}-v1-${{ steps.rainfall-week.outputs.w }}
+          restore-keys: |
+            ea-rain-${{ runner.os }}-v1-
+
+      - name: Populate rainfall_training_data when cache miss
+        run: |
+          set -euo pipefail
+          mkdir -p data/rainfall_training_data
+          COUNT="$(find data/rainfall_training_data -maxdepth 1 -type f -name '*.csv' | wc -l | tr -d ' ')"
+          MIN_DATE="$(python -c "from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc) - timedelta(days=800)).strftime('%Y-%m-%d'))")"
+          if [ "${COUNT:-0}" -lt 15 ]; then
+            echo "Downloading EA qualified rainfall CSVs since ${MIN_DATE} (had ${COUNT} files) ..."
+            python src/flag_predictor/data/download_rainfall.py --min-date "$MIN_DATE" --delay 1.5
+          else
+            echo "Rainfall_training_data cache usable (${COUNT} CSV files)."
+          fi
+
       - name: Generate figures into docs/
         run: |
           python generate_all_location_figures.py --output-dir docs
