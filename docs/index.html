@@ -1567,10 +1567,8 @@
     const anyStale = Object.values(bundle.locations).some(l => l.stale);
     if (anyStale) pill.classList.add('stale');
     else pill.classList.remove('stale');
-    const base = `Site data updated ${relativeTime(bundle.generated_at)}`;
-    text.textContent = anyStale
-      ? `${base} · at least one stretch has a stale river reading (warnings in panels)`
-      : base;
+    const base = `Updated ${relativeTime(bundle.generated_at)}`;
+    text.textContent = anyStale ? `${base} · some gauges stale` : base;
 
     // Plot every location.
     bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
