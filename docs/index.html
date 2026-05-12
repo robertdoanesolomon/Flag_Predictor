@@ -927,6 +927,16 @@
       cutoff = Date.UTC(pts[0], pts[1] - 1, pts[2] + 1, 0, 0, 0, 0);
     }
 
+    // Forecast span in calendar days uses the rainfall-window length (usually ~240 hourly points),
+    // not only the last valid ensemble-mean timestep — avoids "9 days" when trailing NaNs shrink endIdx.
+    let cutoffCount = 0;
+    for (let i = 0; i < times.length; i++) {
+      if (cutoff !== null && new Date(times[i]).getTime() > cutoff) break;
+      cutoffCount++;
+    }
+    const horizonHours = Math.max(1, cutoffCount - 1);
+    const spanDaysPhrase = Math.max(1, Math.ceil(horizonHours / 24));
+
     // Collect valid indices in window.
     const idxs = [];
     for (let i = 0; i < times.length; i++) {
@@ -941,7 +951,6 @@
     const endVal   = mean[endIdx];
     const startT   = new Date(times[startIdx]);
     const endT     = new Date(times[endIdx]);
-    const totalDays = Math.max(1, Math.ceil((endT - startT) / ONE_DAY_MS));
 
     // Find global peak and trough.
     let peakIdx = startIdx, troughIdx = startIdx;
@@ -1019,7 +1028,7 @@
       if (a < SIG)         v = 'stay roughly the same';
       else if (netDelta>0) v = verb(netDelta, 'rise', null) || 'rise';
       else                 v = verb(netDelta, 'drop', null) || 'drop';
-      dir = `<strong>${v} over the next ${ds(totalDays)}</strong>`;
+      dir = `<strong>${v} over the next ${ds(spanDaysPhrase)}</strong>`;
     }
 
     return `The differential is forecast to ${dir}${certainty}.`;
@@ -1129,7 +1138,7 @@
               ${stale}
             </h2>
             ${(() => { const s = summariseForecast(loc); return s ? `<p class="summary-line">${s}</p>` : ''; })()}
-            <p class="meta">Forecast generated at <strong>${fmtShortDateTime(loc.forecast_start)}</strong> · ${loc.n_members}-member ensemble (UK&nbsp;time).</p>
+            <p class="meta">Forecast generated at <strong>${fmtShortDateTime(loc.forecast_start)}</strong> · ${loc.n_members}-member ensemble.</p>
 
             <div class="stats-grid">
               <div class="stat">
