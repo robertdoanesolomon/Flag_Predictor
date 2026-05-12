@@ -1530,12 +1530,17 @@
       ${renderPanels(bundle)}
     `;
 
-    // Update status pill.
+    // Status pill uses bundle.generated_at = when CI finished writing forecast_data.json
+    // (not per-location EA gauge freshness — see stale / last_sensor_update on each pane).
     const pill = document.getElementById('status-pill');
     const text = document.getElementById('status-text');
     const anyStale = Object.values(bundle.locations).some(l => l.stale);
     if (anyStale) pill.classList.add('stale');
-    text.textContent = `Forecast updated ${relativeTime(bundle.generated_at)}`;
+    else pill.classList.remove('stale');
+    const base = `Site data updated ${relativeTime(bundle.generated_at)}`;
+    text.textContent = anyStale
+      ? `${base} · at least one stretch has a stale river reading (warnings in panels)`
+      : base;
 
     // Plot every location.
     bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
