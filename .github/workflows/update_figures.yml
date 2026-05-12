@@ -1,7 +1,7 @@
 name: Update forecast figures
 
 on:
-  # Run every hour on the half hour (UTC)
+  # Run roughly every fifteen minutes UTC (GitHub may delay queued runs under load).
   schedule:
     - cron: "*/15 * * * *"
 
@@ -25,7 +25,6 @@ jobs:
         with:
           # Required so the workflow can push back to the repo
           token: ${{ secrets.GITHUB_TOKEN }}
-          # Needed so we can rebase on origin/main
           fetch-depth: 0
 
       - name: Set up Python
@@ -68,31 +67,41 @@ jobs:
 
       - name: Generate figures into docs/
         run: |
-          python generate_all_location_figures.py --output-dir docs
+          set -euo pipefail
 
-      - name: Commit and push changes (if any)
-        run: |
-          if git diff --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
+          regenerate_and_commit_once() {
+            python generate_all_location_figures.py --output-dir docs
+            if git diff --quiet HEAD -- docs; then
+              echo "No changes under docs/"
+              return 1
+            fi
+            git add docs/
+            git commit -m "Update forecast figures [skip ci]"
+            return 0
+          }
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add docs/
-          git commit -m "Update forecast figures [skip ci]" || exit 0
+          # Always branch from remote main before generating — avoids stacking a second
+          # figure commit onto one that landed while this job ran (PNG/JSON rebase conflicts).
+          git fetch origin main
+          git checkout -B main origin/main
 
-          # Remote may advance (e.g. another run). Rebase + retry push.
+          regenerate_and_commit_once || { echo "No commit needed"; exit 0; }
+
           for i in 1 2 3 4 5; do
-            git fetch origin main
-            git rebase origin/main || (git rebase --abort && exit 1)
             if git push origin HEAD:main; then
+              echo "Push succeeded."
               exit 0
             fi
-            echo "Push failed (attempt $i), retrying..."
+            echo "Push failed (attempt $i): updating from origin/main, regenerating, retrying..."
             sleep $((i * 5))
+            git fetch origin main
+            git reset --hard origin/main
+            regenerate_and_commit_once || { echo "No changes after retry; exiting."; exit 0; }
           done
+
           echo "Failed to push after retries"
           exit 1
 
