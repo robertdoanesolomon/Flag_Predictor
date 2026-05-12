@@ -82,6 +82,9 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       min-height: 100vh;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: hidden;
     }
 
     a { color: var(--accent-soft); text-decoration: none; }
@@ -91,6 +94,9 @@
       max-width: 1280px;
       margin: 0 auto;
       padding: 32px 24px 80px 24px;
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-bottom: max(56px, env(safe-area-inset-bottom));
     }
 
     /* ---------- HERO ---------- */
@@ -616,6 +622,94 @@
       height: 12px;
       border-radius: 2px;
     }
+
+    /* ---------- MOBILE / NARROW ---------- */
+    @media (max-width: 720px) {
+      .page { padding-top: 20px; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+      .hero {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .hero-text h1 {
+        font-size: clamp(24px, 7vw, 36px);
+        line-height: 1.08;
+      }
+      .hero-text p { font-size: 15px; }
+      .hero-sub { margin-top: 10px !important; font-size: 16px !important; }
+      .status-pill {
+        justify-content: center;
+        align-self: stretch;
+        text-align: center;
+        flex-wrap: wrap;
+        font-size: 12.5px;
+      }
+      .tabs {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        border-radius: 12px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4px;
+        padding: 4px;
+      }
+      .tab {
+        min-width: 0;
+        padding: 10px 8px;
+        font-size: 13px;
+        white-space: normal;
+        line-height: 1.25;
+        text-align: center;
+      }
+      .panel { padding: 16px 14px; }
+      .panel h2 { flex-wrap: wrap; font-size: 19px; gap: 8px; }
+      .panel .meta {
+        font-size: 13px;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+      .panel .summary-line {
+        font-size: 15px;
+        word-break: break-word;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .stat .value { font-size: 20px; }
+      .flag-card-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .flag-card-footer .peak {
+        word-break: break-word;
+      }
+      .chart-legend {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+      .chart-legend .item {
+        white-space: normal;
+        justify-content: flex-start;
+        text-align: left;
+      }
+      .chart-title { font-size: 14px; }
+      .plot { min-height: 320px; }
+      .plot.prob { min-height: 200px; }
+      details.about { padding: 16px 14px; }
+    }
+
+    /* Very small phones: give charts a touch more breathing room vertically */
+    @media (max-width: 380px) {
+      .flag-value { font-size: 38px; }
+      .flag-value small { font-size: 13px; }
+      .tab { font-size: 12px; padding: 10px 4px; }
+    }
   </style>
 </head>
 
@@ -921,6 +1015,11 @@
       rainForecast: dark ? 'rgba(110,160,240,0.65)' : 'rgba(100,149,237,0.6)',
       rainError: dark ? 'rgba(220,220,220,0.7)' : 'rgba(40,55,100,0.7)'
     };
+  }
+
+  /** True on narrow screens: tighter Plotly margins + smaller typography. */
+  function isCompactChartLayout() {
+    return typeof window.matchMedia !== 'undefined' && window.matchMedia('(max-width: 720px)').matches;
   }
 
   /* ----------------------- RENDER ---------------------------- */
@@ -1231,18 +1330,20 @@
       tickTexts.push(`<b>${weekday} ${day}</b><br>${month}`);
     }
 
+    const compact = isCompactChartLayout();
     const xAxisShared = {
       type: 'date',
       range: [xStart, xEnd.toISOString()],
       tickmode: 'array',
       tickvals: tickVals,
       ticktext: tickTexts,
-      tickfont: { size: 12, color: T.font },
+      tickfont: { size: compact ? 10 : 12, color: T.font },
       gridcolor: T.grid,
       linecolor: T.axis,
       ticks: 'outside',
-      ticklen: 4,
-      zeroline: false
+      ticklen: compact ? 3 : 4,
+      zeroline: false,
+      ...(compact ? { tickangle: -35 } : {})
     };
     // Stash on the loc payload so the prob plot can use the same settings.
     loc.__xAxisShared = xAxisShared;
@@ -1252,8 +1353,10 @@
     return {
       paper_bgcolor: T.paper,
       plot_bgcolor: T.plot,
-      font: { family: 'Inter, sans-serif', color: T.font, size: 13 },
-      margin: { l: 60, r: 70, t: 28, b: 56 },
+      font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
+      margin: compact
+        ? { l: 42, r: 40, t: 16, b: 88 }
+        : { l: 60, r: 70, t: 28, b: 56 },
       showlegend: false,
       hovermode: 'x unified',
       hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' }, bordercolor: 'rgba(255,255,255,0.2)' },
@@ -1268,7 +1371,7 @@
         spikethickness: 1
       },
       yaxis: {
-        title: { text: 'Height differential (m)', font: { size: 13, color: T.font } },
+        title: { text: 'Height differential (m)', font: { size: compact ? 11 : 13, color: T.font } },
         range: [key === 'godstow' ? -0.05 : -0.1, yMax],
         gridcolor: T.grid,
         linecolor: T.axis,
@@ -1276,7 +1379,7 @@
         tickfont: { color: T.font }
       },
       yaxis2: {
-        title: { text: 'Rainfall (mm/day)', font: { size: 13, color: T.rainForecast } },
+        title: { text: 'Rainfall (mm/day)', font: { size: compact ? 10 : 13, color: T.rainForecast } },
         overlaying: 'y',
         side: 'right',
         rangemode: 'tozero',
@@ -1290,7 +1393,7 @@
           y: 1, yref: 'paper',
           text: 'Now',
           showarrow: false,
-          font: { color: T.nowLine, size: 11, weight: 700 },
+          font: { color: T.nowLine, size: compact ? 9 : 11, weight: 700 },
           bgcolor: 'rgba(255,255,255,0)',
           xanchor: 'left', yanchor: 'top',
           xshift: 4
@@ -1321,11 +1424,14 @@
     // (set on loc.__xAxisShared by buildMainLayout). Same margins too, so
     // the daily columns line up perfectly beneath the chart above.
     const sharedX = loc.__xAxisShared || {};
+    const compact = isCompactChartLayout();
     const layout = {
       paper_bgcolor: T.paper,
       plot_bgcolor: T.plot,
-      font: { family: 'Inter, sans-serif', color: T.font, size: 13 },
-      margin: { l: 60, r: 70, t: 16, b: 56 },
+      font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
+      margin: compact
+        ? { l: 42, r: 40, t: 56, b: 88 }
+        : { l: 60, r: 70, t: 16, b: 56 },
       hovermode: 'x unified',
       hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' } },
       shapes: [{
@@ -1339,7 +1445,7 @@
         showspikes: false
       },
       yaxis: {
-        title: { text: 'Flag probability', font: { size: 13, color: T.font } },
+        title: { text: 'Flag probability', font: { size: compact ? 11 : 13, color: T.font } },
         range: [0, 1],
         tickformat: '.0%',
         gridcolor: T.grid,
@@ -1349,10 +1455,12 @@
       },
       legend: {
         orientation: 'h',
-        x: 0, xanchor: 'left',
-        y: 1.18, yanchor: 'top',
+        x: 0,
+        xanchor: 'left',
+        y: compact ? 1.14 : 1.18,
+        yanchor: 'top',
         bgcolor: 'rgba(0,0,0,0)',
-        font: { color: T.font, size: 12 }
+        font: { color: T.font, size: compact ? 9 : 12 }
       }
     };
     return { traces, layout };
@@ -1462,12 +1570,38 @@
       t.addEventListener('click', () => setActiveTab(t.dataset.location));
     });
 
-    // Re-plot on theme change so colours stay in sync.
-    if (window.matchMedia) {
-      const mql = window.matchMedia('(prefers-color-scheme: dark)');
-      mql.addEventListener('change', () => {
-        bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
+    window.__forecastBundle = bundle;
+
+    /** One-shot: resize Plotly after layout changes / orientation; re-plot crossing 720px or dark mode. */
+    if (!window.__forecastResponsiveWired) {
+      window.__forecastResponsiveWired = true;
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          const b = window.__forecastBundle;
+          if (!b || typeof Plotly === 'undefined') return;
+          b.location_order.forEach(k => {
+            const plot = document.getElementById(`plot-${k}`);
+            if (plot && plot.layout) Plotly.Plots.resize(plot);
+            const prob = document.getElementById(`prob-${k}`);
+            if (prob && prob.layout) Plotly.Plots.resize(prob);
+          });
+        }, 140);
       });
+      const replotForecast = () => {
+        const b = window.__forecastBundle;
+        if (!b || typeof Plotly === 'undefined') return;
+        b.location_order.forEach(k => plotLocation(k, b.locations[k]));
+      };
+      const mqCompact = window.matchMedia('(max-width: 720px)');
+      if (mqCompact.addEventListener) mqCompact.addEventListener('change', replotForecast);
+      else if (mqCompact.addListener) mqCompact.addListener(replotForecast);
+      if (window.matchMedia) {
+        const mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+        if (mqDark.addEventListener) mqDark.addEventListener('change', replotForecast);
+        else if (mqDark.addListener) mqDark.addListener(replotForecast);
+      }
     }
   }
 
