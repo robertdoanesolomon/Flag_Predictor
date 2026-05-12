@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b3d2e">
   <meta name="description" content="An AI-powered forecast of OURCs flag colours and river height differentials on the Oxford Thames (Isis, Godstow and Wallingford stretches).">
-  <title>Oxford Flag Predictor &mdash; Interactive Forecast</title>
+  <title>Flag Predictor</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -794,7 +794,7 @@
 
   <script>
   /* =====================================================================
-     Oxford Flag Predictor — interactive frontend
+     Flag Predictor — interactive frontend
      ===================================================================== */
 
   const FLAG_COLORS = {
@@ -1358,14 +1358,15 @@
     for (let t = tickStart.getTime(); t < xEnd.getTime(); t += ONE_DAY_MS) {
       const d = new Date(t);
       tickVals.push(d.toISOString());
-      // UTC-based day label so it stays consistent regardless of viewer's timezone.
-      const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
       const day = d.getUTCDate();
-      const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
-      // Narrow viewports: omit month on a second line — less crowding alongside angled ticks.
-      tickTexts.push(compact
-        ? `<b>${weekday} ${day}</b>`
-        : `<b>${weekday} ${day}</b><br>${month}`);
+      if (compact) {
+        // Narrow viewports: day-of-month only (e.g. 20) to reduce axis crowding.
+        tickTexts.push(String(day));
+      } else {
+        const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
+        const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
+        tickTexts.push(`<b>${weekday} ${day}</b><br>${month}`);
+      }
     }
 
     const xAxisShared = {
