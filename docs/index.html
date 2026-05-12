@@ -819,6 +819,8 @@
 
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const BAR_WIDTH_MS = 0.8 * ONE_DAY_MS;
+  /** All calendar labels shown to viewers are in UK (London) time — matches BST/GMT transitions. */
+  const TZ_UK = 'Europe/London';
 
   /** P90−P10 spread (m) at last horizon: [very certain, fairly certain, uncertain] upper bounds. */
   const CERTAINTY_THRESHOLDS = {
@@ -888,14 +890,19 @@
 
   function fmtShortDate(iso) {
     const d = new Date(iso);
-    const weekday = d.toLocaleDateString('en-GB', { weekday: 'short' });
-    const day = d.getDate();
-    const month = d.toLocaleDateString('en-GB', { month: 'short' });
+    const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: TZ_UK });
+    const day = d.toLocaleDateString('en-GB', { day: 'numeric', timeZone: TZ_UK });
+    const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: TZ_UK });
     return `${weekday} ${day} ${month}`;
   }
   function fmtShortDateTime(iso) {
     const d = new Date(iso);
-    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const time = d.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: TZ_UK
+    });
     return `${time}, ${fmtShortDate(iso)}`;
   }
 
@@ -934,7 +941,7 @@
     const endVal   = mean[endIdx];
     const startT   = new Date(times[startIdx]);
     const endT     = new Date(times[endIdx]);
-    const totalDays = Math.max(1, Math.round((endT - startT) / ONE_DAY_MS));
+    const totalDays = Math.max(1, Math.ceil((endT - startT) / ONE_DAY_MS));
 
     // Find global peak and trough.
     let peakIdx = startIdx, troughIdx = startIdx;
@@ -944,8 +951,9 @@
     }
     const peakVal    = mean[peakIdx];
     const troughVal  = mean[troughIdx];
-    const daysToPeak   = Math.max(1, Math.round((new Date(times[peakIdx]) - startT) / ONE_DAY_MS));
-    const daysToTrough = Math.max(1, Math.round((new Date(times[troughIdx]) - startT) / ONE_DAY_MS));
+    const msDay = ONE_DAY_MS;
+    const daysToPeak   = Math.max(1, Math.ceil((new Date(times[peakIdx]) - startT) / msDay));
+    const daysToTrough = Math.max(1, Math.ceil((new Date(times[troughIdx]) - startT) / msDay));
     const peakRise   = peakVal - startVal;
     const troughDrop = startVal - troughVal;
     const netDelta   = endVal - startVal;
@@ -1121,7 +1129,7 @@
               ${stale}
             </h2>
             ${(() => { const s = summariseForecast(loc); return s ? `<p class="summary-line">${s}</p>` : ''; })()}
-            <p class="meta">Forecast generated at <strong>${fmtShortDateTime(loc.forecast_start)}</strong> · ${loc.n_members}-member ensemble · last sensor reading ${relativeTime(loc.last_sensor_update)}.</p>
+            <p class="meta">Forecast generated at <strong>${fmtShortDateTime(loc.forecast_start)}</strong> · ${loc.n_members}-member ensemble (UK&nbsp;time).</p>
 
             <div class="stats-grid">
               <div class="stat">
@@ -1340,9 +1348,8 @@
     const lastParts = lastForecastDate.slice(0, 10).split('-').map(Number); // [Y, M, D]
     const xEnd = new Date(Date.UTC(lastParts[0], lastParts[1] - 1, lastParts[2] + 1, 0, 0, 0, 0));
 
-    // Build explicit midday tick values for every day in the visible window.
-    // Going via explicit tickvals avoids Plotly auto-dropping the last tick
-    // when it sits close to the right edge.
+    // Explicit tick vals avoid Plotly dropping the last tick. X positions stay at UTC
+    // midday (bar alignment); label text uses the UK calendar (Europe/London).
     const xStartDate = new Date(xStart);
     const tickStart = new Date(Date.UTC(
       xStartDate.getUTCFullYear(),
@@ -1357,15 +1364,15 @@
     const tickTexts = [];
     for (let t = tickStart.getTime(); t < xEnd.getTime(); t += ONE_DAY_MS) {
       const d = new Date(t);
+      const dayDisplay = d.toLocaleDateString('en-GB', { day: 'numeric', timeZone: TZ_UK });
       tickVals.push(d.toISOString());
-      const day = d.getUTCDate();
       if (compact) {
-        // Narrow viewports: day-of-month only (e.g. 20) to reduce axis crowding.
-        tickTexts.push(String(day));
+        // Narrow viewports: day-of-month in UK timezone.
+        tickTexts.push(dayDisplay);
       } else {
-        const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
-        const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
-        tickTexts.push(`<b>${weekday} ${day}</b><br>${month}`);
+        const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: TZ_UK });
+        const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: TZ_UK });
+        tickTexts.push(`<b>${weekday} ${dayDisplay}</b><br>${month}`);
       }
     }
 
