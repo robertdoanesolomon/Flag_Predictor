@@ -623,6 +623,20 @@
       border-radius: 2px;
     }
 
+    /* Non-interactive legend (e.g. flag probability) — same shell as .chart-legend */
+    .chart-legend-static {
+      cursor: default;
+    }
+    .chart-legend-static .legend-static-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 6px;
+      margin: 0;
+      font: inherit;
+      color: inherit;
+    }
+
     /* ---------- MOBILE / NARROW ---------- */
     @media (max-width: 720px) {
       .page { padding-top: 20px; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
@@ -694,6 +708,11 @@
         padding: 10px 12px;
       }
       .chart-legend .item {
+        white-space: normal;
+        justify-content: flex-start;
+        text-align: left;
+      }
+      .chart-legend-static .legend-static-item {
         white-space: normal;
         justify-content: flex-start;
         text-align: left;
@@ -1056,6 +1075,20 @@
     return `<div class="current-cards">${html}</div>`;
   }
 
+  /** Same visual box as the main chart legend, without toggles — for flag probability swatches. */
+  function renderProbLegendHtml(key) {
+    const order = key === 'godstow'
+      ? ['green', 'amber', 'red']
+      : ['green', 'light_blue', 'dark_blue', 'amber', 'red'];
+    const rows = order.map(fk => `
+      <div class="legend-static-item">
+        <span class="swatch square" style="background:${FLAG_COLORS[fk]};opacity:0.85;"></span>
+        ${FLAG_LABELS[fk]}
+      </div>
+    `).join('');
+    return `<div class="chart-legend chart-legend-static" aria-label="Flag colours in probability chart">${rows}</div>`;
+  }
+
   function renderTabs(bundle, activeKey) {
     const tabs = bundle.location_order.map(k => {
       const cls = k === activeKey ? 'tab active' : 'tab';
@@ -1076,6 +1109,7 @@
       const probPlotHtml = isWallingford ? '' : `
         <div class="chart-block">
           <h3 class="chart-title">Forecast flag probability</h3>
+          ${renderProbLegendHtml(key)}
           <div id="prob-${key}" class="plot prob"></div>
         </div>`;
 
@@ -1318,6 +1352,7 @@
     if (tickStart < xStartDate) {
       tickStart.setUTCDate(tickStart.getUTCDate() + 1);
     }
+    const compact = isCompactChartLayout();
     const tickVals = [];
     const tickTexts = [];
     for (let t = tickStart.getTime(); t < xEnd.getTime(); t += ONE_DAY_MS) {
@@ -1327,10 +1362,12 @@
       const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
       const day = d.getUTCDate();
       const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
-      tickTexts.push(`<b>${weekday} ${day}</b><br>${month}`);
+      // Narrow viewports: omit month on a second line — less crowding alongside angled ticks.
+      tickTexts.push(compact
+        ? `<b>${weekday} ${day}</b>`
+        : `<b>${weekday} ${day}</b><br>${month}`);
     }
 
-    const compact = isCompactChartLayout();
     const xAxisShared = {
       type: 'date',
       range: [xStart, xEnd.toISOString()],
@@ -1343,7 +1380,8 @@
       ticks: 'outside',
       ticklen: compact ? 3 : 4,
       zeroline: false,
-      ...(compact ? { tickangle: -35 } : {})
+      // Single-line weekday+day on mobile usually fits without rotation.
+      ...(compact ? { tickangle: 0 } : {})
     };
     // Stash on the loc payload so the prob plot can use the same settings.
     loc.__xAxisShared = xAxisShared;
@@ -1355,7 +1393,7 @@
       plot_bgcolor: T.plot,
       font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
       margin: compact
-        ? { l: 42, r: 40, t: 16, b: 88 }
+        ? { l: 42, r: 40, t: 16, b: 72 }
         : { l: 60, r: 70, t: 28, b: 56 },
       showlegend: false,
       hovermode: 'x unified',
@@ -1429,8 +1467,9 @@
       paper_bgcolor: T.paper,
       plot_bgcolor: T.plot,
       font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
+      showlegend: false,
       margin: compact
-        ? { l: 42, r: 40, t: 56, b: 88 }
+        ? { l: 42, r: 40, t: 16, b: 72 }
         : { l: 60, r: 70, t: 16, b: 56 },
       hovermode: 'x unified',
       hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' } },
@@ -1452,15 +1491,6 @@
         linecolor: T.axis,
         zeroline: false,
         tickfont: { color: T.font }
-      },
-      legend: {
-        orientation: 'h',
-        x: 0,
-        xanchor: 'left',
-        y: compact ? 1.14 : 1.18,
-        yanchor: 'top',
-        bgcolor: 'rgba(0,0,0,0)',
-        font: { color: T.font, size: compact ? 9 : 12 }
       }
     };
     return { traces, layout };
@@ -1546,9 +1576,9 @@
     bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
 
     // Wire legend-toggle interactivity (matches Plotly's "click to hide" behaviour).
-    document.querySelectorAll('.chart-legend').forEach(legend => {
+    document.querySelectorAll('.chart-legend[data-plot]').forEach(legend => {
       const plotId = legend.dataset.plot;
-      legend.querySelectorAll('.item').forEach(item => {
+      legend.querySelectorAll('button.item').forEach(item => {
         item.addEventListener('click', () => {
           const target = item.dataset.target;
           const plotEl = document.getElementById(plotId);
