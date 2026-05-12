@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b3d2e">
+  <meta name="description" content="An AI-powered forecast of OURCs flag colours and river height differentials on the Oxford Thames (Isis, Godstow and Wallingford stretches).">
+  <title>Oxford Flag Predictor &mdash; Interactive Forecast</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="346b17d1-de0e-46d3-ae12-be38907f1ef9"></script>
+
+  <meta name="google-site-verification" content="zdfcbFi-jZZqdHwitUN7Ps0sn9My9fXcUsWWDg7jQ2E">
+  <meta name="google-site-verification" content="MybyQJHBAntG6FSQYn9Og9RMMzh-BPw7TNFV2O4slt4">
+
+  <style>
+    :root {
+      --bg: #f1f2f4;
+      --bg-grad-top: #eceef1;
+      --bg-grad-bottom: #f4f5f7;
+      --surface: #ffffff;
+      --surface-soft: #f8faf9;
+      --border: #d9e3df;
+      --border-strong: #b8c8c1;
+      --text: #122a23;
+      --text-soft: #4a6058;
+      --text-muted: #6b8079;
+      --accent: #0b3d2e;
+      --accent-soft: #1c6b53;
+      --accent-glow: rgba(28, 107, 83, 0.18);
+      --warning: #b35900;
+      --danger: #c2261c;
+      --shadow-sm: 0 1px 2px rgba(15, 30, 25, 0.06), 0 1px 1px rgba(15, 30, 25, 0.04);
+      --shadow-md: 0 6px 18px rgba(15, 30, 25, 0.08), 0 2px 4px rgba(15, 30, 25, 0.04);
+      --shadow-lg: 0 18px 40px rgba(15, 30, 25, 0.12), 0 4px 10px rgba(15, 30, 25, 0.06);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+
+      --flag-green: #008001;
+      --flag-light-blue: #02bfff;
+      --flag-dark-blue: #000080;
+      --flag-amber: #ffa503;
+      --flag-red: #ff0000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1614;
+        --bg-grad-top: #0b1815;
+        --bg-grad-bottom: #11201c;
+        --surface: #16221f;
+        --surface-soft: #1a2825;
+        --border: #233530;
+        --border-strong: #2f4640;
+        --text: #e7efeb;
+        --text-soft: #b2c5be;
+        --text-muted: #7d958c;
+        --accent: #4ec39a;
+        --accent-soft: #62d4ad;
+        --accent-glow: rgba(78, 195, 154, 0.22);
+        --warning: #f0a85a;
+        --danger: #ff5d50;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+        --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, var(--bg-grad-top) 0%, var(--bg-grad-bottom) 100%);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent-soft); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px 80px 24px;
+    }
+
+    /* ---------- HERO ---------- */
+    .hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .hero-text h1 {
+      margin: 0 0 6px 0;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .hero-text h1 .accent { color: var(--accent-soft); }
+    .hero-text p {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 16px;
+      max-width: 720px;
+      line-height: 1.5;
+    }
+    .hero-sub {
+      margin-top: 14px !important;
+      font-size: 18px !important;
+      font-weight: 700 !important;
+      color: var(--text) !important;
+      letter-spacing: -0.01em;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      box-shadow: var(--shadow-sm);
+      font-size: 13px;
+      color: var(--text-soft);
+      font-weight: 500;
+    }
+    .status-pill .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #2ecc71;
+      box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.18);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.16); }
+      50%      { box-shadow: 0 0 0 8px rgba(46, 204, 113, 0.0); }
+    }
+    .status-pill.stale .dot {
+      background: var(--warning);
+      box-shadow: 0 0 0 4px rgba(179, 89, 0, 0.18);
+    }
+
+    /* ---------- TOP CURRENT FLAG CARDS ---------- */
+    .current-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 880px) { .current-cards { grid-template-columns: 1fr; } }
+
+    .flag-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .flag-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border-strong);
+    }
+    .flag-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow-md);
+    }
+    .flag-card .bg-flag {
+      position: absolute;
+      inset: 0;
+      opacity: 0.10;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .flag-card .bg-flag::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--flag-bg, transparent);
+    }
+    .flag-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 1;
+    }
+    .flag-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .flag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: var(--flag-bg, #ddd);
+      color: var(--flag-text, #000);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    }
+    .flag-badge.no-flag {
+      background: var(--surface-soft);
+      color: var(--text-soft);
+      border: 1px dashed var(--border-strong);
+      box-shadow: none;
+    }
+    .flag-value {
+      z-index: 1;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 44px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-top: 12px;
+    }
+    .flag-value small {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-left: 6px;
+      font-weight: 500;
+    }
+    .flag-card-footer {
+      z-index: 1;
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    .flag-card-footer .peak {
+      font-weight: 600;
+      color: var(--text-soft);
+    }
+
+    /* ---------- TABS ---------- */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      box-shadow: var(--shadow-sm);
+      width: fit-content;
+      margin: 0 auto 24px auto;
+    }
+    .tab {
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-soft);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: background 0.15s ease, color 0.15s ease;
+      font-family: inherit;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+    @media (prefers-color-scheme: dark) {
+      .tab.active { background: var(--accent); color: #0b1815; }
+    }
+
+    /* ---------- PANELS ---------- */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .panel h2 {
+      margin: 0 0 4px 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .panel .summary-line {
+      margin: 6px 0 4px 0;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    .panel .summary-line strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .panel .sub {
+      margin: 0 0 18px 0;
+      color: var(--text-muted);
+      font-size: 13.5px;
+    }
+    .panel .meta {
+      margin: 4px 0 18px 0;
+      color: var(--text-soft);
+      font-size: 14px;
+      font-weight: 500;
+      border-left: 3px solid var(--border-strong);
+      padding-left: 10px;
+    }
+    .panel .stale-warning {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 165, 3, 0.12);
+      color: var(--warning);
+      border: 1px solid rgba(255, 165, 3, 0.3);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ---------- STATS GRID ---------- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+    .stat .label {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .stat .value {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .stat .value small {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-left: 4px;
+    }
+    .stat .value.placeholder { color: var(--text-muted); font-weight: 500; }
+
+    /* ---------- CHART CONTAINERS ---------- */
+    .chart-block { position: relative; }
+    .chart-block + .chart-block { margin-top: 18px; }
+    .chart-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-soft);
+      margin: 0 0 8px 0;
+    }
+    .plot {
+      width: 100%;
+      min-height: 460px;
+    }
+    .plot.prob { min-height: 240px; }
+
+    .pane { display: none; }
+    .pane.active { display: block; }
+
+    /* ---------- ABOUT / FOOTER ---------- */
+    details.about {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    details.about summary {
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      list-style: none;
+      color: var(--text);
+    }
+    details.about summary::-webkit-details-marker { display: none; }
+    details.about summary::after {
+      content: "▾";
+      float: right;
+      transition: transform 0.2s ease;
+      color: var(--text-muted);
+    }
+    details.about[open] summary::after { transform: rotate(180deg); }
+    details.about .about-body {
+      margin-top: 14px;
+      color: var(--text-soft);
+      line-height: 1.6;
+      font-size: 14.5px;
+    }
+    details.about .about-body h3 {
+      font-size: 14px;
+      margin: 16px 0 4px 0;
+      color: var(--text);
+    }
+    .footer {
+      margin-top: 32px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12.5px;
+    }
+
+    /* ---------- PLOTLY MODEBAR ---------- */
+    /* Use explicit colours — CSS variables don't resolve in Plotly's modebar context */
+    .modebar-container {
+      top: 1px !important;
+      right: 8px !important;
+    }
+    .modebar-group {
+      display: flex !important;
+      align-items: center !important;
+      background: #ffffff !important;
+      border: 1.5px solid #c5d5cf !important;
+      border-radius: 8px !important;
+      padding: 4px 5px !important;
+      box-shadow: 0 2px 6px rgba(15,40,30,0.10) !important;
+      margin-left: 4px !important;
+    }
+    .modebar-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 28px !important;
+      height: 28px !important;
+      padding: 0 !important;
+      border-radius: 6px !important;
+      color: #3d5c52 !important;
+      opacity: 1 !important;
+      transition: background 0.15s ease, color 0.15s ease !important;
+    }
+    .modebar-btn svg {
+      vertical-align: middle !important;
+      transform: translateY(-2px) !important;
+    }
+    .modebar-btn path {
+      fill: #3d5c52 !important;
+    }
+    .modebar-btn:hover {
+      background: #e8f0ed !important;
+      color: #0b3d2e !important;
+    }
+    .modebar-btn:hover path {
+      fill: #0b3d2e !important;
+    }
+    .modebar-btn[data-title="Reset axes"],
+    .modebar-btn[data-title="Reset Axes"] {
+      background: #daf0e8 !important;
+      color: #1c6b53 !important;
+    }
+    .modebar-btn[data-title="Reset axes"] path,
+    .modebar-btn[data-title="Reset Axes"] path {
+      fill: #1c6b53 !important;
+    }
+    .modebar-btn[data-title="Reset axes"]:hover,
+    .modebar-btn[data-title="Reset Axes"]:hover {
+      background: #1c6b53 !important;
+      color: #fff !important;
+    }
+    .modebar-btn[data-title="Reset axes"]:hover path,
+    .modebar-btn[data-title="Reset Axes"]:hover path {
+      fill: #fff !important;
+    }
+    @media (prefers-color-scheme: dark) {
+      .modebar-group {
+        background: #1a2825 !important;
+        border-color: #2f4640 !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.35) !important;
+      }
+      .modebar-btn { color: #b2c5be !important; }
+      .modebar-btn path { fill: #b2c5be !important; }
+      .modebar-btn:hover { background: #233530 !important; color: #e7efeb !important; }
+      .modebar-btn:hover path { fill: #e7efeb !important; }
+      .modebar-btn[data-title="Reset axes"],
+      .modebar-btn[data-title="Reset Axes"] {
+        background: rgba(78,195,154,0.18) !important;
+        color: #4ec39a !important;
+      }
+      .modebar-btn[data-title="Reset axes"] path,
+      .modebar-btn[data-title="Reset Axes"] path { fill: #4ec39a !important; }
+      .modebar-btn[data-title="Reset axes"]:hover,
+      .modebar-btn[data-title="Reset Axes"]:hover {
+        background: #4ec39a !important;
+        color: #0b1815 !important;
+      }
+      .modebar-btn[data-title="Reset axes"]:hover path,
+      .modebar-btn[data-title="Reset Axes"]:hover path { fill: #0b1815 !important; }
+    }
+
+    /* ---------- LOADING / ERROR ---------- */
+    .loading, .error {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-soft);
+    }
+    .loading .spinner {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      margin: 0 auto 16px auto;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error {
+      color: var(--danger);
+    }
+
+    /* ---------- CHART LEGEND BOX ---------- */
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 18px 22px;
+      padding: 10px 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin: 0 0 12px 0;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+    .chart-legend .item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      background: transparent;
+      border: none;
+      padding: 4px 6px;
+      margin: 0;
+      border-radius: 6px;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      transition: background 0.15s ease, opacity 0.15s ease;
+    }
+    .chart-legend .item:hover {
+      background: var(--surface);
+    }
+    .chart-legend .item.inactive {
+      opacity: 0.35;
+    }
+    .chart-legend .item.inactive .swatch {
+      filter: grayscale(1);
+    }
+    .chart-legend .swatch {
+      display: inline-block;
+      flex: none;
+    }
+    .chart-legend .line {
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+    }
+    .chart-legend .line-dashed {
+      width: 24px;
+      height: 0;
+      border-top: 2.5px dashed #e0524d;
+    }
+    .chart-legend .line-thin {
+      width: 24px;
+      height: 1.5px;
+      opacity: 0.6;
+    }
+    .chart-legend .square {
+      width: 14px;
+      height: 12px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <header class="hero">
+      <div class="hero-text">
+        <h1>Flag&nbsp;Predictor</h1>
+        <p>An AI-powered 10-day forecast of the river height differential and OURCs flag colours for the
+        Isis, Godstow and Wallingford stretches of the Thames. Trained on historical rainfall + river data and
+        run hourly with the latest rainfall ensemble forecasts.</p>
+        <p class="hero-sub">Latest Experimental Forecasts</p>
+      </div>
+      <div id="status-pill" class="status-pill" aria-live="polite">
+        <span class="dot"></span>
+        <span id="status-text">Loading latest forecast…</span>
+      </div>
+    </header>
+
+    <div id="content">
+      <div class="loading">
+        <div class="spinner"></div>
+        <div>Fetching the latest forecast…</div>
+      </div>
+    </div>
+
+    <details class="about">
+      <summary>About these forecasts</summary>
+      <div class="about-body">
+        <h3>How do I read the chart?</h3>
+        The chart shows the recent observed river height differential (the black line) and a 10-day probabilistic
+        forecast (the blue spaghetti). Each thin blue line is one possible future trajectory driven by a different
+        rainfall ensemble member; the bold purple line is the ensemble mean and is the single most likely outcome.
+        Horizontal bands shade the flag colours, daily rainfall is shown as bars on the right axis, and the dashed
+        red line marks "now". For Isis and Godstow, the stacked chart underneath shows the probability that the river
+        will be in each flag colour at each point in the next 10 days.
+
+        <h3>Where does the data come from?</h3>
+        Historical river levels and rainfall come from the Environment Agency's flood-monitoring and hydrology APIs.
+        Rainfall forecasts come from the ECMWF AI Forecasting System (ECMWF-AIFS) via Open-Meteo. The model is an
+        LSTM trained on years of upstream rainfall paired with differentials at each lock.
+
+        <h3>Why hasn't the forecast updated recently?</h3>
+        Usually it's just a temporary glitch in an Environment Agency sensor going briefly offline; the page will
+        fall back to the latest successful forecast. If a sensor has been offline for more than four hours the page
+        flags the forecast as <em>stale</em>. Updates are also scheduled hourly via GitHub Actions and sometimes
+        queue up, so refreshes may not land exactly on the hour.
+
+        <h3>Is the forecast reliable?</h3>
+        Please treat this as <strong>experimental</strong>. The model is not perfect — in particular it can sometimes
+        display an unusual jump at the very start of the forecast. Issues and improvements get written up on the
+        <a href="https://robertdoanesolomon.substack.com" target="_blank" rel="noopener">substack</a>; bug reports
+        and ideas are very welcome on
+        <a href="https://github.com/robertdoanesolomon/Flag_Predictor" target="_blank" rel="noopener">GitHub</a>.
+      </div>
+    </details>
+
+    <div class="footer">
+      Built by Rob Doane-Solomon — data from the Environment Agency &amp; Open-Meteo · model: LSTM ensemble (50 members).
+    </div>
+  </div>
+
+  <script>
+  /* =====================================================================
+     Oxford Flag Predictor — interactive frontend
+     ===================================================================== */
+
+  const FLAG_COLORS = {
+    green: '#008001',
+    light_blue: '#02bfff',
+    dark_blue: '#000080',
+    amber: '#ffa503',
+    red: '#ff0000'
+  };
+  const FLAG_LABELS = {
+    green: 'Green',
+    light_blue: 'Light Blue',
+    dark_blue: 'Dark Blue',
+    amber: 'Amber',
+    red: 'Red'
+  };
+  const LOCATION_LABELS = {
+    isis: 'Isis',
+    godstow: 'Godstow',
+    wallingford: 'Wallingford'
+  };
+
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const BAR_WIDTH_MS = 0.8 * ONE_DAY_MS;
+
+  /** P90−P10 spread (m) at last horizon: [very certain, fairly certain, uncertain] upper bounds. */
+  const CERTAINTY_THRESHOLDS = {
+    isis:        [0.04, 0.12, 0.30],
+    godstow:     [0.05, 0.15, 0.35],
+    wallingford: [0.10, 0.25, 0.50],
+  };
+
+  /** Pick a readable text colour (black/white) for a given hex background. */
+  function readableTextColor(hex) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.6 ? '#0b1d18' : '#ffffff';
+  }
+
+  function fmtDiff(v, digits = 2) {
+    if (v === null || v === undefined || Number.isNaN(v)) return '—';
+    return (Math.round(v * Math.pow(10, digits)) / Math.pow(10, digits)).toFixed(digits);
+  }
+  function fmtMm(v) {
+    if (v === null || v === undefined || Number.isNaN(v)) return '—';
+    return v.toFixed(1);
+  }
+  function relativeTime(iso) {
+    const t = new Date(iso);
+    const diffMs = Date.now() - t.getTime();
+    const min = Math.round(diffMs / 60000);
+    if (min < 1) return 'just now';
+    if (min < 60) return `${min} min ago`;
+    const hr = Math.round(min / 60);
+    if (hr < 24) return `${hr} hr ago`;
+    const day = Math.round(hr / 24);
+    return `${day} day${day === 1 ? '' : 's'} ago`;
+  }
+  /**
+   * Peak ensemble-mean value within the visible forecast window
+   * (i.e. up to the last day with a full rainfall forecast).
+   * Falls back gracefully if the payload is missing pieces.
+   */
+  function computePeak(loc) {
+    const times = loc.ensemble && loc.ensemble.times;
+    const mean = loc.ensemble && loc.ensemble.mean;
+    if (!times || !times.length || !mean || !mean.length) {
+      return { value: null, time: null };
+    }
+    let cutoff = null;
+    if (loc.rainfall_forecast && loc.rainfall_forecast.dates && loc.rainfall_forecast.dates.length) {
+      const last = new Date(loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1]);
+      last.setUTCHours(24, 0, 0, 0);
+      cutoff = last.getTime();
+    }
+    let bestIdx = -1, bestVal = -Infinity;
+    for (let i = 0; i < times.length; i++) {
+      if (cutoff !== null && new Date(times[i]).getTime() > cutoff) break;
+      const v = mean[i];
+      if (v !== null && !Number.isNaN(v) && v > bestVal) {
+        bestVal = v;
+        bestIdx = i;
+      }
+    }
+    if (bestIdx < 0) return { value: null, time: null };
+    return { value: bestVal, time: times[bestIdx] };
+  }
+
+  function fmtShortDate(iso) {
+    const d = new Date(iso);
+    const weekday = d.toLocaleDateString('en-GB', { weekday: 'short' });
+    const day = d.getDate();
+    const month = d.toLocaleDateString('en-GB', { month: 'short' });
+    return `${weekday} ${day} ${month}`;
+  }
+  function fmtShortDateTime(iso) {
+    const d = new Date(iso);
+    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return `${time}, ${fmtShortDate(iso)}`;
+  }
+
+  /**
+   * Produce a natural-language summary from first-forecast value, detecting
+   * the peak, trough and end value, and appending a certainty qualifier.
+   * Uses the FIRST ensemble mean value as the baseline to avoid the
+   * common "jump" artefact at t=0 in the observations.
+   */
+  function summariseForecast(loc) {
+    const times = loc.ensemble && loc.ensemble.times;
+    const mean  = loc.ensemble && loc.ensemble.mean;
+    const p10   = loc.ensemble && loc.ensemble.p10;
+    const p90   = loc.ensemble && loc.ensemble.p90;
+    if (!times || times.length < 2 || !mean || mean.length < 2) return null;
+
+    // Visible window cut-off.
+    let cutoff = null;
+    if (loc.rainfall_forecast && loc.rainfall_forecast.dates && loc.rainfall_forecast.dates.length) {
+      const last = loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1];
+      const pts = last.slice(0, 10).split('-').map(Number);
+      cutoff = Date.UTC(pts[0], pts[1] - 1, pts[2] + 1, 0, 0, 0, 0);
+    }
+
+    // Collect valid indices in window.
+    const idxs = [];
+    for (let i = 0; i < times.length; i++) {
+      if (cutoff !== null && new Date(times[i]).getTime() > cutoff) break;
+      if (mean[i] !== null && !Number.isNaN(mean[i])) idxs.push(i);
+    }
+    if (idxs.length < 3) return null;
+
+    const startIdx = idxs[0];
+    const endIdx   = idxs[idxs.length - 1];
+    const startVal = mean[startIdx];   // first forecast value — avoids t=0 jump
+    const endVal   = mean[endIdx];
+    const startT   = new Date(times[startIdx]);
+    const endT     = new Date(times[endIdx]);
+    const totalDays = Math.max(1, Math.round((endT - startT) / ONE_DAY_MS));
+
+    // Find global peak and trough.
+    let peakIdx = startIdx, troughIdx = startIdx;
+    for (const i of idxs) {
+      if (mean[i] > mean[peakIdx]) peakIdx = i;
+      if (mean[i] < mean[troughIdx]) troughIdx = i;
+    }
+    const peakVal    = mean[peakIdx];
+    const troughVal  = mean[troughIdx];
+    const daysToPeak   = Math.max(1, Math.round((new Date(times[peakIdx]) - startT) / ONE_DAY_MS));
+    const daysToTrough = Math.max(1, Math.round((new Date(times[troughIdx]) - startT) / ONE_DAY_MS));
+    const peakRise   = peakVal - startVal;
+    const troughDrop = startVal - troughVal;
+    const netDelta   = endVal - startVal;
+
+    // Certainty: P90-P10 spread at the last visible point (location-specific cutoffs, metres).
+    const locKey = (loc.key || 'isis').toLowerCase();
+    const [c1, c2, c3] = CERTAINTY_THRESHOLDS[locKey] || CERTAINTY_THRESHOLDS.isis;
+
+    let certainty = '';
+    if (p10 && p90 && p10[endIdx] != null && p90[endIdx] != null) {
+      const spread = (p90[endIdx] || 0) - (p10[endIdx] || 0);
+      if      (spread < c1) certainty = ', and the forecast is <strong>very certain</strong>';
+      else if (spread < c2) certainty = ', and the forecast is <strong>fairly certain</strong>';
+      else if (spread < c3) certainty = ', but the forecast is <strong>uncertain</strong>';
+      else                    certainty = ', but the forecast is <strong>very uncertain</strong>';
+    }
+
+    // Magnitude adjective: returns '' (significant), 'slightly', or 'sharply'.
+    function adj(delta) {
+      const a = Math.abs(delta);
+      if (a < 0.03) return null;       // not significant
+      if (a < 0.08) return 'slightly';
+      if (a < 0.20) return '';
+      return 'sharply';
+    }
+    function ds(d) { return `${d} day${d === 1 ? '' : 's'}`; }
+    function verb(delta, word1, word2) {
+      const a = adj(delta);
+      if (a === null) return null;
+      return a ? `${word1} ${a}` : word1;
+    }
+
+    // Significance thresholds — movement must exceed this to be "notable".
+    const SIG = 0.04;
+    const hasPeak   = peakRise   > SIG && peakIdx   !== endIdx && peakIdx   !== startIdx;
+    const hasTrough = troughDrop > SIG && troughIdx !== endIdx && troughIdx !== startIdx;
+
+    let dir;
+
+    if (hasPeak && hasTrough) {
+      if (peakIdx < troughIdx) {
+        // Rise then fall.
+        const rV = verb(peakRise, 'rise', null) || 'rise';
+        const fV = verb(-(troughDrop), 'fall', null) || 'fall back';
+        dir = `<strong>${rV} over the next ${ds(daysToPeak)}</strong>, then <strong>${fV}</strong>`;
+      } else {
+        // Fall then rise.
+        const dV = verb(-troughDrop, 'drop', null) || 'drop';
+        const rV = verb(peakRise - troughDrop, 'recover', null) || 'recover';
+        dir = `<strong>${dV} over the next ${ds(daysToTrough)}</strong>, then <strong>${rV}</strong>`;
+      }
+    } else if (hasPeak) {
+      const rV = verb(peakRise, 'rise', null) || 'rise';
+      const afterEnd = Math.abs(endVal - peakVal) < SIG ? 'stay elevated' : 'fall back';
+      dir = `<strong>${rV} over the next ${ds(daysToPeak)}</strong>, then ${afterEnd}`;
+    } else if (hasTrough) {
+      const dV = verb(-troughDrop, 'drop', null) || 'drop';
+      const afterEnd = Math.abs(endVal - troughVal) < SIG ? 'stay low' : 'partially recover';
+      dir = `<strong>${dV} over the next ${ds(daysToTrough)}</strong>, then ${afterEnd}`;
+    } else {
+      const a = Math.abs(netDelta);
+      let v;
+      if (a < SIG)         v = 'stay roughly the same';
+      else if (netDelta>0) v = verb(netDelta, 'rise', null) || 'rise';
+      else                 v = verb(netDelta, 'drop', null) || 'drop';
+      dir = `<strong>${v} over the next ${ds(totalDays)}</strong>`;
+    }
+
+    return `The differential is forecast to ${dir}${certainty}.`;
+  }
+
+  /** Detect a dark theme and return Plotly template + grid colours. */
+  function themeColors() {
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return {
+      paper: 'rgba(0,0,0,0)',
+      plot: 'rgba(0,0,0,0)',
+      font: dark ? '#dde7e2' : '#1a2925',
+      grid: dark ? 'rgba(255,255,255,0.07)' : 'rgba(15,40,30,0.08)',
+      axis: dark ? 'rgba(255,255,255,0.5)' : 'rgba(15,40,30,0.5)',
+      historicalLine: dark ? '#e7efeb' : '#0b1d18',
+      ensembleLine: dark ? 'rgba(120,180,220,0.45)' : 'rgba(70,130,180,0.45)',
+      meanLine: '#8a39d0',
+      nowLine: '#e0524d',
+      rainHist: dark ? 'rgba(160,160,160,0.55)' : 'rgba(110,110,110,0.45)',
+      rainForecast: dark ? 'rgba(110,160,240,0.65)' : 'rgba(100,149,237,0.6)',
+      rainError: dark ? 'rgba(220,220,220,0.7)' : 'rgba(40,55,100,0.7)'
+    };
+  }
+
+  /* ----------------------- RENDER ---------------------------- */
+
+  function renderCurrentCards(bundle) {
+    const order = bundle.location_order;
+    const html = order.map(key => {
+      const loc = bundle.locations[key];
+      const cur = loc.current;
+      const isWallingford = key === 'wallingford';
+      const bg = cur.flag_color;
+      const fg = readableTextColor(bg);
+      const flagHtml = isWallingford
+        ? `<span class="flag-badge no-flag">No flag</span>`
+        : `<span class="flag-badge" style="--flag-bg:${bg}; --flag-text:${fg};">${cur.flag_label} flag</span>`;
+      const peakInfo = computePeak(loc);
+      const peak = fmtDiff(peakInfo.value);
+      const peakDate = peakInfo.time ? fmtShortDate(peakInfo.time) : '—';
+      return `
+        <button class="flag-card" data-location="${key}" aria-label="Switch to ${LOCATION_LABELS[key]} detail">
+          <div class="bg-flag" style="--flag-bg:${bg};"></div>
+          <div class="flag-card-header">
+            <div class="flag-card-title">${LOCATION_LABELS[key]}</div>
+            ${flagHtml}
+          </div>
+          <div class="flag-value">${fmtDiff(cur.differential)}<small>m differential</small></div>
+          <div class="flag-card-footer">
+            <span>${relativeTime(cur.timestamp)}</span>
+            <span class="peak">Est. 10-day peak: ${peak} m · ${peakDate}</span>
+          </div>
+        </button>
+      `;
+    }).join('');
+    return `<div class="current-cards">${html}</div>`;
+  }
+
+  function renderTabs(bundle, activeKey) {
+    const tabs = bundle.location_order.map(k => {
+      const cls = k === activeKey ? 'tab active' : 'tab';
+      return `<button class="${cls}" data-location="${k}">${LOCATION_LABELS[k]}</button>`;
+    }).join('');
+    return `<div class="tabs" role="tablist">${tabs}</div>`;
+  }
+
+  function renderPanels(bundle) {
+    return bundle.location_order.map((key, i) => {
+      const loc = bundle.locations[key];
+      const isWallingford = key === 'wallingford';
+      const stale = loc.stale
+        ? `<span class="stale-warning">Stale forecast — sensor offline</span>`
+        : '';
+
+
+      const probPlotHtml = isWallingford ? '' : `
+        <div class="chart-block">
+          <h3 class="chart-title">Forecast flag probability</h3>
+          <div id="prob-${key}" class="plot prob"></div>
+        </div>`;
+
+      return `
+        <section class="pane ${i === 0 ? 'active' : ''}" id="pane-${key}" role="tabpanel">
+          <div class="panel">
+            <h2>
+              ${loc.display_name}
+              ${stale}
+            </h2>
+            ${(() => { const s = summariseForecast(loc); return s ? `<p class="summary-line">${s}</p>` : ''; })()}
+            <p class="meta">Forecast generated at <strong>${fmtShortDateTime(loc.forecast_start)}</strong> · ${loc.n_members}-member ensemble · last sensor reading ${relativeTime(loc.last_sensor_update)}.</p>
+
+            <div class="stats-grid">
+              <div class="stat">
+                <div class="label">Now</div>
+                <div class="value">${fmtDiff(loc.current.differential)}<small>m</small></div>
+              </div>
+              <div class="stat">
+                <div class="label">Estimated 10-day peak</div>
+                <div class="value" style="font-size:16px;">${fmtDiff(computePeak(loc).value)}m <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;">on ${computePeak(loc).time ? fmtShortDate(computePeak(loc).time) : '—'}</small></div>
+              </div>
+              <div class="stat">
+                <div class="label">Rain last 24 h</div>
+                <div class="value">${fmtMm(loc.summary.last_24h_rain_mm)}<small>mm</small></div>
+              </div>
+              <div class="stat">
+                <div class="label">Rain last 7 d</div>
+                <div class="value">${fmtMm(loc.summary.last_7d_rain_mm)}<small>mm</small></div>
+              </div>
+              <div class="stat">
+                <div class="label">Rain next 24 h</div>
+                <div class="value">${fmtMm(loc.summary.next_24h_rain_mm)}<small>mm</small></div>
+              </div>
+              <div class="stat">
+                <div class="label">Rain next 7 d</div>
+                <div class="value">${fmtMm(loc.summary.next_7d_rain_mm ?? loc.summary.next_3d_rain_mm)}<small>mm</small></div>
+              </div>
+            </div>
+
+
+            <div class="chart-block">
+              <div class="chart-legend" data-plot="plot-${key}">
+                <button type="button" class="item" data-target="Historical Differential"><span class="swatch line" style="background:#0b1d18;"></span>Historical Differential</button>
+                <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:#4682b4;"></span>Ensemble Predictions (n=${loc.n_members})</button>
+                <button type="button" class="item" data-target="Ensemble Mean"><span class="swatch line" style="background:#8a39d0;"></span>Ensemble Mean</button>
+                <button type="button" class="item" data-target="Historical Rainfall"><span class="swatch square" style="background:#999;opacity:0.5;"></span>Historical Rainfall</button>
+                <button type="button" class="item" data-target="Forecast Rainfall"><span class="swatch square" style="background:#6495ed;opacity:0.6;"></span>Forecast Rainfall (mean &plusmn; P10&ndash;P90)</button>
+              </div>
+              <div id="plot-${key}" class="plot"></div>
+            </div>
+
+            ${probPlotHtml}
+          </div>
+        </section>
+      `;
+    }).join('');
+  }
+
+  /* ----------------------- PLOTLY ---------------------------- */
+
+  function buildMainTraces(loc, T) {
+    const traces = [];
+    const tHist = loc.historical.times;
+    const yHist = loc.historical.differential;
+    const tEns = loc.ensemble.times;
+    const ensMean = loc.ensemble.mean;
+
+    // Historical rainfall bars (right axis).
+    if (loc.rainfall_historical.dates.length) {
+      traces.push({
+        type: 'bar',
+        x: loc.rainfall_historical.dates.map(addHalfDay),
+        y: loc.rainfall_historical.values,
+        name: 'Historical Rainfall',
+        marker: { color: T.rainHist, line: { width: 0 } },
+        opacity: 0.85,
+        width: BAR_WIDTH_MS,
+        yaxis: 'y2',
+        hovertemplate: '<b>%{x|%a %-d %b}</b><br>%{y:.1f} mm<extra>Past rain</extra>'
+      });
+    }
+
+    // Forecast rainfall bars with error whiskers.
+    if (loc.rainfall_forecast.dates.length) {
+      const dates = loc.rainfall_forecast.dates.map(addHalfDay);
+      const mean = loc.rainfall_forecast.mean;
+      const p10 = loc.rainfall_forecast.p10;
+      const p90 = loc.rainfall_forecast.p90;
+      const errLo = mean.map((m, i) => Math.max(0, m - p10[i]));
+      const errHi = mean.map((m, i) => Math.max(0, p90[i] - m));
+      traces.push({
+        type: 'bar',
+        x: dates,
+        y: mean,
+        name: 'Forecast Rainfall (mean ± P10–P90)',
+        marker: { color: T.rainForecast, line: { width: 0 } },
+        opacity: 0.85,
+        width: BAR_WIDTH_MS,
+        yaxis: 'y2',
+        error_y: {
+          type: 'data',
+          symmetric: false,
+          arrayminus: errLo,
+          array: errHi,
+          color: T.rainError,
+          thickness: 1.4,
+          width: 4
+        },
+        hovertemplate: '<b>%{x|%a %-d %b}</b><br>Mean %{y:.1f} mm<br>P10–P90 spread shown<extra>Forecast rain</extra>'
+      });
+    }
+
+    // Ensemble spaghetti — flatten all members into one trace separated by
+    // `null` gaps. This is much faster than 50 individual traces.
+    const spaghettiX = [];
+    const spaghettiY = [];
+    loc.ensemble.members.forEach((member, i) => {
+      if (i > 0) { spaghettiX.push(null); spaghettiY.push(null); }
+      for (let j = 0; j < tEns.length; j++) {
+        spaghettiX.push(tEns[j]);
+        spaghettiY.push(member[j]);
+      }
+    });
+    traces.push({
+      type: 'scattergl',
+      mode: 'lines',
+      x: spaghettiX,
+      y: spaghettiY,
+      line: { color: T.ensembleLine, width: 1 },
+      opacity: 0.7,
+      name: `Ensemble Predictions (n=${loc.ensemble.members.length})`,
+      hoverinfo: 'skip',
+      connectgaps: false
+    });
+
+    // Ensemble mean.
+    traces.push({
+      type: 'scatter',
+      mode: 'lines',
+      x: tEns,
+      y: ensMean,
+      line: { color: T.meanLine, width: 3.5 },
+      name: 'Ensemble Mean',
+      hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>%{y:.2f} m<extra>Mean</extra>'
+    });
+
+    // Historical line (drawn last so it sits on top).
+    traces.push({
+      type: 'scatter',
+      mode: 'lines',
+      x: tHist,
+      y: yHist,
+      line: { color: T.historicalLine, width: 3 },
+      name: 'Historical Differential',
+      hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>%{y:.2f} m<extra>Observed</extra>'
+    });
+
+    return traces;
+  }
+
+  function addHalfDay(iso) {
+    // Source ISO strings (no trailing Z) get parsed as LOCAL time by JS.
+    // Build a noon-UTC timestamp from the date's calendar components so
+    // every bar sits at the same UTC instant regardless of viewer timezone.
+    const parts = iso.slice(0, 10).split('-').map(Number);
+    return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0)).toISOString();
+  }
+
+  function buildFlagBandShapes(loc, key) {
+    if (key === 'wallingford') return [];
+    const t = loc.thresholds;
+    const yMin = -0.1;
+    const yMax = 4;
+    const order = key === 'godstow'
+      ? ['green', 'amber', 'red']
+      : ['green', 'light_blue', 'dark_blue', 'amber', 'red'];
+    const shapes = [];
+    order.forEach(k => {
+      const [lo, hi] = t[k];
+      shapes.push({
+        type: 'rect',
+        xref: 'paper', x0: 0, x1: 1,
+        yref: 'y',
+        y0: Math.max(lo, yMin),
+        y1: Math.min(isFinite(hi) ? hi : yMax, yMax),
+        fillcolor: FLAG_COLORS[k],
+        opacity: 0.08,
+        line: { width: 0 },
+        layer: 'below'
+      });
+    });
+    return shapes;
+  }
+
+  function buildMainLayout(loc, key, T) {
+    // Use actual wall-clock time for the "Now" marker (not the forecast
+    // start, which can lag the current minute by up to an hour).
+    const forecastStart = new Date().toISOString();
+    const shapes = buildFlagBandShapes(loc, key);
+    // Vertical "Now" line.
+    shapes.push({
+      type: 'line',
+      x0: forecastStart, x1: forecastStart,
+      yref: 'paper', y0: 0, y1: 1,
+      line: { color: T.nowLine, width: 2, dash: 'dash' }
+    });
+
+    // Determine y range from observations + ensemble (mean and members).
+    const reduceMax = (acc, v) => (v !== null && !Number.isNaN(v) && v > acc) ? v : acc;
+    let dataMax = loc.historical.differential.reduce(reduceMax, -Infinity);
+    dataMax = loc.ensemble.mean.reduce(reduceMax, dataMax);
+    dataMax = loc.ensemble.p90.reduce(reduceMax, dataMax);
+    if (!isFinite(dataMax)) dataMax = 1;
+    const flagMax = key === 'godstow' ? 1.2 : (key === 'isis' ? 0.8 : 3.0);
+    const yMax = Math.max(dataMax + 0.15, flagMax);
+
+    // X range = first historical time to the midnight AFTER the last full
+    // rainfall forecast day. Date strings without timezone (e.g.
+    // "2026-05-21T00:00:00") are parsed as local time by JS, so we
+    // explicitly reconstruct the cut-off in UTC using the year/month/day
+    // components of the source string. Otherwise BST shifts the chart by
+    // a whole day and the last bar/label gets dropped off the right edge.
+    const xStart = loc.historical.times[0] || loc.ensemble.times[0];
+    const lastForecastDate = loc.rainfall_forecast.dates.length
+      ? loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1]
+      : loc.ensemble.times[loc.ensemble.times.length - 1];
+    const lastParts = lastForecastDate.slice(0, 10).split('-').map(Number); // [Y, M, D]
+    const xEnd = new Date(Date.UTC(lastParts[0], lastParts[1] - 1, lastParts[2] + 1, 0, 0, 0, 0));
+
+    // Build explicit midday tick values for every day in the visible window.
+    // Going via explicit tickvals avoids Plotly auto-dropping the last tick
+    // when it sits close to the right edge.
+    const xStartDate = new Date(xStart);
+    const tickStart = new Date(Date.UTC(
+      xStartDate.getUTCFullYear(),
+      xStartDate.getUTCMonth(),
+      xStartDate.getUTCDate(), 12, 0, 0, 0
+    ));
+    if (tickStart < xStartDate) {
+      tickStart.setUTCDate(tickStart.getUTCDate() + 1);
+    }
+    const tickVals = [];
+    const tickTexts = [];
+    for (let t = tickStart.getTime(); t < xEnd.getTime(); t += ONE_DAY_MS) {
+      const d = new Date(t);
+      tickVals.push(d.toISOString());
+      // UTC-based day label so it stays consistent regardless of viewer's timezone.
+      const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
+      const day = d.getUTCDate();
+      const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
+      tickTexts.push(`<b>${weekday} ${day}</b><br>${month}`);
+    }
+
+    const xAxisShared = {
+      type: 'date',
+      range: [xStart, xEnd.toISOString()],
+      tickmode: 'array',
+      tickvals: tickVals,
+      ticktext: tickTexts,
+      tickfont: { size: 12, color: T.font },
+      gridcolor: T.grid,
+      linecolor: T.axis,
+      ticks: 'outside',
+      ticklen: 4,
+      zeroline: false
+    };
+    // Stash on the loc payload so the prob plot can use the same settings.
+    loc.__xAxisShared = xAxisShared;
+    loc.__xStart = xStart;
+    loc.__xEnd = xEnd.toISOString();
+
+    return {
+      paper_bgcolor: T.paper,
+      plot_bgcolor: T.plot,
+      font: { family: 'Inter, sans-serif', color: T.font, size: 13 },
+      margin: { l: 60, r: 70, t: 28, b: 56 },
+      showlegend: false,
+      hovermode: 'x unified',
+      hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' }, bordercolor: 'rgba(255,255,255,0.2)' },
+      shapes,
+      barmode: 'overlay',
+      bargap: 0.0,
+      xaxis: {
+        ...xAxisShared,
+        showspikes: true,
+        spikemode: 'across',
+        spikecolor: T.axis,
+        spikethickness: 1
+      },
+      yaxis: {
+        title: { text: 'Height differential (m)', font: { size: 13, color: T.font } },
+        range: [key === 'godstow' ? -0.05 : -0.1, yMax],
+        gridcolor: T.grid,
+        linecolor: T.axis,
+        zeroline: false,
+        tickfont: { color: T.font }
+      },
+      yaxis2: {
+        title: { text: 'Rainfall (mm/day)', font: { size: 13, color: T.rainForecast } },
+        overlaying: 'y',
+        side: 'right',
+        rangemode: 'tozero',
+        showgrid: false,
+        linecolor: T.axis,
+        tickfont: { color: T.rainForecast }
+      },
+      annotations: [
+        {
+          x: forecastStart, xref: 'x',
+          y: 1, yref: 'paper',
+          text: 'Now',
+          showarrow: false,
+          font: { color: T.nowLine, size: 11, weight: 700 },
+          bgcolor: 'rgba(255,255,255,0)',
+          xanchor: 'left', yanchor: 'top',
+          xshift: 4
+        }
+      ]
+    };
+  }
+
+  function buildProbTracesAndLayout(loc, key, T) {
+    if (key === 'wallingford') return null;
+    const order = key === 'godstow'
+      ? ['green', 'amber', 'red']
+      : ['green', 'light_blue', 'dark_blue', 'amber', 'red'];
+    const x = loc.flag_probability.times;
+    const traces = order.map(k => ({
+      type: 'scatter',
+      mode: 'lines',
+      x,
+      y: loc.flag_probability.probabilities[k],
+      name: FLAG_LABELS[k],
+      stackgroup: 'one',
+      fillcolor: FLAG_COLORS[k],
+      line: { color: FLAG_COLORS[k], width: 0.5 },
+      opacity: 0.85,
+      hovertemplate: '<b>%{x|%a %d %b %H:%M}</b><br>' + FLAG_LABELS[k] + ': %{y:.0%}<extra></extra>'
+    }));
+    // Reuse the EXACT x-axis range and tick alignment from the main chart
+    // (set on loc.__xAxisShared by buildMainLayout). Same margins too, so
+    // the daily columns line up perfectly beneath the chart above.
+    const sharedX = loc.__xAxisShared || {};
+    const layout = {
+      paper_bgcolor: T.paper,
+      plot_bgcolor: T.plot,
+      font: { family: 'Inter, sans-serif', color: T.font, size: 13 },
+      margin: { l: 60, r: 70, t: 16, b: 56 },
+      hovermode: 'x unified',
+      hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' } },
+      shapes: [{
+        type: 'line',
+        x0: new Date().toISOString(), x1: new Date().toISOString(),
+        yref: 'paper', y0: 0, y1: 1,
+        line: { color: T.nowLine, width: 2, dash: 'dash' }
+      }],
+      xaxis: {
+        ...sharedX,
+        showspikes: false
+      },
+      yaxis: {
+        title: { text: 'Flag probability', font: { size: 13, color: T.font } },
+        range: [0, 1],
+        tickformat: '.0%',
+        gridcolor: T.grid,
+        linecolor: T.axis,
+        zeroline: false,
+        tickfont: { color: T.font }
+      },
+      legend: {
+        orientation: 'h',
+        x: 0, xanchor: 'left',
+        y: 1.18, yanchor: 'top',
+        bgcolor: 'rgba(0,0,0,0)',
+        font: { color: T.font, size: 12 }
+      }
+    };
+    return { traces, layout };
+  }
+
+  function plotLocation(key, loc) {
+    if (typeof Plotly === 'undefined') {
+      console.error('Plotly not loaded yet');
+      const el = document.getElementById(`plot-${key}`);
+      if (el) el.innerHTML = '<div class="error">Plotly failed to load. Check your network / ad-blocker.</div>';
+      return;
+    }
+    const T = themeColors();
+    try {
+      const mainTraces = buildMainTraces(loc, T);
+      const mainLayout = buildMainLayout(loc, key, T);
+      Plotly.newPlot(`plot-${key}`, mainTraces, mainLayout, {
+        displayModeBar: true,
+        modeBarButtons: [['resetScale2d']],
+        displaylogo: false,
+        responsive: true
+      });
+    } catch (err) {
+      console.error(`main plot failed for ${key}`, err);
+      const el = document.getElementById(`plot-${key}`);
+      if (el) el.innerHTML = `<div class="error">Chart failed: ${err.message}</div>`;
+    }
+
+    if (key !== 'wallingford') {
+      try {
+        const prob = buildProbTracesAndLayout(loc, key, T);
+        Plotly.newPlot(`prob-${key}`, prob.traces, prob.layout, {
+          displayModeBar: false,
+          responsive: true
+        });
+      } catch (err) {
+        console.error(`prob plot failed for ${key}`, err);
+        const el = document.getElementById(`prob-${key}`);
+        if (el) el.innerHTML = `<div class="error">Probability chart failed: ${err.message}</div>`;
+      }
+    }
+  }
+
+  /* ----------------------- WIRE-UP ---------------------------- */
+
+  function setActiveTab(key) {
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.location === key);
+    });
+    document.querySelectorAll('.pane').forEach(p => {
+      p.classList.toggle('active', p.id === `pane-${key}`);
+    });
+    // Trigger a Plotly resize since the plot was hidden on first render.
+    requestAnimationFrame(() => {
+      const plot = document.getElementById(`plot-${key}`);
+      if (plot && plot.data) Plotly.Plots.resize(plot);
+      const prob = document.getElementById(`prob-${key}`);
+      if (prob && prob.data) Plotly.Plots.resize(prob);
+    });
+  }
+
+  function renderAll(bundle) {
+    const root = document.getElementById('content');
+    const firstKey = bundle.location_order[0];
+    root.innerHTML = `
+      ${renderTabs(bundle, firstKey)}
+      ${renderPanels(bundle)}
+    `;
+
+    // Update status pill.
+    const pill = document.getElementById('status-pill');
+    const text = document.getElementById('status-text');
+    const anyStale = Object.values(bundle.locations).some(l => l.stale);
+    if (anyStale) pill.classList.add('stale');
+    text.textContent = `Forecast updated ${relativeTime(bundle.generated_at)}`;
+
+    // Plot every location.
+    bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
+
+    // Wire legend-toggle interactivity (matches Plotly's "click to hide" behaviour).
+    document.querySelectorAll('.chart-legend').forEach(legend => {
+      const plotId = legend.dataset.plot;
+      legend.querySelectorAll('.item').forEach(item => {
+        item.addEventListener('click', () => {
+          const target = item.dataset.target;
+          const plotEl = document.getElementById(plotId);
+          if (!plotEl || !plotEl.data) return;
+          // Find all trace indices whose name starts with the target string.
+          const indices = [];
+          const newVisible = [];
+          plotEl.data.forEach((trace, idx) => {
+            if (trace.name && trace.name.indexOf(target) === 0) {
+              const currentlyVisible = trace.visible !== 'legendonly' && trace.visible !== false;
+              indices.push(idx);
+              newVisible.push(currentlyVisible ? 'legendonly' : true);
+            }
+          });
+          if (!indices.length) return;
+          Plotly.restyle(plotEl, { visible: newVisible }, indices);
+          item.classList.toggle('inactive');
+        });
+      });
+    });
+
+    // Wire interactivity.
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => setActiveTab(t.dataset.location));
+    });
+
+    // Re-plot on theme change so colours stay in sync.
+    if (window.matchMedia) {
+      const mql = window.matchMedia('(prefers-color-scheme: dark)');
+      mql.addEventListener('change', () => {
+        bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
+      });
+    }
+  }
+
+  function renderError(message, details) {
+    const root = document.getElementById('content');
+    const stack = details ? `<pre style="text-align:left;white-space:pre-wrap;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;background:var(--surface-soft);border:1px solid var(--border);padding:12px;border-radius:8px;margin:16px auto;max-width:900px;color:var(--text-soft);">${details}</pre>` : '';
+    root.innerHTML = `<div class="error"><strong>Forecast unavailable.</strong><br>${message}${stack}</div>`;
+    const pill = document.getElementById('status-pill');
+    pill.classList.add('stale');
+    document.getElementById('status-text').textContent = 'Forecast unavailable';
+  }
+
+  function safeRenderAll(bundle) {
+    try {
+      renderAll(bundle);
+    } catch (err) {
+      console.error('renderAll failed', err);
+      renderError(
+        "The data loaded but the page failed to render. Details below — please share these:",
+        (err && (err.stack || err.message)) ? String(err.stack || err.message) : String(err)
+      );
+    }
+  }
+
+  // Load the forecast JSON written by generate_all_location_figures.py.
+  fetch('forecast_data.json', { cache: 'no-store' })
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
+      return r.json();
+    })
+    .then(safeRenderAll)
+    .catch(err => {
+      console.error('forecast load failed', err);
+      renderError(
+        "Couldn't load <code>forecast_data.json</code>.",
+        (err && (err.stack || err.message)) ? String(err.stack || err.message) : String(err)
+      );
+    });
+  </script>
+</body>
+</html>

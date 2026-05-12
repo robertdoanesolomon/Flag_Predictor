@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Large raw training data (kept locally only, used for retraining)
+data/rainfall_training_data/
+data/level_training_data/
+data/flow_training_data/
+data/groundwater_training_data/
+notebooks/
+
+# Forecast cache
+forecast_cache/
+*.pkl
+!models/*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+clear_and_regenerate_cache.py
+*QUICK_START*
+.venv_new/
+.git-rewrite/
+
+# Images (ignore all PNGs except those in docs/ for GitHub Pages)
+*.png
+!docs/*.png

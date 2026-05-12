@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flag-predictor"
+version = "1.0.0"
+description = "River differential prediction system for Oxford locks using LSTM models"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Flag Predictor Team"}
+]
+keywords = [
+    "river",
+    "flood",
+    "prediction",
+    "lstm",
+    "machine-learning",
+    "pytorch"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Hydrology",
+]
+
+dependencies = [
+    "numpy>=1.24.0,<2.0",
+    "pandas>=2.0.0",
+    "torch>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "requests>=2.28.0",
+    "tqdm>=4.65.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "flask>=2.3.0",
+    "schedule>=1.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+notebook = [
+    "jupyter>=1.0.0",
+    "ipykernel>=6.0.0",
+]
+
+[project.scripts]
+flag-predictor = "flag_predictor.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/flag-predictor"
+Repository = "https://github.com/yourusername/flag-predictor"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+flag_predictor = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=flag_predictor"
