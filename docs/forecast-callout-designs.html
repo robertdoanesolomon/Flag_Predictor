@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forecast callout — design gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f1f2f4;
+      --surface: #ffffff;
+      --surface-soft: #f8faf9;
+      --border: #d9e3df;
+      --border-strong: #b8c8c1;
+      --text: #122a23;
+      --text-muted: #6b8079;
+      --accent: #0b3d2e;
+      --accent-soft: #1c6b53;
+      --accent-glow: rgba(28, 107, 83, 0.18);
+      --shadow-sm: 0 1px 2px rgba(15, 30, 25, 0.06), 0 1px 1px rgba(15, 30, 25, 0.04);
+      --shadow-md: 0 6px 18px rgba(15, 30, 25, 0.08), 0 2px 4px rgba(15, 30, 25, 0.04);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1614;
+        --surface: #16221f;
+        --surface-soft: #1a2825;
+        --border: #233530;
+        --border-strong: #2f4640;
+        --text: #e7efeb;
+        --text-muted: #7d958c;
+        --accent: #4ec39a;
+        --accent-soft: #62d4ad;
+        --accent-glow: rgba(78, 195, 154, 0.22);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px 18px 48px;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .intro {
+      max-width: 720px;
+      margin-bottom: 28px;
+    }
+    .intro h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px 0;
+    }
+    .intro p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .intro code { font-size: 0.85em; }
+
+    .gallery {
+      display: grid;
+      gap: 20px;
+      max-width: 920px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 20px 22px;
+    }
+    .card h2 {
+      margin: 0 0 4px 0;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .card .label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .card .hint {
+      margin: 12px 0 0 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: ui-monospace, monospace;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    /* Shared forecast text */
+    .outlook {
+      margin: 0;
+      font-size: clamp(0.98rem, 2.2vw, 1.12rem);
+      font-weight: 600;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+    }
+    .outlook strong { color: var(--accent); font-weight: 800; }
+
+    /* ——— Variants ——— */
+    .v-none {
+      margin: 8px 0 0 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+    }
+
+    .v-current {
+      margin: 8px 0 0 0;
+      padding: 15px 18px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+    }
+
+    .v-light-frame {
+      margin: 8px 0 0 0;
+      padding: 14px 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    .v-pill {
+      margin: 8px 0 0 0;
+      padding: 14px 20px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+
+    .v-shadow-sm {
+      margin: 8px 0 0 0;
+      padding: 15px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .v-inset {
+      margin: 8px 0 0 0;
+      padding: 15px 18px;
+      background: var(--surface-soft);
+      border-radius: var(--radius-md);
+      box-shadow: inset 0 1px 3px rgba(15, 30, 25, 0.08);
+      border: 1px solid var(--border);
+    }
+    @media (prefers-color-scheme: dark) {
+      .v-inset {
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    .v-accent-outline {
+      margin: 8px 0 0 0;
+      padding: 15px 18px;
+      background: var(--surface-soft);
+      border: 1px solid rgba(28, 107, 83, 0.35);
+      border-radius: var(--radius-lg);
+    }
+    @media (prefers-color-scheme: dark) {
+      .v-accent-outline {
+        border-color: rgba(78, 195, 154, 0.35);
+      }
+    }
+
+    .v-left-rail {
+      margin: 8px 0 0 0;
+      padding: 14px 16px 14px 20px;
+      position: relative;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+    .v-left-rail::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 10px;
+      bottom: 10px;
+      width: 4px;
+      border-radius: 4px;
+      background: var(--accent);
+    }
+
+    .v-top-bar {
+      margin: 8px 0 0 0;
+      padding: 14px 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: var(--radius-md);
+    }
+
+    .v-dashed {
+      margin: 8px 0 0 0;
+      padding: 14px 16px;
+      background: transparent;
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-md);
+    }
+
+    .v-gradient-bg {
+      margin: 8px 0 0 0;
+      padding: 15px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(165deg, var(--surface-soft) 0%, var(--surface) 100%);
+    }
+
+    .v-ghost {
+      margin: 8px 0 0 0;
+      padding: 14px 16px;
+      background: rgba(28, 107, 83, 0.05);
+      border: 1px solid transparent;
+      border-radius: var(--radius-lg);
+    }
+    @media (prefers-color-scheme: dark) {
+      .v-ghost {
+        background: rgba(78, 195, 154, 0.06);
+      }
+    }
+
+    .v-md-panel {
+      margin: 8px 0 0 0;
+      padding: 15px 18px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+    }
+
+    .sample-text::before {
+      content: "The differential is forecast to ";
+    }
+  </style>
+</head>
+<body>
+  <div class="intro">
+    <h1>Forecast callout — design gallery</h1>
+    <p>
+      Local-only preview: same sample sentence and tokens as <code>docs/index.html</code>.
+      Pick a look, then we can mirror it in the live page.
+    </p>
+  </div>
+
+  <div class="gallery">
+
+    <section class="card">
+      <div class="label">A · Borderless</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-none">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">padding: 0; no border — text only (early iteration).</p>
+    </section>
+
+    <section class="card">
+      <div class="label">B · Soft rounded frame (near current)</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-current">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">surface-soft · 1px border-strong · radius-lg · no shadow</p>
+    </section>
+
+    <section class="card">
+      <div class="label">C · Lighter edge</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-light-frame">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">border var(--border) instead of border-strong — quieter box</p>
+    </section>
+
+    <section class="card">
+      <div class="label">D · Tighter radius (match stats tiles)</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-md-panel">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">radius-md (14px) — closer to .stat cards on the page</p>
+    </section>
+
+    <section class="card">
+      <div class="label">E · Pill / chip</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-pill">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">border-radius 999px — very rounded; works best for short copy</p>
+    </section>
+
+    <section class="card">
+      <div class="label">F · Hairline + tiny shadow</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-shadow-sm">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">var(--shadow-sm) — subtle lift (you had avoided heavier shadows before)</p>
+    </section>
+
+    <section class="card">
+      <div class="label">G · Inset (“pressed in”)</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-inset">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">inset shadow + border — reads recessed, not floating</p>
+    </section>
+
+    <section class="card">
+      <div class="label">H · Tinted outline (accent)</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-accent-outline">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">green-tinted border — ties to brand without a thick left bar</p>
+    </section>
+
+    <section class="card">
+      <div class="label">I · Left rail (straight bar)</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-left-rail">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">::before 4px bar — accent emphasis, no “crescent” curve issue</p>
+    </section>
+
+    <section class="card">
+      <div class="label">J · Top accent stripe</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-top-bar">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">border-top 3px accent — banner feel</p>
+    </section>
+
+    <section class="card">
+      <div class="label">K · Dashed frontier</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-dashed">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">dashed border — light, editorial</p>
+    </section>
+
+    <section class="card">
+      <div class="label">L · Soft gradient fill</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-gradient-bg">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">linear-gradient soft → surface — depth without shadow</p>
+    </section>
+
+    <section class="card">
+      <div class="label">M · Accent wash</div>
+      <h2>Isis Stretch</h2>
+      <div class="v-ghost">
+        <p class="outlook sample-text"><strong>stay roughly the same over the next 10 days</strong>, and the forecast is <strong>very certain</strong>.</p>
+      </div>
+      <p class="hint">very light green wash — almost flat, tiny bit of presence</p>
+    </section>
+
+  </div>
+</body>
+</html>
