@@ -276,6 +276,21 @@ def fetch_all_api_data(
     return river_levels, rainfall, flow
 
 
+def _level_series_hourly_last(level: pd.Series) -> pd.Series:
+    """Resample irregular EA readings to hourly using the last value in each hour (UTC).
+
+    Raw flood-monitoring points are unevenly spaced; subtracting aligned Series without
+    this step can silently drop trailing hours wherever indices do not coincide. Three-gauge
+    blends (Isis) are especially sensitive versus two-gauge stretches.
+    """
+    s = level.sort_index().copy()
+    if s.index.tz is None:
+        s.index = s.index.tz_localize("UTC")
+    else:
+        s.index = s.index.tz_convert("UTC")
+    return s.resample("1h").last()
+
+
 def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
     """
     Calculate ISIS differential from river level data.
@@ -290,15 +305,17 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
     Returns:
         DataFrame with 'differential' column
     """
-    osney_ds = river_levels['osney_downstream']['level']
-    iffley_us = river_levels['iffley_upstream']['level']
-    kings_mill_ds = river_levels['kings_mill_downstream']['level']
-    
-    isis_contrib = 0.71 * (osney_ds - iffley_us - 2.14)
-    cherwell_contrib = 0.29 * (kings_mill_ds - iffley_us - 0.73)
-    differential = isis_contrib + cherwell_contrib
-    
-    return pd.DataFrame({'differential': differential})
+    o = _level_series_hourly_last(river_levels["osney_downstream"]["level"])
+    i = _level_series_hourly_last(river_levels["iffley_upstream"]["level"])
+    k = _level_series_hourly_last(river_levels["kings_mill_downstream"]["level"])
+    merged = pd.concat({"o": o, "i": i, "k": k}, axis=1).sort_index()
+    # Allow small gaps—EA stations often miss occasional hours; avoids a frozen tail/hourly NaNs.
+    merged = merged.ffill(limit=6).dropna(how="any")
+    differential = (
+        0.71 * (merged["o"] - merged["i"] - 2.14)
+        + 0.29 * (merged["k"] - merged["i"] - 0.73)
+    )
+    return pd.DataFrame({"differential": differential})
 
 
 def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
@@ -314,11 +331,13 @@ def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.
     Returns:
         DataFrame with 'differential' column
     """
-    godstow_ds = river_levels['godstow_downstream']['level']
-    osney_us = river_levels['osney_upstream']['level']
-    
-    differential = godstow_ds - osney_us - 1.63
-    
+    g = _level_series_hourly_last(river_levels["godstow_downstream"]["level"])
+    u = _level_series_hourly_last(river_levels["osney_upstream"]["level"])
+    merged = pd.concat({"godstow": g, "osney_us": u}, axis=1).sort_index().ffill(limit=6).dropna(
+        how="any"
+    )
+    differential = merged["godstow"] - merged["osney_us"] - 1.63
+
     return pd.DataFrame({'differential': differential})
 
 def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
@@ -334,11 +353,11 @@ def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) ->
     Returns:
         DataFrame with 'differential' column
     """
-    benson_ds = river_levels['benson_downstream']['level']
-    cleeve_us = river_levels['cleeve_upstream']['level']
-    
-    differential = benson_ds - cleeve_us - 2.13
-    
+    b = _level_series_hourly_last(river_levels["benson_downstream"]["level"])
+    c = _level_series_hourly_last(river_levels["cleeve_upstream"]["level"])
+    merged = pd.concat({"benson": b, "cleeve": c}, axis=1).sort_index().ffill(limit=6).dropna(how="any")
+    differential = merged["benson"] - merged["cleeve"] - 2.13
+
     return pd.DataFrame({'differential': differential})
 
 def get_rainfall_forecast(
