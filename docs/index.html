@@ -324,10 +324,12 @@
     .forecast-callout {
       margin: 10px 0 22px 0;
       padding: 22px 24px;
-      background: var(--surface-soft);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       border-left: 5px solid var(--accent);
+      box-shadow: none !important;
+      filter: none;
     }
     .forecast-callout .summary-line {
       margin: 0;
@@ -349,10 +351,15 @@
     .panel .meta {
       margin: 4px 0 18px 0;
       color: var(--text-soft);
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 500;
       border-left: 3px solid var(--border-strong);
       padding-left: 10px;
+    }
+    .panel .meta strong {
+      font-size: 1.07em;
+      font-weight: 700;
+      color: var(--text);
     }
     .panel .stale-warning {
       display: inline-flex;
@@ -696,7 +703,7 @@
       .panel { padding: 16px 14px; }
       .panel h2 { flex-wrap: wrap; font-size: 19px; gap: 8px; }
       .panel .meta {
-        font-size: 13px;
+        font-size: 15px;
         line-height: 1.45;
         word-break: break-word;
       }
@@ -1161,7 +1168,7 @@
                 ? `<div class="forecast-callout" role="status" aria-live="polite"><p class="summary-line">${s}</p></div>`
                 : '';
             })()}
-            <p class="meta">Forecast generated at <strong>${fmtShortDateTime(loc.forecast_start)}</strong> · ${loc.n_members}-member ensemble.</p>
+            <p class="meta">Forecast generated at <strong>${fmtShortDateTime(loc.forecast_start)}</strong></p>
 
             <div class="chart-block">
               <div class="chart-legend" data-plot="plot-${key}">
