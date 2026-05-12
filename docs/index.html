@@ -321,12 +321,14 @@
       gap: 12px;
     }
     /* Primary narrative — visible above charts */
+    /* Left edge square so the accent bar stays vertical — thick border-left + uniform
+       border-radius draws a curved “crescent” on rounded corners. */
     .forecast-callout {
       margin: 10px 0 22px 0;
       padding: 22px 24px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
       border-left: 5px solid var(--accent);
       box-shadow: none !important;
       filter: none;
