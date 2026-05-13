@@ -1448,6 +1448,7 @@
       showlegend: false,
       hovermode: 'x unified',
       hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' }, bordercolor: 'rgba(255,255,255,0.2)' },
+      dragmode: false,
       shapes,
       barmode: 'overlay',
       bargap: 0.0,
@@ -1456,7 +1457,8 @@
         showspikes: true,
         spikemode: 'across',
         spikecolor: T.axis,
-        spikethickness: 1
+        spikethickness: 1,
+        fixedrange: true
       },
       yaxis: {
         title: { text: 'Height differential (m)', font: { size: compact ? 11 : 13, color: T.font } },
@@ -1464,7 +1466,8 @@
         gridcolor: T.grid,
         linecolor: T.axis,
         zeroline: false,
-        tickfont: { color: T.font }
+        tickfont: { color: T.font },
+        fixedrange: true
       },
       yaxis2: {
         title: { text: 'Rainfall (mm/day)', font: { size: compact ? 10 : 13, color: T.rainForecast } },
@@ -1473,7 +1476,8 @@
         rangemode: 'tozero',
         showgrid: false,
         linecolor: T.axis,
-        tickfont: { color: T.rainForecast }
+        tickfont: { color: T.rainForecast },
+        fixedrange: true
       },
       annotations: [
         {
@@ -1523,6 +1527,7 @@
         : { l: 60, r: 70, t: 16, b: 56 },
       hovermode: 'x unified',
       hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' } },
+      dragmode: false,
       shapes: [{
         type: 'line',
         x0: new Date().toISOString(), x1: new Date().toISOString(),
@@ -1531,7 +1536,8 @@
       }],
       xaxis: {
         ...sharedX,
-        showspikes: false
+        showspikes: false,
+        fixedrange: true
       },
       yaxis: {
         title: { text: 'Flag probability', font: { size: compact ? 11 : 13, color: T.font } },
@@ -1540,7 +1546,8 @@
         gridcolor: T.grid,
         linecolor: T.axis,
         zeroline: false,
-        tickfont: { color: T.font }
+        tickfont: { color: T.font },
+        fixedrange: true
       }
     };
     return { traces, layout };
@@ -1558,10 +1565,11 @@
       const mainTraces = buildMainTraces(loc, T);
       const mainLayout = buildMainLayout(loc, key, T);
       Plotly.newPlot(`plot-${key}`, mainTraces, mainLayout, {
-        displayModeBar: true,
-        modeBarButtons: [['resetScale2d']],
+        displayModeBar: false,
         displaylogo: false,
-        responsive: true
+        responsive: true,
+        scrollZoom: false,
+        doubleClick: false
       });
     } catch (err) {
       console.error(`main plot failed for ${key}`, err);
@@ -1574,7 +1582,9 @@
         const prob = buildProbTracesAndLayout(loc, key, T);
         Plotly.newPlot(`prob-${key}`, prob.traces, prob.layout, {
           displayModeBar: false,
-          responsive: true
+          responsive: true,
+          scrollZoom: false,
+          doubleClick: false
         });
       } catch (err) {
         console.error(`prob plot failed for ${key}`, err);
