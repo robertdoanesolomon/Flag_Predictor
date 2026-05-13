@@ -788,6 +788,12 @@
         red line marks "now". For Isis and Godstow, the stacked chart underneath shows the probability that the river
         will be in each flag colour at each point in the next 10 days.
 
+        <h3>How reliable is the summary sentence?</h3>
+        The summary sentence is simply a short description of the forecast, without any human intervention. The certainty
+        bounds are just based off the spread of the forecast. Importantly, the summary sentence is based off the change
+        from the first (+2h) prediction, so it doesn't take into account the initial jump at t=0. This summary sentence
+        is meant to give a general idea of the forecast, which is probably more reliable than the prediction chart itself.
+
         <h3>Where does the data come from?</h3>
         Historical river levels and rainfall come from the Environment Agency's flood-monitoring and hydrology APIs.
         Rainfall forecasts come from the ECMWF AI Forecasting System (ECMWF-AIFS) via Open-Meteo. The model is an
