@@ -1,4 +1,37 @@
-# Flag Predictor 
+# Flag Predictor (June 2026 model)
+
+## What changed in June 2026
+
+This copy of the repo contains the **June 2026** retrain, which targets the structural
+errors discussed in the Feb 2026 Substack post ("How bad is the model?"):
+
+1. **Delta targets** – the LSTM now predicts the *change* in differential from the
+   current value (`diff(t+h) - diff(t)`) instead of the absolute level, so every
+   forecast is anchored at the observed differential and the "weird jump" at the
+   start of predictions is gone by construction.
+2. **Physical recession limit** – the river essentially never falls faster than
+   ~3 inches (0.076 m) per day (Anu's rule). This is now a soft penalty in the
+   training loss *and* a hard clamp on forecast trajectories
+   (`PHYSICAL_CONSTRAINTS['max_recession_m_per_day']` in `config.py`).
+3. **Winter upweighting** – Nov–Mar samples (where structural error is worst)
+   count 1.5x in the loss.
+4. **Future-rain noise augmentation** – training uses the rainfall that actually
+   fell ("clairvoyant rainfall"), but real forecasts are uncertain; future-rain
+   features are perturbed with multiplicative noise during training so the model
+   does not over-trust them.
+5. **Bug fix** – input sequences and targets were misaligned by 1 hour in
+   `create_sequences`.
+
+Models are saved as `models/*_experiment_2026_06_{location}.*` (and `{location}_latest`).
+Retrain with `python train_june_models.py`; compare against the May models with
+`python backtest_june_vs_may.py {location}` (results land in `figures/`).
+
+Clairvoyant-rainfall backtest vs the May 2026 models (~60 weekly forecast starts,
+Nov 2024 – Jan 2026): start-of-forecast error is 3–6x smaller, first-day MAE is
+~35% lower, and faster-than-physical drops are eliminated at all three locations,
+at the cost of slightly higher far-horizon (3–10 day) error under perfect rainfall.
+
+---
 
 This is an LSTM AI model that predicts the river differential levels along the Thames, which acts a proxy for the river flow speed. The differential is the difference in river height between the upstream and downstream locks for a given stretch, which is how the OURCs flag is set at Godstow and usually closely tracks the flag on the Isis. This model has been trained on upstream rainfall data for the Isis, Godstow and the Wallingford stretches. Predictions are made using rainfall forecasts and features derived from recent rainfall. The model generates 10-day probablistic forecasts to help determine the differential. Please consider this experimental and a work in progress!
 

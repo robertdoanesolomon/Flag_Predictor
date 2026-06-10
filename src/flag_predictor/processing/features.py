@@ -430,7 +430,8 @@ def create_target_and_features(
     df_featureless: pd.DataFrame,
     future_rainfall_df: pd.DataFrame,
     differential_column: str = 'differential',
-    horizons: Optional[List[int]] = None
+    horizons: Optional[List[int]] = None,
+    delta_targets: bool = False,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, List[int]]:
     """
     Create multi-horizon targets and feature set for training.
@@ -440,6 +441,11 @@ def create_target_and_features(
         future_rainfall_df: DataFrame with future rainfall (use historical for training)
         differential_column: Name of the differential column to predict
         horizons: List of hours ahead to predict
+        delta_targets: If True, targets are the CHANGE in differential from the
+            current value (diff(t+h) - diff(t)) instead of the absolute level.
+            In this case y_multi gains an extra final column
+            'current_differential' holding diff(t), which the training code
+            uses to reconstruct absolute levels for loss weighting.
         
     Returns:
         Tuple of (X, y_multi, mask, horizons)
@@ -462,8 +468,18 @@ def create_target_and_features(
     targets = []
     for horizon in horizons:
         target_col = f'target_{horizon}h'
-        df_with_features[target_col] = df_with_features[differential_column].shift(-horizon)
+        future_value = df_with_features[differential_column].shift(-horizon)
+        if delta_targets:
+            df_with_features[target_col] = future_value - df_with_features[differential_column]
+        else:
+            df_with_features[target_col] = future_value
         targets.append(target_col)
+
+    if delta_targets:
+        # Carry the current differential alongside the targets so the loss
+        # can reconstruct absolute levels (for flow-dependent weighting).
+        df_with_features['current_differential'] = df_with_features[differential_column]
+        targets.append('current_differential')
     
     # Define features (exclude targets, differential, and raw flow/level/groundwater)
     # Raw flow (m³/s) has very different statistics; we use only derived features.

@@ -14,6 +14,7 @@ from .config import (
     LocationConfig,
     MODEL_CONFIG,
     TRAINING_CONFIG,
+    PHYSICAL_CONSTRAINTS,
     RAINFALL_STATION_NAMES,
 )
 from .data.api import (
@@ -40,6 +41,7 @@ from .prediction.forecast import (
 def prepare_training_data(
     location: str = 'isis',
     project_root: Optional[Path] = None,
+    delta_targets: bool = True,
     verbose: bool = True
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
@@ -138,7 +140,8 @@ def prepare_training_data(
         df_featureless=merged_df,
         future_rainfall_df=historical_rainfall,
         differential_column='differential',
-        horizons=config.horizons
+        horizons=config.horizons,
+        delta_targets=delta_targets
     )
 
     # Drop any rows with NaNs in features or targets (e.g. from long rolling
@@ -208,6 +211,10 @@ def train_location_model(
         'input_size': len(X.columns),
         'feature_columns': list(X.columns),
         'training_history': history,
+        # June 2026 model: outputs are deltas from the current differential,
+        # and forecasts get a physical recession-rate clamp.
+        'predicts_delta': True,
+        'max_recession_m_per_day': PHYSICAL_CONSTRAINTS['max_recession_m_per_day'],
     }
     
     # Save model
@@ -217,6 +224,15 @@ def train_location_model(
         config=model_config,
         save_dir=save_dir,
         name=f'{location}_latest'
+    )
+    
+    # Also save under the June 2026 experiment name
+    save_model(
+        model=model,
+        scaler=scaler,
+        config=model_config,
+        save_dir=save_dir,
+        name=f'experiment_2026_06_{location}'
     )
     
     # Also save as generic 'latest' for backward compatibility
@@ -273,6 +289,8 @@ def run_forecast(
     feature_columns = model_config['feature_columns']
     sequence_length = model_config['sequence_length']
     horizons = model_config['horizons']
+    predicts_delta = model_config.get('predicts_delta', False)
+    max_recession = model_config.get('max_recession_m_per_day', None)
     
     # Prepare historical data
     merged_df, _, _ = prepare_training_data(
@@ -308,6 +326,8 @@ def run_forecast(
             horizons=horizons,
             station_names=station_names,
             n_members=n_members,
+            predicts_delta=predicts_delta,
+            max_recession_m_per_day=max_recession,
             verbose=verbose
         )
         
@@ -336,6 +356,8 @@ def run_forecast(
             feature_columns=feature_columns,
             sequence_length=sequence_length,
             horizons=horizons,
+            predicts_delta=predicts_delta,
+            max_recession_m_per_day=max_recession,
             verbose=verbose
         )
         

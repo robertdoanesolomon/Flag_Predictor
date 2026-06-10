@@ -20,7 +20,12 @@ from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 from .lstm import MultiHorizonLSTMModel, get_device
-from ..config import MODEL_CONFIG, TRAINING_CONFIG
+from ..config import (
+    MODEL_CONFIG,
+    TRAINING_CONFIG,
+    PHYSICAL_CONSTRAINTS,
+    JUNE_2026_TRAINING,
+)
 
 
 def create_sequences(
@@ -42,7 +47,7 @@ def create_sequences(
     X_values = X.values
     y_values = y_multi.values
     
-    n_samples = len(X) - sequence_length
+    n_samples = len(X) - sequence_length + 1
     n_features = X_values.shape[1]
     n_horizons = y_values.shape[1]
     
@@ -52,8 +57,11 @@ def create_sequences(
     
     for i in range(n_samples):
         X_sequences[i] = X_values[i:i+sequence_length]
-        y_sequences[i] = y_values[i+sequence_length]
-        valid_indices.append(X.index[i+sequence_length])
+        # Targets aligned with the LAST row of the input sequence (time t),
+        # so target_{h} really is diff(t+h). The previous version took the
+        # row AFTER the sequence end, introducing a 1-hour misalignment.
+        y_sequences[i] = y_values[i+sequence_length-1]
+        valid_indices.append(X.index[i+sequence_length-1])
     
     return X_sequences, y_sequences, valid_indices
 
@@ -61,100 +69,98 @@ def create_sequences(
 def _compute_loss(
     outputs: torch.Tensor,
     batch_y: torch.Tensor,
-    criterion: nn.Module,
+    current: torch.Tensor,
+    sample_weights: torch.Tensor,
+    horizon_gaps: torch.Tensor,
     horizon_importance: torch.Tensor,
-    device: torch.device
+    device: torch.device,
+    recession_penalty_weight: float = JUNE_2026_TRAINING['recession_penalty_weight'],
+    max_recession_m_per_hour: float = PHYSICAL_CONSTRAINTS['max_recession_m_per_day'] / 24.0,
 ) -> torch.Tensor:
     """
-    Compute weighted loss with custom penalties.
-    
-    This loss function includes:
-    - Weighted MSE (high-flow events weighted more)
-    - Horizon importance weighting
-    - Persistence loss (penalize false upticks)
-    - Continuity loss (smooth transition from observed)
-    - Extended anchor loss (anchor to current value)
+    Compute weighted loss with custom penalties (June 2026, delta formulation).
+
+    `outputs` and `batch_y` are DELTAS from the current differential
+    (diff(t+h) - diff(t)); `current` is diff(t). Absolute levels are
+    reconstructed for the flow-dependent weighting.
+
+    Components:
+    - Weighted MSE (high-flow / rising events weighted more, winter samples
+      upweighted via `sample_weights`)
+    - Early-rise / false-rise penalties
+    - Persistence penalty (no spurious upticks in stable low flow)
+    - Recession-rate penalty: predicted drops faster than the physical
+      maximum (~3 inches/day) are penalized
+
+    The old "extended anchor" and "continuity" losses are gone: the delta
+    formulation anchors predictions to the current value by construction.
     """
+    current_col = current.unsqueeze(1)            # (batch, 1)
+    abs_y = current_col + batch_y                 # absolute future levels
+    sample_w = sample_weights.unsqueeze(1)        # (batch, 1)
+
     # Base weights: penalize errors during high-flow events more
-    weights = torch.where(batch_y > 0.3, 3.0, 1.0)
-    
-    # Also weight rising events
-    rising_mask = (batch_y > batch_y[:, 0:1] + 0.05)
+    weights = torch.where(abs_y > 0.3, 3.0, 1.0)
+
+    # Also weight rising events (rise of >5cm from current)
+    rising_mask = (batch_y > 0.05)
     weights = torch.where(rising_mask, weights * 1.5, weights)
-    
+
     # Reduce weight for stable low-flow predictions
-    current_val = batch_y[:, 0:1]
-    low_flow_mask = (current_val < 0.2)
-    stable_mask = (batch_y[:, -1:] < 0.25)
-    low_stable_mask = low_flow_mask & stable_mask
+    low_stable_mask = (current_col < 0.2) & (abs_y[:, -1:] < 0.25)
     weights = torch.where(
         low_stable_mask.expand_as(weights),
         torch.clamp(weights, max=1.5),
         weights
     )
-    
-    # Weighted MSE loss
+
+    # Seasonal (winter) upweighting
+    weights = weights * sample_w
+
+    # Weighted MSE loss (identical in delta and absolute space)
     mse_loss = (outputs - batch_y) ** 2
     weighted_loss = (mse_loss * weights * horizon_importance).mean()
-    
-    # Early rise detection loss
+
+    # Early rise detection loss: reality rises but prediction doesn't
     early_rise_loss = torch.tensor(0.0, device=device)
-    if outputs.shape[1] >= 2:
-        actual_rising = (batch_y[:, -1] > batch_y[:, 0] + 0.02)
-        pred_rising = (outputs[:, -1] > outputs[:, 0] + 0.02)
-        missed_rise_mask = actual_rising & ~pred_rising
-        if missed_rise_mask.any():
-            actual_rise_magnitude = batch_y[:, -1] - batch_y[:, 0]
-            pred_rise_magnitude = outputs[:, -1] - outputs[:, 0]
-            rise_error = torch.clamp(actual_rise_magnitude - pred_rise_magnitude, min=0)
-            early_rise_loss = (rise_error * missed_rise_mask.float()).mean()
+    actual_rising = (batch_y[:, -1] > 0.02)
+    pred_rising = (outputs[:, -1] > 0.02)
+    missed_rise_mask = actual_rising & ~pred_rising
+    if missed_rise_mask.any():
+        rise_error = torch.clamp(batch_y[:, -1] - outputs[:, -1], min=0)
+        early_rise_loss = (rise_error * missed_rise_mask.float()).mean()
 
     # Penalize false early rises: model predicts a rise but reality stays flat
     false_rise_loss = torch.tensor(0.0, device=device)
-    if outputs.shape[1] >= 2:
-        actual_flat = (batch_y[:, -1] <= batch_y[:, 0] + 0.02)
-        pred_rising = (outputs[:, -1] > outputs[:, 0] + 0.02)
-        false_rise_mask = actual_flat & pred_rising
-        if false_rise_mask.any():
-            pred_rise_magnitude = outputs[:, -1] - outputs[:, 0]
-            false_rise_penalty = torch.clamp(pred_rise_magnitude, min=0)
-            false_rise_loss = (false_rise_penalty * false_rise_mask.float()).mean()
-    
-    # Continuity loss
-    continuity_loss = torch.mean((outputs[:, 0] - batch_y[:, 0]) ** 2)
-    
-    # Persistence loss
+    actual_flat = (batch_y[:, -1] <= 0.02)
+    false_rise_mask = actual_flat & pred_rising
+    if false_rise_mask.any():
+        false_rise_penalty = torch.clamp(outputs[:, -1], min=0)
+        false_rise_loss = (false_rise_penalty * false_rise_mask.float()).mean()
+
+    # Persistence loss: in stable low flow, predicted deltas should stay ~0
     persistence_loss = torch.tensor(0.0, device=device)
-    is_stable_low = (batch_y[:, 0] < 0.2) & (batch_y[:, -1] < 0.25)
+    is_stable_low = (current < 0.2) & (abs_y[:, -1] < 0.25)
     if is_stable_low.any():
-        for i in range(outputs.shape[1]):
-            pred_rise = torch.clamp(outputs[:, i] - batch_y[:, 0] - 0.02, min=0)
-            persistence_loss = persistence_loss + (pred_rise * is_stable_low.float()).mean()
-        persistence_loss = persistence_loss / outputs.shape[1]
-    
-    # Extended anchor loss
-    extended_anchor_loss = torch.tensor(0.0, device=device)
-    for i in range(outputs.shape[1]):
-        weight = 0.3 / (1 + i * 0.1)
-        anchor_strength = torch.where(batch_y[:, 0] < 0.2, 2.0, 1.0)
-        extended_anchor_loss = extended_anchor_loss + weight * torch.mean(
-            anchor_strength * (outputs[:, i] - batch_y[:, 0]) ** 2
-        )
-    extended_anchor_loss = extended_anchor_loss / outputs.shape[1]
-    
-    # Combine losses
-    # We want to:
-    # - keep the base weighted MSE as the main driver
-    # - softly encourage correct rises / discourage false rises
-    # - strongly discourage huge jumps in the first few hours
-    #   via the extended anchor + continuity
+        pred_rise = torch.clamp(outputs - 0.02, min=0)
+        persistence_loss = (pred_rise.mean(dim=1) * is_stable_low.float()).mean()
+
+    # Recession-rate penalty: between consecutive horizons (including a
+    # virtual point at h=0 where the delta is 0 by definition), the predicted
+    # drop rate must not exceed the physical maximum.
+    zeros = torch.zeros(outputs.shape[0], 1, device=device)
+    deltas_full = torch.cat([zeros, outputs], dim=1)        # (batch, n_horizons+1)
+    drop = deltas_full[:, :-1] - deltas_full[:, 1:]         # positive = falling
+    drop_rate = drop / horizon_gaps                          # m per hour
+    recession_violation = torch.clamp(drop_rate - max_recession_m_per_hour, min=0)
+    recession_loss = recession_violation.mean()
+
     loss = (
         weighted_loss
         + 0.3 * early_rise_loss
         + 0.2 * false_rise_loss
-        + 0.5 * extended_anchor_loss
         + 0.2 * persistence_loss
-        + 0.1 * continuity_loss
+        + recession_penalty_weight * recession_loss
     )
     
     return loss
@@ -197,6 +203,12 @@ def train_model(
         Tuple of (model, scaler, history, sequence_length, horizons)
     """
     device = get_device()
+
+    if 'current_differential' not in y_multi.columns:
+        raise ValueError(
+            "June 2026 training expects delta targets. Build y_multi with "
+            "create_target_and_features(..., delta_targets=True)."
+        )
     
     # Scale features
     scaler = MinMaxScaler()
@@ -206,26 +218,62 @@ def train_model(
         index=X.index
     )
     
-    # Create sequences
-    X_seq, y_seq, _ = create_sequences(X_scaled, y_multi, sequence_length)
+    # Create sequences (y includes the current differential as last column)
+    X_seq, y_seq_all, valid_indices = create_sequences(X_scaled, y_multi, sequence_length)
+    y_seq = y_seq_all[:, :-1]            # delta targets
+    current_seq = y_seq_all[:, -1]       # diff(t) at sequence end
     
     if verbose:
         print(f"\nSequence shape: {X_seq.shape}")
         print(f"Target shape: {y_seq.shape}")
+
+    # Winter upweighting: structural error is worst when the differential
+    # varies the most (winter), so those samples count more in the loss.
+    months = pd.DatetimeIndex(valid_indices).month.to_numpy()
+    winter_months = JUNE_2026_TRAINING['winter_months']
+    season_weights = np.where(
+        np.isin(months, winter_months),
+        JUNE_2026_TRAINING['winter_weight'],
+        1.0
+    ).astype(np.float32)
+
+    # Feature columns that depend on FUTURE rainfall. During training these
+    # are computed from the rain that actually fell, but at forecast time the
+    # model only gets uncertain forecasts -> inject multiplicative noise so
+    # the model does not over-trust them.
+    future_rain_col_idx = [
+        i for i, col in enumerate(X.columns)
+        if col.startswith('rainfall_future_')
+        or col.startswith('future_rainfall_intensity_')
+        or col.startswith('future_flood_risk_')
+    ]
+    future_rain_noise_std = JUNE_2026_TRAINING['future_rain_noise_std']
+    if verbose:
+        print(f"Future-rain noise augmentation on {len(future_rain_col_idx)} "
+              f"features (std={future_rain_noise_std})")
+        print(f"Winter-upweighted samples: {(season_weights > 1).sum()} / {len(season_weights)}")
     
     # Train/validation split (time series)
     n_train = int(len(X_seq) * (1 - validation_split))
     X_train, X_val = X_seq[:n_train], X_seq[n_train:]
     y_train, y_val = y_seq[:n_train], y_seq[n_train:]
+    cur_train, cur_val = current_seq[:n_train], current_seq[n_train:]
+    w_train, w_val = season_weights[:n_train], season_weights[n_train:]
     
     # Convert to PyTorch tensors
     X_train_tensor = torch.FloatTensor(X_train)
     y_train_tensor = torch.FloatTensor(y_train)
+    cur_train_tensor = torch.FloatTensor(cur_train)
+    w_train_tensor = torch.FloatTensor(w_train)
     X_val_tensor = torch.FloatTensor(X_val).to(device)
     y_val_tensor = torch.FloatTensor(y_val).to(device)
+    cur_val_tensor = torch.FloatTensor(cur_val).to(device)
+    w_val_tensor = torch.FloatTensor(w_val).to(device)
     
     # Create data loader
-    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    train_dataset = TensorDataset(
+        X_train_tensor, y_train_tensor, cur_train_tensor, w_train_tensor
+    )
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, shuffle=True,
         num_workers=0, pin_memory=False
@@ -256,6 +304,12 @@ def train_model(
         else:
             horizon_importance.append(0.75)   # far horizons: still weighted, but less
     horizon_importance = torch.tensor(horizon_importance, device=device).view(1, -1)
+
+    # Hour gaps between consecutive horizons (incl. virtual h=0 point),
+    # used by the recession-rate penalty.
+    horizon_gaps = torch.tensor(
+        np.diff([0] + list(horizons)).astype(np.float32), device=device
+    ).view(1, -1)
     
     if verbose:
         print(f"\nModel Architecture:")
@@ -271,7 +325,6 @@ def train_model(
         print(f"{'='*70}")
     
     # Setup training
-    criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='min', factor=0.5, patience=5, verbose=False
@@ -300,15 +353,33 @@ def train_model(
         
         pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/{epochs}', leave=True, disable=not verbose)
         
-        for batch_X, batch_y in pbar:
+        for batch_X, batch_y, batch_cur, batch_w in pbar:
             batch_X = batch_X.to(device)
             batch_y = batch_y.to(device)
+            batch_cur = batch_cur.to(device)
+            batch_w = batch_w.to(device)
+
+            # Future-rain noise augmentation (training only): one mean-1
+            # log-normal factor per sample per feature, constant across the
+            # sequence so temporal coherence is preserved.
+            if future_rain_col_idx and future_rain_noise_std > 0:
+                noise = torch.exp(
+                    torch.randn(batch_X.shape[0], 1, len(future_rain_col_idx), device=device)
+                    * future_rain_noise_std
+                    - 0.5 * future_rain_noise_std ** 2
+                )
+                batch_X[:, :, future_rain_col_idx] = (
+                    batch_X[:, :, future_rain_col_idx] * noise
+                )
             
             # Forward pass
             outputs = model(batch_X)
             
             # Compute loss
-            loss = _compute_loss(outputs, batch_y, criterion, horizon_importance, device)
+            loss = _compute_loss(
+                outputs, batch_y, batch_cur, batch_w,
+                horizon_gaps, horizon_importance, device
+            )
             
             if torch.isnan(loss):
                 raise ValueError("NaN loss encountered")
@@ -332,7 +403,10 @@ def train_model(
         with torch.no_grad():
             val_outputs = model(X_val_tensor)
             # Use the same weighted loss function for validation to make it comparable
-            val_loss = _compute_loss(val_outputs, y_val_tensor, criterion, horizon_importance, device)
+            val_loss = _compute_loss(
+                val_outputs, y_val_tensor, cur_val_tensor, w_val_tensor,
+                horizon_gaps, horizon_importance, device
+            )
             val_mae = torch.mean(torch.abs(val_outputs - y_val_tensor))
         
         # Record history

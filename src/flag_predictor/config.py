@@ -203,6 +203,34 @@ TRAINING_CONFIG = {
     'max_grad_norm': 1.0,
 }
 
+# === June 2026 model improvements ===
+# Physical constraint on how fast the river can recede. Based on Anu's
+# "3-inches-max-per-day-drop" rule of thumb: the differential essentially
+# never falls faster than ~0.076 m/day, no matter how dry the forecast is.
+# Used both as a soft penalty in the training loss and as a hard clamp on
+# the final forecast trajectories.
+PHYSICAL_CONSTRAINTS = {
+    'max_recession_m_per_day': 0.0762,  # 3 inches/day
+}
+
+JUNE_2026_TRAINING = {
+    # Predict the CHANGE from the current differential rather than the
+    # absolute level. This anchors every forecast at the observed value and
+    # removes the "weird jump" at the start of predictions.
+    'delta_targets': True,
+    # Weight of the soft recession-rate penalty in the loss.
+    'recession_penalty_weight': 5.0,
+    # Structural error is worst in winter, when the differential varies the
+    # most -> upweight winter samples during training.
+    'winter_weight': 1.5,
+    'winter_months': (11, 12, 1, 2, 3),
+    # Training uses the rainfall that actually fell ("clairvoyant rainfall"),
+    # but at forecast time the model only sees uncertain forecasts. Inject
+    # multiplicative noise into the future-rainfall features during training
+    # so the model does not over-trust them.
+    'future_rain_noise_std': 0.3,
+}
+
 """
 Flag thresholds for mapping differentials to flag colours.
 

@@ -604,11 +604,10 @@ def generate_spaghetti_figure(
     # ------------------------------------------------------------------
     models_dir = project_root / "models"
 
-    # Use the 2026-01 experiment models for all locations, matching the
-    # notebook `USE_EXPERIMENT_MODEL = True` behaviour.
-    model_path = models_dir / f"multihorizon_model_experiment_2026_01_{location}.pth"
-    scaler_path = models_dir / f"scaler_experiment_2026_01_{location}.pkl"
-    config_path = models_dir / f"config_experiment_2026_01_{location}.pkl"
+    # Use the June 2026 experiment models (delta targets + recession clamp).
+    model_path = models_dir / f"multihorizon_model_experiment_2026_06_{location}.pth"
+    scaler_path = models_dir / f"scaler_experiment_2026_06_{location}.pkl"
+    config_path = models_dir / f"config_experiment_2026_06_{location}.pkl"
 
     try:
         model, scaler, model_config = load_model(
@@ -667,6 +666,8 @@ def generate_spaghetti_figure(
         horizons=horizons,
         station_names=station_names_list,
         n_members=n_members,
+        predicts_delta=model_config.get("predicts_delta", False),
+        max_recession_m_per_day=model_config.get("max_recession_m_per_day"),
         verbose=True,
     )
 

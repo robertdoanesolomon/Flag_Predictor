@@ -14,6 +14,28 @@ from tqdm import tqdm
 
 from ..models.lstm import MultiHorizonLSTMModel, get_device
 from ..processing.features import create_features_with_future_rainfall
+from ..config import PHYSICAL_CONSTRAINTS
+
+
+def apply_recession_limit(
+    predictions: pd.Series,
+    max_recession_m_per_day: float = PHYSICAL_CONSTRAINTS['max_recession_m_per_day'],
+) -> pd.Series:
+    """
+    Enforce the physical maximum recession rate on an hourly forecast.
+
+    The river essentially never falls faster than ~3 inches (0.076m) per day
+    (Anu's rule). Walking forward through the trajectory, each step is not
+    allowed to fall more than max_rate/24 below the (already constrained)
+    previous value. Rises are untouched.
+    """
+    max_drop_per_step = max_recession_m_per_day / 24.0
+    values = predictions.to_numpy(dtype=float).copy()
+    for i in range(1, len(values)):
+        floor = values[i - 1] - max_drop_per_step
+        if values[i] < floor:
+            values[i] = floor
+    return pd.Series(values, index=predictions.index)
 
 
 def predict_single(
@@ -24,6 +46,8 @@ def predict_single(
     feature_columns: List[str],
     sequence_length: int = 120,
     horizons: Optional[List[int]] = None,
+    predicts_delta: bool = False,
+    max_recession_m_per_day: Optional[float] = None,
     verbose: bool = True
 ) -> pd.Series:
     """
@@ -43,6 +67,10 @@ def predict_single(
         feature_columns: List of feature column names used in training
         sequence_length: LSTM sequence length
         horizons: List of prediction horizons
+        predicts_delta: True for June-2026-style models whose raw outputs are
+            CHANGES from the current differential (added back here)
+        max_recession_m_per_day: If set, clamp the trajectory so it never
+            falls faster than this rate (e.g. 0.0762 = 3 inches/day)
         verbose: Whether to print progress
         
     Returns:
@@ -168,6 +196,11 @@ def predict_single(
     model.eval()
     with torch.no_grad():
         predictions = model(sequence_tensor).cpu().numpy()[0]
+
+    if predicts_delta:
+        # Model outputs are changes from the current differential; the
+        # forecast is anchored at the observed value by construction.
+        predictions = current_differential + predictions
     
     # Create sparse prediction series
     horizon_times = [forecast_start_time + pd.Timedelta(hours=h) for h in horizons]
@@ -187,6 +220,13 @@ def predict_single(
     full_predictions = sparse_predictions.reindex(full_timeline)
     full_predictions = full_predictions.interpolate(method='linear')
     full_predictions = full_predictions.ffill().bfill()
+
+    # Physical constraint: the river cannot drop faster than the maximum
+    # recession rate, however dry the rainfall forecast is.
+    if max_recession_m_per_day is not None:
+        full_predictions = apply_recession_limit(
+            full_predictions, max_recession_m_per_day
+        )
     
     if verbose:
         print(f"  Prediction range: {full_predictions.min():.3f}m to {full_predictions.max():.3f}m")
@@ -204,6 +244,8 @@ def predict_ensemble(
     horizons: Optional[List[int]] = None,
     station_names: Optional[List[str]] = None,
     n_members: int = 20,
+    predicts_delta: bool = False,
+    max_recession_m_per_day: Optional[float] = None,
     verbose: bool = True
 ) -> pd.DataFrame:
     """
@@ -280,6 +322,8 @@ def predict_ensemble(
                 feature_columns=feature_columns,
                 sequence_length=sequence_length,
                 horizons=horizons,
+                predicts_delta=predicts_delta,
+                max_recession_m_per_day=max_recession_m_per_day,
                 verbose=False
             )
             
