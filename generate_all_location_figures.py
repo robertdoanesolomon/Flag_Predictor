@@ -18,6 +18,7 @@ import json
 import math
 import os
 import sys
+import traceback
 from pathlib import Path
 from typing import Optional
 
@@ -1100,15 +1101,38 @@ def main(argv: list[str] | None = None) -> None:
     print(f"Total locations: {len(locations_to_process)}")
 
     all_payloads: dict[str, dict] = {}
+    failed_locations: list[str] = []
     for location in locations_to_process:
-        payload = generate_spaghetti_figure(
-            location=location,
-            output_dir=output_dir,
-            n_members=args.n_members,
-            project_root=PROJECT_ROOT,
-        )
+        # One flaky EA gauge must not block publishing the other locations.
+        try:
+            payload = generate_spaghetti_figure(
+                location=location,
+                output_dir=output_dir,
+                n_members=args.n_members,
+                project_root=PROJECT_ROOT,
+            )
+        except Exception:
+            failed_locations.append(location)
+            print(f"\n[ERROR] Figure generation failed for '{location}':")
+            traceback.print_exc()
+            continue
         if payload is not None:
             all_payloads[location] = payload
+
+    json_path = output_dir / "forecast_data.json"
+
+    # Keep the previous payload for failed locations so the interactive page
+    # still shows them (with their older forecast) instead of dropping the tab.
+    if failed_locations and json_path.exists():
+        try:
+            with open(json_path) as f:
+                previous_locations = json.load(f).get("locations", {})
+            for location in failed_locations:
+                if location not in all_payloads and location in previous_locations:
+                    all_payloads[location] = previous_locations[location]
+                    print(f"  Reusing previous forecast payload for '{location}'")
+        except Exception as exc:
+            print(f"  Could not reuse previous forecast_data.json: {exc}")
 
     if all_payloads:
         bundle = {
@@ -1116,12 +1140,20 @@ def main(argv: list[str] | None = None) -> None:
             "location_order": [k for k in ["isis", "godstow", "wallingford"] if k in all_payloads],
             "locations": all_payloads,
         }
-        json_path = output_dir / "forecast_data.json"
         with open(json_path, "w") as f:
             json.dump(bundle, f, separators=(",", ":"))
         print(f"\n✓ Interactive JSON payload saved to: {json_path}")
 
     print(f"\nAll figures saved to: {output_dir}")
+
+    if failed_locations:
+        print(
+            f"\nWARNING: generation failed for {len(failed_locations)} location(s): "
+            f"{', '.join(failed_locations)}"
+        )
+        # Exit code 2 = partial failure: some locations updated, some did not.
+        # The CI workflow publishes what succeeded and then marks the run failed.
+        sys.exit(2 if all_payloads else 1)
 
 
 if __name__ == "__main__":

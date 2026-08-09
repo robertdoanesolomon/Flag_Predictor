@@ -25,9 +25,13 @@ from ..config import (
 )
 
 _DEFAULT_HTTP_TIMEOUT = (10, 180)  # (connect_timeout_s, read_timeout_s)
-# EA readings endpoints hard-cap at 10000 items. 90d of 15-min data is ~8640.
+# EA readings endpoints hard-cap at 10000 items. The flood-monitoring API only
+# retains ~28 days of readings, so asking for more just strains the backend.
 _EA_READINGS_LIMIT = 10000
-_EA_LOOKBACK_DAYS = 90
+_EA_LOOKBACK_DAYS = 28
+# When the backend 503s on a query, progressively smaller windows often still
+# succeed; a couple of days of fresh readings beats failing the whole publish.
+_EA_FALLBACK_LOOKBACK_DAYS = (7, 2)
 _EA_HTTP_TIMEOUT = (10, 60)
 
 
@@ -78,16 +82,31 @@ def _ea_readings_params(lookback_days: int = _EA_LOOKBACK_DAYS) -> dict:
 
 
 def _fetch_ea_readings_json(url: str, session: Optional[requests.Session] = None) -> dict:
-    """GET an EA readings endpoint with retries and sane limits."""
+    """
+    GET an EA readings endpoint with retries and sane limits.
+
+    Each window already gets HTTP-level retries from the session; if the full
+    window still fails (EA backends intermittently 503 heavy queries), fall
+    back to smaller lookback windows before giving up.
+    """
     sess = session or _requests_session_with_retries()
-    response = sess.get(
-        _normalize_readings_url(url),
-        params=_ea_readings_params(),
-        timeout=_EA_HTTP_TIMEOUT,
-        headers={"User-Agent": "Flag_Predictor/1.0 (+GitHubActions)"},
-    )
-    response.raise_for_status()
-    return response.json()
+    normalized = _normalize_readings_url(url)
+    last_error: Optional[Exception] = None
+    for lookback_days in (_EA_LOOKBACK_DAYS, *_EA_FALLBACK_LOOKBACK_DAYS):
+        try:
+            response = sess.get(
+                normalized,
+                params=_ea_readings_params(lookback_days),
+                timeout=_EA_HTTP_TIMEOUT,
+                headers={"User-Agent": "Flag_Predictor/1.0 (+GitHubActions)"},
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as exc:
+            last_error = exc
+            print(f"    EA readings fetch failed ({lookback_days}d window): {exc}")
+    assert last_error is not None
+    raise last_error
 
 
 def _require_level_series(river_levels: Dict[str, pd.DataFrame], name: str) -> pd.Series:
@@ -99,6 +118,18 @@ def _require_level_series(river_levels: Dict[str, pd.DataFrame], name: str) -> p
             "Flood-monitoring fetch returned no usable readings."
         )
     return df["level"]
+
+
+def _coerce_reading_values(series: pd.Series) -> pd.Series:
+    """
+    Coerce EA reading values to floats.
+
+    The EA API occasionally returns `value` as a JSON list (duplicate readings
+    for one timestamp, e.g. [0.107, 0.107]); take the first element. Anything
+    non-numeric becomes NaN and is dropped by callers.
+    """
+    cleaned = series.map(lambda v: v[0] if isinstance(v, list) and v else v)
+    return pd.to_numeric(cleaned, errors="coerce")
 
 
 def _process_level_api_response(data: dict) -> pd.DataFrame:
@@ -121,7 +152,10 @@ def _process_level_api_response(data: dict) -> pd.DataFrame:
     temp_df = temp_df[['dateTime', 'value']]
     temp_df.rename(columns={'dateTime': 'timestamp', 'value': 'level'}, inplace=True)
     temp_df['timestamp'] = pd.to_datetime(temp_df['timestamp'])
+    temp_df['level'] = _coerce_reading_values(temp_df['level'])
+    temp_df = temp_df.dropna(subset=['level'])
     df = temp_df.set_index('timestamp')
+    df = df[~df.index.duplicated(keep='last')]
     return df
 
 
@@ -145,7 +179,10 @@ def _process_rainfall_api_response(data: dict) -> pd.DataFrame:
     temp_df = temp_df[['dateTime', 'value']]
     temp_df.rename(columns={'dateTime': 'timestamp', 'value': 'rainfall'}, inplace=True)
     temp_df['timestamp'] = pd.to_datetime(temp_df['timestamp'])
+    temp_df['rainfall'] = _coerce_reading_values(temp_df['rainfall'])
+    temp_df = temp_df.dropna(subset=['rainfall'])
     df = temp_df.set_index('timestamp')
+    df = df[~df.index.duplicated(keep='last')]
     return df
 
 
@@ -170,8 +207,10 @@ def _process_flow_api_response(data: dict, column_name: str = 'flow_m3s_Farmoor'
     temp_df = temp_df[['dateTime', 'value']]
     temp_df.rename(columns={'dateTime': 'timestamp', 'value': column_name}, inplace=True)
     temp_df['timestamp'] = pd.to_datetime(temp_df['timestamp'])
-    temp_df[column_name] = pd.to_numeric(temp_df[column_name], errors='coerce')
+    temp_df[column_name] = _coerce_reading_values(temp_df[column_name])
+    temp_df = temp_df.dropna(subset=[column_name])
     df = temp_df.set_index('timestamp')
+    df = df[~df.index.duplicated(keep='last')]
     return df
 
 

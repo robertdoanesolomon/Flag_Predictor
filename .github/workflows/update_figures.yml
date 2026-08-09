@@ -77,9 +77,27 @@ jobs:
           git fetch origin main
           git checkout -B main origin/main
 
+          # Exit codes from generate_all_location_figures.py:
+          #   0 = all locations generated; 2 = partial (some locations failed but
+          #   others updated — publish what we have, then mark the run failed so
+          #   the problem stays visible). Anything else = hard failure.
+          GEN_RC=0
           generate_once() {
-            # IMPORTANT: generation failures must fail the job (do not treat as "no changes").
-            python generate_all_location_figures.py --output-dir docs
+            local rc=0
+            python generate_all_location_figures.py --output-dir docs || rc=$?
+            if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
+              echo "Figure generation failed hard (exit $rc)."
+              exit "$rc"
+            fi
+            GEN_RC=$rc
+          }
+
+          finish() {
+            if [ "$GEN_RC" -ne 0 ]; then
+              echo "Some locations failed to generate (see errors above); published partial update."
+              exit 1
+            fi
+            exit 0
           }
 
           commit_docs_if_changed() {
@@ -94,14 +112,14 @@ jobs:
 
           generate_once
           if ! commit_docs_if_changed; then
-            echo "Generation succeeded but docs/ already up to date."
-            exit 0
+            echo "Generation ran but docs/ already up to date."
+            finish
           fi
 
           for i in 1 2 3 4 5; do
             if git push origin HEAD:main; then
               echo "Push succeeded."
-              exit 0
+              finish
             fi
             echo "Push failed (attempt $i): updating from origin/main, regenerating, retrying..."
             sleep $((i * 5))
@@ -110,7 +128,7 @@ jobs:
             generate_once
             if ! commit_docs_if_changed; then
               echo "No changes after retry; exiting."
-              exit 0
+              finish
             fi
           done
 
