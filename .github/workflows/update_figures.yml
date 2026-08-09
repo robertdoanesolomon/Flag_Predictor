@@ -69,8 +69,20 @@ jobs:
         run: |
           set -euo pipefail
 
-          regenerate_and_commit_once() {
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Always branch from remote main before generating — avoids stacking a second
+          # figure commit onto one that landed while this job ran (PNG/JSON rebase conflicts).
+          git fetch origin main
+          git checkout -B main origin/main
+
+          generate_once() {
+            # IMPORTANT: generation failures must fail the job (do not treat as "no changes").
             python generate_all_location_figures.py --output-dir docs
+          }
+
+          commit_docs_if_changed() {
             if git diff --quiet HEAD -- docs; then
               echo "No changes under docs/"
               return 1
@@ -80,15 +92,11 @@ jobs:
             return 0
           }
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Always branch from remote main before generating — avoids stacking a second
-          # figure commit onto one that landed while this job ran (PNG/JSON rebase conflicts).
-          git fetch origin main
-          git checkout -B main origin/main
-
-          regenerate_and_commit_once || { echo "No commit needed"; exit 0; }
+          generate_once
+          if ! commit_docs_if_changed; then
+            echo "Generation succeeded but docs/ already up to date."
+            exit 0
+          fi
 
           for i in 1 2 3 4 5; do
             if git push origin HEAD:main; then
@@ -99,9 +107,12 @@ jobs:
             sleep $((i * 5))
             git fetch origin main
             git reset --hard origin/main
-            regenerate_and_commit_once || { echo "No changes after retry; exiting."; exit 0; }
+            generate_once
+            if ! commit_docs_if_changed; then
+              echo "No changes after retry; exiting."
+              exit 0
+            fi
           done
 
           echo "Failed to push after retries"
           exit 1
-

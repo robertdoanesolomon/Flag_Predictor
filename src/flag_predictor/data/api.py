@@ -25,6 +25,10 @@ from ..config import (
 )
 
 _DEFAULT_HTTP_TIMEOUT = (10, 180)  # (connect_timeout_s, read_timeout_s)
+# EA readings endpoints hard-cap at 10000 items. 90d of 15-min data is ~8640.
+_EA_READINGS_LIMIT = 10000
+_EA_LOOKBACK_DAYS = 90
+_EA_HTTP_TIMEOUT = (10, 60)
 
 
 def _requests_session_with_retries() -> requests.Session:
@@ -32,7 +36,7 @@ def _requests_session_with_retries() -> requests.Session:
     Build a requests Session with retries/backoff.
 
     GitHub Actions runners can intermittently time out when calling external APIs.
-    This makes Open-Meteo calls much more reliable without changing call sites.
+    This makes Open-Meteo / EA calls much more reliable without changing call sites.
     """
     retry = Retry(
         total=5,
@@ -48,6 +52,53 @@ def _requests_session_with_retries() -> requests.Session:
     session.mount("https://", adapter)
     session.mount("http://", adapter)
     return session
+
+
+def _normalize_readings_url(url: str) -> str:
+    """Force https and a .json readings path; strip any old query string."""
+    base = url.split("?", 1)[0].replace("http://", "https://")
+    if base.endswith("/readings"):
+        base = base + ".json"
+    elif not base.endswith(".json") and "/readings" not in base:
+        # Allow bare measure URLs for safety
+        base = base.rstrip("/") + "/readings.json"
+    return base
+
+
+def _ea_readings_params(lookback_days: int = _EA_LOOKBACK_DAYS) -> dict:
+    """Toby-style EA params: recent window only, within the 10k hard cap."""
+    since = (pd.Timestamp.utcnow() - pd.Timedelta(days=lookback_days)).strftime(
+        "%Y-%m-%dT%H:%M:%SZ"
+    )
+    return {
+        "since": since,
+        "_limit": _EA_READINGS_LIMIT,
+        "_sorted": "",
+    }
+
+
+def _fetch_ea_readings_json(url: str, session: Optional[requests.Session] = None) -> dict:
+    """GET an EA readings endpoint with retries and sane limits."""
+    sess = session or _requests_session_with_retries()
+    response = sess.get(
+        _normalize_readings_url(url),
+        params=_ea_readings_params(),
+        timeout=_EA_HTTP_TIMEOUT,
+        headers={"User-Agent": "Flag_Predictor/1.0 (+GitHubActions)"},
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def _require_level_series(river_levels: Dict[str, pd.DataFrame], name: str) -> pd.Series:
+    """Return a level series or raise a clear error if the EA fetch was empty."""
+    df = river_levels.get(name)
+    if df is None or df.empty or "level" not in df.columns:
+        raise RuntimeError(
+            f"Missing EA river-level data for '{name}'. "
+            "Flood-monitoring fetch returned no usable readings."
+        )
+    return df["level"]
 
 
 def _process_level_api_response(data: dict) -> pd.DataFrame:
@@ -137,15 +188,20 @@ def fetch_river_level_data(verbose: bool = True) -> Dict[str, pd.DataFrame]:
     if verbose:
         print("Fetching river level data...")
     
+    session = _requests_session_with_retries()
     results = {}
     for name, url in API_URLS.items():
         try:
-            response = requests.get(url, timeout=30)
-            response.raise_for_status()
-            df = _process_level_api_response(response.json())
+            df = _process_level_api_response(_fetch_ea_readings_json(url, session=session))
             results[name] = df
             if verbose:
-                print(f"  ✓ {name}: {len(df)} records")
+                if df.empty:
+                    print(f"  ✗ {name}: empty response")
+                else:
+                    print(
+                        f"  ✓ {name}: {len(df)} records "
+                        f"({df.index.min()} → {df.index.max()})"
+                    )
         except Exception as e:
             if verbose:
                 print(f"  ✗ {name}: {e}")
@@ -194,17 +250,18 @@ def fetch_rainfall_data(location: Optional[str] = None, verbose: bool = True) ->
             if verbose:
                 print(f"  Including {len(WALLINGFORD_RAINFALL_STATION_NAMES)} Wallingford-specific stations")
     
+    session = _requests_session_with_retries()
     rainfall_dfs = {}
     for url, name in zip(api_urls, station_names):
         try:
-            response = requests.get(url, timeout=30)
-            response.raise_for_status()
-            df = _process_rainfall_api_response(response.json())
+            df = _process_rainfall_api_response(_fetch_ea_readings_json(url, session=session))
             if not df.empty:
                 df.rename(columns={'rainfall': name}, inplace=True)
                 rainfall_dfs[name] = df
                 if verbose:
                     print(f"  ✓ {name}: {len(df)} records")
+            elif verbose:
+                print(f"  ✗ {name}: empty response")
         except Exception as e:
             if verbose:
                 print(f"  ✗ {name}: {e}")
@@ -305,12 +362,14 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
     Returns:
         DataFrame with 'differential' column
     """
-    o = _level_series_hourly_last(river_levels["osney_downstream"]["level"])
-    i = _level_series_hourly_last(river_levels["iffley_upstream"]["level"])
-    k = _level_series_hourly_last(river_levels["kings_mill_downstream"]["level"])
+    o = _level_series_hourly_last(_require_level_series(river_levels, "osney_downstream"))
+    i = _level_series_hourly_last(_require_level_series(river_levels, "iffley_upstream"))
+    k = _level_series_hourly_last(_require_level_series(river_levels, "kings_mill_downstream"))
     merged = pd.concat({"o": o, "i": i, "k": k}, axis=1).sort_index()
     # Allow small gaps—EA stations often miss occasional hours; avoids a frozen tail/hourly NaNs.
     merged = merged.ffill(limit=6).dropna(how="any")
+    if merged.empty:
+        raise RuntimeError("ISIS differential is empty after aligning EA level series.")
     differential = (
         0.71 * (merged["o"] - merged["i"] - 2.14)
         + 0.29 * (merged["k"] - merged["i"] - 0.73)
@@ -331,11 +390,13 @@ def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.
     Returns:
         DataFrame with 'differential' column
     """
-    g = _level_series_hourly_last(river_levels["godstow_downstream"]["level"])
-    u = _level_series_hourly_last(river_levels["osney_upstream"]["level"])
+    g = _level_series_hourly_last(_require_level_series(river_levels, "godstow_downstream"))
+    u = _level_series_hourly_last(_require_level_series(river_levels, "osney_upstream"))
     merged = pd.concat({"godstow": g, "osney_us": u}, axis=1).sort_index().ffill(limit=6).dropna(
         how="any"
     )
+    if merged.empty:
+        raise RuntimeError("Godstow differential is empty after aligning EA level series.")
     differential = merged["godstow"] - merged["osney_us"] - 1.63
 
     return pd.DataFrame({'differential': differential})
@@ -353,9 +414,11 @@ def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) ->
     Returns:
         DataFrame with 'differential' column
     """
-    b = _level_series_hourly_last(river_levels["benson_downstream"]["level"])
-    c = _level_series_hourly_last(river_levels["cleeve_upstream"]["level"])
+    b = _level_series_hourly_last(_require_level_series(river_levels, "benson_downstream"))
+    c = _level_series_hourly_last(_require_level_series(river_levels, "cleeve_upstream"))
     merged = pd.concat({"benson": b, "cleeve": c}, axis=1).sort_index().ffill(limit=6).dropna(how="any")
+    if merged.empty:
+        raise RuntimeError("Wallingford differential is empty after aligning EA level series.")
     differential = merged["benson"] - merged["cleeve"] - 2.13
 
     return pd.DataFrame({'differential': differential})

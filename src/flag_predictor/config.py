@@ -71,29 +71,29 @@ WALLINGFORD_RAINFALL_STATION_COORDINATES = {
     'Cleeve': {'latitude': 51.680, 'longitude': -1.200},  # Cleeve, Oxfordshire
 }
 
-# Wallingford-specific rainfall API URLs (measure IDs from user)
+# Wallingford-specific rainfall measure IDs / reading endpoints.
+# Query params are applied at fetch time (EA hard-caps readings at 10000).
 WALLINGFORD_RAINFALL_API_URLS = [
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/260221TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',  # Stanford
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/261021TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',  # Abingdon
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/263541TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',  # Wheatley
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/264254TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',  # Benson
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/261923TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',  # Aylesbury
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/264845TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',  # Cleeve
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/260221TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',  # Stanford
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/261021TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',  # Abingdon
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/263541TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',  # Wheatley
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/264254TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',  # Benson
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/261923TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',  # Aylesbury
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/264845TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',  # Cleeve
 ]
 
 WALLINGFORD_RAINFALL_STATION_NAMES = list(WALLINGFORD_RAINFALL_STATION_COORDINATES.keys())
 
 
-# River level API URLs
+# River level reading endpoints (query params applied at fetch time).
 API_URLS = {
-    'kings_mill_downstream': 'http://environment.data.gov.uk/flood-monitoring/id/measures/1491TH-level-downstage-i-15_min-mASD/readings?_sorted&_limit=90000',
-    'godstow_downstream': 'http://environment.data.gov.uk/flood-monitoring/id/measures/1302TH-level-downstage-i-15_min-mASD/readings?_sorted&_limit=90000',
-    'osney_upstream': 'http://environment.data.gov.uk/flood-monitoring/id/measures/1303TH-level-stage-i-15_min-mASD/readings?_sorted&_limit=90000',
-    'osney_downstream': 'http://environment.data.gov.uk/flood-monitoring/id/measures/1303TH-level-downstage-i-15_min-mASD/readings?_sorted&_limit=90000',
-    'iffley_upstream': 'http://environment.data.gov.uk/flood-monitoring/id/measures/1501TH-level-stage-i-15_min-mASD/readings?_sorted&_limit=90000',
-    'benson_downstream': 'http://environment.data.gov.uk/flood-monitoring/id/measures/2001TH-level-downstage-i-15_min-mASD/readings?_sorted&_limit=90000',
-    'cleeve_upstream': 'http://environment.data.gov.uk/flood-monitoring/id/measures/2002TH-level-stage-i-15_min-mASD/readings?_sorted&_limit=90000',
-
+    'kings_mill_downstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/1491TH-level-downstage-i-15_min-mASD/readings.json',
+    'godstow_downstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/1302TH-level-downstage-i-15_min-mASD/readings.json',
+    'osney_upstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/1303TH-level-stage-i-15_min-mASD/readings.json',
+    'osney_downstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/1303TH-level-downstage-i-15_min-mASD/readings.json',
+    'iffley_upstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/1501TH-level-stage-i-15_min-mASD/readings.json',
+    'benson_downstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/2001TH-level-downstage-i-15_min-mASD/readings.json',
+    'cleeve_upstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/2002TH-level-stage-i-15_min-mASD/readings.json',
 }
 
 # Farmoor flow (upstream) - Hydrology API, same structure as rainfall (items with dateTime, value)
@@ -104,19 +104,19 @@ FLOW_API_BASE = (
 )
 
 RAINFALL_API_URLS = [
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/256230TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/254336TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/251530TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/248332TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/248965TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/251556TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/253340TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/254829TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/257039TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/259110TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/256345TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/249744TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000',
-    'http://environment.data.gov.uk/flood-monitoring/id/measures/253861TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings?_sorted&_limit=90000'
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/256230TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/254336TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/251530TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/248332TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/248965TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/251556TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/253340TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/254829TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/257039TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/259110TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/256345TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/249744TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
+    'https://environment.data.gov.uk/flood-monitoring/id/measures/253861TP-rainfall-tipping_bucket_raingauge-t-15_min-mm/readings.json',
 ]
 
 
