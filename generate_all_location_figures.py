@@ -350,12 +350,16 @@ def generate_combined_figure(
     forecast_start_time = plot_df.index[0]
 
     # --- differential sensor freshness check ---
+    # Use the differential column itself: the merged frame's index also covers
+    # rainfall columns, which stay fresh even when the level gauges go offline.
     hist_naive = historical_df.copy()
     hist_naive.index = _ensure_timezone_naive(hist_naive.index)
-    
-    last_update = hist_naive.index.max()
+
+    last_update = hist_naive["differential"].last_valid_index()
+    if last_update is None:
+        last_update = hist_naive.index.max()
     now_utc = pd.Timestamp.utcnow().tz_localize(None)
-    
+
     stale_suffix = ""
     if now_utc - last_update > pd.Timedelta(hours=4):
         stale_suffix = "  |  STALE FORECAST: SENSOR OFFLINE"
@@ -965,12 +969,16 @@ def generate_spaghetti_figure(
 
     
     # --- differential sensor freshness check ---
+    # Use the differential column itself: the merged frame's index also covers
+    # rainfall columns, which stay fresh even when the level gauges go offline.
     hist_naive = merged_df.copy()
     hist_naive.index = _ensure_timezone_naive(hist_naive.index)
-    
-    last_update = hist_naive.index.max()
+
+    last_update = hist_naive["differential"].last_valid_index()
+    if last_update is None:
+        last_update = hist_naive.index.max()
     now_utc = pd.Timestamp.utcnow().tz_localize(None)
-    
+
     stale_suffix = ""
     if now_utc - last_update > pd.Timedelta(hours=4):
         stale_suffix = "  |  STALE FORECAST: SENSOR OFFLINE"
