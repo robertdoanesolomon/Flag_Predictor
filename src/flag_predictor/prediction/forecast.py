@@ -65,7 +65,7 @@ def apply_hourly_physics(
     )
     values = predictions.to_numpy(dtype=float).copy()
     current = float(values[0])
-    rain = future_rain.reindex(predictions.index).fillna(0.0).to_numpy(dtype=float)
+    rain = future_rain.reindex(predictions.index).fillna(0.0).to_numpy(dtype=float).copy()
     rain[0] = 0.0
     rain = np.clip(rain, 0, None)
     rain_3h = np.convolve(rain, np.ones(3), mode='full')[: len(rain)]
@@ -181,6 +181,9 @@ def predict_flow_hourly(
 
     log_now = np.log1p(max(current_flow, 0.0))
     flow_abs = np.expm1(log_now + delta).clip(min=0.0)
+    if not flow_config.get('flow_blend', True):
+        # Raw stage-1 output, without holding flow at the last observation.
+        return pd.Series(flow_abs, index=future_index, name=flow_col)
     rain_cume = np.cumsum(np.clip(rain.to_numpy(dtype=float), 0, None))
     mix = np.clip(rain_cume / max(PHYSICAL_CONSTRAINTS['dry_cume_mm'], 1e-3), 0.0, 1.0)
     flow_blend = current_flow * (1.0 - mix) + flow_abs * mix
