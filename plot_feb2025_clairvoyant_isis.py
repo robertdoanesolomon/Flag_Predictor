@@ -49,7 +49,8 @@ def rain_columns(df: pd.DataFrame) -> list:
     ]
 
 
-def run_clairvoyant(model, scaler, config, merged_df, t0, predicts_delta, clamp):
+def run_clairvoyant(model, scaler, config, merged_df, t0, predicts_delta, clamp,
+                    flow_model=None, flow_scaler=None, flow_config=None):
     cols = rain_columns(merged_df)
     history = merged_df.loc[:t0]
     future_rain = merged_df.loc[t0:t0 + pd.Timedelta(hours=241), cols].iloc[1:]
@@ -60,10 +61,14 @@ def run_clairvoyant(model, scaler, config, merged_df, t0, predicts_delta, clamp)
         rainfall_forecast_df=future_rain,
         feature_columns=config['feature_columns'],
         sequence_length=config['sequence_length'],
-        horizons=config['horizons'],
+        horizons=config.get('horizons'),
         predicts_delta=predicts_delta,
         max_recession_m_per_day=MAX_RECESSION if clamp else None,
         verbose=False,
+        model_config=config,
+        flow_model=flow_model,
+        flow_scaler=flow_scaler,
+        flow_config=flow_config,
     )
 
 
@@ -86,8 +91,17 @@ def main():
     model_specs = [
         ('May 2026 (old)', 'experiment_2026_01_isis', False, False),
         ('June 2026 (new)', 'experiment_2026_06_isis', True, True),
+        ('September 2026', 'experiment_2026_09_isis', True, True),
     ]
     models = {}
+    flow_bundle = (None, None, None)
+    farmoor = MODELS_DIR / 'multihorizon_model_experiment_2026_09_farmoor.pth'
+    if farmoor.exists():
+        flow_bundle = load_model(
+            model_path=farmoor,
+            scaler_path=MODELS_DIR / 'scaler_experiment_2026_09_farmoor.pkl',
+            config_path=MODELS_DIR / 'config_experiment_2026_09_farmoor.pkl',
+        )
     for label, name, delta, clamp in model_specs:
         model, scaler, config = load_model(
             model_path=MODELS_DIR / f'multihorizon_model_{name}.pth',
@@ -97,8 +111,12 @@ def main():
         forecasts = {}
         for i, t0 in enumerate(t0s, 1):
             print(f"  [{label}] {i}/{len(t0s)}  t0={t0:%Y-%m-%d %H:%M}", flush=True)
+            use_flow = config.get('uses_predicted_flow')
             forecasts[t0] = run_clairvoyant(
-                model, scaler, config, merged_df, t0, delta, clamp
+                model, scaler, config, merged_df, t0, delta, clamp,
+                flow_model=flow_bundle[0] if use_flow else None,
+                flow_scaler=flow_bundle[1] if use_flow else None,
+                flow_config=flow_bundle[2] if use_flow else None,
             )
         models[label] = {'forecasts': forecasts}
 
@@ -122,6 +140,7 @@ def main():
     panel_styles = [
         ('May 2026 (old)', '#d62728'),
         ('June 2026 (new)', '#1f77b4'),
+        ('September 2026', '#2ca02c'),
     ]
     for label, color in panel_styles:
         forecasts = models[label]['forecasts']
@@ -163,10 +182,13 @@ def main():
     plt.setp(ax_rain.xaxis.get_majorticklabels(), rotation=30, ha='right')
 
     FIGURES_DIR.mkdir(exist_ok=True)
-    out_png = FIGURES_DIR / 'feb2025_clairvoyant_isis_may_vs_june.png'
-    out_pdf = FIGURES_DIR / 'feb2025_clairvoyant_isis_may_vs_june.pdf'
+    out_png = FIGURES_DIR / 'feb2025_clairvoyant_isis_may_vs_june_vs_sept.png'
+    out_pdf = FIGURES_DIR / 'feb2025_clairvoyant_isis_may_vs_june_vs_sept.pdf'
     fig.savefig(out_png, dpi=150, bbox_inches='tight')
     fig.savefig(out_pdf, bbox_inches='tight')
+    # Legacy June filenames
+    fig.savefig(FIGURES_DIR / 'feb2025_clairvoyant_isis_may_vs_june.png', dpi=150, bbox_inches='tight')
+    fig.savefig(FIGURES_DIR / 'feb2025_clairvoyant_isis_may_vs_june.pdf', bbox_inches='tight')
     plt.close(fig)
     print(f"\nSaved: {out_png}")
     print(f"Saved: {out_pdf}")

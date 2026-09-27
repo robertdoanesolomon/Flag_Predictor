@@ -1,4 +1,33 @@
-# Flag Predictor (June 2026 model)
+# Flag Predictor (September 2026 model)
+
+## What changed in September 2026
+
+This is the model currently running on GitHub Pages. It keeps June's delta targets and
+the 3 in/day recession **clamp at inference only**, and replaces the 24-head LSTM
+plus flow-persistence with a two-stage hourly decoder. Dry weather is also
+constrained: no rise until rain is actually falling, and a quiet low-flow
+plateau is held near the current observed differential for the first day.
+After rain arrives the learned trajectory can move (the plateau pin does not
+last the whole 10 days). Loss weights the first 24 hours more than day 10.
+
+1. **Stage 1 — Farmoor flow.** Rain → 240-hour Farmoor discharge, trained on the
+   long EA record (rainfall from 2000, flow from 1992) rather than the
+   differential start date of 2017. This replaces the old 10-day **flat flow**
+   persistence at forecast time, if and only if the flow decoder beats
+   persistence on 24–240h MAE (`figures/backtest_flow_vs_persistence.png`).
+2. **Stage 2 — location differential.** Encoder reads past river/rain/flow
+   features; the decoder sees future rain (and predicted Farmoor flow) **each
+   hour**. No linear interpolation between 24 knots.
+3. **Loss.** Weighted MAE on hourly deltas, event/rising/winter weights, a light
+   rain-response term. Persistence, 240h false-rise, rain-noise, and the heavy
+   recession×5 teacher are gone.
+4. **Split.** Train through 2024-10-31 except calendar 2023 (validation). The
+   May/June backtest window (2024-11 → 2026-01) is held out.
+
+Compare with `python backtest_may_june_sept.py {location}`. Retrain with
+`python train_september_models.py`. Weights: `models/*_experiment_2026_09_*`.
+
+---
 
 ## What changed in June 2026
 

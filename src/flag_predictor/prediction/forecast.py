@@ -12,9 +12,13 @@ from typing import Dict, List, Optional, Union
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 
-from ..models.lstm import MultiHorizonLSTMModel, get_device
-from ..processing.features import create_features_with_future_rainfall
-from ..config import PHYSICAL_CONSTRAINTS
+from ..models.lstm import HourlyDecoderModel, MultiHorizonLSTMModel, get_device
+from ..processing.features import (
+    build_september_encoder_features,
+    create_features_with_future_rainfall,
+    rain_station_columns,
+)
+from ..config import PHYSICAL_CONSTRAINTS, get_location_config
 
 
 def apply_recession_limit(
@@ -38,6 +42,233 @@ def apply_recession_limit(
     return pd.Series(values, index=predictions.index)
 
 
+def apply_hourly_physics(
+    predictions: pd.Series,
+    historical_diff: pd.Series,
+    future_rain: pd.Series,
+    max_recession_m_per_day: Optional[float] = None,
+    min_differential: Optional[float] = None,
+) -> pd.Series:
+    """
+    Physical limits on an hourly differential forecast.
+
+    Recession clamp always. Dry hours cannot rise, and a quiet plateau is
+    held near the current observation. As soon as rain is falling, the
+    learned trajectory is allowed to move (so 0–24h rain response is not
+    delayed until a large catchment total has accumulated).
+    """
+    phys = PHYSICAL_CONSTRAINTS
+    rec = (
+        phys['max_recession_m_per_day']
+        if max_recession_m_per_day is None
+        else max_recession_m_per_day
+    )
+    values = predictions.to_numpy(dtype=float).copy()
+    current = float(values[0])
+    rain = future_rain.reindex(predictions.index).fillna(0.0).to_numpy(dtype=float)
+    rain[0] = 0.0
+    rain = np.clip(rain, 0, None)
+    rain_3h = np.convolve(rain, np.ones(3), mode='full')[: len(rain)]
+
+    hist = historical_diff.dropna()
+    recent = hist.iloc[-48:] if len(hist) else hist
+    if len(recent) >= 8:
+        net_48h = float(recent.iloc[-1] - recent.iloc[0])
+        std_48h = float(recent.std())
+    else:
+        net_48h, std_48h = 0.0, 0.0
+    plateau = (abs(net_48h) < phys['plateau_net_m']) and (std_48h < phys['plateau_std_m'])
+
+    min_7d = float(hist.iloc[-168:].min()) if len(hist) else current
+    min_14d = float(hist.iloc[-336:].min()) if len(hist) else current
+    struct_floor = -0.15 if min_differential is None else float(min_differential)
+    if plateau:
+        low_floor = min(current, min_7d) - phys['dry_band_m']
+    else:
+        low_floor = min(current, min_7d, min_14d) - phys['low_flow_slack_m']
+    low_floor = max(low_floor, struct_floor)
+
+    dry_ceiling = current + phys['dry_band_m']
+    if len(hist):
+        dry_ceiling = max(dry_ceiling, float(hist.iloc[-24:].max()) + 0.005)
+
+    max_drop = rec / 24.0
+    dry_hour = phys['dry_hour_mm']
+    dry_band = phys['dry_band_m']
+    left_init = False
+
+    for i in range(1, len(values)):
+        rec_floor = values[i - 1] - max_drop
+        if values[i] < rec_floor:
+            values[i] = rec_floor
+        if values[i] < low_floor:
+            values[i] = low_floor
+        hour_dry = (rain[i] < dry_hour) and (rain_3h[i] < dry_hour * 2.5)
+        if (not hour_dry) or (i > 24):
+            left_init = True
+        # Only pin to the current observation while it is still dry near t0.
+        # After rain (or after 24h) the learned trajectory is allowed to move,
+        # otherwise winter floods get snapped back to the start.
+        if (not left_init) and hour_dry:
+            if values[i] > dry_ceiling:
+                values[i] = dry_ceiling
+            if plateau:
+                lo, hi = current - 0.005, current + dry_band
+                if values[i] < lo:
+                    values[i] = lo
+                if values[i] > hi:
+                    values[i] = hi
+    return pd.Series(values, index=predictions.index)
+
+
+def _align_future_rain(
+    rainfall_forecast_df: pd.DataFrame,
+    future_index: pd.DatetimeIndex,
+    station_hint: Optional[List[str]] = None,
+) -> pd.Series:
+    """Hourly catchment rainfall on future_index (0 if missing)."""
+    rain = rainfall_forecast_df.copy()
+    if rain.index.tz is None and future_index.tz is not None:
+        rain = rain.tz_localize(future_index.tz)
+    elif rain.index.tz is not None and future_index.tz is None:
+        rain = rain.tz_convert('UTC').tz_localize(None)
+    cols = list(rain.columns)
+    if station_hint:
+        cols = [c for c in cols if c in rain.columns]
+    catchment = rain[cols].sum(axis=1) if len(cols) else pd.Series(0.0, index=rain.index)
+    catchment = catchment.reindex(future_index).fillna(0.0)
+    return catchment
+
+
+def predict_flow_hourly(
+    flow_model: HourlyDecoderModel,
+    flow_scaler: MinMaxScaler,
+    flow_config: Dict,
+    historical_df: pd.DataFrame,
+    rainfall_forecast_df: pd.DataFrame,
+    verbose: bool = False,
+) -> pd.Series:
+    """240-hour Farmoor flow forecast from rain (absolute m3/s, not log)."""
+    device = next(flow_model.parameters()).device
+    sequence_length = flow_config['sequence_length']
+    horizon = flow_config.get('horizon', 240)
+    feature_columns = flow_config['feature_columns']
+    decoder_scaler: MinMaxScaler = flow_config['decoder_scaler']
+
+    lookback = max(720, sequence_length + 24)
+    history = historical_df.iloc[-lookback:].copy()
+    t0 = history.index[-1]
+    flow_col = flow_config.get('target_column', 'flow_m3s_Farmoor')
+    current_flow = float(history[flow_col].iloc[-1]) if flow_col in history.columns else 0.0
+
+    encoder_df = build_september_encoder_features(history, target_col=flow_col)
+    for col in feature_columns:
+        if col not in encoder_df.columns:
+            encoder_df[col] = 0.0
+    seq = encoder_df[feature_columns].iloc[-sequence_length:].ffill().bfill().fillna(0)
+    x = flow_scaler.transform(seq.values)
+    x_t = torch.FloatTensor(x).unsqueeze(0).to(device)
+
+    future_index = pd.date_range(t0 + pd.Timedelta(hours=1), periods=horizon, freq='1h')
+    rain = _align_future_rain(rainfall_forecast_df, future_index)
+    cov = rain.to_numpy(dtype=float).reshape(-1, 1)
+    cov = decoder_scaler.transform(cov)
+    c_t = torch.FloatTensor(cov).unsqueeze(0).to(device)
+
+    flow_model.eval()
+    with torch.no_grad():
+        delta = flow_model(x_t, c_t).cpu().numpy()[0]
+
+    log_now = np.log1p(max(current_flow, 0.0))
+    flow_abs = np.expm1(log_now + delta).clip(min=0.0)
+    rain_cume = np.cumsum(np.clip(rain.to_numpy(dtype=float), 0, None))
+    mix = np.clip(rain_cume / max(PHYSICAL_CONSTRAINTS['dry_cume_mm'], 1e-3), 0.0, 1.0)
+    flow_blend = current_flow * (1.0 - mix) + flow_abs * mix
+    series = pd.Series(flow_blend, index=future_index, name=flow_col)
+    if verbose:
+        print(f"  Flow forecast: {flow_abs.min():.1f} – {flow_abs.max():.1f} m3/s")
+    return series
+
+
+def _predict_hourly_differential(
+    model: HourlyDecoderModel,
+    scaler: MinMaxScaler,
+    model_config: Dict,
+    historical_df: pd.DataFrame,
+    rainfall_forecast_df: pd.DataFrame,
+    predicted_flow: Optional[pd.Series],
+    max_recession_m_per_day: Optional[float],
+    verbose: bool,
+) -> pd.Series:
+    device = next(model.parameters()).device
+    sequence_length = model_config['sequence_length']
+    horizon = model_config.get('horizon', 240)
+    feature_columns = model_config['feature_columns']
+    decoder_cols = model_config['decoder_columns']
+    decoder_scaler: MinMaxScaler = model_config['decoder_scaler']
+
+    lookback = max(720, sequence_length + 24)
+    history = historical_df.iloc[-lookback:].copy()
+    t0 = history.index[-1]
+    current_differential = float(history['differential'].iloc[-1])
+
+    encoder_df = build_september_encoder_features(history, target_col='differential')
+    for col in feature_columns:
+        if col not in encoder_df.columns:
+            encoder_df[col] = 0.0
+    seq = encoder_df[feature_columns].iloc[-sequence_length:].ffill().bfill().fillna(0)
+    x = scaler.transform(seq.values)
+    x_t = torch.FloatTensor(x).unsqueeze(0).to(device)
+
+    future_index = pd.date_range(t0 + pd.Timedelta(hours=1), periods=horizon, freq='1h')
+    rain = _align_future_rain(rainfall_forecast_df, future_index)
+    cov_parts = []
+    for name in decoder_cols:
+        if name == 'catchment_rainfall_total':
+            cov_parts.append(rain.to_numpy(dtype=float))
+        elif name == 'flow_log':
+            if predicted_flow is None:
+                last_flow = float(history['flow_m3s_Farmoor'].iloc[-1]) if 'flow_m3s_Farmoor' in history.columns else 0.0
+                flow_vals = np.full(horizon, last_flow, dtype=float)
+            else:
+                flow_vals = predicted_flow.reindex(future_index).ffill().bfill().fillna(0).to_numpy(dtype=float)
+            cov_parts.append(np.log1p(np.clip(flow_vals, 0, None)))
+        else:
+            cov_parts.append(np.zeros(horizon, dtype=float))
+    cov = np.column_stack(cov_parts)
+    cov = decoder_scaler.transform(cov)
+    c_t = torch.FloatTensor(cov).unsqueeze(0).to(device)
+
+    model.eval()
+    with torch.no_grad():
+        delta = model(x_t, c_t).cpu().numpy()[0]
+
+    values = current_differential + delta
+    full_index = pd.date_range(t0, periods=horizon + 1, freq='1h')
+    full = pd.Series(np.concatenate([[current_differential], values]), index=full_index)
+    if max_recession_m_per_day is not None:
+        mode = (model_config or {}).get('physics_mode', 'full')
+        if mode == 'off':
+            pass
+        elif mode == 'recession':
+            full = apply_recession_limit(full, max_recession_m_per_day)
+        else:
+            min_diff = model_config.get('min_differential')
+            loc = model_config.get('location')
+            if min_diff is None and loc:
+                min_diff = get_location_config(loc).min_differential
+            full = apply_hourly_physics(
+                full,
+                historical_diff=history['differential'],
+                future_rain=rain,
+                max_recession_m_per_day=max_recession_m_per_day,
+                min_differential=min_diff,
+            )
+    if verbose:
+        print(f"  Prediction range: {full.min():.3f}m to {full.max():.3f}m")
+    return full
+
+
 def predict_single(
     model: MultiHorizonLSTMModel,
     scaler: MinMaxScaler,
@@ -48,7 +279,11 @@ def predict_single(
     horizons: Optional[List[int]] = None,
     predicts_delta: bool = False,
     max_recession_m_per_day: Optional[float] = None,
-    verbose: bool = True
+    verbose: bool = True,
+    model_config: Optional[Dict] = None,
+    flow_model: Optional[HourlyDecoderModel] = None,
+    flow_scaler: Optional[MinMaxScaler] = None,
+    flow_config: Optional[Dict] = None,
 ) -> pd.Series:
     """
     Generate a 240-hour river differential prediction for ONE rainfall scenario.
@@ -76,6 +311,34 @@ def predict_single(
     Returns:
         pd.Series: Hourly predictions for next 240 hours
     """
+    is_hourly = (
+        isinstance(model, HourlyDecoderModel)
+        or (model_config or {}).get('architecture') == 'hourly_decoder'
+    )
+    if is_hourly:
+        cfg = model_config or {}
+        predicted_flow = None
+        if (
+            cfg.get('uses_predicted_flow', False)
+            and flow_model is not None
+            and flow_scaler is not None
+            and flow_config is not None
+        ):
+            predicted_flow = predict_flow_hourly(
+                flow_model, flow_scaler, flow_config,
+                historical_df, rainfall_forecast_df, verbose=verbose,
+            )
+        return _predict_hourly_differential(
+            model=model,
+            scaler=scaler,
+            model_config=cfg,
+            historical_df=historical_df,
+            rainfall_forecast_df=rainfall_forecast_df,
+            predicted_flow=predicted_flow,
+            max_recession_m_per_day=max_recession_m_per_day,
+            verbose=verbose,
+        )
+
     device = next(model.parameters()).device
     
     if horizons is None:
@@ -246,7 +509,11 @@ def predict_ensemble(
     n_members: int = 20,
     predicts_delta: bool = False,
     max_recession_m_per_day: Optional[float] = None,
-    verbose: bool = True
+    verbose: bool = True,
+    model_config: Optional[Dict] = None,
+    flow_model: Optional[HourlyDecoderModel] = None,
+    flow_scaler: Optional[MinMaxScaler] = None,
+    flow_config: Optional[Dict] = None,
 ) -> pd.DataFrame:
     """
     Generate ensemble river flow predictions from multiple rainfall scenarios.
@@ -324,7 +591,11 @@ def predict_ensemble(
                 horizons=horizons,
                 predicts_delta=predicts_delta,
                 max_recession_m_per_day=max_recession_m_per_day,
-                verbose=False
+                verbose=False,
+                model_config=model_config,
+                flow_model=flow_model,
+                flow_scaler=flow_scaler,
+                flow_config=flow_config,
             )
             
             ensemble_predictions[f'member_{member_idx}'] = prediction

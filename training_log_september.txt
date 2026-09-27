@@ -1,0 +1,23 @@
+September 2026 training log
+========================================
+farmoor: status=ok  best_val_mae=0.1403193553986822  epochs=15  minutes=26.4
+  beats_persistence=True
+  flow_backtest 24-240h MAE 4.15 vs persistence 5.59 m3/s
+
+Location models (near-term-weighted loss + dry-hour persist; predicted Farmoor flow):
+isis:        best_val_mae=0.0668
+godstow:     best_val_mae=0.0563
+wallingford: best_val_mae=0.1023
+
+Inference physics: recession clamp always; low-flow plateau pinned only while
+still dry in the first 24h (does not snap winter floods back to t0). Farmoor
+flow is held at the last observation until catchment rain arrives.
+
+Clairvoyant weekly backtest after these changes (physics=full v2):
+  isis        mae=0.049  mae_0_24h=0.016  jump_6h=0.0067  (June mae=0.057 / 0.012)
+  godstow     mae=0.067  mae_0_24h=0.020  jump_6h=0.0086  (June mae=0.070 / 0.018)
+  wallingford mae=0.106  mae_0_24h=0.024  jump_6h=0.0068  (June mae=0.088 / 0.021)
+
+Tried and rejected: plateau-hold for the whole 10 days (hurts winter MAE);
+Wallingford without Farmoor flow (mae 0.126 vs 0.106); extra-strong 0-6h/rain
+Isis retrain (0-24h 0.0153 but overall mae 0.055 vs 0.049).

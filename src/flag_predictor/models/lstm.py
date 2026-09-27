@@ -125,3 +125,82 @@ class MultiHorizonLSTMModel(nn.Module):
             'num_layers': self.num_layers,
             'n_horizons': self.n_horizons,
         }
+
+
+class HourlyDecoderModel(nn.Module):
+    """
+    Encoder-decoder LSTM that emits an hourly trajectory.
+
+    The encoder reads `sequence_length` hours of past features. The decoder
+    then steps across `horizon` future hours, seeing known future covariates
+    at each step (rainfall, and for location models predicted Farmoor flow).
+    Outputs are deltas from the value at t0.
+    """
+
+    architecture = 'hourly_decoder'
+
+    def __init__(
+        self,
+        input_size: int,
+        decoder_input_size: int,
+        hidden_sizes: List[int] = [192, 128, 64],
+        dropout_rate: float = 0.3,
+        horizon: int = 240,
+    ):
+        super().__init__()
+        self.input_size = input_size
+        self.decoder_input_size = decoder_input_size
+        self.hidden_sizes = list(hidden_sizes)
+        self.num_layers = len(self.hidden_sizes)
+        self.dropout_rate = dropout_rate
+        self.horizon = horizon
+
+        self.encoder_layers = nn.ModuleList()
+        self.encoder_dropouts = nn.ModuleList()
+        for i, hidden_size in enumerate(self.hidden_sizes):
+            in_dim = input_size if i == 0 else self.hidden_sizes[i - 1]
+            self.encoder_layers.append(nn.LSTM(in_dim, hidden_size, batch_first=True))
+            self.encoder_dropouts.append(nn.Dropout(dropout_rate))
+
+        dec_hidden = self.hidden_sizes[-1]
+        self.decoder = nn.LSTM(decoder_input_size, dec_hidden, batch_first=True)
+        self.decoder_dropout = nn.Dropout(dropout_rate)
+        self.head = nn.Linear(dec_hidden, 1)
+
+    def forward(
+        self,
+        x_past: torch.Tensor,
+        future_cov: torch.Tensor,
+        debug: bool = False,
+    ) -> torch.Tensor:
+        """
+        Args:
+            x_past: (batch, sequence_length, input_size)
+            future_cov: (batch, horizon, decoder_input_size)
+
+        Returns:
+            (batch, horizon) predicted deltas
+        """
+        x = x_past
+        h_n = c_n = None
+        for lstm, dropout in zip(self.encoder_layers, self.encoder_dropouts):
+            x, (h_n, c_n) = lstm(x)
+            x = dropout(x)
+        if debug:
+            print(f"[HOURLY] encoder last {x.shape} h {h_n.shape}")
+
+        dec_out, _ = self.decoder(future_cov, (h_n, c_n))
+        dec_out = self.decoder_dropout(dec_out)
+        pred = self.head(dec_out).squeeze(-1)
+        if debug:
+            print(f"[HOURLY] pred {pred.shape}")
+        return pred
+
+    def get_config(self) -> dict:
+        return {
+            'architecture': self.architecture,
+            'hidden_sizes': self.hidden_sizes,
+            'num_layers': self.num_layers,
+            'decoder_input_size': self.decoder_input_size,
+            'horizon': self.horizon,
+        }

@@ -1,0 +1,11 @@
+{
+  "uses_predicted_flow": true,
+  "summary": {
+    "n": 62,
+    "mae_model_24_240h": 4.1467169794701935,
+    "mae_persist_24_240h": 5.591607960457857,
+    "mae_model": 3.841593674208922,
+    "mae_persist": 5.1166196961584784,
+    "beats_persistence": true
+  }
+}

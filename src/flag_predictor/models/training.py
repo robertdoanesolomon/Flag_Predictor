@@ -19,7 +19,7 @@ from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
-from .lstm import MultiHorizonLSTMModel, get_device
+from .lstm import HourlyDecoderModel, MultiHorizonLSTMModel, get_device
 from ..config import (
     MODEL_CONFIG,
     TRAINING_CONFIG,
@@ -549,13 +549,22 @@ def load_model(
     with open(config_path, 'rb') as f:
         config = pickle.load(f)
     
-    # Recreate model
-    model = MultiHorizonLSTMModel(
-        input_size=config['input_size'],
-        hidden_sizes=config['hidden_sizes'],
-        n_horizons=len(config['horizons']),
-        dropout_rate=config['dropout_rate']
-    )
+    # Recreate model (May/June multi-horizon or September hourly decoder)
+    if config.get('architecture') == 'hourly_decoder':
+        model = HourlyDecoderModel(
+            input_size=config['input_size'],
+            decoder_input_size=config['decoder_input_size'],
+            hidden_sizes=config['hidden_sizes'],
+            dropout_rate=config['dropout_rate'],
+            horizon=config.get('horizon', 240),
+        )
+    else:
+        model = MultiHorizonLSTMModel(
+            input_size=config['input_size'],
+            hidden_sizes=config['hidden_sizes'],
+            n_horizons=len(config['horizons']),
+            dropout_rate=config['dropout_rate']
+        )
     model = model.to(device)
     
     # Load weights
@@ -575,6 +584,9 @@ def load_model(
     print(f"✓ Model loaded from: {model_path}")
     print(f"✓ Scaler loaded from: {scaler_path}")
     print(f"✓ Sequence length: {config['sequence_length']}")
-    print(f"✓ Horizons: {config['horizons']}")
+    if config.get('architecture') == 'hourly_decoder':
+        print(f"✓ Architecture: hourly_decoder  horizon={config.get('horizon', 240)}")
+    else:
+        print(f"✓ Horizons: {config['horizons']}")
     
     return model, scaler, config

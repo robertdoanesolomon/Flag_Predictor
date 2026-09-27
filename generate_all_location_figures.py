@@ -609,10 +609,15 @@ def generate_spaghetti_figure(
     # ------------------------------------------------------------------
     models_dir = project_root / "models"
 
-    # Use the June 2026 experiment models (delta targets + recession clamp).
-    model_path = models_dir / f"multihorizon_model_experiment_2026_06_{location}.pth"
-    scaler_path = models_dir / f"scaler_experiment_2026_06_{location}.pkl"
-    config_path = models_dir / f"config_experiment_2026_06_{location}.pkl"
+    # Use the September 2026 experiment models (hourly decoder + optional
+    # Farmoor flow stage-1). Fall back to June if September weights are missing.
+    model_path = models_dir / f"multihorizon_model_experiment_2026_09_{location}.pth"
+    scaler_path = models_dir / f"scaler_experiment_2026_09_{location}.pkl"
+    config_path = models_dir / f"config_experiment_2026_09_{location}.pkl"
+    if not model_path.exists():
+        model_path = models_dir / f"multihorizon_model_experiment_2026_06_{location}.pth"
+        scaler_path = models_dir / f"scaler_experiment_2026_06_{location}.pkl"
+        config_path = models_dir / f"config_experiment_2026_06_{location}.pkl"
 
     try:
         model, scaler, model_config = load_model(
@@ -631,10 +636,20 @@ def generate_spaghetti_figure(
     sequence_length = model_config["sequence_length"]
     horizons = model_config["horizons"]
 
+    flow_model = flow_scaler = flow_config = None
+    farmoor_path = models_dir / "multihorizon_model_experiment_2026_09_farmoor.pth"
+    if model_config.get("uses_predicted_flow") and farmoor_path.exists():
+        flow_model, flow_scaler, flow_config = load_model(
+            model_path=str(farmoor_path),
+            scaler_path=str(models_dir / "scaler_experiment_2026_09_farmoor.pkl"),
+            config_path=str(models_dir / "config_experiment_2026_09_farmoor.pkl"),
+        )
+
     print("\nModel configuration:")
     print(f"  Sequence length: {sequence_length}")
     print(f"  Hidden sizes: {model_config['hidden_sizes']}")
     print(f"  Features: {len(feature_columns)}")
+    print(f"  Architecture: {model_config.get('architecture', 'multihorizon')}")
 
     # ------------------------------------------------------------------
     # STEP 3: Fetch ensemble rainfall forecast (location-specific)
@@ -674,6 +689,10 @@ def generate_spaghetti_figure(
         predicts_delta=model_config.get("predicts_delta", False),
         max_recession_m_per_day=model_config.get("max_recession_m_per_day"),
         verbose=True,
+        model_config=model_config,
+        flow_model=flow_model,
+        flow_scaler=flow_scaler,
+        flow_config=flow_config,
     )
 
     # ------------------------------------------------------------------

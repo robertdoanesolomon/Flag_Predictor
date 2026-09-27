@@ -9,6 +9,8 @@ import pandas as pd
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
+import numpy as np
+
 from .config import (
     get_location_config,
     LocationConfig,
@@ -16,6 +18,7 @@ from .config import (
     TRAINING_CONFIG,
     PHYSICAL_CONSTRAINTS,
     RAINFALL_STATION_NAMES,
+    SEPTEMBER_2026_TRAINING,
 )
 from .data.api import (
     fetch_all_api_data,
@@ -25,11 +28,16 @@ from .data.api import (
     get_rainfall_forecast,
     get_rainfall_forecast_ensemble,
 )
-from .data.loader import load_all_historical_data
-from .processing.cleaning import merge_and_clean_data
-from .processing.features import create_target_and_features
-from .models.lstm import MultiHorizonLSTMModel, get_device
+from .data.loader import load_all_historical_data, load_historical_flow, load_historical_rainfall
+from .processing.cleaning import merge_and_clean_data, merge_rain_and_flow
+from .processing.features import (
+    build_september_encoder_features,
+    create_target_and_features,
+    rain_station_columns,
+)
+from .models.lstm import HourlyDecoderModel, MultiHorizonLSTMModel, get_device
 from .models.training import train_model, save_model, load_model
+from .models.september_train import train_hourly_decoder
 from .prediction.forecast import (
     predict_single,
     predict_ensemble,
@@ -42,6 +50,7 @@ def prepare_training_data(
     location: str = 'isis',
     project_root: Optional[Path] = None,
     delta_targets: bool = True,
+    include_api: bool = True,
     verbose: bool = True
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
@@ -76,21 +85,24 @@ def prepare_training_data(
     )
     
     # Fetch API data (with location-specific rainfall stations and flow)
-    river_levels, api_rainfall, api_flow = fetch_all_api_data(location=location, verbose=verbose)
-    
-    # Calculate differential from API data
-    if location == 'isis':
-        api_diff_df = calculate_isis_differential(river_levels)
-    elif location == 'godstow':
-        api_diff_df = calculate_godstow_differential(river_levels)
-    elif location == 'wallingford':
-        api_diff_df = calculate_wallingford_differential(river_levels)
+    if include_api:
+        river_levels, api_rainfall, api_flow = fetch_all_api_data(location=location, verbose=verbose)
+        if location == 'isis':
+            api_diff_df = calculate_isis_differential(river_levels)
+        elif location == 'godstow':
+            api_diff_df = calculate_godstow_differential(river_levels)
+        elif location == 'wallingford':
+            api_diff_df = calculate_wallingford_differential(river_levels)
+        else:
+            api_diff_df = pd.DataFrame(columns=['differential'], index=pd.DatetimeIndex([]))
+        if verbose:
+            print(f"\n✓ API differential: {api_diff_df.shape}")
     else:
-        # For other locations, create empty DataFrame
-        api_diff_df = pd.DataFrame(columns=['differential'], index=river_levels.get(list(river_levels.keys())[0], pd.DataFrame()).index if river_levels else pd.DatetimeIndex([]))
-    
-    if verbose:
-        print(f"\n✓ API differential: {api_diff_df.shape}")
+        api_diff_df = None
+        api_rainfall = None
+        api_flow = None
+        if verbose:
+            print("\nSkipping API fetch (historical CSVs only)")
     
     # Merge and clean
     merged_df = merge_and_clean_data(
@@ -365,3 +377,124 @@ def run_forecast(
             'prediction': prediction,
             'model_config': model_config,
         }
+
+
+def prepare_flow_training_data(
+    project_root: Optional[Path] = None,
+    verbose: bool = True,
+) -> pd.DataFrame:
+    """Rain + Farmoor flow only (no differential inner join)."""
+    if verbose:
+        print(f"\n{'='*70}")
+        print("Preparing Farmoor flow training data (rain + flow, long record)")
+        print(f"{'='*70}")
+    rainfall = load_historical_rainfall(
+        project_root=project_root, location='isis', verbose=verbose
+    )
+    flow = load_historical_flow(project_root=project_root)
+    if flow is None or flow.empty:
+        raise FileNotFoundError(
+            "No Farmoor flow CSV found. Run: python -m flag_predictor.data.download_flow"
+        )
+    return merge_rain_and_flow(rainfall, flow, verbose=verbose)
+
+
+def _decoder_frame(merged_df: pd.DataFrame, include_flow: bool) -> pd.DataFrame:
+    rain_cols = rain_station_columns(merged_df)
+    out = pd.DataFrame(index=merged_df.index)
+    out['catchment_rainfall_total'] = merged_df[rain_cols].sum(axis=1) if rain_cols else 0.0
+    if include_flow:
+        flow_col = 'flow_m3s_Farmoor'
+        if flow_col not in merged_df.columns:
+            raise KeyError("merged data is missing flow_m3s_Farmoor")
+        out['flow_log'] = np.log1p(merged_df[flow_col].clip(lower=0))
+    return out
+
+
+def train_september_flow_model(
+    project_root: Optional[Path] = None,
+    save_dir: str = 'models',
+    verbose: bool = True,
+) -> Tuple[HourlyDecoderModel, Dict]:
+    """Stage 1: hourly rain → Farmoor log-flow decoder."""
+    import numpy as np
+
+    merged = prepare_flow_training_data(project_root=project_root, verbose=verbose)
+    flow_col = 'flow_m3s_Farmoor'
+    encoder_df = build_september_encoder_features(merged, target_col=flow_col)
+    decoder_cov = _decoder_frame(merged, include_flow=False)
+    target = np.log1p(merged[flow_col].clip(lower=0))
+    target.name = 'flow_log'
+
+    model, past_scaler, dec_scaler, extra = train_hourly_decoder(
+        encoder_df=encoder_df,
+        decoder_cov=decoder_cov,
+        target=target,
+        target_kind='flow',
+        verbose=verbose,
+    )
+    model_config = {
+        **extra,
+        'location': 'farmoor',
+        'max_recession_m_per_day': None,
+        'uses_predicted_flow': False,
+        'target_transform': 'log1p',
+        'target_column': flow_col,
+    }
+    # decoder_scaler lives inside extra already
+    save_model(model, past_scaler, model_config, save_dir=save_dir, name='experiment_2026_09_farmoor')
+    save_model(model, past_scaler, model_config, save_dir=save_dir, name='farmoor_latest')
+    return model, model_config
+
+
+def train_september_location_model(
+    location: str,
+    project_root: Optional[Path] = None,
+    save_dir: str = 'models',
+    uses_predicted_flow: bool = True,
+    verbose: bool = True,
+    name: Optional[str] = None,
+    cfg_override: Optional[Dict] = None,
+) -> Tuple[HourlyDecoderModel, Dict]:
+    """Stage 2: hourly differential decoder, optionally seeing future flow."""
+    import numpy as np
+
+    merged_df, _, _ = prepare_training_data(
+        location=location,
+        project_root=project_root,
+        include_api=False,
+        verbose=verbose,
+    )
+    encoder_df = build_september_encoder_features(merged_df, target_col='differential')
+    decoder_cov = _decoder_frame(merged_df, include_flow=uses_predicted_flow)
+    target = merged_df['differential']
+
+    model, past_scaler, dec_scaler, extra = train_hourly_decoder(
+        encoder_df=encoder_df,
+        decoder_cov=decoder_cov,
+        target=target,
+        target_kind='diff',
+        verbose=verbose,
+        cfg_override=cfg_override,
+    )
+    loc_cfg = get_location_config(location)
+    model_config = {
+        **extra,
+        'location': location,
+        'predicts_delta': True,
+        'max_recession_m_per_day': PHYSICAL_CONSTRAINTS['max_recession_m_per_day'],
+        'min_differential': loc_cfg.min_differential,
+        'uses_predicted_flow': uses_predicted_flow,
+        'target_transform': None,
+        'target_column': 'differential',
+    }
+    save_name = name or f'experiment_2026_09_{location}'
+    save_model(
+        model, past_scaler, model_config, save_dir=save_dir,
+        name=save_name,
+    )
+    save_model(
+        model, past_scaler, model_config, save_dir=save_dir,
+        name=f'{location}_latest',
+    )
+    return model, model_config

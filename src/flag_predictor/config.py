@@ -211,6 +211,17 @@ TRAINING_CONFIG = {
 # the final forecast trajectories.
 PHYSICAL_CONSTRAINTS = {
     'max_recession_m_per_day': 0.0762,  # 3 inches/day
+    # Catchment mm below which a forecast hour is treated as dry.
+    'dry_hour_mm': 0.3,
+    # After this much rain has fallen, stop blending Farmoor flow toward persistence.
+    'dry_cume_mm': 2.0,
+    # If the last 48h of observations are this quiet, treat as a low-flow
+    # plateau and hold near the current differential until rain arrives.
+    'plateau_net_m': 0.03,
+    'plateau_std_m': 0.02,
+    'dry_band_m': 0.008,
+    # Slack below the recent observed minimum when not on a plateau.
+    'low_flow_slack_m': 0.02,
 }
 
 JUNE_2026_TRAINING = {
@@ -229,6 +240,46 @@ JUNE_2026_TRAINING = {
     # multiplicative noise into the future-rainfall features during training
     # so the model does not over-trust them.
     'future_rain_noise_std': 0.3,
+}
+
+# === September 2026 model ===
+# Hourly encoder-decoder. Stage 1: rain → Farmoor flow on the long record.
+# Stage 2: per-location differential, with predicted future flow as a decoder
+# covariate instead of 10-day flow persistence. Delta targets and an inference
+# recession clamp are kept; persistence / 240h-rise / rain-noise are gone.
+SEPTEMBER_2026_TRAINING = {
+    'delta_targets': True,
+    'architecture': 'hourly_decoder',
+    'horizon': 240,
+    'sequence_length': 100,
+    'stride': 4,
+    'quiet_keep_frac': 0.35,
+    'winter_weight': 1.5,
+    'winter_months': (11, 12, 1, 2, 3),
+    'event_weight': 5.0,
+    'rising_weight': 2.0,
+    # Soft recession regulariser only (hard clamp stays at inference).
+    'recession_penalty_weight': 0.5,
+    'rain_response_weight': 0.05,
+    # Dry-weather physics: no rise without rain; stay put on quiet windows.
+    'dry_rise_weight': 4.0,
+    'dry_persist_weight': 2.0,
+    'dry_hour_mm': 0.3,
+    'dry_cume_mm': 2.0,
+    # Near-term accuracy matters more than day 10.
+    'w_0_6h': 6.0,
+    'w_6_24h': 4.0,
+    'w_24_72h': 2.0,
+    'w_72_240h': 1.0,
+    'future_rain_noise_std': 0.0,
+    # Frozen test window matches the May/June backtest; do not train or
+    # early-stop on it.
+    'train_end': '2024-10-31',
+    'val_year': 2023,
+    'epochs': 15,
+    'batch_size': 32,
+    'patience': 5,
+    'learning_rate': 0.0003,
 }
 
 """

@@ -426,6 +426,83 @@ def _create_interaction_features(df: pd.DataFrame, differential_column: str) -> 
     return df
 
 
+def rain_station_columns(df: pd.DataFrame) -> List[str]:
+    """Rainfall station columns on a merged (pre-feature) frame."""
+    return [
+        col
+        for col in df.columns
+        if col != 'differential'
+        and not col.startswith('flow_m3s_')
+        and not col.startswith('level_m_')
+        and not col.startswith('groundwater_mAOD_')
+    ]
+
+
+def build_september_encoder_features(
+    df: pd.DataFrame,
+    target_col: str,
+) -> pd.DataFrame:
+    """
+    Past-only encoder features for the September hourly decoder.
+
+    Future rainfall is not included — the decoder sees it hour by hour.
+    """
+    df = df.copy()
+    rain_cols = rain_station_columns(df)
+    rain_cols = [c for c in rain_cols if c != target_col]
+    if rain_cols:
+        df[rain_cols] = df[rain_cols].fillna(0)
+        df['catchment_rainfall_total'] = df[rain_cols].sum(axis=1)
+    elif 'catchment_rainfall_total' not in df.columns:
+        df['catchment_rainfall_total'] = 0.0
+
+    df = _create_rainfall_features(df)
+
+    if 'differential' in df.columns:
+        df = _create_low_flow_features(df, 'differential')
+        df = _create_differential_features(df, 'differential')
+        df = _create_interaction_features(df, 'differential')
+
+    flow_cols = [col for col in df.columns if col.startswith('flow_m3s_')]
+    if flow_cols:
+        df = _create_flow_features(df, flow_cols)
+
+    level_cols = [col for col in df.columns if col.startswith('level_m_')]
+    if level_cols:
+        df = _create_level_features(df, level_cols)
+
+    groundwater_cols = [col for col in df.columns if col.startswith('groundwater_mAOD_')]
+    if groundwater_cols:
+        df = _create_groundwater_features(df, groundwater_cols)
+
+    df['day_of_year'] = df.index.dayofyear
+    df['day_of_year_sin'] = np.sin(2 * np.pi * df['day_of_year'] / 365.25)
+    df['day_of_year_cos'] = np.cos(2 * np.pi * df['day_of_year'] / 365.25)
+    df['hour_of_day'] = df.index.hour
+    df['hour_of_day_sin'] = np.sin(2 * np.pi * df['hour_of_day'] / 24)
+    df['hour_of_day_cos'] = np.cos(2 * np.pi * df['hour_of_day'] / 24)
+
+    def _is_raw_source(col: str) -> bool:
+        if col == target_col:
+            return True
+        if col.startswith('flow_m3s_'):
+            return not any(
+                s in col
+                for s in ['_lag_', '_norm_', '_frac_change_', '_is_rising_', '_log_', '_anomaly']
+            )
+        if col.startswith('level_m_') and 'level_diff_' not in col:
+            return not any(s in col for s in ['_lag_', '_velocity_', '_rolling_', '_is_rising_'])
+        if col.startswith('groundwater_mAOD_'):
+            return not any(s in col for s in ['_lag_', '_rolling_'])
+        if col in rain_cols:
+            return True
+        return False
+
+    drop = [c for c in df.columns if _is_raw_source(c) or c.startswith('target_')]
+    keep = [c for c in df.columns if c not in drop]
+    return df[keep]
+
+
 def create_target_and_features(
     df_featureless: pd.DataFrame,
     future_rainfall_df: pd.DataFrame,

@@ -267,3 +267,57 @@ def _clean_differential(
         ).mean().fillna(df[differential_column])
     
     return df
+
+
+def merge_rain_and_flow(
+    hist_rainfall_df: pd.DataFrame,
+    hist_flow_df: pd.DataFrame,
+    verbose: bool = True,
+) -> pd.DataFrame:
+    """
+    Hourly rain + Farmoor flow with NO differential join, so pre-2017 data
+    remains available for the stage-1 flow model.
+    """
+    rainfall_df = hist_rainfall_df.copy()
+    rainfall_column_map = {}
+    for col in rainfall_df.columns:
+        if "mm_" in col:
+            parts = col.split("mm_")
+            if len(parts) > 1:
+                after_mm = parts[1]
+                station_name = after_mm.split("-")[0] if "-" in after_mm else after_mm
+                rainfall_column_map[col] = station_name
+    if rainfall_column_map:
+        rainfall_df = rainfall_df.rename(columns=rainfall_column_map)
+        rainfall_station_names = list(rainfall_column_map.values())
+    else:
+        rainfall_station_names = list(rainfall_df.columns)
+
+    if rainfall_df.index.tz is None:
+        rainfall_df = rainfall_df.tz_localize('UTC')
+    flow_df = hist_flow_df.copy()
+    if flow_df.index.tz is None:
+        flow_df = flow_df.tz_localize('UTC')
+
+    df = rainfall_df.join(flow_df, how='inner')
+    aggregation_rules = {}
+    for col in df.columns:
+        if col in rainfall_station_names:
+            aggregation_rules[col] = 'sum'
+        else:
+            aggregation_rules[col] = 'mean'
+    df = df.resample('1h').agg(aggregation_rules)
+
+    for col in rainfall_station_names:
+        if col in df.columns:
+            df[col] = df[col].fillna(0).clip(lower=0, upper=50)
+    flow_cols = [c for c in df.columns if c.startswith('flow')]
+    for col in flow_cols:
+        df[col] = df[col].ffill().bfill()
+        df.loc[df[col] < 0, col] = np.nan
+        df[col] = df[col].ffill().bfill()
+
+    df = df.dropna(subset=flow_cols)
+    if verbose:
+        print(f"✓ Rain+flow hourly: {df.shape}  {df.index.min()} → {df.index.max()}")
+    return df
