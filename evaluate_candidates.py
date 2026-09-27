@@ -47,14 +47,19 @@ def persistence(location: str):
 
 
 def september(location: str, physics: str = 'full', flow_blend: bool = True,
-              name: str = None, flow_name: str = 'experiment_2026_09_farmoor'):
-    """September-style hourly decoder. physics: 'full' (live), 'recession' or 'off'."""
+              name: str = None, flow_name: str = 'experiment_2026_09_farmoor',
+              history_hours: int = 720):
+    """September-style hourly decoder. physics: 'full' (live), 'recession' or 'off'.
+
+    history_hours=720 reproduces the live code, which computes features on only
+    the last 720 rows, so 720h rolling features are back-filled from one value.
+    """
     model, scaler, config = _load(name or f'experiment_2026_09_{location}')
-    config = {**config, 'physics_mode': physics}
+    config = {**config, 'physics_mode': physics, 'history_hours': history_hours}
     flow_model = flow_scaler = flow_config = None
     if config.get('uses_predicted_flow'):
         flow_model, flow_scaler, flow_config = _load(flow_name)
-        flow_config = {**flow_config, 'flow_blend': flow_blend}
+        flow_config = {**flow_config, 'flow_blend': flow_blend, 'history_hours': history_hours}
     rec = None if physics == 'off' else config.get('max_recession_m_per_day')
 
     def predict(history, future_rain):
@@ -77,11 +82,18 @@ CANDIDATES = {
     'sept_raw': lambda loc: september(loc, 'off', False),
     'sept_off_blend': lambda loc: september(loc, 'off', True),
     'sept_recession': lambda loc: september(loc, 'recession', True),
+    'sept_raw_longhist': lambda loc: september(loc, 'off', False, history_hours=1100),
+    'sept_noflow_raw': lambda loc: september(loc, 'off', False, name=f'experiment_2026_09_{loc}_noflow'),
 }
 
 
 def resolve(cand: str):
-    """Built-in candidates, or 'redesign:<name>' for models/redesign_<name>_<loc>.pt."""
+    """Built-in candidates, 'redesign:<name>' for models/redesign_<name>_<loc>.pt,
+    or 'ensemble:<name>+<name>+...' for the mean of several redesign models."""
+    if cand.startswith('ensemble:'):
+        from flag_predictor.models.candidates import ensemble_predictor
+        names = cand.split(':', 1)[1].split('+')
+        return lambda location: ensemble_predictor(names, location)
     if cand.startswith('redesign:'):
         from flag_predictor.models.candidates import redesign_predictor
         name = cand.split(':', 1)[1]

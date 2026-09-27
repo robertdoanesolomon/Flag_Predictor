@@ -162,6 +162,14 @@ class WindowSampler:
         self.past_off = torch.arange(-SEQ_LEN + 1, 1, device=device)
         self.fut_off = torch.arange(1, HORIZON + 1, device=device)
         self.rain_past_off = torch.arange(-71, 1, device=device)
+        self.rain_st = None
+        if getattr(data, 'rain_st', None) is not None:
+            self.rain_st = torch.from_numpy(np.nan_to_num(data.rain_st, nan=0.0)).to(device)
+            self.rain_st_ok = torch.from_numpy(np.isfinite(data.rain_st)).to(device)
+        self.pred_flow = None
+        if getattr(data, 'pred_flow', None) is not None:
+            self.pred_flow = torch.from_numpy(np.log1p(data.pred_flow)).to(device)
+            self.pred_flow_row = torch.from_numpy(data.pred_flow_row).to(device)
 
     def batch(self, t0: np.ndarray) -> Dict[str, torch.Tensor]:
         t = torch.as_tensor(t0, device=self.device, dtype=torch.long)
@@ -181,6 +189,8 @@ class WindowSampler:
             'flow': self.flow[fut],
             'flow_ok': self.flow_ok[fut],
             'winter': self.winter[t],
+            **({'pred_flow_log': self.pred_flow[self.pred_flow_row[t]]} if self.pred_flow is not None else {}),
+            **({'rain_st': self.rain_st[fut], 'rain_st_ok': self.rain_st_ok[fut]} if self.rain_st is not None else {}),
         }
 
 
@@ -197,3 +207,11 @@ def load_location_data(location: str, project_root: Path, merged: Optional[pd.Da
     data = build_location_data(location, merged)
     pd.to_pickle(data, path)
     return data
+
+
+def attach_station_rain(data: LocationData, merged: pd.DataFrame) -> None:
+    """Add data.rain_st (T, S) per-station mm/h (NaN where a gauge is not reporting)."""
+    from ..evaluation import rain_station_columns
+    cols = rain_station_columns(merged)
+    data.station_names = list(cols)
+    data.rain_st = merged[cols].clip(lower=0).to_numpy(dtype=np.float32)

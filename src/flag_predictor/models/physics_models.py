@@ -69,7 +69,9 @@ class MonotoneRatingCurve(nn.Module):
         cdf = np.searchsorted(np.sort(z_obs), knots) / len(z_obs)
         d_k = np.quantile(d_obs, np.clip(cdf, 0, 1))
         d_k[0] = self.d_lo  # the curve is anchored at d_lo at z_min
-        slopes = np.maximum(np.diff(d_k) / self.dz, 2e-3)
+        # Beyond the observed flows the quantile map is flat; a floor keeps the
+        # curve invertible there (2 cm per e-fold of flow).
+        slopes = np.maximum(np.diff(d_k) / self.dz, 0.02)
         self.slope_raw.copy_(torch.as_tensor(np.log(np.expm1(slopes - 1e-3 + 1e-6)), dtype=torch.float32))
 
     def slopes(self) -> torch.Tensor:
@@ -90,6 +92,65 @@ class MonotoneRatingCurve(nn.Module):
         dk = self.d_knots()
         seg = torch.clamp(torch.searchsorted(dk, d.contiguous()) - 1, 0, len(s) - 1)
         return self.z_knots[seg] + (d - dk[seg]) / s[seg]
+
+
+class SmoothRatingCurve(MonotoneRatingCurve):
+    """
+    Increasing, continuously differentiable D = g(z).
+
+    The slope is linear between knots (so g is piecewise quadratic): a
+    recession that sweeps log Q smoothly past a knot no longer shows a corner,
+    as it does with the piecewise-linear curve. Linear beyond the end knots.
+    The inverse is still exact (a quadratic per segment).
+    """
+
+    def __init__(self, d_lo: float, d_hi: float, z_min: float, z_max: float, n_knots: int = 24):
+        super().__init__(d_lo, d_hi, z_min, z_max, n_knots)
+        slope0 = (d_hi - d_lo) / (z_max - z_min)
+        self.slope_raw = nn.Parameter(torch.full((n_knots + 1,), math.log(math.expm1(slope0))))
+
+    @torch.no_grad()
+    def init_from_data(self, z_obs, d_obs) -> None:
+        import numpy as np
+        z_obs = np.asarray(z_obs, dtype=float)
+        d_obs = np.asarray(d_obs, dtype=float)
+        knots = self.z_knots.cpu().numpy()
+        cdf = np.searchsorted(np.sort(z_obs), knots) / len(z_obs)
+        d_k = np.quantile(d_obs, np.clip(cdf, 0, 1))
+        d_k[0] = self.d_lo
+        seg = np.maximum(np.diff(d_k) / self.dz, 0.02)
+        knot_slopes = np.concatenate([[seg[0]], 0.5 * (seg[:-1] + seg[1:]), [seg[-1]]])
+        self.slope_raw.copy_(torch.as_tensor(np.log(np.expm1(knot_slopes - 1e-3 + 1e-6)), dtype=torch.float32))
+
+    def d_knots(self) -> torch.Tensor:
+        s = self.slopes()
+        seg_rise = 0.5 * (s[:-1] + s[1:]) * self.dz
+        return torch.cat([s.new_tensor([self.d_lo]), self.d_lo + torch.cumsum(seg_rise, 0)])
+
+    def forward(self, z: torch.Tensor) -> torch.Tensor:
+        s = self.slopes()
+        dk = self.d_knots()
+        k = len(s) - 1
+        seg = torch.clamp(((z - self.z_min) / self.dz).floor().long(), 0, k - 1)
+        u = (z - self.z_knots[seg]) / self.dz
+        inside = dk[seg] + self.dz * (s[seg] * u + 0.5 * (s[seg + 1] - s[seg]) * u * u)
+        below = self.d_lo + s[0] * (z - self.z_min)
+        above = dk[-1] + s[-1] * (z - self.z_max)
+        return torch.where(z < self.z_min, below, torch.where(z > self.z_max, above, inside))
+
+    def inverse(self, d: torch.Tensor) -> torch.Tensor:
+        s = self.slopes()
+        dk = self.d_knots()
+        k = len(s) - 1
+        seg = torch.clamp(torch.searchsorted(dk, d.contiguous()) - 1, 0, k - 1)
+        c = (d - dk[seg]).clamp(min=0)
+        a = 0.5 * self.dz * (s[seg + 1] - s[seg])
+        b = self.dz * s[seg]
+        u = 2 * c / (b + torch.sqrt(torch.clamp(b * b + 4 * a * c, min=1e-12)))
+        inside = self.z_knots[seg] + u * self.dz
+        below = self.z_min + (d - self.d_lo) / s[0]
+        above = self.z_max + (d - dk[-1]) / s[-1]
+        return torch.where(d < self.d_lo, below, torch.where(d > dk[-1], above, inside))
 
 
 # Farmoor catchment ~1609 km²: 1 mm/h of runoff over it is ~447 m³/s.
@@ -121,8 +182,16 @@ class ReservoirHybrid(nn.Module):
         z_min: float = math.log(1e-4),
         z_max: float = math.log(3.0),
         per_sample_params: bool = False,
+        smooth_rating: bool = False,
+        n_stations: int = 0,
     ):
         super().__init__()
+        # Optional learned gauge weights (softmax, so non-negative): the rain
+        # forcing becomes a weighted mean over reporting gauges. Zero logits
+        # reproduce the plain mean-station rain.
+        self.n_stations = n_stations
+        if n_stations:
+            self.station_logits = nn.Parameter(torch.zeros(n_stations))
         self.n_features = n_features
         self.hidden = hidden
         self.per_sample_params = per_sample_params
@@ -139,7 +208,8 @@ class ReservoirHybrid(nn.Module):
         })
         # Runoff split over quick / medium / slow paths.
         self.split_logits = nn.Parameter(torch.tensor([0.0, 0.5, 0.0]))
-        self.rating = MonotoneRatingCurve(d_lo, d_hi, z_min, z_max)
+        curve = SmoothRatingCurve if smooth_rating else MonotoneRatingCurve
+        self.rating = curve(d_lo, d_hi, z_min, z_max)
 
     def param(self, name: str, shift: torch.Tensor = None) -> torch.Tensor:
         lo, hi, _ = self.RANGES[name]
@@ -162,12 +232,17 @@ class ReservoirHybrid(nn.Module):
         d0: torch.Tensor,
         return_states: bool = False,
         return_q: bool = False,
+        rain_st: torch.Tensor = None,
+        rain_st_ok: torch.Tensor = None,
     ):
         """
         x: (B, SEQ, F) scaled encoder features; rain: (B, H) mm/h mean-station;
         season: (B, H) cos day-of-year phase; rain24/rain168: (B,) mm;
         d0: (B,) observed differential at t0.  Returns D: (B, H).
         """
+        if self.n_stations and rain_st is not None:
+            w = torch.softmax(self.station_logits, 0) * rain_st_ok.float()
+            rain = (rain_st * w).sum(-1) / w.sum(-1).clamp(min=1e-6)
         out = self.initial_state(x)
         s = torch.sigmoid(out[:, 0])
         rho = torch.sigmoid(out[:, 1])
@@ -204,7 +279,7 @@ class ReservoirHybrid(nn.Module):
         # Pin the channel to the observation: g(log(Q0 + floor)) = d0.
         # Stores hold their post-outflow content, so with inflow I the next
         # outflow is (1 - a)·Q0 + a·I: steady when I = Q0, falling when I < Q0.
-        z0 = self.rating.inverse(d0)
+        z0 = torch.clamp(self.rating.inverse(d0), self.rating.z_min - 5.0, self.rating.z_max + 3.0)
         q0 = torch.clamp(torch.exp(z0) - self.q_floor, min=1e-7)
         channel = q0 * (1 - a_c) / a_c
         slow = rho * q0 * (1 - a_s) / a_s

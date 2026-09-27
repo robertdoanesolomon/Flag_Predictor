@@ -155,7 +155,7 @@ def predict_flow_hourly(
     feature_columns = flow_config['feature_columns']
     decoder_scaler: MinMaxScaler = flow_config['decoder_scaler']
 
-    lookback = max(720, sequence_length + 24)
+    lookback = max(flow_config.get('history_hours', 720), sequence_length + 24)
     history = historical_df.iloc[-lookback:].copy()
     t0 = history.index[-1]
     flow_col = flow_config.get('target_column', 'flow_m3s_Farmoor')
@@ -210,7 +210,7 @@ def _predict_hourly_differential(
     decoder_cols = model_config['decoder_columns']
     decoder_scaler: MinMaxScaler = model_config['decoder_scaler']
 
-    lookback = max(720, sequence_length + 24)
+    lookback = max(model_config.get('history_hours', 720), sequence_length + 24)
     history = historical_df.iloc[-lookback:].copy()
     t0 = history.index[-1]
     current_differential = float(history['differential'].iloc[-1])

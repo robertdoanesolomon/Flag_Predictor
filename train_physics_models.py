@@ -34,17 +34,27 @@ def main():
     parser.add_argument('--name', required=True)
     parser.add_argument('--cfg', default='{}')
     parser.add_argument('--device', default='cpu')
+    parser.add_argument('--threads', type=int, default=8)
     args = parser.parse_args()
 
-    torch.set_num_threads(8)
+    torch.set_num_threads(args.threads)
     locations = ['isis', 'godstow', 'wallingford'] if args.locations == 'all' else args.locations.split(',')
     for location in locations:
         t = time.time()
         data = load_location_data(location, PROJECT_ROOT)
+        cfg_override = json.loads(args.cfg)
+        if cfg_override.get('station_weights'):
+            from flag_predictor.evaluation import load_merged
+            from flag_predictor.models.physics_data import attach_station_rain
+            attach_station_rain(data, load_merged(location, PROJECT_ROOT))
+        if cfg_override.get('use_pred_flow'):
+            from flag_predictor.evaluation import load_merged
+            from flag_predictor.models.stage1_flow import attach_flow_forecasts
+            attach_flow_forecasts(data, load_merged(location, PROJECT_ROOT), PROJECT_ROOT)
         print(f"\n=== {args.family} {args.name} {location}: train {len(data.train_t)} / "
               f"val {len(data.val_t)} windows, {data.enc.shape[1]} features ===", flush=True)
         model, scaler, cfg, history = train_candidate(
-            args.family, data, json.loads(args.cfg), device=torch.device(args.device)
+            args.family, data, cfg_override, device=torch.device(args.device)
         )
         path = save_candidate(model, scaler, cfg, history, args.family, args.name,
                               location, data, PROJECT_ROOT / 'models')

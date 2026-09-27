@@ -59,8 +59,15 @@ DEFAULTS = {
     'recession_weight': 1.0,
     # hybrid
     'per_sample_params': False,
+    'smooth_rating': False,
+    'station_weights': False,
     'rating_smooth_weight': 1e-3,
     'flow_aux_weight': 0.0,
+    # Exponential moving average of weights (0 = off); validation and the
+    # saved model use the averaged weights, which damps epoch-to-epoch noise.
+    'ema_decay': 0.0,
+    # lstm_v2: feed stage-1 predicted Farmoor flow to the decoder
+    'use_pred_flow': False,
     'seed': 0,
 }
 
@@ -84,20 +91,29 @@ def dry_mask(rain_past72: torch.Tensor, rain: torch.Tensor) -> torch.Tensor:
 
 
 class LSTMv2(torch.nn.Module):
-    """HourlyDecoderModel with delta outputs and a log-rain decoder input."""
+    """HourlyDecoderModel with delta outputs and a log-rain decoder input.
+
+    With use_flow, the decoder also sees stage-1 *predicted* Farmoor log-flow,
+    in training as well as at forecast time (the September model trained on
+    observed flow but forecast with predicted flow).
+    """
 
     architecture = 'lstm_v2'
 
-    def __init__(self, n_features: int, hidden_sizes=(128, 64), dropout: float = 0.2):
+    def __init__(self, n_features: int, hidden_sizes=(128, 64), dropout: float = 0.2,
+                 use_flow: bool = False):
         super().__init__()
+        self.use_flow = use_flow
         self.core = HourlyDecoderModel(
-            input_size=n_features, decoder_input_size=2,
+            input_size=n_features, decoder_input_size=3 if use_flow else 2,
             hidden_sizes=list(hidden_sizes), dropout_rate=dropout, horizon=HORIZON,
         )
 
-    def forward(self, x, rain, season, rain24, rain168, d0, **_):
-        cov = torch.stack([torch.log1p(rain.clamp(min=0)), season], dim=-1)
-        return d0[:, None] + self.core(x, cov)
+    def forward(self, x, rain, season, rain24, rain168, d0, pred_flow_log=None):
+        parts = [torch.log1p(rain.clamp(min=0)), season]
+        if self.use_flow:
+            parts.append((pred_flow_log - 2.5) / 1.5)
+        return d0[:, None] + self.core(x, torch.stack(parts, dim=-1))
 
 
 def build_model(family: str, data: LocationData, cfg: Dict):
@@ -109,6 +125,8 @@ def build_model(family: str, data: LocationData, cfg: Dict):
         model = ReservoirHybrid(
             n_feat, d_lo=d_lo, d_hi=d_hi, hidden=cfg['hidden'], dropout=cfg['dropout'],
             per_sample_params=cfg['per_sample_params'],
+            smooth_rating=cfg['smooth_rating'],
+            n_stations=len(data.station_names) if cfg['station_weights'] else 0,
         )
         # Start the rating curve from the observed Farmoor-flow → D relation
         # (training period only), so latent Q starts out meaning real flow.
@@ -118,18 +136,26 @@ def build_model(family: str, data: LocationData, cfg: Dict):
         model.rating.init_from_data(z_obs, data.diff[ok])
         return model
     if family == 'lstm_v2':
-        return LSTMv2(n_feat, hidden_sizes=(128, cfg['hidden']), dropout=cfg['dropout'])
+        return LSTMv2(n_feat, hidden_sizes=(128, cfg['hidden']), dropout=cfg['dropout'],
+                      use_flow=cfg['use_pred_flow'])
     raise ValueError(family)
 
 
 def _forward(model, b):
+    if isinstance(model, ReservoirHybrid) and model.n_stations:
+        return model(b['x'], b['rain'], b['season'], b['rain24'], b['rain168'], b['d0'],
+                     rain_st=b['rain_st'], rain_st_ok=b['rain_st_ok'])
+    if isinstance(model, LSTMv2) and model.use_flow:
+        return model(b['x'], b['rain'], b['season'], b['rain24'], b['rain168'], b['d0'],
+                     pred_flow_log=b['pred_flow_log'])
     return model(b['x'], b['rain'], b['season'], b['rain24'], b['rain168'], b['d0'])
 
 
 def compute_loss(model, family: str, b: Dict, cfg: Dict, hw: torch.Tensor, train: bool):
     q = None
     if family == 'hybrid' and cfg['flow_aux_weight'] > 0:
-        pred, q = model(b['x'], b['rain'], b['season'], b['rain24'], b['rain168'], b['d0'], return_q=True)
+        pred, q = model(b['x'], b['rain'], b['season'], b['rain24'], b['rain168'], b['d0'], return_q=True,
+                        rain_st=b.get('rain_st'), rain_st_ok=b.get('rain_st_ok'))
     else:
         pred = _forward(model, b)
     mask = b['y_ok'].float()
@@ -195,6 +221,9 @@ def train_candidate(
     opt = torch.optim.Adam(groups)
     sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, factor=0.5, patience=2)
 
+    ema = copy.deepcopy(model) if cfg['ema_decay'] > 0 else None
+    scored = ema if ema is not None else model
+
     history = []
     best = (math.inf, None, -1)
     bad = 0
@@ -213,8 +242,12 @@ def train_candidate(
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
+            if ema is not None:
+                with torch.no_grad():
+                    for pe, pm in zip(ema.parameters(), model.parameters()):
+                        pe.mul_(cfg['ema_decay']).add_(pm.detach(), alpha=1 - cfg['ema_decay'])
             tr.append({k: float(v) for k, v in parts.items()} | {'loss': float(loss)})
-        val = evaluate_windows(model, family, sampler, data.val_t, cfg, hw)
+        val = evaluate_windows(scored, family, sampler, data.val_t, cfg, hw)
         sched.step(val['mae'])
         rec = {'epoch': epoch + 1, 'secs': time.time() - t_start,
                **{f'train_{k}': float(np.mean([r[k] for r in tr])) for k in tr[0]},
@@ -223,12 +256,12 @@ def train_candidate(
         if verbose:
             extra = ''
             if family == 'hybrid':
-                extra = '  ' + ' '.join(f"{k}={v:.3g}" for k, v in model.describe().items())
+                extra = '  ' + ' '.join(f"{k}={v:.3g}" for k, v in scored.describe().items())
             print(f"epoch {epoch + 1:2d} ({rec['secs']:.0f}s) train_mae={rec['train_mae']:.4f} "
                   f"val_mae={val['mae']:.4f} [1-24h {val['mae_1_24h']:.4f} 25-72h {val['mae_25_72h']:.4f} "
                   f"73-240h {val['mae_73_240h']:.4f}]{extra}", flush=True)
         if val['mae'] < best[0] - 1e-5:
-            best = (val['mae'], copy.deepcopy(model.state_dict()), epoch + 1)
+            best = (val['mae'], copy.deepcopy(scored.state_dict()), epoch + 1)
             bad = 0
         else:
             bad += 1
@@ -273,7 +306,11 @@ def save_candidate(model, scaler: Standardiser, cfg: Dict, history, family: str,
         'family': family, 'name': name, 'location': location, 'cfg': cfg,
         'scaler': scaler.state(), 'enc_cols': data.enc_cols, 'history': history,
         'n_features': data.enc.shape[1],
+        'station_names': getattr(data, 'station_names', None),
     }
+    if family == 'hybrid' and model.n_stations:
+        meta['station_weights'] = dict(zip(data.station_names,
+                                           torch.softmax(model.station_logits, 0).tolist()))
     if family == 'hybrid':
         meta['d_lo'] = model.rating.d_lo
         meta['d_hi'] = float(model.rating.d_knots()[-1])
@@ -293,9 +330,12 @@ def load_candidate(name: str, location: str, models_dir: Path, device=None):
         model = ReservoirHybrid(
             meta['n_features'], d_lo=meta['d_lo'], d_hi=meta['d_hi'], hidden=cfg['hidden'],
             dropout=cfg['dropout'], per_sample_params=cfg['per_sample_params'],
+            smooth_rating=cfg.get('smooth_rating', False),
+            n_stations=len(meta.get('station_names') or []) if cfg.get('station_weights') else 0,
         )
     else:
-        model = LSTMv2(meta['n_features'], hidden_sizes=(128, cfg['hidden']), dropout=cfg['dropout'])
+        model = LSTMv2(meta['n_features'], hidden_sizes=(128, cfg['hidden']), dropout=cfg['dropout'],
+                       use_flow=cfg.get('use_pred_flow', False))
     model.load_state_dict(torch.load(models_dir / f'{stem}.pt', map_location=device))
     model.to(device).eval()
     scaler = Standardiser(meta['scaler']['mean'], meta['scaler']['std'])
