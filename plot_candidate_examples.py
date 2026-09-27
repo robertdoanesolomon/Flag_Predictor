@@ -27,7 +27,17 @@ LABELS = {
     'sept_full': 'September (live, clamped)',
     'sept_raw': 'September (raw output)',
     'persistence': 'Persistence',
+    'redesign:lstm_v2f': 'LSTM + predicted flow (candidate A)',
 }
+
+
+def label(cand: str) -> str:
+    if cand.startswith('ensemble:'):
+        n = len(cand.split(':', 1)[1].split('+'))
+        return f'Physics hybrid ({n}-seed ensemble)'
+    return LABELS.get(cand, cand.replace('redesign:', ''))
+
+
 COLORS = ['#2ca02c', '#1f77b4', '#d62728', '#9467bd', '#ff7f0e', '#8c564b']
 
 
@@ -64,7 +74,7 @@ def main():
         ax = axes[row * 2, col]
         ax.plot(hours, actual[i], 'k-', lw=2.2, label='Observed')
         for (cand, run), color in zip(runs.items(), COLORS):
-            ax.plot(hours, run['pred'][i], color=color, lw=1.6, label=LABELS.get(cand, cand))
+            ax.plot(hours, run['pred'][i], color=color, lw=1.6, label=label(cand))
         ax.set_title(f"{kind}: forecast from {t0[i]:%Y-%m-%d %H:%M}")
         ax.set_ylabel('Differential (m)')
         ax.grid(alpha=0.3)
@@ -73,11 +83,11 @@ def main():
         ax2.set_ylim(0, max(4.0, float(np.nanmax(rain[i])) * 3))
         ax2.set_ylabel('Rain (mm/h)', color='#4a90d9')
         if row == 0 and col == 0:
-            ax.legend(fontsize=8, loc='upper left')
+            ax.legend(fontsize=8, loc='best', framealpha=0.85)
         # Zero-rain companion panel
         axz = axes[row * 2 + 1, col]
         for (cand, run), color in zip(runs.items(), COLORS):
-            axz.plot(hours, run['zero_rain'][i], color=color, lw=1.4, ls='--', label=LABELS.get(cand, cand))
+            axz.plot(hours, run['zero_rain'][i], color=color, lw=1.4, ls='--', label=label(cand))
         axz.set_title('Same start, all future rain removed', fontsize=9)
         axz.set_xlabel('Hours ahead')
         axz.grid(alpha=0.3)

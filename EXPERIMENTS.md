@@ -6,6 +6,36 @@ construction, not by clamps applied afterwards. The live September 2026 model
 is the baseline; nothing here touches `main`, `docs/`, `.github/` or the live
 model files.
 
+## Summary
+
+**Recommendation: replace the September model with the physics hybrid
+(`hybrid_c1_ps`, five seeds averaged).** Not deployed; see Deployment notes.
+
+On the frozen test window (weekly starts, Nov 2024 – Jan 2026, observed
+rain), against the live September model:
+
+- **MAE falls by 36–44%:** 0.048 → 0.031 m (Isis), 0.066 → 0.040 m (Godstow),
+  0.107 → 0.060 m (Wallingford).
+- **Winter MAE falls by 39–46%.**
+- **Right flag colour:** 83% → 89% of forecast hours at Isis, 87% → 92% at
+  Godstow. Two or more colours wrong: 4.9% → 2.4% at Isis.
+- **The two problems asked about are gone by construction:**
+  - Dry-weather climbs of > 1 cm: 16–44% of forecasts → 0–2%. The 2% is one
+    Godstow forecast draining rain from earlier in the week.
+  - Kinks: the sharpest falls from 13–14 to 0.6–1.3 mm/h², and direction
+    reversals from 5–7 to under 1 per forecast.
+- **More rain never lowers the forecast** (live: 5–7% of hours at Isis and
+  Godstow).
+- **Recessions now fall as fast as the real river does,** instead of being
+  clamped to 3 in/day.
+
+Where it doesn't win: the first 24 h at Wallingford (0.0267 vs 0.0256 m).
+
+The fixed LSTM (candidate A) is more accurate than the live model and has the
+best first-day MAE. But without structural constraints it still climbs in dry
+weather and wiggles, and every attempt to train realism into it with
+penalties collapsed it to a flat forecast.
+
 ## How to reproduce
 
 ```bash
@@ -263,8 +293,18 @@ properties. Validation MAE of the individual seeds:
 rain is a forecast. This variant trains with the future rain perturbed:
 6-hourly lognormal noise σ = 0.5, plus a random ±18 h timing shift.
 Validation MAE with the observed rain gets worse (0.0540 / 0.0569 / 0.0747),
-as expected. Whether it pays off with imperfect rain is judged by
-`mae_perturbed` below.
+as expected. As a five-seed ensemble, compared with the plain five-seed
+ensemble on the weekly 2023 starts (Isis / Godstow / Wallingford):
+
+| | MAE, observed rain | MAE, perturbed rain |
+|---|---|---|
+| plain ensemble | **0.0423 / 0.0432 / 0.0617** | 0.0569 / **0.0619** / 0.1067 |
+| noisy-rain ensemble | 0.0427 / 0.0499 / 0.0634 | **0.0543** / 0.0627 / **0.0999** |
+
+It trades accuracy with good rain for robustness to bad rain at Isis and
+Wallingford only. Kept as an option (`hybrid_c1_ps_rn*`). The right choice
+depends on how wrong real rain forecasts are, which needs an archive of past
+forecasts to backtest against.
 
 Notes:
 
@@ -278,8 +318,9 @@ Notes:
   loss** helps Wallingford a little and hurts Isis. **Gauge weights** help
   Wallingford (tributaries below Farmoor) and hurt Godstow.
 - **LSTM with predicted flow** (`lstm_v2f`): validation MAE 0.0543 / 0.0540 /
-  0.0843 (Isis / Godstow / Wallingford), much closer to the hybrid. With the gentle penalties trained from scratch
-  (`lstm_v2fp`) it collapses to the flat solution again (0.1143).
+  0.0843 (Isis / Godstow / Wallingford), much closer to the hybrid. With the
+  gentle penalties trained from scratch (`lstm_v2fp`) it collapses to the flat
+  solution again (0.1143).
 - **Curriculum** (`lstm_v2fc`): start from the trained `lstm_v2f`, then
   fine-tune with the gentle penalties at lr 3e-4. It still collapses to flat
   (0.1141) within the first epoch. With these loss terms the flat forecast is
@@ -320,6 +361,96 @@ suggests the parameters are physically identifiable rather than curve-fitting.
   sits around 0.2–0.3 mm/day in winter, plausible values for southern England
   that came out of rain and river data alone.
 
+## Final results (step 3, test window)
+
+Frozen window: weekly starts 2024-11-01 → 2026-01-05, observed rain, all
+clamps off except in `sept_full`. 57 / 60 / 61 starts at Isis / Godstow /
+Wallingford. `figures/eval/summary_test.csv` has every column.
+
+### Accuracy (MAE, m)
+
+| | Isis | Godstow | Wallingford |
+|---|---|---|---|
+| Persistence | 0.0863 | 0.1125 | 0.1847 |
+| September, live (clamped) | 0.0484 | 0.0662 | 0.1068 |
+| September, raw output | 0.0459 | 0.0589 | 0.1075 |
+| A: LSTM + predicted flow (`lstm_v2f`) | 0.0420 | 0.0423 | 0.0664 |
+| B: hybrid, first version (`hybrid_v1`) | 0.0358 | 0.0416 | 0.0651 |
+| B: hybrid, final setup, one seed (`hybrid_c1_ps`) | 0.0310 | 0.0431 | 0.0635 |
+| **B: hybrid, final setup, 5 seeds averaged** | **0.0312** | **0.0404** | **0.0599** |
+
+MAE by lead time, live September vs final hybrid:
+
+| | Isis | Godstow | Wallingford |
+|---|---|---|---|
+| 1–24 h | 0.0174 → **0.0146** | 0.0210 → **0.0170** | **0.0256** → 0.0267 |
+| 25–72 h | 0.0303 → **0.0261** | 0.0429 → **0.0253** | 0.0612 → **0.0449** |
+| 73–240 h | 0.0582 → **0.0351** | 0.0794 → **0.0481** | 0.1313 → **0.0690** |
+| winter only | 0.0936 → **0.0575** | 0.1154 → **0.0624** | 0.1883 → **0.1063** |
+| with perturbed rain | 0.0569 → **0.0401** | 0.0778 → **0.0558** | 0.1266 → **0.0799** |
+| bias | +0.017 → +0.008 | +0.010 → +0.005 | +0.030 → +0.017 |
+
+On the first day, the LSTM (0.0117 / 0.0183 / 0.0202) and persistence (0.0146
+at Isis) are the ones to beat. The hybrid matches persistence at Isis and
+beats it at Godstow and Wallingford.
+
+### Realism (on each model's raw output)
+
+| | live September | final hybrid | LSTM (A) |
+|---|---|---|---|
+| forecasts climbing > 1 cm in dry weather (I / G / W) | 44 / 22 / 16% | **0 / 2 / 0%** | 16 / 17 / 28% |
+| sharpest kink (mm/h²) | 13.2 / 12.8 / 14.3 | **0.6 / 0.6 / 1.3** | 6.8 / 6.0 / 9.4 |
+| direction reversals per forecast | 7.2 / 5.3 / 5.8 | **0.6 / 0.8 / 0.8** | 4.5 / 6.9 / 7.9 |
+| hours where more rain gives a lower forecast | 5.3 / 6.6 / 0.4% | **0 / 0 / 0%** | 0.2 / 0 / 0.2% |
+| with no future rain, climb after hour 72 (cm) | 0 / 0 / 0 (clamped) | **0 / 0 / 0** | 0.16 / 0.22 / 0.34 |
+| 24 h falls > 3 in/day (observed: 5.3 / 6.0 / 11.4%) | 0 / 0 / 0% | 2.7 / 5.6 / 9.9% | 2.4 / 3.5 / 9.7% |
+
+The hybrid's single "dry climb" at Godstow is water from rain 3–7 days before
+t0 draining through the medium stores. That's physically legitimate, and the
+72 h rule counts it as dry.
+
+### Flag colour (Isis and Godstow)
+
+Share of observed forecast hours with the right flag colour
+(`flag_accuracy.py`, `figures/eval/flag_accuracy_test.csv`).
+
+| | Isis | Isis, first day | Isis, ≥ 2 colours wrong | Godstow | Godstow, first day |
+|---|---|---|---|---|---|
+| Persistence | 80.0% | 95.5% | 12.7% | 80.4% | 96.6% |
+| September, live | 83.3% | 93.3% | 4.9% | 87.3% | 95.1% |
+| A: LSTM | 86.7% | 96.7% | 4.0% | 91.7% | 95.6% |
+| **Final hybrid** | **89.0%** | **97.3%** | **2.4%** | **92.4%** | **96.6%** |
+
+The 2023 validation year shows the same ordering (Isis 88.1% vs 79.3%;
+Godstow 93.2% vs 89.0%).
+
+### Plots
+
+`figures/eval/examples_{test,val}_{isis,godstow,wallingford}.png`. Each shows
+the three biggest storms and three driest spells in the window. Under each, the
+same start is rerun with all future rain removed. The live model shows its
+hour-24 plateau-release jumps (e.g. Isis 2025-01-24: 0.22 → 0.30 m with no
+rain) and flatlines on its floors (Wallingford 2025-02-28 stuck at 0.92 m
+while the river fell to 0.4 m). The LSTM drifts upward in dry spells. The
+hybrid only recedes.
+
+### Known weaknesses of the hybrid
+
+- **First-day MAE at Wallingford** is 1 mm worse than the live model. The
+  LSTM is better still on the first day everywhere. The staircase makes "no
+  change for a few hours" hard to beat, and the hybrid always moves
+  smoothly.
+- **The biggest flood peaks are under-predicted** (Wallingford Jan 2025:
+  1.6 vs 1.9 m), though by less than the other models.
+- **More sensitive to rain-forecast error than the raw September model** in
+  relative terms. With perturbed rain its MAE rises 29–38%, against 18–19%
+  for September. It's still lower in absolute terms at every location.
+  Training on perturbed rain (`hybrid_c1_ps_rn`) helps with bad rain at Isis
+  and Wallingford but costs accuracy with good rain (Candidate B above).
+- **All testing uses observed rain,** with synthetic perturbations as a proxy.
+  There's no archive of past forecast rain to backtest against, beyond one
+  10-day window in February 2026 that has no observed differential.
+
 ## Deployment notes (not done)
 
 Swapping the hybrid into `generate_all_location_figures.py` needs more than
@@ -336,9 +467,9 @@ loading different weights:
    - Differential: the API's 4 weeks are enough.
 2. **Ensemble prediction.** Per member, call
    `candidates.ensemble_predictor([...5 seeds...], location)` with that
-   member's station rain. It's roughly 0.1 s per member per seed, so about
-   25 s per location for 50 members × 5 seeds. That's fine on a 15-minute
-   schedule, and could be batched further.
+   member's station rain. The past-only encoder inputs are computed once per
+   start and shared across members and seeds, so 50 members × 5 seeds takes a
+   few seconds per location.
 3. **Weights to commit:** `models/redesign_hybrid_c1_ps*_{location}.{pt,pkl}`
    (15 weight files of about 300 kB, plus their small configs).
 4. **Drop the clamps.** None of `apply_hourly_physics` / `apply_recession_limit`

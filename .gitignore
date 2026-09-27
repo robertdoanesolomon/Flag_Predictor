@@ -63,3 +63,15 @@ clear_and_regenerate_cache.py
 # Images (ignore all PNGs except those in docs/ for GitHub Pages)
 *.png
 !docs/*.png
+
+# physics-redesign: keep only the final hybrid ensemble weights and result summaries
+models/redesign_*
+!models/redesign_hybrid_c1_ps_isis.*
+!models/redesign_hybrid_c1_ps_godstow.*
+!models/redesign_hybrid_c1_ps_wallingford.*
+!models/redesign_hybrid_c1_ps_s[0-9]_*
+data/stage1_flow_*.npz
+figures/eval/*
+!figures/eval/summary_*.csv
+!figures/eval/flag_accuracy_*.csv
+!figures/eval/examples_*.png
