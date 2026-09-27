@@ -65,7 +65,7 @@ def apply_hourly_physics(
     )
     values = predictions.to_numpy(dtype=float).copy()
     current = float(values[0])
-    rain = future_rain.reindex(predictions.index).fillna(0.0).to_numpy(dtype=float)
+    rain = future_rain.reindex(predictions.index).fillna(0.0).to_numpy(dtype=float).copy()
     rain[0] = 0.0
     rain = np.clip(rain, 0, None)
     rain_3h = np.convolve(rain, np.ones(3), mode='full')[: len(rain)]
