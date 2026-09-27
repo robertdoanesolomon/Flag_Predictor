@@ -884,8 +884,16 @@
     if (v === null || v === undefined || Number.isNaN(v)) return '—';
     return v.toFixed(1);
   }
+  // Payload timestamps are UTC but carry no offset; JS would read them as local time
+  // (an hour early during BST). Treat any offset-less date-time string as UTC.
+  function parseUtc(iso) {
+    if (typeof iso === 'string' && iso.includes('T') && !/(Z|[+-]\d\d:?\d\d)$/i.test(iso)) {
+      return new Date(iso + 'Z');
+    }
+    return new Date(iso);
+  }
   function relativeTime(iso) {
-    const t = new Date(iso);
+    const t = parseUtc(iso);
     const diffMs = Date.now() - t.getTime();
     const min = Math.round(diffMs / 60000);
     if (min < 1) return 'just now';
@@ -908,13 +916,13 @@
     }
     let cutoff = null;
     if (loc.rainfall_forecast && loc.rainfall_forecast.dates && loc.rainfall_forecast.dates.length) {
-      const last = new Date(loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1]);
+      const last = parseUtc(loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1]);
       last.setUTCHours(24, 0, 0, 0);
       cutoff = last.getTime();
     }
     let bestIdx = -1, bestVal = -Infinity;
     for (let i = 0; i < times.length; i++) {
-      if (cutoff !== null && new Date(times[i]).getTime() > cutoff) break;
+      if (cutoff !== null && parseUtc(times[i]).getTime() > cutoff) break;
       const v = mean[i];
       if (v !== null && !Number.isNaN(v) && v > bestVal) {
         bestVal = v;
@@ -926,14 +934,14 @@
   }
 
   function fmtShortDate(iso) {
-    const d = new Date(iso);
+    const d = parseUtc(iso);
     const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: TZ_UK });
     const day = d.toLocaleDateString('en-GB', { day: 'numeric', timeZone: TZ_UK });
     const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: TZ_UK });
     return `${weekday} ${day} ${month}`;
   }
   function fmtShortDateTime(iso) {
-    const d = new Date(iso);
+    const d = parseUtc(iso);
     const time = d.toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
@@ -968,7 +976,7 @@
     // not only the last valid ensemble-mean timestep — avoids "9 days" when trailing NaNs shrink endIdx.
     let cutoffCount = 0;
     for (let i = 0; i < times.length; i++) {
-      if (cutoff !== null && new Date(times[i]).getTime() > cutoff) break;
+      if (cutoff !== null && parseUtc(times[i]).getTime() > cutoff) break;
       cutoffCount++;
     }
     const horizonHours = Math.max(1, cutoffCount - 1);
@@ -977,7 +985,7 @@
     // Collect valid indices in window.
     const idxs = [];
     for (let i = 0; i < times.length; i++) {
-      if (cutoff !== null && new Date(times[i]).getTime() > cutoff) break;
+      if (cutoff !== null && parseUtc(times[i]).getTime() > cutoff) break;
       if (mean[i] !== null && !Number.isNaN(mean[i])) idxs.push(i);
     }
     if (idxs.length < 3) return null;
@@ -986,8 +994,8 @@
     const endIdx   = idxs[idxs.length - 1];
     const startVal = mean[startIdx];   // first forecast value — avoids t=0 jump
     const endVal   = mean[endIdx];
-    const startT   = new Date(times[startIdx]);
-    const endT     = new Date(times[endIdx]);
+    const startT   = parseUtc(times[startIdx]);
+    const endT     = parseUtc(times[endIdx]);
 
     // Find global peak and trough.
     let peakIdx = startIdx, troughIdx = startIdx;
@@ -998,8 +1006,8 @@
     const peakVal    = mean[peakIdx];
     const troughVal  = mean[troughIdx];
     const msDay = ONE_DAY_MS;
-    const daysToPeak   = Math.max(1, Math.ceil((new Date(times[peakIdx]) - startT) / msDay));
-    const daysToTrough = Math.max(1, Math.ceil((new Date(times[troughIdx]) - startT) / msDay));
+    const daysToPeak   = Math.max(1, Math.ceil((parseUtc(times[peakIdx]) - startT) / msDay));
+    const daysToTrough = Math.max(1, Math.ceil((parseUtc(times[troughIdx]) - startT) / msDay));
     const peakRise   = peakVal - startVal;
     const troughDrop = startVal - troughVal;
     const netDelta   = endVal - startVal;
@@ -1120,7 +1128,7 @@
           </div>
           <div class="flag-value">${fmtDiff(cur.differential)}<small>m differential</small></div>
           <div class="flag-card-footer">
-            <span>${relativeTime(cur.timestamp)}</span>
+            <span>${relativeTime(loc.latest_reading || cur.timestamp)}</span>
             <span class="peak">Est. 10-day peak: ${peak} m · ${peakDate}</span>
           </div>
         </button>
@@ -1182,7 +1190,7 @@
                 ? `<div class="forecast-callout" role="status" aria-live="polite"><p class="summary-line">${s}</p></div>`
                 : '';
             })()}
-            <p class="meta">Forecast generated at <strong>${fmtShortDateTime(loc.forecast_start)}</strong></p>
+            <p class="meta">Latest river reading <strong>${fmtShortDateTime(loc.latest_reading || loc.forecast_start)}</strong></p>
 
             <div class="chart-block">
               <div class="chart-legend" data-plot="plot-${key}">
