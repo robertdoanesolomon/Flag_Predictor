@@ -65,6 +65,28 @@ jobs:
             echo "Rainfall_training_data cache usable (${COUNT} CSV files)."
           fi
 
+      # Beta page (physics hybrid) needs ~5 weeks of continuous gauge rain. The weekly
+      # cache above can hold stale CSVs, so keep a separate recent-rain folder that is
+      # refreshed at most once per day. Failures here never block the live forecast.
+      - name: Daily cache slug for recent rainfall (beta page)
+        id: recent-rain-day
+        run: echo "d=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore recent rainfall (beta page)
+        uses: actions/cache@v4
+        with:
+          path: data/recent_rainfall
+          key: ea-recent-rain-${{ runner.os }}-v1-${{ steps.recent-rain-day.outputs.d }}
+
+      - name: Download recent rainfall once per day (beta page)
+        continue-on-error: true
+        run: |
+          if ! ls data/recent_rainfall/*.csv >/dev/null 2>&1; then
+            python src/flag_predictor/data/download_rainfall.py \
+              --min-date "$(date -u -d '50 days ago' +%F)" \
+              --output-dir data/recent_rainfall --delay 1.0 || true
+          fi
+
       - name: Generate figures into docs/
         run: |
           set -euo pipefail
@@ -84,7 +106,7 @@ jobs:
           GEN_RC=0
           generate_once() {
             local rc=0
-            python generate_all_location_figures.py --output-dir docs || rc=$?
+            python generate_all_location_figures.py --output-dir docs --beta-dir docs/beta || rc=$?
             if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
               echo "Figure generation failed hard (exit $rc)."
               exit "$rc"

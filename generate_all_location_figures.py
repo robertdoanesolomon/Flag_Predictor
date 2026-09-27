@@ -341,6 +341,7 @@ def generate_combined_figure(
     forecast_rain_p90: pd.Series,
     flag_thresholds: dict,
     n_members_used: int,
+    title_suffix: str = "",
 ) -> None:
     """
     Generate combined spaghetti + probability figure with aligned axes.
@@ -470,7 +471,7 @@ def generate_combined_figure(
     ax_rain.set_ylim(0, max_rain * 1.3)
     forecast_time_str = forecast_start_time.strftime("%H:%M, %a %-d %b")
     ax.set_title(
-        f"{location.upper()} - Forecast at {forecast_time_str}{stale_suffix}",
+        f"{location.upper()}{title_suffix} - Forecast at {forecast_time_str}{stale_suffix}",
         fontsize=32,
         fontweight="bold",
         pad=20,
@@ -570,130 +571,18 @@ def generate_combined_figure(
     print(f"✓ Combined figure saved to: {output_path}")
 
 
-def generate_spaghetti_figure(
+def render_location_outputs(
     location: str,
     output_dir: Path,
-    n_members: int = 50,
-    project_root: Path | None = None,
-) -> dict | None:
-    """
-    Generate the spaghetti + rainfall figure for a single location and save it.
-
-    This closely follows STEP 5 in `all_locations_visualization.ipynb`.
-
-    Returns:
-        A JSON-serialisable payload describing the forecast (for the interactive
-        frontend), or ``None`` if the location was skipped (e.g. missing model
-        artefacts).
-    """
-    project_root = project_root or PROJECT_ROOT
-
-    print(f"\n{'=' * 80}")
-    print(f"GENERATING FIGURE FOR: {location.upper()}")
-    print(f"{'=' * 80}")
-
-    config = get_location_config(location)
-    flag_thresholds = get_flag_thresholds(location)
-
-    # ------------------------------------------------------------------
-    # STEP 1: Historical data (matches notebook call)
-    # ------------------------------------------------------------------
-    merged_df, X, y_multi = prepare_training_data(
-        location=location,
-        project_root=project_root,
-        verbose=True,
-    )
-
-    # ------------------------------------------------------------------
-    # STEP 2: Load model (use location-specific latest files)
-    # ------------------------------------------------------------------
-    models_dir = project_root / "models"
-
-    # Use the September 2026 experiment models (hourly decoder + optional
-    # Farmoor flow stage-1). Fall back to June if September weights are missing.
-    model_path = models_dir / f"multihorizon_model_experiment_2026_09_{location}.pth"
-    scaler_path = models_dir / f"scaler_experiment_2026_09_{location}.pkl"
-    config_path = models_dir / f"config_experiment_2026_09_{location}.pkl"
-    if not model_path.exists():
-        model_path = models_dir / f"multihorizon_model_experiment_2026_06_{location}.pth"
-        scaler_path = models_dir / f"scaler_experiment_2026_06_{location}.pkl"
-        config_path = models_dir / f"config_experiment_2026_06_{location}.pkl"
-
-    try:
-        model, scaler, model_config = load_model(
-            model_path=str(model_path),
-            scaler_path=str(scaler_path),
-            config_path=str(config_path),
-        )
-    except FileNotFoundError as exc:
-        # If the experiment artefacts for this location are not present in the
-        # repo (e.g. not committed to GitHub), skip this location instead of
-        # failing the whole workflow.
-        print(f"\n[WARNING] Skipping location '{location}' – {exc}")
-        return None
-
-    feature_columns = model_config["feature_columns"]
-    sequence_length = model_config["sequence_length"]
-    horizons = model_config["horizons"]
-
-    flow_model = flow_scaler = flow_config = None
-    farmoor_path = models_dir / "multihorizon_model_experiment_2026_09_farmoor.pth"
-    if model_config.get("uses_predicted_flow") and farmoor_path.exists():
-        flow_model, flow_scaler, flow_config = load_model(
-            model_path=str(farmoor_path),
-            scaler_path=str(models_dir / "scaler_experiment_2026_09_farmoor.pkl"),
-            config_path=str(models_dir / "config_experiment_2026_09_farmoor.pkl"),
-        )
-
-    print("\nModel configuration:")
-    print(f"  Sequence length: {sequence_length}")
-    print(f"  Hidden sizes: {model_config['hidden_sizes']}")
-    print(f"  Features: {len(feature_columns)}")
-    print(f"  Architecture: {model_config.get('architecture', 'multihorizon')}")
-
-    # ------------------------------------------------------------------
-    # STEP 3: Fetch ensemble rainfall forecast (location-specific)
-    # ------------------------------------------------------------------
-    print(f"\n{'=' * 70}")
-    print(f"STEP 3: Fetching location-specific rainfall forecast for {location.upper()}")
-    print(f"{'=' * 70}")
-
-    rainfall_forecast = get_rainfall_forecast_ensemble(
-        location=location,
-        n_members=n_members,
-    )
-
-    print(f"\n✓ Rainfall forecast: {rainfall_forecast.shape}")
-    print(f"  Time range: {rainfall_forecast.index[0]} to {rainfall_forecast.index[-1]}")
-    print(f"  Stations loaded: {len(get_location_station_names(location))}")
-
-    # ------------------------------------------------------------------
-    # STEP 4: Ensemble prediction
-    # ------------------------------------------------------------------
-    print(f"\n{'=' * 70}")
-    print(f"STEP 4: Running ensemble prediction for {location.upper()}")
-    print(f"{'=' * 70}")
-
+    merged_df: pd.DataFrame,
+    ensemble_predictions: pd.DataFrame,
+    rainfall_forecast: pd.DataFrame,
+    config,
+    flag_thresholds: dict,
+    title_suffix: str = "",
+) -> dict:
+    """Figures and the JSON payload for one location's ensemble forecast (steps 5-7)."""
     station_names_list = get_location_station_names(location)
-
-    ensemble_predictions = predict_ensemble(
-        model=model,
-        scaler=scaler,
-        historical_df=merged_df,
-        rainfall_ensemble_df=rainfall_forecast,
-        feature_columns=feature_columns,
-        sequence_length=sequence_length,
-        horizons=horizons,
-        station_names=station_names_list,
-        n_members=n_members,
-        predicts_delta=model_config.get("predicts_delta", False),
-        max_recession_m_per_day=model_config.get("max_recession_m_per_day"),
-        verbose=True,
-        model_config=model_config,
-        flow_model=flow_model,
-        flow_scaler=flow_scaler,
-        flow_config=flow_config,
-    )
 
     # ------------------------------------------------------------------
     # STEP 5: Visualisation (spaghetti + rainfall bars)
@@ -779,8 +668,6 @@ def generate_spaghetti_figure(
 
     # Get location-specific station names (excludes Bicester and Grimsbury for godstow,
     # includes Wallingford-specific for wallingford)
-    station_names_list = get_location_station_names(location)
-
     # Filter to only rainfall stations (explicitly exclude flow, level, groundwater)
     rainfall_cols = [
         col
@@ -1005,7 +892,7 @@ def generate_spaghetti_figure(
 
     forecast_time_str = forecast_start_time.strftime("%H:%M, %a %-d %b")
     ax.set_title(
-        f"{location.upper()} - Forecast at {forecast_time_str}{stale_suffix}",
+        f"{location.upper()}{title_suffix} - Forecast at {forecast_time_str}{stale_suffix}",
         fontsize=32,
         fontweight="bold",
         pad=20,
@@ -1060,6 +947,7 @@ def generate_spaghetti_figure(
         forecast_rain_p90=forecast_rain_p90,
         flag_thresholds=flag_thresholds,
         n_members_used=n_members_used,
+        title_suffix=title_suffix,
     )
 
     # ------------------------------------------------------------------
@@ -1090,6 +978,168 @@ def generate_spaghetti_figure(
     return payload
 
 
+def generate_spaghetti_figure(
+    location: str,
+    output_dir: Path,
+    n_members: int = 50,
+    project_root: Path | None = None,
+    beta_dir: Path | None = None,
+) -> tuple[dict | None, dict | None]:
+    """
+    Generate the spaghetti + rainfall figure for a single location and save it.
+
+    This closely follows STEP 5 in `all_locations_visualization.ipynb`.
+
+    Returns:
+        (payload, beta_payload): JSON-serialisable payloads for the live and
+        (if ``beta_dir`` is given) the physics-hybrid beta forecast, each
+        ``None`` if that forecast was skipped or failed.
+    """
+    project_root = project_root or PROJECT_ROOT
+
+    print(f"\n{'=' * 80}")
+    print(f"GENERATING FIGURE FOR: {location.upper()}")
+    print(f"{'=' * 80}")
+
+    config = get_location_config(location)
+    flag_thresholds = get_flag_thresholds(location)
+
+    # ------------------------------------------------------------------
+    # STEP 1: Historical data (matches notebook call)
+    # ------------------------------------------------------------------
+    merged_df, X, y_multi = prepare_training_data(
+        location=location,
+        project_root=project_root,
+        verbose=True,
+    )
+
+    # ------------------------------------------------------------------
+    # STEP 2: Load model (use location-specific latest files)
+    # ------------------------------------------------------------------
+    models_dir = project_root / "models"
+
+    # Use the September 2026 experiment models (hourly decoder + optional
+    # Farmoor flow stage-1). Fall back to June if September weights are missing.
+    model_path = models_dir / f"multihorizon_model_experiment_2026_09_{location}.pth"
+    scaler_path = models_dir / f"scaler_experiment_2026_09_{location}.pkl"
+    config_path = models_dir / f"config_experiment_2026_09_{location}.pkl"
+    if not model_path.exists():
+        model_path = models_dir / f"multihorizon_model_experiment_2026_06_{location}.pth"
+        scaler_path = models_dir / f"scaler_experiment_2026_06_{location}.pkl"
+        config_path = models_dir / f"config_experiment_2026_06_{location}.pkl"
+
+    try:
+        model, scaler, model_config = load_model(
+            model_path=str(model_path),
+            scaler_path=str(scaler_path),
+            config_path=str(config_path),
+        )
+    except FileNotFoundError as exc:
+        # If the experiment artefacts for this location are not present in the
+        # repo (e.g. not committed to GitHub), skip this location instead of
+        # failing the whole workflow.
+        print(f"\n[WARNING] Skipping location '{location}' – {exc}")
+        return None, None
+
+    feature_columns = model_config["feature_columns"]
+    sequence_length = model_config["sequence_length"]
+    horizons = model_config["horizons"]
+
+    flow_model = flow_scaler = flow_config = None
+    farmoor_path = models_dir / "multihorizon_model_experiment_2026_09_farmoor.pth"
+    if model_config.get("uses_predicted_flow") and farmoor_path.exists():
+        flow_model, flow_scaler, flow_config = load_model(
+            model_path=str(farmoor_path),
+            scaler_path=str(models_dir / "scaler_experiment_2026_09_farmoor.pkl"),
+            config_path=str(models_dir / "config_experiment_2026_09_farmoor.pkl"),
+        )
+
+    print("\nModel configuration:")
+    print(f"  Sequence length: {sequence_length}")
+    print(f"  Hidden sizes: {model_config['hidden_sizes']}")
+    print(f"  Features: {len(feature_columns)}")
+    print(f"  Architecture: {model_config.get('architecture', 'multihorizon')}")
+
+    # ------------------------------------------------------------------
+    # STEP 3: Fetch ensemble rainfall forecast (location-specific)
+    # ------------------------------------------------------------------
+    print(f"\n{'=' * 70}")
+    print(f"STEP 3: Fetching location-specific rainfall forecast for {location.upper()}")
+    print(f"{'=' * 70}")
+
+    rainfall_forecast = get_rainfall_forecast_ensemble(
+        location=location,
+        n_members=n_members,
+    )
+
+    print(f"\n✓ Rainfall forecast: {rainfall_forecast.shape}")
+    print(f"  Time range: {rainfall_forecast.index[0]} to {rainfall_forecast.index[-1]}")
+    print(f"  Stations loaded: {len(get_location_station_names(location))}")
+
+    # ------------------------------------------------------------------
+    # STEP 4: Ensemble prediction
+    # ------------------------------------------------------------------
+    print(f"\n{'=' * 70}")
+    print(f"STEP 4: Running ensemble prediction for {location.upper()}")
+    print(f"{'=' * 70}")
+
+    station_names_list = get_location_station_names(location)
+
+    ensemble_predictions = predict_ensemble(
+        model=model,
+        scaler=scaler,
+        historical_df=merged_df,
+        rainfall_ensemble_df=rainfall_forecast,
+        feature_columns=feature_columns,
+        sequence_length=sequence_length,
+        horizons=horizons,
+        station_names=station_names_list,
+        n_members=n_members,
+        predicts_delta=model_config.get("predicts_delta", False),
+        max_recession_m_per_day=model_config.get("max_recession_m_per_day"),
+        verbose=True,
+        model_config=model_config,
+        flow_model=flow_model,
+        flow_scaler=flow_scaler,
+        flow_config=flow_config,
+    )
+
+    payload = render_location_outputs(
+        location=location,
+        output_dir=output_dir,
+        merged_df=merged_df,
+        ensemble_predictions=ensemble_predictions,
+        rainfall_forecast=rainfall_forecast,
+        config=config,
+        flag_thresholds=flag_thresholds,
+    )
+
+    beta_payload = None
+    if beta_dir is not None:
+        # Physics-hybrid trial (beta page). Never allowed to affect the live output.
+        try:
+            from flag_predictor.prediction.hybrid_live import forecast_ensemble, rain_forecast
+
+            print(f"\n{'=' * 70}")
+            print(f"BETA: physics hybrid for {location.upper()}")
+            print(f"{'=' * 70}")
+            beta_predictions = forecast_ensemble(location, merged_df, project_root, n_members=n_members)
+            beta_payload = render_location_outputs(
+                location=location,
+                output_dir=beta_dir,
+                merged_df=merged_df,
+                ensemble_predictions=beta_predictions,
+                rainfall_forecast=rain_forecast(n_members),
+                config=config,
+                flag_thresholds=flag_thresholds,
+                title_suffix=" (beta)",
+            )
+        except Exception:
+            print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
+            traceback.print_exc()
+    return payload, beta_payload
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -1108,7 +1158,44 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=50,
         help="Number of ensemble members to use for the forecast.",
     )
+    parser.add_argument(
+        "--beta-dir",
+        default=None,
+        help=(
+            "Also run the physics-hybrid trial model and write its figures and "
+            "forecast_data.json here (e.g. docs/beta). Beta failures never "
+            "affect the live output or the exit code."
+        ),
+    )
     return parser.parse_args(argv)
+
+
+def write_forecast_bundle(output_dir: Path, payloads: dict, failed_locations: list[str]) -> None:
+    """Write forecast_data.json, reusing the previous payload for failed locations."""
+    json_path = output_dir / "forecast_data.json"
+
+    # Keep the previous payload for failed locations so the interactive page
+    # still shows them (with their older forecast) instead of dropping the tab.
+    if failed_locations and json_path.exists():
+        try:
+            with open(json_path) as f:
+                previous_locations = json.load(f).get("locations", {})
+            for location in failed_locations:
+                if location not in payloads and location in previous_locations:
+                    payloads[location] = previous_locations[location]
+                    print(f"  Reusing previous forecast payload for '{location}' in {output_dir}")
+        except Exception as exc:
+            print(f"  Could not reuse previous forecast_data.json: {exc}")
+
+    if payloads:
+        bundle = {
+            "generated_at": pd.Timestamp.utcnow().tz_localize(None).isoformat() + "Z",
+            "location_order": [k for k in ["isis", "godstow", "wallingford"] if k in payloads],
+            "locations": payloads,
+        }
+        with open(json_path, "w") as f:
+            json.dump(bundle, f, separators=(",", ":"))
+        print(f"\n✓ Interactive JSON payload saved to: {json_path}")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -1127,16 +1214,25 @@ def main(argv: list[str] | None = None) -> None:
     print(f"Processing all locations: {locations_to_process}")
     print(f"Total locations: {len(locations_to_process)}")
 
+    beta_dir = None
+    if args.beta_dir:
+        beta_dir = Path(args.beta_dir)
+        if not beta_dir.is_absolute():
+            beta_dir = PROJECT_ROOT / beta_dir
+        beta_dir.mkdir(parents=True, exist_ok=True)
+
     all_payloads: dict[str, dict] = {}
+    beta_payloads: dict[str, dict] = {}
     failed_locations: list[str] = []
     for location in locations_to_process:
         # One flaky EA gauge must not block publishing the other locations.
         try:
-            payload = generate_spaghetti_figure(
+            payload, beta_payload = generate_spaghetti_figure(
                 location=location,
                 output_dir=output_dir,
                 n_members=args.n_members,
                 project_root=PROJECT_ROOT,
+                beta_dir=beta_dir,
             )
         except Exception:
             failed_locations.append(location)
@@ -1145,31 +1241,13 @@ def main(argv: list[str] | None = None) -> None:
             continue
         if payload is not None:
             all_payloads[location] = payload
+        if beta_payload is not None:
+            beta_payloads[location] = beta_payload
 
-    json_path = output_dir / "forecast_data.json"
-
-    # Keep the previous payload for failed locations so the interactive page
-    # still shows them (with their older forecast) instead of dropping the tab.
-    if failed_locations and json_path.exists():
-        try:
-            with open(json_path) as f:
-                previous_locations = json.load(f).get("locations", {})
-            for location in failed_locations:
-                if location not in all_payloads and location in previous_locations:
-                    all_payloads[location] = previous_locations[location]
-                    print(f"  Reusing previous forecast payload for '{location}'")
-        except Exception as exc:
-            print(f"  Could not reuse previous forecast_data.json: {exc}")
-
-    if all_payloads:
-        bundle = {
-            "generated_at": pd.Timestamp.utcnow().tz_localize(None).isoformat() + "Z",
-            "location_order": [k for k in ["isis", "godstow", "wallingford"] if k in all_payloads],
-            "locations": all_payloads,
-        }
-        with open(json_path, "w") as f:
-            json.dump(bundle, f, separators=(",", ":"))
-        print(f"\n✓ Interactive JSON payload saved to: {json_path}")
+    write_forecast_bundle(output_dir, all_payloads, failed_locations)
+    if beta_dir is not None:
+        beta_failed = [loc for loc in locations_to_process if loc not in beta_payloads]
+        write_forecast_bundle(beta_dir, beta_payloads, beta_failed)
 
     print(f"\nAll figures saved to: {output_dir}")
 
