@@ -75,3 +75,7 @@ figures/eval/*
 !figures/eval/summary_*.csv
 !figures/eval/flag_accuracy_*.csv
 !figures/eval/examples_*.png
+!figures/eval/feb20*_sept_vs_hybrid.png
+!figures/eval/feb2025_*_sept_vs_hybrid.png
+!figures/eval/now_*_sept_vs_hybrid.png
+data/recent_rainfall/
