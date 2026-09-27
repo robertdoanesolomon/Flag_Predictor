@@ -23,6 +23,26 @@ MODELS_DIR = Path(__file__).resolve().parents[3] / 'models'
 # Enough history for the 720h rolling features to be exact over the encoder window.
 HISTORY_H = 720 + SEQ_LEN + 200
 
+_PAST_CACHE: dict = {}
+
+
+def _past_inputs(history: pd.DataFrame):
+    """Encoder features and past rain for a forecast start, shared across calls.
+
+    These depend only on the history, so every ensemble member, seed and rain
+    variant for the same t0 reuses one computation.
+    """
+    hist = history.iloc[-HISTORY_H:]
+    key = (hist.index[-1], len(hist), tuple(hist.columns),
+           float(np.nansum(hist['differential'].to_numpy())), float(np.nansum(hist.iloc[:, 1:].to_numpy())))
+    if key not in _PAST_CACHE:
+        if len(_PAST_CACHE) > 8:
+            _PAST_CACHE.clear()
+        enc = encoder_frame(hist)
+        rain_hist = mean_station_rain(hist).to_numpy(dtype=np.float32)
+        _PAST_CACHE[key] = (hist, enc, rain_hist)
+    return _PAST_CACHE[key]
+
 
 def redesign_predictor(name: str, location: str, models_dir: Path = MODELS_DIR):
     model, scaler, meta = load_candidate(name, location, models_dir)
@@ -30,10 +50,9 @@ def redesign_predictor(name: str, location: str, models_dir: Path = MODELS_DIR):
 
     @torch.no_grad()
     def predict(history: pd.DataFrame, future_rain: pd.DataFrame) -> np.ndarray:
-        hist = history.iloc[-HISTORY_H:]
-        enc = encoder_frame(hist).reindex(columns=enc_cols)
+        hist, enc_all, rain_hist = _past_inputs(history)
+        enc = enc_all.reindex(columns=enc_cols)
         x = scaler.transform(enc.to_numpy(dtype=np.float32)[-SEQ_LEN:])
-        rain_hist = mean_station_rain(hist).to_numpy(dtype=np.float32)
         rain_fut = future_rain.clip(lower=0).mean(axis=1).fillna(0.0).to_numpy(dtype=np.float32)
         t0 = hist.index[-1]
         fut_idx = pd.date_range(t0 + pd.Timedelta(hours=1), periods=HORIZON, freq='1h')

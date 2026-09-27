@@ -71,6 +71,11 @@ DEFAULTS = {
     # Warm start from a saved redesign model of the same family (curriculum:
     # fit first, then add realism penalties).
     'init_from': None,
+    # Train on imperfect future rain (it is a forecast in operation):
+    # 6-hourly mean-preserving lognormal noise with this sigma, and a random
+    # timing shift of up to this many hours. 0 = off.
+    'train_rain_noise': 0.0,
+    'train_rain_shift': 0,
     'seed': 0,
 }
 
@@ -154,8 +159,27 @@ def _forward(model, b):
     return model(b['x'], b['rain'], b['season'], b['rain24'], b['rain168'], b['d0'])
 
 
+def perturb_future_rain(rain: torch.Tensor, sigma: float, max_shift: int) -> torch.Tensor:
+    """Per-sample random timing shift and 6-hourly lognormal noise (mean-preserving)."""
+    B, H = rain.shape
+    out = rain
+    if max_shift:
+        shifts = torch.randint(-max_shift, max_shift + 1, (B,), device=rain.device)
+        idx = torch.arange(H, device=rain.device)[None, :] - shifts[:, None]
+        valid = (idx >= 0) & (idx < H)
+        out = torch.where(valid, torch.gather(rain, 1, idx.clamp(0, H - 1)), torch.zeros_like(rain))
+    if sigma > 0:
+        blocks = (H + 5) // 6
+        z = torch.randn(B, blocks, device=rain.device)
+        factors = torch.exp(sigma * z - sigma ** 2 / 2).repeat_interleave(6, dim=1)[:, :H]
+        out = out * factors
+    return out
+
+
 def compute_loss(model, family: str, b: Dict, cfg: Dict, hw: torch.Tensor, train: bool):
     q = None
+    if train and (cfg['train_rain_noise'] > 0 or cfg['train_rain_shift'] > 0):
+        b = dict(b, rain=perturb_future_rain(b['rain'], cfg['train_rain_noise'], cfg['train_rain_shift']))
     if family == 'hybrid' and cfg['flow_aux_weight'] > 0:
         pred, q = model(b['x'], b['rain'], b['season'], b['rain24'], b['rain168'], b['d0'], return_q=True,
                         rain_st=b.get('rain_st'), rain_st_ok=b.get('rain_st_ok'))

@@ -246,6 +246,26 @@ and single-run gaps under about 2 mm (Wallingford: 5 mm) aren't read as real.
 Gauge weights and first-day weighting didn't give a consistent gain, so they
 were left out.
 
+**Final model: five seeds of `hybrid_c1_ps`, averaged** (`ensemble:hybrid_c1_ps+…_s4`).
+Averaging keeps every structural guarantee: a mean of trajectories that start
+at D(t0), never climb without water and rise with rain has the same
+properties. Validation MAE of the individual seeds:
+
+| seed | Isis | Godstow | Wallingford |
+|---|---|---|---|
+| 0 | 0.0506 | 0.0506 | 0.0719 |
+| 1 | 0.0491 | 0.0529 | 0.0755 |
+| 2 | 0.0518 | 0.0530 | 0.0724 |
+| 3 | 0.0497 | 0.0501 | 0.0735 |
+| 4 | 0.0503 | 0.0508 | 0.0724 |
+
+**Training on imperfect rain** (`hybrid_c1_ps_rn`). In operation the future
+rain is a forecast. This variant trains with the future rain perturbed:
+6-hourly lognormal noise σ = 0.5, plus a random ±18 h timing shift.
+Validation MAE with the observed rain gets worse (0.0540 / 0.0569 / 0.0747),
+as expected. Whether it pays off with imperfect rain is judged by
+`mae_perturbed` below.
+
 Notes:
 
 - **Piecewise-linear rating curve (v1).** A recession that sweeps log Q past a
@@ -257,8 +277,8 @@ Notes:
   to their EMA base at all three locations. **The Farmoor-flow auxiliary
   loss** helps Wallingford a little and hurts Isis. **Gauge weights** help
   Wallingford (tributaries below Farmoor) and hurt Godstow.
-- **LSTM with predicted flow** (`lstm_v2f`, Isis): validation MAE 0.0543, much
-  closer to the hybrid. With the gentle penalties trained from scratch
+- **LSTM with predicted flow** (`lstm_v2f`): validation MAE 0.0543 / 0.0540 /
+  0.0843 (Isis / Godstow / Wallingford), much closer to the hybrid. With the gentle penalties trained from scratch
   (`lstm_v2fp`) it collapses to the flat solution again (0.1143).
 - **Curriculum** (`lstm_v2fc`): start from the trained `lstm_v2f`, then
   fine-tune with the gentle penalties at lr 3e-4. It still collapses to flat
