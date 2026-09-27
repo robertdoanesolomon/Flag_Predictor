@@ -994,6 +994,8 @@ def generate_spaghetti_figure(
     n_members: int = 50,
     project_root: Path | None = None,
     beta_dir: Path | None = None,
+    live_title_suffix: str = "",
+    beta_title_suffix: str = " (beta)",
 ) -> tuple[dict | None, dict | None]:
     """
     Generate the spaghetti + rainfall figure for a single location and save it.
@@ -1122,6 +1124,7 @@ def generate_spaghetti_figure(
         rainfall_forecast=rainfall_forecast,
         config=config,
         flag_thresholds=flag_thresholds,
+        title_suffix=live_title_suffix,
     )
 
     beta_payload = None
@@ -1142,7 +1145,7 @@ def generate_spaghetti_figure(
                 rainfall_forecast=rain_forecast(n_members),
                 config=config,
                 flag_thresholds=flag_thresholds,
-                title_suffix=" (beta)",
+                title_suffix=beta_title_suffix,
             )
         except Exception:
             print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
@@ -1176,6 +1179,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "forecast_data.json here (e.g. docs/beta). Beta failures never "
             "affect the live output or the exit code."
         ),
+    )
+    parser.add_argument(
+        "--primary",
+        choices=["september", "hybrid"],
+        default="september",
+        help=(
+            "Which model the main page shows. With 'hybrid', the physics hybrid "
+            "is written to --output-dir and the September LSTM to --old-dir; a "
+            "location where the hybrid fails falls back to the September forecast."
+        ),
+    )
+    parser.add_argument(
+        "--old-dir",
+        default=None,
+        help="With --primary hybrid: where the September LSTM forecast is written (e.g. docs/old).",
     )
     return parser.parse_args(argv)
 
@@ -1224,12 +1242,26 @@ def main(argv: list[str] | None = None) -> None:
     print(f"Processing all locations: {locations_to_process}")
     print(f"Total locations: {len(locations_to_process)}")
 
-    beta_dir = None
-    if args.beta_dir:
-        beta_dir = Path(args.beta_dir)
-        if not beta_dir.is_absolute():
-            beta_dir = PROJECT_ROOT / beta_dir
-        beta_dir.mkdir(parents=True, exist_ok=True)
+    def _resolve(path_str):
+        if not path_str:
+            return None
+        path = Path(path_str)
+        if not path.is_absolute():
+            path = PROJECT_ROOT / path
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    hybrid_primary = args.primary == "hybrid"
+    if hybrid_primary:
+        # September renders into old_dir, the hybrid into the main output_dir.
+        main_dir = output_dir
+        old_dir = _resolve(args.old_dir) or (output_dir / "old")
+        old_dir.mkdir(parents=True, exist_ok=True)
+        september_dir, beta_dir = old_dir, main_dir
+        live_suffix, beta_suffix = " (old model)", ""
+    else:
+        september_dir, beta_dir = output_dir, _resolve(args.beta_dir)
+        live_suffix, beta_suffix = "", " (beta)"
 
     all_payloads: dict[str, dict] = {}
     beta_payloads: dict[str, dict] = {}
@@ -1239,10 +1271,12 @@ def main(argv: list[str] | None = None) -> None:
         try:
             payload, beta_payload = generate_spaghetti_figure(
                 location=location,
-                output_dir=output_dir,
+                output_dir=september_dir,
                 n_members=args.n_members,
                 project_root=PROJECT_ROOT,
                 beta_dir=beta_dir,
+                live_title_suffix=live_suffix,
+                beta_title_suffix=beta_suffix,
             )
         except Exception:
             failed_locations.append(location)
@@ -1254,10 +1288,23 @@ def main(argv: list[str] | None = None) -> None:
         if beta_payload is not None:
             beta_payloads[location] = beta_payload
 
-    write_forecast_bundle(output_dir, all_payloads, failed_locations)
-    if beta_dir is not None:
-        beta_failed = [loc for loc in locations_to_process if loc not in beta_payloads]
-        write_forecast_bundle(beta_dir, beta_payloads, beta_failed)
+    if hybrid_primary:
+        # Main page: the hybrid, falling back to a fresh September forecast
+        # for any location where the hybrid failed.
+        main_payloads = {}
+        for loc in locations_to_process:
+            if loc in beta_payloads:
+                main_payloads[loc] = beta_payloads[loc]
+            elif loc in all_payloads:
+                print(f"  [primary] hybrid missing for '{loc}'; main page shows the September forecast")
+                main_payloads[loc] = all_payloads[loc]
+        write_forecast_bundle(output_dir, main_payloads, failed_locations)
+        write_forecast_bundle(september_dir, dict(all_payloads), failed_locations)
+    else:
+        write_forecast_bundle(output_dir, all_payloads, failed_locations)
+        if beta_dir is not None:
+            beta_failed = [loc for loc in locations_to_process if loc not in beta_payloads]
+            write_forecast_bundle(beta_dir, beta_payloads, beta_failed)
 
     print(f"\nAll figures saved to: {output_dir}")
 
