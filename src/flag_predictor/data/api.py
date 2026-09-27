@@ -372,6 +372,37 @@ def fetch_all_api_data(
     return river_levels, rainfall, flow
 
 
+def _utc_series(level: pd.Series) -> pd.Series:
+    s = level.sort_index().copy()
+    if s.index.tz is None:
+        s.index = s.index.tz_localize("UTC")
+    else:
+        s.index = s.index.tz_convert("UTC")
+    return s
+
+
+def _attach_reading_times(out: pd.DataFrame, gauges: Dict[str, pd.Series], n_hours: int = 48) -> pd.DataFrame:
+    """Record, for each recent hourly point, when its oldest contributing raw reading was taken.
+
+    Hourly points are labelled by the start of the hour but built from the last reading in
+    that hour, and gauges are forward-filled up to 6h, so the true age of a point is the
+    oldest of its gauges' latest readings. Stored in ``out.attrs["reading_time"]`` as
+    {naive UTC hour: naive UTC reading time} for the last ``n_hours`` points.
+    """
+    times = {}
+    for name, level in gauges.items():
+        s = _utc_series(level).dropna()
+        stamps = pd.Series(s.index, index=s.index)
+        times[name] = stamps.resample("1h").last()
+    as_of = pd.concat(times, axis=1).sort_index().ffill(limit=6).min(axis=1)
+    as_of = as_of.reindex(out.index).dropna().iloc[-n_hours:]
+    out.attrs["reading_time"] = {
+        idx.tz_localize(None): pd.Timestamp(t).tz_convert("UTC").tz_localize(None)
+        for idx, t in as_of.items()
+    }
+    return out
+
+
 def _level_series_hourly_last(level: pd.Series) -> pd.Series:
     """Resample irregular EA readings to hourly using the last value in each hour (UTC).
 
@@ -379,12 +410,7 @@ def _level_series_hourly_last(level: pd.Series) -> pd.Series:
     this step can silently drop trailing hours wherever indices do not coincide. Three-gauge
     blends (Isis) are especially sensitive versus two-gauge stretches.
     """
-    s = level.sort_index().copy()
-    if s.index.tz is None:
-        s.index = s.index.tz_localize("UTC")
-    else:
-        s.index = s.index.tz_convert("UTC")
-    return s.resample("1h").last()
+    return _utc_series(level).resample("1h").last()
 
 
 def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
@@ -401,9 +427,13 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
     Returns:
         DataFrame with 'differential' column
     """
-    o = _level_series_hourly_last(_require_level_series(river_levels, "osney_downstream"))
-    i = _level_series_hourly_last(_require_level_series(river_levels, "iffley_upstream"))
-    k = _level_series_hourly_last(_require_level_series(river_levels, "kings_mill_downstream"))
+    gauges = {
+        name: _require_level_series(river_levels, name)
+        for name in ("osney_downstream", "iffley_upstream", "kings_mill_downstream")
+    }
+    o = _level_series_hourly_last(gauges["osney_downstream"])
+    i = _level_series_hourly_last(gauges["iffley_upstream"])
+    k = _level_series_hourly_last(gauges["kings_mill_downstream"])
     merged = pd.concat({"o": o, "i": i, "k": k}, axis=1).sort_index()
     # Allow small gaps—EA stations often miss occasional hours; avoids a frozen tail/hourly NaNs.
     merged = merged.ffill(limit=6).dropna(how="any")
@@ -413,7 +443,7 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
         0.71 * (merged["o"] - merged["i"] - 2.14)
         + 0.29 * (merged["k"] - merged["i"] - 0.73)
     )
-    return pd.DataFrame({"differential": differential})
+    return _attach_reading_times(pd.DataFrame({"differential": differential}), gauges)
 
 
 def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
@@ -429,8 +459,12 @@ def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.
     Returns:
         DataFrame with 'differential' column
     """
-    g = _level_series_hourly_last(_require_level_series(river_levels, "godstow_downstream"))
-    u = _level_series_hourly_last(_require_level_series(river_levels, "osney_upstream"))
+    gauges = {
+        name: _require_level_series(river_levels, name)
+        for name in ("godstow_downstream", "osney_upstream")
+    }
+    g = _level_series_hourly_last(gauges["godstow_downstream"])
+    u = _level_series_hourly_last(gauges["osney_upstream"])
     merged = pd.concat({"godstow": g, "osney_us": u}, axis=1).sort_index().ffill(limit=6).dropna(
         how="any"
     )
@@ -438,7 +472,7 @@ def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.
         raise RuntimeError("Godstow differential is empty after aligning EA level series.")
     differential = merged["godstow"] - merged["osney_us"] - 1.63
 
-    return pd.DataFrame({'differential': differential})
+    return _attach_reading_times(pd.DataFrame({'differential': differential}), gauges)
 
 def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
     """
@@ -453,14 +487,18 @@ def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) ->
     Returns:
         DataFrame with 'differential' column
     """
-    b = _level_series_hourly_last(_require_level_series(river_levels, "benson_downstream"))
-    c = _level_series_hourly_last(_require_level_series(river_levels, "cleeve_upstream"))
+    gauges = {
+        name: _require_level_series(river_levels, name)
+        for name in ("benson_downstream", "cleeve_upstream")
+    }
+    b = _level_series_hourly_last(gauges["benson_downstream"])
+    c = _level_series_hourly_last(gauges["cleeve_upstream"])
     merged = pd.concat({"benson": b, "cleeve": c}, axis=1).sort_index().ffill(limit=6).dropna(how="any")
     if merged.empty:
         raise RuntimeError("Wallingford differential is empty after aligning EA level series.")
     differential = merged["benson"] - merged["cleeve"] - 2.13
 
-    return pd.DataFrame({'differential': differential})
+    return _attach_reading_times(pd.DataFrame({'differential': differential}), gauges)
 
 def get_rainfall_forecast(
     locations: Optional[Dict] = None,

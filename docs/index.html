@@ -1118,7 +1118,7 @@
           </div>
           <div class="flag-value">${fmtDiff(cur.differential)}<small>m differential</small></div>
           <div class="flag-card-footer">
-            <span>${relativeTime(cur.timestamp)}</span>
+            <span>${relativeTime(loc.latest_reading || cur.timestamp)}</span>
             <span class="peak">Est. 10-day peak: ${peak} m · ${peakDate}</span>
           </div>
         </button>
@@ -1180,7 +1180,7 @@
                 ? `<div class="forecast-callout" role="status" aria-live="polite"><p class="summary-line">${s}</p></div>`
                 : '';
             })()}
-            <p class="meta">Latest river reading <strong>${fmtShortDateTime(loc.forecast_start)}</strong></p>
+            <p class="meta">Latest river reading <strong>${fmtShortDateTime(loc.latest_reading || loc.forecast_start)}</strong></p>
 
             <div class="chart-block">
               <div class="chart-legend" data-plot="plot-${key}">

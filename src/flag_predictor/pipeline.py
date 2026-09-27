@@ -133,6 +133,10 @@ def prepare_training_data(
             print(f"\nDropping rainfall stations for godstow: {drop_cols}")
         merged_df = merged_df.drop(columns=drop_cols, errors="ignore")
     
+    # Carry the raw EA reading time behind each recent hourly differential point.
+    if api_diff_df is not None and "reading_time" in api_diff_df.attrs:
+        merged_df.attrs["reading_time"] = api_diff_df.attrs["reading_time"]
+
     if verbose:
         print(f"\n✓ Merged data: {merged_df.shape}")
         print(f"  Date range: {merged_df.index.min()} to {merged_df.index.max()}")

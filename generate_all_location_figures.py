@@ -143,6 +143,7 @@ def build_location_payload(
     n_members_used: int,
     last_sensor_update: pd.Timestamp,
     display_name: str,
+    latest_reading: Optional[pd.Timestamp] = None,
 ) -> dict:
     """Assemble a JSON-serialisable dict with everything the frontend needs."""
     location = location.lower()
@@ -236,6 +237,10 @@ def build_location_payload(
         "stale": bool(stale),
         "last_sensor_update": pd.Timestamp(last_sensor_update).isoformat(),
         "forecast_start": pd.Timestamp(forecast_start_time).isoformat(),
+        # Raw EA time of the oldest gauge reading behind the last historical point (UTC).
+        "latest_reading": (
+            pd.Timestamp(latest_reading).isoformat() + "Z" if latest_reading is not None else None
+        ),
         "n_members": n_members_used,
         "current": {
             "differential": round(current_value, 4),
@@ -1072,6 +1077,10 @@ def generate_spaghetti_figure(
         historical_to_plot_full.index <= forecast_start_time
     ]
 
+    latest_reading = None
+    if len(historical_to_plot_full) > 0:
+        latest_reading = merged_df.attrs.get("reading_time", {}).get(historical_to_plot_full.index[-1])
+
     payload = build_location_payload(
         location=location,
         plot_df=plot_df,
@@ -1086,6 +1095,7 @@ def generate_spaghetti_figure(
         n_members_used=n_members_used,
         last_sensor_update=last_update,
         display_name=config.display_name,
+        latest_reading=latest_reading,
     )
     return payload
 
