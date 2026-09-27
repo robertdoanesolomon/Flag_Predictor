@@ -68,6 +68,9 @@ DEFAULTS = {
     'ema_decay': 0.0,
     # lstm_v2: feed stage-1 predicted Farmoor flow to the decoder
     'use_pred_flow': False,
+    # Warm start from a saved redesign model of the same family (curriculum:
+    # fit first, then add realism penalties).
+    'init_from': None,
     'seed': 0,
 }
 
@@ -211,6 +214,11 @@ def train_candidate(
         [data.train_t[:, None] + np.arange(-99, 1)[None, :]]).ravel())])
     sampler = WindowSampler(data, scaler, device)
     model = build_model(family, data, cfg).to(device)
+    if cfg['init_from']:
+        from pathlib import Path as _P
+        state = torch.load(_P(__file__).resolve().parents[3] / 'models'
+                           / f"redesign_{cfg['init_from']}_{data.location}.pt", map_location=device)
+        model.load_state_dict(state)
     hw = horizon_weights(cfg, device)
 
     phys = [p for n, p in model.named_parameters() if n.startswith(('params_raw', 'split_logits', 'rating'))]

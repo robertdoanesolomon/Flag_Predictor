@@ -226,3 +226,100 @@ Variants (validation MAE from the trainer, Isis / Godstow / Wallingford):
 | name | change | Isis | Godstow | Wallingford |
 |---|---|---|---|---|
 | `hybrid_v1` | baseline structure | 0.0524 | 0.0533 | 0.0758 |
+| `hybrid_ema` | + EMA of weights (0.995) | 0.0542 | 0.0530 | 0.0761 |
+| `hybrid_ps` | + EMA, encoder also modulates k_quick, k_medium, β and the runoff split per forecast | 0.0527 | 0.0499 | 0.0724 |
+| `hybrid_aux` | + EMA, latent Q pulled toward observed Farmoor flow (weight 0.02) | 0.0579 | 0.0538 | 0.0742 |
+| `hybrid_h128` | + EMA, encoder 128 hidden, dropout 0.3 | 0.0540 | 0.0519 | 0.0743 |
+| `hybrid_c1` | C1 (smooth) rating curve | 0.0508 | 0.0513 | 0.0748 |
+| `hybrid_c1_st` | + learned rain-gauge weights | 0.0516 | 0.0547 | 0.0715 |
+| `hybrid_c1_ps` | C1 curve + per-forecast parameters (no EMA) | **0.0506** | 0.0506 | **0.0719** |
+| `hybrid_c1_ps_st` | + gauge weights | 0.0521 | **0.0505** | **0.0719** |
+| `hybrid_w` | v1 with first-day loss weights 5 / 2.5 / 1 | 0.0557 | 0.0520 | 0.0767 |
+| `hybrid_v1_s1`, `_s2` | v1, seeds 1 and 2 | 0.0519, 0.0508 | 0.0547, 0.0548 | 0.0735, 0.0789 |
+
+**Seed noise.** Three seeds of the same v1 setup span 0.0508–0.0524 (Isis),
+0.0533–0.0548 (Godstow) and 0.0735–0.0789 (Wallingford). That's as large as
+most differences between variants. So the final model averages several seeds,
+and single-run gaps under about 2 mm (Wallingford: 5 mm) aren't read as real.
+
+**Chosen setup: `hybrid_c1_ps`.** Best or joint best at all three locations.
+Gauge weights and first-day weighting didn't give a consistent gain, so they
+were left out.
+
+Notes:
+
+- **Piecewise-linear rating curve (v1).** A recession that sweeps log Q past a
+  knot shows a visible corner, e.g. hours 80–100 and ~165 in
+  `figures/eval/examples_val_isis.png`. The C1 curve (slope linear between
+  knots, exact quadratic inverse) removes them. It's also more accurate at
+  all three locations, so it becomes the base.
+- **EMA** doesn't help on its own. **Per-forecast parameters** help relative
+  to their EMA base at all three locations. **The Farmoor-flow auxiliary
+  loss** helps Wallingford a little and hurts Isis. **Gauge weights** help
+  Wallingford (tributaries below Farmoor) and hurt Godstow.
+- **LSTM with predicted flow** (`lstm_v2f`, Isis): validation MAE 0.0543, much
+  closer to the hybrid. With the gentle penalties trained from scratch
+  (`lstm_v2fp`) it collapses to the flat solution again (0.1143).
+- **Curriculum** (`lstm_v2fc`): start from the trained `lstm_v2f`, then
+  fine-tune with the gentle penalties at lr 3e-4. It still collapses to flat
+  (0.1141) within the first epoch. With these loss terms the flat forecast is
+  a strong attractor.
+- **Candidate A on the weekly 2023 starts (Isis).**
+  - Accuracy: `lstm_v2f` MAE 0.048, and the best first-day MAE of any model
+    (0.0138, level with persistence).
+  - Realism: still unrealistic without constraints. It climbs > 1 cm in dry
+    weather in 13% of forecasts, max kink 8.3 mm/h², 8.6 reversals per
+    forecast, rain non-monotonic in 0.6% of hours, and a late climb after
+    removing all rain.
+  - It's better than the September model on every realism measure, but far
+    from the hybrid.
+
+### What the hybrid learned
+
+Global parameters of `hybrid_c1_ps`, seed 0. The encoder also nudges the
+quick/medium time constants, β and the split per forecast.
+
+| | Isis | Godstow | Wallingford |
+|---|---|---|---|
+| quick store time constant (h) | 9.0 | 10.3 | 9.0 |
+| medium store time constant, ×3 in cascade (h) | 18.5 | 19.5 | 18.7 |
+| groundwater time constant (h) | 475 | 448 | 335 |
+| channel time constant (h) | 22 | 29 | 19 |
+| runoff exponent β | 2.15 | 2.11 | 2.05 |
+| soil capacity (mm) | 76 | 77 | 103 |
+| evapotranspiration, winter base / midsummer extra (mm/h) | 0.012 / 0.106 | 0.007 / 0.157 | 0.012 / 0.117 |
+| runoff split quick / medium / groundwater | 18 / 58 / 24% | 18 / 58 / 25% | 17 / 59 / 25% |
+
+The three locations were trained independently yet agree closely, which
+suggests the parameters are physically identifiable rather than curve-fitting.
+
+- **Travel times.** About 2.3 days mean travel on the medium path; groundwater
+  recession over 14–20 days (Farmoor flow halved over about three weeks in the
+  Dec 2024 recession).
+- **Evapotranspiration.** It peaks at roughly 2.6–3.8 mm/day in midsummer and
+  sits around 0.2–0.3 mm/day in winter, plausible values for southern England
+  that came out of rain and river data alone.
+
+## Deployment notes (not done)
+
+Swapping the hybrid into `generate_all_location_figures.py` needs more than
+loading different weights:
+
+1. **A continuous hourly history.** The live script builds history with the
+   September merge (differential rows only), so there's a hole between the
+   end of the differential archive (2026-01-20) and the start of the EA API's
+   ~4-week window. The hybrid's encoder needs about 820 h of continuous rain
+   (its 720 h rolling rain feature) and about 270 h of differential.
+   - Rain: CI already downloads the qualified EA rain CSVs up to near-present
+     (see the workflow). Building rain and flow from those plus the API, as
+     `evaluation.load_merged` does, closes the gap.
+   - Differential: the API's 4 weeks are enough.
+2. **Ensemble prediction.** Per member, call
+   `candidates.ensemble_predictor([...5 seeds...], location)` with that
+   member's station rain. It's roughly 0.1 s per member per seed, so about
+   25 s per location for 50 members × 5 seeds. That's fine on a 15-minute
+   schedule, and could be batched further.
+3. **Weights to commit:** `models/redesign_hybrid_c1_ps*_{location}.{pt,pkl}`
+   (15 weight files of about 300 kB, plus their small configs).
+4. **Drop the clamps.** None of `apply_hourly_physics` / `apply_recession_limit`
+   / the flow blend applies; the model doesn't use stage-1 flow at all.
