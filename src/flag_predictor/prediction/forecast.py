@@ -155,7 +155,7 @@ def predict_flow_hourly(
     feature_columns = flow_config['feature_columns']
     decoder_scaler: MinMaxScaler = flow_config['decoder_scaler']
 
-    lookback = max(720, sequence_length + 24)
+    lookback = max(flow_config.get('history_hours', 720), sequence_length + 24)
     history = historical_df.iloc[-lookback:].copy()
     t0 = history.index[-1]
     flow_col = flow_config.get('target_column', 'flow_m3s_Farmoor')
@@ -181,6 +181,9 @@ def predict_flow_hourly(
 
     log_now = np.log1p(max(current_flow, 0.0))
     flow_abs = np.expm1(log_now + delta).clip(min=0.0)
+    if not flow_config.get('flow_blend', True):
+        # Raw stage-1 output, without holding flow at the last observation.
+        return pd.Series(flow_abs, index=future_index, name=flow_col)
     rain_cume = np.cumsum(np.clip(rain.to_numpy(dtype=float), 0, None))
     mix = np.clip(rain_cume / max(PHYSICAL_CONSTRAINTS['dry_cume_mm'], 1e-3), 0.0, 1.0)
     flow_blend = current_flow * (1.0 - mix) + flow_abs * mix
@@ -207,7 +210,7 @@ def _predict_hourly_differential(
     decoder_cols = model_config['decoder_columns']
     decoder_scaler: MinMaxScaler = model_config['decoder_scaler']
 
-    lookback = max(720, sequence_length + 24)
+    lookback = max(model_config.get('history_hours', 720), sequence_length + 24)
     history = historical_df.iloc[-lookback:].copy()
     t0 = history.index[-1]
     current_differential = float(history['differential'].iloc[-1])
