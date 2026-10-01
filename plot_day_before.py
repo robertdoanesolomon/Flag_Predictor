@@ -1,13 +1,13 @@
 """
-Day-before forecasts for a whole year: September LSTM vs the physics hybrid.
+Days-before forecasts for a whole year: September LSTM vs the physics hybrid.
 
-For every day D, take the forecast issued at 00z on D-1 and keep its hours
-+24..+47 (i.e. day D as forecast the day before). Stitching those together
+For every day D, take the forecast issued at 00z on D-N and keep its hours
++24N..+24N+23 (i.e. day D as forecast N days before; default N=1). Stitching those together
 gives one "what we said yesterday" line for the year, plotted against the
 observed differential. Rainfall is what actually fell.
 
 Usage:
-    python plot_day_before.py [--year 2025] [isis godstow wallingford]
+    python plot_day_before.py [--year 2025] [--days-before 3] [isis godstow wallingford]
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ def start_hour(diff: pd.Series, t: pd.Timestamp):
     return window.index[-1] if len(window) else None
 
 
-def day_before_series(location: str, year: int) -> tuple[pd.Series, dict]:
+def day_before_series(location: str, year: int, days_before: int = 1) -> tuple[pd.Series, dict]:
     merged = load_merged(location, PROJECT_ROOT)
     tz = merged.index.tz
     diff = merged['differential']
@@ -49,13 +49,13 @@ def day_before_series(location: str, year: int) -> tuple[pd.Series, dict]:
     out = {label: [] for label in preds}
     days = pd.date_range(pd.Timestamp(f'{year}-01-01', tz=tz), pd.Timestamp(f'{year}-12-31', tz=tz), freq='D')
     for day in days:
-        t0 = start_hour(diff, day - pd.Timedelta(days=1))
+        t0 = start_hour(diff, day - pd.Timedelta(days=days_before))
         if t0 is None:
             continue
         hist, fut = merged.loc[:t0], future_rain_frame(merged, t0)
         target = pd.date_range(day, periods=24, freq='1h')
         for label, predict in preds.items():
-            values = pd.Series(predict(hist, fut), index=pd.date_range(t0, periods=241, freq='1h'))
+            values = pd.Series(predict(hist, fut), index=pd.date_range(t0, periods=241, freq='1h'))  # target = day D
             out[label].append(values.reindex(target))
         if day.day == 1:
             print(f"  {location} {day:%b}", flush=True)
@@ -64,7 +64,9 @@ def day_before_series(location: str, year: int) -> tuple[pd.Series, dict]:
     return obs, {label: pd.concat(parts) for label, parts in out.items()}, mean_station_rain(merged).loc[days[0]:end]
 
 
-def plot(location: str, year: int, obs: pd.Series, lines: dict, rain: pd.Series) -> Path:
+def plot(location: str, year: int, obs: pd.Series, lines: dict, rain: pd.Series, days_before: int = 1) -> Path:
+    when = 'the day before' if days_before == 1 else f'{days_before} days before'
+    lead = f'{24 * days_before}–{24 * days_before + 24} h ahead'
     fig, axes = plt.subplots(3, 1, figsize=(22, 13), sharex=True,
                              gridspec_kw={'height_ratios': [3, 3, 1], 'hspace': 0.08})
     top = float(np.nanmax([obs.max()] + [s.max() for s in lines.values()])) + 0.05
@@ -75,13 +77,13 @@ def plot(location: str, year: int, obs: pd.Series, lines: dict, rain: pd.Series)
         flag_bands(ax, location, top)
         ax.plot(obs.index, obs.values, color='black', lw=1.4, label='Observed differential', zorder=5)
         ax.plot(s.index, s.values, color=color, lw=1.2, alpha=0.9, zorder=6,
-                label=f'{label}: forecast made the day before (MAE {np.nanmean(err):.3f} m)')
+                label=f'{label}: forecast made {when} (MAE {np.nanmean(err):.3f} m)')
         ax.set_ylim(bottom, top)
         ax.set_ylabel('Differential (m)')
         ax.grid(alpha=0.25)
         ax.legend(loc='upper right', framealpha=0.92)
-    axes[0].set_title(f'{location.title()} {year}: each day as forecast at 00z the day before '
-                      '(24–48 h ahead), rainfall = what actually fell', fontsize=14)
+    axes[0].set_title(f'{location.title()} {year}: each day as forecast at 00z {when} '
+                      f'({lead}), rainfall = what actually fell', fontsize=14)
     daily = rain.resample('D').sum()
     axes[2].bar(daily.index, daily.values, width=1.0, color='0.55')
     axes[2].set_ylabel('Rain (mm/day,\nmean of gauges)')
@@ -89,7 +91,8 @@ def plot(location: str, year: int, obs: pd.Series, lines: dict, rain: pd.Series)
     axes[2].xaxis.set_major_locator(mdates.MonthLocator())
     axes[2].xaxis.set_major_formatter(mdates.DateFormatter('%b'))
     axes[2].set_xlim(obs.index[0], obs.index[-1])
-    out = FIGURES_DIR / f'day_before_{year}_{location}_sept_vs_hybrid.png'
+    prefix = 'day_before' if days_before == 1 else f'{days_before}_days_before'
+    out = FIGURES_DIR / f'{prefix}_{year}_{location}_sept_vs_hybrid.png'
     fig.savefig(out, dpi=110, bbox_inches='tight')
     plt.close(fig)
     return out
@@ -99,14 +102,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('locations', nargs='*', default=['isis', 'godstow', 'wallingford'])
     parser.add_argument('--year', type=int, default=2025)
+    parser.add_argument('--days-before', type=int, default=1, choices=range(1, 10))
     args = parser.parse_args()
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     for location in args.locations:
-        obs, lines, rain = day_before_series(location, args.year)
+        obs, lines, rain = day_before_series(location, args.year, args.days_before)
         for label, s in lines.items():
             err = (s - obs.reindex(s.index)).abs()
-            print(f"  {location} {label}: day-before MAE {np.nanmean(err):.4f} m over {err.notna().sum()} h")
-        print(f"saved {plot(location, args.year, obs, lines, rain)}", flush=True)
+            print(f"  {location} {label}: {args.days_before}-day-before MAE {np.nanmean(err):.4f} m over {err.notna().sum()} h")
+        print(f"saved {plot(location, args.year, obs, lines, rain, args.days_before)}", flush=True)
 
 
 if __name__ == '__main__':
