@@ -789,10 +789,16 @@
         will be in each flag colour at each point in the next 10 days.
 
         <h3>How reliable is the summary sentence?</h3>
+        The summary sentence is written automatically from the average forecast (the purple line), starting from the
+        latest river reading. How certain it says it is combines two things: how much the 50 rainfall forecasts disagree,
+        and how wrong the model itself has typically been at that river level when given the rain that actually fell.
+        It's meant to give a general idea of the next 10 days, not a precise prediction.
+        <!-- Previous text (summary version 1):
         The summary sentence is simply a short description of the forecast, without any human intervention. The certainty
         bounds are just based off the spread of the forecast. Importantly, the summary sentence is based off the change
         from the first (+2h) prediction, so it doesn't take into account the initial jump at t=0. This summary sentence
         is meant to give a general idea of the forecast, which is probably more reliable than the prediction chart itself.
+        -->
 
         <h3>Where does the data come from?</h3>
         Historical river levels and rainfall come from the Environment Agency's flood-monitoring and hydrology APIs.
@@ -950,7 +956,7 @@
    * Uses the FIRST ensemble mean value as the baseline to avoid the
    * common "jump" artefact at t=0 in the observations.
    */
-  function summariseForecast(loc) {
+  function summariseForecastV1(loc) {
     const times = loc.ensemble && loc.ensemble.times;
     const mean  = loc.ensemble && loc.ensemble.mean;
     const p10   = loc.ensemble && loc.ensemble.p10;
@@ -1070,6 +1076,122 @@
     }
 
     return `The differential is forecast to ${dir}${certainty}.`;
+  }
+
+
+  /*
+   * Summary sentence version. 2 = physics-model version (starts from the latest
+   * observation; certainty includes the model's own error). Set to 1 to go back
+   * to the original sentence (summariseForecastV1, unchanged), and swap the
+   * "How reliable is the summary sentence?" text back (old text kept in a comment).
+   */
+  const SUMMARY_VERSION = 2;
+
+  /*
+   * V2 settings, per location (metres).
+   *  sig/slight/sharp: a move counts if > sig; "slightly" up to slight; "sharply" above sharp.
+   *  levels/modelErr: the model's own 10-day error (P10-P90 width, from the
+   *    Nov 2024 - Jan 2026 backtest) when the river is below levels[0], between
+   *    levels[0] and levels[1], or above levels[1].
+   *  certainty: total-spread upper bounds for very certain / fairly certain / uncertain.
+   */
+  const SUMMARY_V2 = {
+    isis:        { sig: 0.04, slight: 0.08, sharp: 0.20, levels: [0.10, 0.35], modelErr: [0.05, 0.25, 0.15], certainty: [0.10, 0.20, 0.35] },
+    godstow:     { sig: 0.05, slight: 0.10, sharp: 0.25, levels: [0.15, 0.45], modelErr: [0.10, 0.40, 0.20], certainty: [0.15, 0.30, 0.50] },
+    wallingford: { sig: 0.08, slight: 0.16, sharp: 0.40, levels: [0.20, 0.70], modelErr: [0.08, 0.50, 0.40], certainty: [0.15, 0.35, 0.60] },
+  };
+
+  function summariseForecastV2(loc) {
+    const times = loc.ensemble && loc.ensemble.times;
+    const mean  = loc.ensemble && loc.ensemble.mean;
+    const p10   = loc.ensemble && loc.ensemble.p10;
+    const p90   = loc.ensemble && loc.ensemble.p90;
+    if (!times || times.length < 2 || !mean || mean.length < 2) return null;
+    const cfg = SUMMARY_V2[(loc.key || 'isis').toLowerCase()] || SUMMARY_V2.isis;
+
+    // Visible window: up to the end of the rainfall forecast.
+    let cutoff = null;
+    if (loc.rainfall_forecast && loc.rainfall_forecast.dates && loc.rainfall_forecast.dates.length) {
+      const last = loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1];
+      const pts = last.slice(0, 10).split('-').map(Number);
+      cutoff = Date.UTC(pts[0], pts[1] - 1, pts[2] + 1, 0, 0, 0, 0);
+    }
+    const idxs = [];
+    for (let i = 0; i < times.length; i++) {
+      if (cutoff !== null && parseUtc(times[i]).getTime() > cutoff) break;
+      if (mean[i] !== null && !Number.isNaN(mean[i])) idxs.push(i);
+    }
+    if (idxs.length < 3) return null;
+
+    const startIdx = idxs[0];
+    const endIdx   = idxs[idxs.length - 1];
+    // The physics model starts exactly at the latest reading, so use it as the baseline.
+    const observed = loc.current && typeof loc.current.differential === 'number' ? loc.current.differential : null;
+    const startVal = observed !== null ? observed : mean[startIdx];
+    const endVal   = mean[endIdx];
+    const startT   = parseUtc(times[startIdx]);
+    const horizonDays = Math.max(1, Math.ceil((parseUtc(times[endIdx]) - startT) / ONE_DAY_MS));
+
+    let peakIdx = startIdx, troughIdx = startIdx;
+    for (const i of idxs) {
+      if (mean[i] > mean[peakIdx]) peakIdx = i;
+      if (mean[i] < mean[troughIdx]) troughIdx = i;
+    }
+    const peakRise   = mean[peakIdx] - startVal;
+    const troughDrop = startVal - mean[troughIdx];
+    const daysTo = (i) => Math.max(1, Math.ceil((parseUtc(times[i]) - startT) / ONE_DAY_MS));
+
+    // Certainty: rain-ensemble spread at the end, combined with the model's own error.
+    let certainty = '';
+    if (p10 && p90 && p10[endIdx] != null && p90[endIdx] != null) {
+      const rainSpread = Math.max(0, p90[endIdx] - p10[endIdx]);
+      // Use the highest level the forecast reaches: a big rise from a low start is
+      // exactly when the model has been least reliable.
+      const level = Math.max(startVal, mean[peakIdx]);
+      const modelErr = level < cfg.levels[0] ? cfg.modelErr[0]
+                     : level < cfg.levels[1] ? cfg.modelErr[1] : cfg.modelErr[2];
+      const total = Math.sqrt(rainSpread * rainSpread + modelErr * modelErr);
+      const [c1, c2, c3] = cfg.certainty;
+      if      (total < c1) certainty = ', and the forecast is <strong>very certain</strong>';
+      else if (total < c2) certainty = ', and the forecast is <strong>fairly certain</strong>';
+      else if (total < c3) certainty = ', but the forecast is <strong>uncertain</strong>';
+      else                 certainty = ', but the forecast is <strong>very uncertain</strong>';
+    }
+
+    function word(delta, base) {
+      const a = Math.abs(delta);
+      if (a <= cfg.slight) return `${base} slightly`;
+      if (a > cfg.sharp)   return `${base} sharply`;
+      return base;
+    }
+    const ds = (d) => `${d} day${d === 1 ? '' : 's'}`;
+    const SIG = cfg.sig;
+    const hasPeak   = peakRise   > SIG && peakIdx   !== endIdx;
+    const hasTrough = troughDrop > SIG && troughIdx !== endIdx;
+
+    let dir;
+    if (hasPeak && hasTrough) {
+      if (peakIdx < troughIdx) {
+        dir = `<strong>${word(peakRise, 'rise')} over the next ${ds(daysTo(peakIdx))}</strong>, then <strong>fall back</strong>`;
+      } else {
+        dir = `<strong>${word(troughDrop, 'drop')} over the next ${ds(daysTo(troughIdx))}</strong>, then <strong>recover</strong>`;
+      }
+    } else if (hasPeak) {
+      const after = Math.abs(endVal - mean[peakIdx]) < SIG ? 'stay high' : 'fall back';
+      dir = `<strong>${word(peakRise, 'rise')} over the next ${ds(daysTo(peakIdx))}</strong>, then ${after}`;
+    } else if (hasTrough) {
+      const after = Math.abs(endVal - mean[troughIdx]) < SIG ? 'stay low' : 'partly recover';
+      dir = `<strong>${word(troughDrop, 'drop')} over the next ${ds(daysTo(troughIdx))}</strong>, then ${after}`;
+    } else {
+      const net = endVal - startVal;
+      const v = Math.abs(net) <= SIG ? 'stay roughly the same' : word(net, net > 0 ? 'rise' : 'drop');
+      dir = `<strong>${v} over the next ${ds(horizonDays)}</strong>`;
+    }
+    return `The differential is forecast to ${dir}${certainty}.`;
+  }
+
+  function summariseForecast(loc) {
+    return SUMMARY_VERSION === 1 ? summariseForecastV1(loc) : summariseForecastV2(loc);
   }
 
   /** Detect a dark theme and return Plotly template + grid colours. */

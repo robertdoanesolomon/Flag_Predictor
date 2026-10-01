@@ -1,21 +1,25 @@
 """
-February 2025 comparison plots: live September model vs the physics hybrid.
+Month comparison plots: September LSTM vs the physics hybrid.
 
-Recreates the two February 2025 figures (plot_feb2025_clairvoyant_isis.py and
-plot_feb20_uncertain_rainfall_isis.py) with the physics-hybrid ensemble
-alongside the live September model, which keeps its clamps as on the website.
+Generalises the two February 2025 figures (plot_feb2025_clairvoyant_isis.py and
+plot_feb20_uncertain_rainfall_isis.py) to any month, with the physics-hybrid
+ensemble alongside the September LSTM (clamps on, as on the old page).
 
-1. Every 00z start in February 2025, 10-day forecasts with the rain that
-   actually fell (one figure per location).
-2. Isis from 00z on 20 Feb 2025 with 36 synthetic rain scenarios (0–1.2x the
-   actual rain, random noise, +/-1 day shifts), as in the original script.
+1. Every 00z start in the month, 10-day forecasts with the rain that actually
+   fell (one figure per location).
+2. Isis from 00z on --scenario-start with 36 synthetic rain scenarios
+   (0–1.2x the actual rain, random noise, +/-1 day shifts), as in the
+   original script.
 
 Usage:
-    python plot_redesign_feb2025.py [isis godstow wallingford]
+    python plot_redesign_month.py                       # February 2025, 20 Feb scenarios
+    python plot_redesign_month.py --month 2025-11 --scenario-start 2025-11-10
+    python plot_redesign_month.py --month 2025-11 isis   # one location, no scenarios
 """
 
 from __future__ import annotations
 
+import argparse
 import sys
 import warnings
 from pathlib import Path
@@ -68,11 +72,12 @@ def flag_bands(ax, location: str, top: float) -> None:
         ax.axhspan(lo, hi, color=FLAG_COLORS[key], alpha=0.07, zorder=0)
 
 
-def february_daily(location: str) -> Path:
+def month_daily(location: str, month: str) -> Path:
     merged = load_merged(location, PROJECT_ROOT)
     tz = merged.index.tz
-    start, end = pd.Timestamp('2025-02-01', tz=tz), pd.Timestamp('2025-03-01', tz=tz)
-    t0s = [t for t in pd.date_range(start, periods=28, freq='D')
+    start = pd.Timestamp(f'{month}-01', tz=tz)
+    end = start + pd.offsets.MonthBegin(1)
+    t0s = [t for t in pd.date_range(start, periods=(end - start).days, freq='D')
            if np.isfinite(merged['differential'].get(t, np.nan))]
     preds = predictors(location)
     actual = merged['differential']
@@ -101,7 +106,7 @@ def february_daily(location: str) -> Path:
         ax.set_ylim(min(-0.05, float(obs.min()) - 0.05), top)
         ax.legend(loc='upper left', framealpha=0.92)
         ax.grid(alpha=0.25)
-    axes[0].set_title(f'{location.title()}: forecasts from every 00z in February 2025, '
+    axes[0].set_title(f'{location.title()}: forecasts from every 00z in {start:%B %Y}, '
                       'rainfall = what actually fell', fontsize=13)
     rain = mean_station_rain(merged).loc[start:end].resample('D').sum()
     axes[2].bar(rain.index, rain.values, width=0.9, color='0.6', edgecolor='0.45', lw=0.3)
@@ -111,16 +116,16 @@ def february_daily(location: str) -> Path:
     axes[2].xaxis.set_major_locator(mdates.DayLocator(interval=2))
     axes[2].xaxis.set_major_formatter(mdates.DateFormatter('%d %b'))
     plt.setp(axes[2].xaxis.get_majorticklabels(), rotation=30, ha='right')
-    out = FIGURES_DIR / f'feb2025_clairvoyant_{location}_sept_vs_hybrid.png'
+    out = FIGURES_DIR / (f'{start:%b%Y}'.lower() + f'_clairvoyant_{location}_sept_vs_hybrid.png')
     fig.savefig(out, dpi=130, bbox_inches='tight')
     plt.close(fig)
     return out
 
 
-def feb20_uncertain() -> Path:
+def uncertain_scenarios(start_date: str) -> Path:
     location = 'isis'
     merged = load_merged(location, PROJECT_ROOT)
-    t0 = pd.Timestamp(feb20.T0, tz=merged.index.tz)
+    t0 = pd.Timestamp(start_date, tz=merged.index.tz)
     hist = merged.loc[:t0]
     base = future_rain_frame(merged, t0)
     scenarios = feb20.build_scenarios(base)
@@ -133,6 +138,7 @@ def feb20_uncertain() -> Path:
     fig, axes = plt.subplots(3, 1, figsize=(16, 14), sharex=True,
                              gridspec_kw={'height_ratios': [3, 3, 1.2], 'hspace': 0.08})
     top = max(1.2, float(np.nanmax([s.max() for r in runs.values() for s in r])) + 0.05)
+    bottom = min(0.0, float(np.nanmin([obs.min()] + [s.min() for r in runs.values() for s in r])) - 0.05)
     for ax, (label, color) in zip(axes[:2], MODELS):
         flag_bands(ax, location, top)
         for s in runs[label]:
@@ -144,13 +150,13 @@ def feb20_uncertain() -> Path:
                 label=f'{label}, synthetic rain scenarios (n={len(scenarios)})')
         spread = pd.DataFrame({i: s for i, s in enumerate(runs[label])})
         ax.set_ylabel('Differential (m)')
-        ax.set_ylim(0, top)
+        ax.set_ylim(bottom, top)
         ax.legend(loc='upper left', framealpha=0.92)
         ax.grid(alpha=0.25)
         ax.text(0.99, 0.03, f'spread at +240h: {spread.iloc[-1].min():.2f}–{spread.iloc[-1].max():.2f} m',
                 transform=ax.transAxes, ha='right', fontsize=10)
     axes[0].set_title(
-        f'Isis from 00z 20 Feb 2025 (differential {obs.iloc[0]:.3f} m): '
+        f'Isis from 00z {t0:%-d %b %Y} (differential {obs.iloc[0]:.3f} m): '
         f'{len(scenarios)} synthetic rain scenarios, 0–{feb20.MAX_RAIN_SCALE}× actual, noise and ±1 day shifts',
         fontsize=12)
     daily = pd.DataFrame({name: rain.clip(lower=0).mean(axis=1).resample('D').sum()
@@ -167,19 +173,26 @@ def feb20_uncertain() -> Path:
     axes[2].xaxis.set_major_locator(mdates.DayLocator(interval=1))
     axes[2].xaxis.set_major_formatter(mdates.DateFormatter('%d %b'))
     plt.setp(axes[2].xaxis.get_majorticklabels(), rotation=30, ha='right')
-    out = FIGURES_DIR / 'feb20_uncertain_rainfall_isis_sept_vs_hybrid.png'
+    out = FIGURES_DIR / f'{t0:%b}{t0.day}_uncertain_rainfall_isis_sept_vs_hybrid.png'.lower()
     fig.savefig(out, dpi=130, bbox_inches='tight')
     plt.close(fig)
     return out
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('locations', nargs='*', default=['isis', 'godstow', 'wallingford'])
+    parser.add_argument('--month', default='2025-02', help='YYYY-MM')
+    parser.add_argument('--scenario-start', default=None,
+                        help='YYYY-MM-DD for the Isis rain-scenario test (default: 20 Feb 2025 '
+                             'for February 2025, otherwise skipped)')
+    args = parser.parse_args()
+    scenario_start = args.scenario_start or (feb20.T0 if args.month == '2025-02' else None)
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    locations = sys.argv[1:] or ['isis', 'godstow', 'wallingford']
-    for location in locations:
-        print(f"saved {february_daily(location)}", flush=True)
-    if 'isis' in locations:
-        print(f"saved {feb20_uncertain()}", flush=True)
+    for location in args.locations:
+        print(f"saved {month_daily(location, args.month)}", flush=True)
+    if scenario_start and 'isis' in args.locations:
+        print(f"saved {uncertain_scenarios(scenario_start)}", flush=True)
 
 
 if __name__ == '__main__':
