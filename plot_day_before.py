@@ -41,13 +41,16 @@ def start_hour(diff: pd.Series, t: pd.Timestamp):
     return window.index[-1] if len(window) else None
 
 
-def day_before_series(location: str, year: int, days_before: int = 1) -> tuple[pd.Series, dict]:
+def day_before_series(location: str, year: int, days_before: int = 1,
+                      start: str | None = None, end: str | None = None) -> tuple[pd.Series, dict]:
     merged = load_merged(location, PROJECT_ROOT)
     tz = merged.index.tz
     diff = merged['differential']
     preds = predictors(location)
     out = {label: [] for label in preds}
-    days = pd.date_range(pd.Timestamp(f'{year}-01-01', tz=tz), pd.Timestamp(f'{year}-12-31', tz=tz), freq='D')
+    first = pd.Timestamp(start or f'{year}-01-01', tz=tz)
+    last = pd.Timestamp(end or f'{year}-12-31', tz=tz)
+    days = pd.date_range(first, last, freq='D')
     for day in days:
         t0 = start_hour(diff, day - pd.Timedelta(days=days_before))
         if t0 is None:
@@ -59,12 +62,13 @@ def day_before_series(location: str, year: int, days_before: int = 1) -> tuple[p
             out[label].append(values.reindex(target))
         if day.day == 1:
             print(f"  {location} {day:%b}", flush=True)
-    end = pd.Timestamp(f'{year + 1}-01-01', tz=tz)
-    obs = diff.loc[days[0]:end]
-    return obs, {label: pd.concat(parts) for label, parts in out.items()}, mean_station_rain(merged).loc[days[0]:end]
+    stop = days[-1] + pd.Timedelta(days=1)
+    obs = diff.loc[days[0]:stop]
+    return obs, {label: pd.concat(parts) for label, parts in out.items()}, mean_station_rain(merged).loc[days[0]:stop]
 
 
-def plot(location: str, year: int, obs: pd.Series, lines: dict, rain: pd.Series, days_before: int = 1) -> Path:
+def plot(location: str, year: int, obs: pd.Series, lines: dict, rain: pd.Series, days_before: int = 1,
+         suffix: str = '') -> Path:
     when = 'the day before' if days_before == 1 else f'{days_before} days before'
     lead = f'{24 * days_before}–{24 * days_before + 24} h ahead'
     fig, axes = plt.subplots(3, 1, figsize=(22, 13), sharex=True,
@@ -82,17 +86,22 @@ def plot(location: str, year: int, obs: pd.Series, lines: dict, rain: pd.Series,
         ax.set_ylabel('Differential (m)')
         ax.grid(alpha=0.25)
         ax.legend(loc='upper right', framealpha=0.92)
-    axes[0].set_title(f'{location.title()} {year}: each day as forecast at 00z {when} '
+    period = f'{obs.index[0]:%-d %b} – {obs.index[-1]:%-d %b %Y}' if suffix else str(year)
+    axes[0].set_title(f'{location.title()} {period}: each day as forecast at 00z {when} '
                       f'({lead}), rainfall = what actually fell', fontsize=14)
     daily = rain.resample('D').sum()
-    axes[2].bar(daily.index, daily.values, width=1.0, color='0.55')
+    axes[2].bar(daily.index + pd.Timedelta(hours=12), daily.values, width=0.9, color='0.55')
     axes[2].set_ylabel('Rain (mm/day,\nmean of gauges)')
     axes[2].grid(alpha=0.25, axis='y')
-    axes[2].xaxis.set_major_locator(mdates.MonthLocator())
-    axes[2].xaxis.set_major_formatter(mdates.DateFormatter('%b'))
+    if suffix:
+        axes[2].xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
+        axes[2].xaxis.set_major_formatter(mdates.DateFormatter('%-d %b'))
+    else:
+        axes[2].xaxis.set_major_locator(mdates.MonthLocator())
+        axes[2].xaxis.set_major_formatter(mdates.DateFormatter('%b'))
     axes[2].set_xlim(obs.index[0], obs.index[-1])
     prefix = 'day_before' if days_before == 1 else f'{days_before}_days_before'
-    out = FIGURES_DIR / f'{prefix}_{year}_{location}_sept_vs_hybrid.png'
+    out = FIGURES_DIR / f'{prefix}_{year}{suffix}_{location}_sept_vs_hybrid.png'
     fig.savefig(out, dpi=110, bbox_inches='tight')
     plt.close(fig)
     return out
@@ -103,14 +112,17 @@ def main():
     parser.add_argument('locations', nargs='*', default=['isis', 'godstow', 'wallingford'])
     parser.add_argument('--year', type=int, default=2025)
     parser.add_argument('--days-before', type=int, default=1, choices=range(1, 10))
+    parser.add_argument('--start', default=None, help='YYYY-MM-DD (default: 1 Jan of --year)')
+    parser.add_argument('--end', default=None, help='YYYY-MM-DD (default: 31 Dec of --year)')
     args = parser.parse_args()
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     for location in args.locations:
-        obs, lines, rain = day_before_series(location, args.year, args.days_before)
+        obs, lines, rain = day_before_series(location, args.year, args.days_before, args.start, args.end)
+        suffix = f'_{args.start}_to_{args.end}' if (args.start or args.end) else ''
         for label, s in lines.items():
             err = (s - obs.reindex(s.index)).abs()
             print(f"  {location} {label}: {args.days_before}-day-before MAE {np.nanmean(err):.4f} m over {err.notna().sum()} h")
-        print(f"saved {plot(location, args.year, obs, lines, rain, args.days_before)}", flush=True)
+        print(f"saved {plot(location, args.year, obs, lines, rain, args.days_before, suffix)}", flush=True)
 
 
 if __name__ == '__main__':
