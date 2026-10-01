@@ -789,15 +789,15 @@
         will be in each flag colour at each point in the next 10 days.
 
         <h3>How reliable is the summary sentence?</h3>
-        The summary sentence is written automatically from the average forecast (the purple line), starting from the
-        latest river reading. How certain it says it is combines two things: how much the 50 rainfall forecasts disagree,
-        and how wrong the model itself has typically been at that river level when given the rain that actually fell.
-        It's meant to give a general idea of the next 10 days, not a precise prediction.
-        <!-- Previous text (summary version 1):
         The summary sentence is simply a short description of the forecast, without any human intervention. The certainty
         bounds are just based off the spread of the forecast. Importantly, the summary sentence is based off the change
         from the first (+2h) prediction, so it doesn't take into account the initial jump at t=0. This summary sentence
         is meant to give a general idea of the forecast, which is probably more reliable than the prediction chart itself.
+        <!-- Summary version 2 text:
+        The summary sentence is written automatically from the average forecast (the purple line), starting from the
+        latest river reading. How certain it says it is combines two things: how much the 50 rainfall forecasts disagree,
+        and how wrong the model itself has typically been at that river level when given the rain that actually fell.
+        It's meant to give a general idea of the next 10 days, not a precise prediction.
         -->
 
         <h3>Where does the data come from?</h3>
@@ -1085,7 +1085,7 @@
    * to the original sentence (summariseForecastV1, unchanged), and swap the
    * "How reliable is the summary sentence?" text back (old text kept in a comment).
    */
-  const SUMMARY_VERSION = 2;
+  const SUMMARY_VERSION = 1;
 
   /*
    * V2 settings, per location (metres).
