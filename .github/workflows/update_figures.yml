@@ -1,17 +1,20 @@
 name: Update forecast figures
 
 on:
-  # Run roughly every fifteen minutes UTC (GitHub may delay queued runs under load).
+  # Main trigger: an external timer (cron-job.org) calls the workflow_dispatch API
+  # every 15 minutes, because GitHub only fires frequent schedules every few hours.
+  # This schedule is a backup; off-peak minutes are less congested than :00/:15.
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "7,22,37,52 * * * *"
 
-  # Allow manual runs from the Actions tab
+  # Manual runs from the Actions tab, and the external timer
   workflow_dispatch:
 
-# Prevent overlapping runs (scheduled/manual) from racing on git push
+# One run at a time. Runs take 8-20 min, so don't cancel a run in progress when the
+# next trigger arrives: queue it instead (GitHub keeps at most one pending run).
 concurrency:
   group: update-forecast-figures
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-publish:
