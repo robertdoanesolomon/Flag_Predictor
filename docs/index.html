@@ -1055,7 +1055,7 @@
       } else {
         // Fall then rise.
         const dV = verb(-troughDrop, 'drop', null) || 'drop';
-        const rV = verb(peakRise - troughDrop, 'recover', null) || 'recover';
+        const rV = verb(peakRise - troughDrop, 'rise', null) || 'rise';
         dir = `<strong>${dV} over the next ${ds(daysToTrough)}</strong>, then <strong>${rV}</strong>`;
       }
     } else if (hasPeak) {
@@ -1064,7 +1064,7 @@
       dir = `<strong>${rV} over the next ${ds(daysToPeak)}</strong>, then ${afterEnd}`;
     } else if (hasTrough) {
       const dV = verb(-troughDrop, 'drop', null) || 'drop';
-      const afterEnd = Math.abs(endVal - troughVal) < SIG ? 'stay low' : 'partially recover';
+      const afterEnd = Math.abs(endVal - troughVal) < SIG ? 'stay low' : 'rise slightly';
       dir = `<strong>${dV} over the next ${ds(daysToTrough)}</strong>, then ${afterEnd}`;
     } else {
       const a = Math.abs(netDelta);
@@ -1174,13 +1174,13 @@
       if (peakIdx < troughIdx) {
         dir = `<strong>${word(peakRise, 'rise')} over the next ${ds(daysTo(peakIdx))}</strong>, then <strong>fall back</strong>`;
       } else {
-        dir = `<strong>${word(troughDrop, 'drop')} over the next ${ds(daysTo(troughIdx))}</strong>, then <strong>recover</strong>`;
+        dir = `<strong>${word(troughDrop, 'drop')} over the next ${ds(daysTo(troughIdx))}</strong>, then <strong>rise</strong>`;
       }
     } else if (hasPeak) {
       const after = Math.abs(endVal - mean[peakIdx]) < SIG ? 'stay high' : 'fall back';
       dir = `<strong>${word(peakRise, 'rise')} over the next ${ds(daysTo(peakIdx))}</strong>, then ${after}`;
     } else if (hasTrough) {
-      const after = Math.abs(endVal - mean[troughIdx]) < SIG ? 'stay low' : 'partly recover';
+      const after = Math.abs(endVal - mean[troughIdx]) < SIG ? 'stay low' : 'rise slightly';
       dir = `<strong>${word(troughDrop, 'drop')} over the next ${ds(daysTo(troughIdx))}</strong>, then ${after}`;
     } else {
       const net = endVal - startVal;
