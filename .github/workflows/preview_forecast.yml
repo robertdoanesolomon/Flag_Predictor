@@ -24,6 +24,9 @@ jobs:
   preview:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -61,16 +64,30 @@ jobs:
           rc=0
           python generate_all_location_figures.py --primary hybrid --output-dir site --old-dir site/old || rc=$?
           if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then exit "$rc"; fi
-          python - <<'EOF'
+          python - <<'EOF' | tee preview_summary.md
           import json
           b = json.load(open('site/forecast_data.json'))
+          print('### Preview forecast build')
+          print()
+          print('| location | model | forecast start | likely-range band | band width 24 h / 240 h (m) | flag probabilities from |')
+          print('|---|---|---|---|---|---|')
           for k, loc in b['locations'].items():
               tot = loc['ensemble'].get('total')
-              print(k, 'model:', loc.get('model'), '| likely-range band:', 'yes' if tot else 'NO',
-                    '| flag probabilities from:', loc['flag_probability'].get('source'))
+              w = (f"{tot['p90'][24] - tot['p10'][24]:.3f} / {tot['p90'][-1] - tot['p10'][-1]:.3f}"
+                   if tot else '-')
+              print(f"| {k} | {loc.get('model', 'september')} | {loc['forecast_start']} | "
+                    f"{'yes' if tot else 'NO'} | {w} | {loc['flag_probability'].get('source')} |")
           idx = json.load(open('site/archive/index.json'))
-          print('archive issues:', len(idx['issues']), 'latest:', idx['issues'][-1]['slot'])
+          print()
+          print(f"Archive: {len(idx['issues'])} forecasts, latest slot {idx['issues'][-1]['slot']}.")
           EOF
+          cat preview_summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Comment the summary on the pull request
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr comment "${{ github.event.pull_request.number }}" --body-file preview_summary.md
       - uses: actions/upload-artifact@v4
         with:
           name: site-preview

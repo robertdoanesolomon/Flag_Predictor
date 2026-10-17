@@ -474,3 +474,76 @@ loading different weights:
    (15 weight files of about 300 kB, plus their small configs).
 4. **Drop the clamps.** None of `apply_hourly_physics` / `apply_recession_limit`
    / the flow blend applies; the model doesn't use stage-1 flow at all.
+
+---
+
+# October 2026: continuous state, flow pre-training, model-error spread
+
+Branch `forecast-improvements`. Three ideas from the review of the September
+hybrid: (1) archive the live forecasts, (2) track the catchment state
+continuously instead of inferring it from 100 h of features, (3) pre-train the
+hydrology on the long Farmoor flow record. Plus a model-error spread for the
+forecast band.
+
+## Hydrology pre-trained on Farmoor flow (idea 3)
+
+`train_continuous_models.py pretrain`. The reservoir model of the hybrid
+(soil bucket → quick / 3-cascade medium / groundwater → channel), plus a small
+direct-runoff share `f_direct` that ignores soil wetness, driven only by
+mean-station gauge rain from 2000 and fitted to Farmoor flow (mm/h over the
+1609 km² catchment) by multiple shooting (12-week chunks simulated in parallel,
+each starting where the previous one ended on the previous epoch). Train:
+2001 – Nov 2022 and Jan – Oct 2024; validation 2023; test from Nov 2024.
+
+| core | ET | train NSE / log-NSE | 2023 NSE / log-NSE | test NSE / log-NSE | bias (test) |
+|---|---|---|---|---|---|
+| `cs_cos` | seasonal cosine | 0.90 / 0.88 | **0.92 / 0.96** | 0.91 / 0.91 | +1 % |
+| `cs_pet` | k_et × ERA5 ET0 | 0.88 / 0.88 | 0.87 / 0.92 | 0.92 / 0.89 | −8 % |
+
+A rain-only simulation reproduces Farmoor flow well, including the first
+rises after the dry summer of 2025 (`figures/core_cs_cos_flow.csv.gz`). Real
+ET0 (ERA5 via Open-Meteo, fetched by the one-off workflow on the
+`data/era5-et` branch) did not help: the learned crop factor is ≈ 1.0 and the
+fit is no better than with the seasonal cosine, so it was not used further.
+
+Learned parameters (`cs_cos`): quick 24 h, medium 25 h ×3, groundwater 480 h,
+channel 35 h, β 4.4, soil capacity 259 mm, f_direct 2 %, runoff split
+quick / medium / groundwater 8 / 10 / 82 %. Fitted to *flow volume* the
+catchment is groundwater-dominated (consistent with the high baseflow of the
+Cotswold limestone tributaries); fitted to the *differential* the September hybrid put only
+24 % through groundwater: the differential is far more sensitive to the quick
+response than the volume is.
+
+## Continuous state (idea 2)
+
+Three ways of using the continuous simulation in the forecast, all with the
+same windows, encoder features and loss as the September hybrid
+(validation MAE, 2023, seed 0; September hybrid seed 0: 0.0506 / 0.0506 / 0.0719,
+its five seeds span 0.0491–0.0518 / 0.0501–0.0530 / 0.0719–0.0755):
+
+| variant | what | Isis | Godstow | Wallingford |
+|---|---|---|---|---|
+| `hybrid_cs_cos` | forecast starts from the simulated state (encoder only nudges it); flow-trained hydrology frozen | 0.0533 | 0.0573 | 0.0849 |
+| `hybrid_cs_ft` | same, hydrology fine-tuned on the differential (re-simulated every epoch) | 0.0485 | 0.0525 | 0.0806 |
+| `hybrid_cs_cap` | + quick/medium stores capped by 72 h / 336 h rain instead of 24 h / 168 h | 0.0515 | 0.0542 | – |
+| `hybrid_cs_old` | starts from the simulated state, hydrology = the September hybrid's | 0.0504 | 0.0597 | 0.0845 |
+| `hybrid_simfeat` | September hybrid unchanged, simulated soil wetness, flow, groundwater outflow, fast-store water and sim/observed flow ratio added as encoder inputs | **0.0476** | **0.0502** | **0.0686** |
+
+Test window, every 6 h (MAE, m, seed 0, observed rain; `compare_batch.py`):
+
+| | Isis | Godstow | Wallingford | autumn 2025 Isis / Godstow / Wallingford |
+|---|---|---|---|---|
+| September hybrid | 0.0299 | 0.0472 | 0.0659 | 0.046 / 0.073 / 0.110 |
+| `hybrid_cs_ft` | 0.0379 | 0.0462 | 0.0713 | 0.080 / 0.085 / 0.098 |
+| `hybrid_cs_old` | 0.0352 | 0.0498 | 0.0772 | 0.064 / 0.084 / 0.164 |
+| `hybrid_simfeat` | 0.0293 | 0.0477 | 0.0629 | 0.053 / 0.078 / 0.104 |
+
+Starting the forecast *from* the simulated state is worse than letting the
+encoder infer the state, at every location on the test window. The river
+itself integrates the catchment's memory: the current differential, its
+recession and Farmoor flow already tell the encoder most of what the soil and
+groundwater stores hold, and pinning the start to a rain-only simulation
+imports the simulation's own errors (e.g. wherever gauge rain under- or
+over-catches). Giving the simulation to the encoder as extra information
+(`hybrid_simfeat`) is the variant that can only help, and it is level with or
+slightly better than the September hybrid for seed 0.
