@@ -128,6 +128,21 @@ def _find_first_crossing(times: pd.Index, values, threshold: float) -> Optional[
     return pd.Timestamp(times[idx]).isoformat()
 
 
+def _smooth_lead(values: np.ndarray, window: int = 7) -> np.ndarray:
+    """Light centred smoothing over lead time (the outcome cloud is a finite sample).
+
+    Hour 0 (the observation) is left alone; the window shrinks near the start
+    so the band still opens from zero width.
+    """
+    v = np.asarray(values, dtype=float)
+    out = v.copy()
+    half = window // 2
+    for h in range(1, len(v)):
+        w = min(half, h - 1) if h > 1 else 0
+        out[h] = np.nanmean(v[max(1, h - w):h + w + 1])
+    return out
+
+
 def build_location_payload(
     *,
     location: str,
@@ -181,7 +196,7 @@ def build_location_payload(
     if total_samples is not None:
         total_samples = np.asarray(total_samples, dtype=float)
         total_payload = {
-            name: _safe_float_list(np.round(np.nanpercentile(total_samples, q, axis=0), 4))
+            name: _safe_float_list(np.round(_smooth_lead(np.nanpercentile(total_samples, q, axis=0)), 4))
             for name, q in (("p10", 10), ("p25", 25), ("p50", 50), ("p75", 75), ("p90", 90))
         }
         total_payload["n_samples"] = int(total_samples.shape[0])
@@ -195,7 +210,7 @@ def build_location_payload(
             lo, hi = flag_thresholds[key]
             if total_samples is not None:
                 in_range = ((total_samples >= lo) & (total_samples < hi)).mean(axis=0)
-                flag_probs_payload[key] = _safe_float_list(in_range)
+                flag_probs_payload[key] = _safe_float_list(np.round(_smooth_lead(in_range), 4))
             else:
                 in_range = ((plot_df >= lo) & (plot_df < hi)).sum(axis=1) / max(n_members, 1)
                 flag_probs_payload[key] = _safe_float_list(in_range.values)

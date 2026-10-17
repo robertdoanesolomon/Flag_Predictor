@@ -190,6 +190,7 @@ def train_location(location: str, core_name: str, root: Path, cfg_override: Opti
     rng = np.random.default_rng(cfg['seed'])
     models_dir = root / 'models'
     data = load_location_data(location, root)
+    core_name = core_name.format(location=location)   # per-location cores: 'old_{location}'
     core = load_core(core_name, models_dir)
     et0_series = location_et0(root, core)
     rec = long_rain_for_location(root, location, data, et0_series)
@@ -373,3 +374,29 @@ def backtest_state_sims(names, location: str, root: Path, models_dir: Path):
             by_core[key] = StateSimulation(model.core, rec)
         sims[n] = by_core[key]
     return sims, et0
+
+
+# --------------------------------------------------------------------------
+# Continuous-simulation states as extra encoder inputs (hybrid_simfeat)
+# --------------------------------------------------------------------------
+
+SIM_FEATURES = ['sim_soil_wetness', 'sim_log_q', 'sim_log_groundwater_out', 'sim_log_fast_stores',
+                'sim_log_q_ratio']
+
+
+def sim_features(core: ReservoirCore, sim: StateSimulation, index: pd.DatetimeIndex,
+                 flow_m3s: Optional[np.ndarray]) -> np.ndarray:
+    """(T, 5) features from the continuous simulation at the given hours.
+
+    Soil wetness, simulated flow, groundwater outflow, water in the fast stores,
+    and how far the simulated flow is from the observed Farmoor flow (0 where
+    the gauge has no reading).
+    """
+    from .continuous_hybrid import Q_EPS
+    st, q = sim.at(index)
+    a_s = float(core.params()['a_s'].detach())
+    flow_mmh = (np.asarray(flow_m3s, dtype=float) / M3S_PER_MM_H if flow_m3s is not None
+                else np.full(len(index), np.nan))
+    ratio = np.where(np.isfinite(flow_mmh), np.log(q + Q_EPS) - np.log(np.nan_to_num(flow_mmh) + Q_EPS), 0.0)
+    return np.stack([st[:, 0], np.log(q + Q_EPS), np.log(a_s * st[:, 5] + Q_EPS),
+                     np.log1p(st[:, 1:5].sum(1)), ratio], axis=1).astype(np.float32)

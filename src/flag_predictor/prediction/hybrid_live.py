@@ -31,6 +31,10 @@ from ..models.candidates import ensemble_predictor
 
 HYBRID_MODELS = ['hybrid_c1_ps'] + [f'hybrid_c1_ps_s{i}' for i in range(1, 5)]
 MODEL_TAG = 'hybrid_c1_ps'
+# Optional: the hybrid with continuous-simulation encoder inputs (hybrid_simfeat,
+# see EXPERIMENTS.md). When set, it is used unless the 2-year rain spin-up is
+# incomplete, in which case the plain hybrid above runs instead.
+SIMFEAT_MODEL = None   # e.g. {'tag': 'hybrid_simfeat', 'core': 'cs_cos', 'names': [...]}
 # Model-error library (build_error_library.py); missing file = rain spread only.
 ERROR_LIBRARY = 'error_library_{tag}_{location}.npz'
 HORIZON = 240
@@ -177,8 +181,16 @@ def forecast_with_uncertainty(
     forecast = _to_utc(rain_forecast(n_members))
     fut_idx = pd.date_range(t0 + pd.Timedelta(hours=1), periods=HORIZON, freq='1h')
     gauges = TRAINING_GAUGES[location]
-    kwargs = {'models_dir': models_dir} if models_dir else {}
-    predict = ensemble_predictor(HYBRID_MODELS, location, **kwargs)
+    names, tag = HYBRID_MODELS, MODEL_TAG
+    extra = None
+    if SIMFEAT_MODEL:
+        try:
+            from .continuous_live import simulation_features
+            extra = simulation_features(location, frame, project_root, models_dir, SIMFEAT_MODEL['core'])
+            names, tag = SIMFEAT_MODEL['names'], SIMFEAT_MODEL['tag']
+        except Exception as exc:
+            print(f"  [simfeat] unavailable ({exc}); using {MODEL_TAG}")
+    predict = ensemble_predictor(names, location, models_dir=models_dir, extra_features=extra)
     members: Dict[str, np.ndarray] = {}
     rain_means: Dict[str, np.ndarray] = {}
     for i in range(n_members):
@@ -193,11 +205,11 @@ def forecast_with_uncertainty(
     members_df = pd.DataFrame(members, index=pd.date_range(t0, periods=HORIZON + 1, freq='1h'))
     rain_df = pd.DataFrame(rain_means, index=fut_idx)
     try:
-        total = model_error_samples(location, frame, members_df, rain_df, models_dir)
+        total = model_error_samples(location, frame, members_df, rain_df, models_dir, tag=tag)
     except Exception as exc:   # the spread is extra; never lose the forecast over it
         print(f"  [model error] failed ({exc}); showing rain spread only")
         total = None
-    return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=MODEL_TAG)
+    return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag)
 
 
 def forecast_rain_gauges(location: str) -> List[str]:

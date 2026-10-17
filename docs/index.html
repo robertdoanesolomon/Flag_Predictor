@@ -2174,7 +2174,8 @@
       (e3 !== null ? `<span>5–10 days before: <strong>${e3} cm</strong></span>` : '') +
       (flagNow !== null ? `<span>right flag in <strong>${flagHits} of ${rows.length}</strong></span>` : '');
     block.querySelector('.history-note').innerHTML =
-      `Each dot is one archived forecast (saved every 6 hours); the bar is its ${useTotal ? 'likely range' : 'rain-forecast spread'}. ` +
+      `Each dot is one archived forecast (saved every 6 hours); the bar is its ${useTotal ? 'likely range' : 'rain-forecast spread'}` +
+      (useTotal && rows.some(r => r.total_p10 === undefined) ? ' (rain spread only for forecasts saved before the likely range was added)' : '') + '. ' +
       'The dashed line is what the river actually read. Forecasts closer to the right were issued nearer the time.';
   }
 

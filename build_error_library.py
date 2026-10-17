@@ -83,7 +83,7 @@ def predict_continuous(names, location, data, t_idx) -> np.ndarray:
     et0_frame = fill_et0(et0, data.index) if et0 is not None else None
     preds = []
     for n in names:
-        model, scaler, _ = load_forecast_model(n, location, ROOT / 'models')
+        model, scaler, meta = load_forecast_model(n, location, ROOT / 'models')
         caps = (meta['cfg'].get('quick_cap_h', 24), meta['cfg'].get('medium_cap_h', 168))
         sampler = ContinuousSampler(data, scaler, sims[n], et0_frame, torch.device('cpu'), cap_hours=caps)
         out = []
@@ -91,6 +91,24 @@ def predict_continuous(names, location, data, t_idx) -> np.ndarray:
             out.append(_forward(model, sampler.batch(t_idx[i:i + 256])).numpy())
         preds.append(np.concatenate(out))
     return np.mean(preds, axis=0)
+
+
+def predict_simfeat(names, location, data, t_idx, core_name: str) -> np.ndarray:
+    """Hybrid models trained with continuous-simulation states as extra encoder inputs."""
+    import copy
+    from train_continuous_models import sim_feature_frame
+    from flag_predictor.models.continuous_train import SIM_FEATURES, load_core, long_rain_for_location
+    from flag_predictor.models.continuous_hybrid import ReservoirCore  # noqa: F401
+    core = load_core(core_name, ROOT / 'models')
+    et0 = None
+    if core.et_mode == 'pet':
+        from flag_predictor.models.continuous_train import location_et0
+        et0 = location_et0(ROOT, core)
+    d2 = copy.copy(data)
+    rec = long_rain_for_location(ROOT, location, data, et0)
+    d2.enc = np.concatenate([data.enc, sim_feature_frame(core, rec, data)], axis=1)
+    d2.enc_cols = list(data.enc_cols) + SIM_FEATURES
+    return predict_hybrid(names, location, d2, t_idx)
 
 
 def features_for(data, t_idx) -> np.ndarray:
@@ -102,11 +120,11 @@ def features_for(data, t_idx) -> np.ndarray:
     return np.stack(rows)
 
 
-K_GRID = (20, 40, 100, 200)
+K_GRID = (40, 100, 200)
 C_GRID = np.round(np.arange(0.6, 3.01, 0.05), 2)
 
 
-def cv_samples(lib: ErrorLibrary, feats, is_val, k: int, n: int = 100, seed: int = 0):
+def cv_samples(lib: ErrorLibrary, feats, is_val, k: int, n: int = 60, seed: int = 0):
     """Residual samples for every start, drawn only from the *other* period's errors."""
     rng = np.random.default_rng(seed)
     out = np.empty((len(feats), n, lib.residuals.shape[1]), np.float32)
@@ -122,8 +140,8 @@ def cv_samples(lib: ErrorLibrary, feats, is_val, k: int, n: int = 100, seed: int
 
 def fit_inflation(samples, err_obs) -> np.ndarray:
     """Per-lead factor c so that observed errors fall inside c x the 10-90% sample band 80% of the time."""
-    q10 = np.nanpercentile(samples, 10, axis=1)        # (N, H)
-    q90 = np.nanpercentile(samples, 90, axis=1)
+    q10 = np.percentile(samples, 10, axis=1)        # (N, H)
+    q90 = np.percentile(samples, 90, axis=1)
     ok = np.isfinite(err_obs)
     cov = np.stack([np.nanmean(np.where(ok, (err_obs >= c * q10) & (err_obs <= c * q90), np.nan), axis=0)
                     for c in C_GRID])                     # (C, H)
@@ -135,16 +153,29 @@ def fit_inflation(samples, err_obs) -> np.ndarray:
     return c.astype(np.float32)
 
 
-def cv_scores(samples, preds, obs, c) -> dict:
+def cv_scores(samples, preds, obs, c, chunk: int = 300) -> dict:
     """CRPS / coverage of held-out bands (point = clairvoyant forecast) by lead bucket."""
-    out = {}
-    s = preds[:, None, :] + samples * c[None, None, :]
     o = obs[:, 1:]
-    crps = np.stack([crps_samples(s[i], o[i]) for i in range(len(o))])
-    cov = np.stack([coverage(s[i], o[i]) for i in range(len(o))])
+    crps = np.empty_like(o, dtype=np.float64)
+    cov = np.empty_like(o, dtype=np.float64)
+    for i in range(0, len(o), chunk):
+        s = np.sort(preds[i:i + chunk, None, :] + samples[i:i + chunk] * c[None, None, :], axis=1)
+        S = s.shape[1]
+        oo = o[i:i + chunk, None, :]
+        term1 = np.mean(np.abs(s - oo), axis=1)
+        w = (2 * np.arange(1, S + 1) - S - 1)[None, :, None]
+        term2 = (2.0 / (S * S)) * np.sum(w * s, axis=1)
+        crps[i:i + chunk] = term1 - 0.5 * term2
+        lo = s[:, int(round(0.1 * (S - 1))), :]
+        hi = s[:, int(round(0.9 * (S - 1))), :]
+        cov[i:i + chunk] = ((oo[:, 0] >= lo) & (oo[:, 0] <= hi)).astype(float)
+    bad = ~np.isfinite(o)
+    crps[bad] = np.nan
+    cov[bad] = np.nan
     mae = np.abs(preds - o)
-    for name, (lo, hi) in LEAD_BUCKETS.items():
-        sl = slice(lo - 1, hi)
+    out = {}
+    for name, (lo_h, hi_h) in LEAD_BUCKETS.items():
+        sl = slice(lo_h - 1, hi_h)
         out[name] = {'in_band_10_90': float(np.nanmean(cov[:, sl])), 'crps': float(np.nanmean(crps[:, sl])),
                      'mae_point': float(np.nanmean(mae[:, sl]))}
     out['all'] = {'crps': float(np.nanmean(crps)), 'mae_point': float(np.nanmean(mae)),
@@ -154,19 +185,26 @@ def cv_scores(samples, preds, obs, c) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--family', choices=['hybrid', 'continuous'], required=True)
+    ap.add_argument('--family', choices=['hybrid', 'continuous', 'simfeat'], required=True)
+    ap.add_argument('--core', default='cs_cos', help='simfeat: the core whose simulation feeds the encoder')
     ap.add_argument('--tag', required=True, help='library name, e.g. the deployed model name')
     ap.add_argument('--names', required=True, help='comma-separated model names (seeds) to average')
     ap.add_argument('--locations', default='isis,godstow,wallingford')
+    ap.add_argument('--k-grid', default=','.join(map(str, K_GRID)), help='neighbour counts to try')
+    ap.add_argument('--no-save', action='store_true', help='report only')
     args = ap.parse_args()
+    k_grid = [int(k) for k in args.k_grid.split(',')]
     names = args.names.split(',')
     report = {}
     for loc in args.locations.split(','):
         data = load_location_data(loc, ROOT)
         starts = start_positions(data)
         t_all = np.concatenate([starts['val2023'], starts['test']])
-        predict = predict_hybrid if args.family == 'hybrid' else predict_continuous
-        preds = predict(names, loc, data, t_all)
+        if args.family == 'simfeat':
+            preds = predict_simfeat(names, loc, data, t_all, args.core)
+        else:
+            predict = predict_hybrid if args.family == 'hybrid' else predict_continuous
+            preds = predict(names, loc, data, t_all)
         obs = np.stack([data.diff[t:t + HORIZON + 1] for t in t_all])
         feats = features_for(data, t_all)
         resid = obs[:, 1:] - preds
@@ -175,7 +213,7 @@ def main() -> None:
         is_val = np.arange(len(t_all)) < len(starts['val2023'])
         best = None
         rep = {'n_starts': {k: int(len(v)) for k, v in starts.items()}, 'by_k': {}}
-        for k in K_GRID:
+        for k in k_grid:
             samp = cv_samples(lib, feats, is_val, k)
             c = fit_inflation(samp, resid)
             raw = cv_scores(samp, preds, obs, np.ones_like(c))
@@ -189,7 +227,8 @@ def main() -> None:
                 best = (cal['all']['crps'], k, c, cal)
         lib.k, lib.inflation = best[1], best[2]
         path = ROOT / 'models' / f'error_library_{args.tag}_{loc}.npz'
-        lib.save(path)
+        if not args.no_save:
+            lib.save(path)
         rep['chosen_k'] = best[1]
         rep['chosen'] = best[3]
         rep['inflation'] = [round(float(x), 3) for x in best[2]]
@@ -199,7 +238,8 @@ def main() -> None:
             print(f"    {b:>9}: in 10-90% band {v['in_band_10_90']:.0%}  CRPS {v['crps']:.4f}  "
                   f"(point MAE {v['mae_point']:.4f})")
     out = ROOT / 'figures' / f'error_library_{args.tag}_check.json'
-    out.write_text(json.dumps(report, indent=1))
+    if not args.no_save:
+        out.write_text(json.dumps(report, indent=1))
     print(f'\nreport: {out}')
 
 

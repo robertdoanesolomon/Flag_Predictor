@@ -77,7 +77,36 @@ def cmd_forecast(args) -> None:
     for loc in locations:
         print(f'\n=== {loc}: {args.name} (core {args.core}, seed {args.seed}) ===', flush=True)
         model, scaler, cfg_used, history, extras = train_location(loc, args.core, ROOT, cfg)
-        save_forecast_model(model, scaler, cfg_used, history, args.name, args.core, loc, extras, MODELS)
+        save_forecast_model(model, scaler, cfg_used, history, args.name, args.core.format(location=loc), loc,
+                            extras, MODELS)
+
+
+def sim_feature_frame(core, rec, data) -> np.ndarray:
+    """Continuous-simulation features aligned to data.index (see continuous_train.sim_features)."""
+    from flag_predictor.models.continuous_train import StateSimulation, sim_features
+    return sim_features(core, StateSimulation(core, rec), data.index, data.flow)
+
+
+def cmd_simfeat(args) -> None:
+    """September hybrid unchanged, plus continuous-simulation states as extra encoder inputs."""
+    from flag_predictor.models.continuous_train import SIM_FEATURES, load_core, long_rain_for_location
+    from flag_predictor.models.physics_data import load_location_data
+    from flag_predictor.models.physics_train import save_candidate, train_candidate
+    torch.set_num_threads(args.threads)
+    locations = ['isis', 'godstow', 'wallingford'] if args.locations == 'all' else args.locations.split(',')
+    cfg = {'per_sample_params': True, 'smooth_rating': True, 'seed': args.seed}
+    for loc in locations:
+        print(f'\n=== {loc}: {args.name} (sim features from core {args.core}) ===', flush=True)
+        data = load_location_data(loc, ROOT)
+        core = load_core(args.core, MODELS)
+        rec = long_rain_for_location(ROOT, loc, data)
+        extra = sim_feature_frame(core, rec, data)
+        data.enc = np.concatenate([data.enc, extra], axis=1)
+        data.enc_cols = list(data.enc_cols) + SIM_FEATURES
+        model, scaler, cfg_used, history = train_candidate('hybrid', data, cfg)
+        save_candidate(model, scaler, cfg_used, history, 'hybrid', args.name, loc, data, MODELS)
+        best = min(history, key=lambda r: r['val_mae'])
+        print(f"saved {args.name}_{loc}: best val MAE {best['val_mae']:.4f} (epoch {best['epoch']})", flush=True)
 
 
 def main() -> None:
@@ -101,6 +130,13 @@ def main() -> None:
     f.add_argument('--cfg', default=None)
     f.add_argument('--threads', type=int, default=2)
     f.set_defaults(func=cmd_forecast)
+    sf = sub.add_parser('simfeat')
+    sf.add_argument('--core', required=True)
+    sf.add_argument('--name', required=True)
+    sf.add_argument('--locations', default='all')
+    sf.add_argument('--seed', type=int, default=0)
+    sf.add_argument('--threads', type=int, default=1)
+    sf.set_defaults(func=cmd_simfeat)
     args = ap.parse_args()
     args.func(args)
 

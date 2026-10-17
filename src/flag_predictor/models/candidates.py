@@ -44,13 +44,18 @@ def _past_inputs(history: pd.DataFrame):
     return _PAST_CACHE[key]
 
 
-def redesign_predictor(name: str, location: str, models_dir: Path = MODELS_DIR):
+def redesign_predictor(name: str, location: str, models_dir: Path = MODELS_DIR,
+                       extra_features: pd.DataFrame = None):
+    """``extra_features``: hourly encoder columns not derived from the history frame
+    (e.g. continuous-simulation states for hybrid_simfeat), joined on time."""
     model, scaler, meta = load_candidate(name, location, models_dir)
     enc_cols = meta['enc_cols']
 
     @torch.no_grad()
     def predict(history: pd.DataFrame, future_rain: pd.DataFrame) -> np.ndarray:
         hist, enc_all, rain_hist = _past_inputs(history)
+        if extra_features is not None:
+            enc_all = enc_all.join(extra_features.reindex(enc_all.index))
         enc = enc_all.reindex(columns=enc_cols)
         x = scaler.transform(enc.to_numpy(dtype=np.float32)[-SEQ_LEN:])
         rain_fut = future_rain.clip(lower=0).mean(axis=1).fillna(0.0).to_numpy(dtype=np.float32)
@@ -81,14 +86,14 @@ def redesign_predictor(name: str, location: str, models_dir: Path = MODELS_DIR):
     return predict
 
 
-def ensemble_predictor(names, location: str, models_dir: Path = MODELS_DIR):
+def ensemble_predictor(names, location: str, models_dir: Path = MODELS_DIR, extra_features: pd.DataFrame = None):
     """Mean of several redesign models (e.g. seeds).
 
     The structural guarantees survive averaging: a mean of trajectories that
     start at d0, never climb without water and rise with rain has the same
     properties.
     """
-    members = [redesign_predictor(n, location, models_dir) for n in names]
+    members = [redesign_predictor(n, location, models_dir, extra_features) for n in names]
 
     def predict(history: pd.DataFrame, future_rain: pd.DataFrame) -> np.ndarray:
         return np.mean([m(history, future_rain) for m in members], axis=0)

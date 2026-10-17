@@ -103,6 +103,25 @@ def resolve(cand: str):
             sims, et0 = backtest_state_sims(names, location, PROJECT_ROOT, MODELS_DIR)
             return continuous_predictor(names, location, MODELS_DIR, sims, et0)
         return make
+    if cand.startswith('simfeat:'):
+        # Hybrid + continuous-simulation encoder inputs: 'simfeat:<name>+<name>@<core>'.
+        from flag_predictor.models.candidates import ensemble_predictor
+        from flag_predictor.models.continuous_train import (
+            SIM_FEATURES, StateSimulation, load_core, location_et0, long_rain_for_location, sim_features,
+        )
+        from flag_predictor.models.physics_data import load_location_data
+        spec, core_name = cand.split(':', 1)[1].split('@')
+        names = spec.split('+')
+
+        def make_sf(location):
+            data = load_location_data(location, PROJECT_ROOT)
+            core = load_core(core_name, MODELS_DIR)
+            et0 = location_et0(PROJECT_ROOT, core)
+            rec = long_rain_for_location(PROJECT_ROOT, location, data, et0)
+            feats = pd.DataFrame(sim_features(core, StateSimulation(core, rec), data.index, data.flow),
+                                 index=data.index, columns=SIM_FEATURES)
+            return ensemble_predictor(names, location, extra_features=feats)
+        return make_sf
     if cand.startswith('redesign:'):
         from flag_predictor.models.candidates import redesign_predictor
         name = cand.split(':', 1)[1]

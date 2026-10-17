@@ -1,5 +1,48 @@
 # Flag Predictor (September 2026 model)
 
+## What changed in October 2026
+
+The forecast model is unchanged (the physics hybrid, `hybrid_c1_ps`, five seeds).
+Three additions around it:
+
+1. **Forecast archive** (`src/flag_predictor/prediction/archive.py`). Every CI
+   run adds to `docs/archive/`: the observed differential (the EA API only
+   keeps ~4 weeks, so this is now the long record of the live differential),
+   one forecast per 6-hour slot (mean and bands per location), `index.json`
+   and `now.json` for the website. The raw ensemble inputs (hourly
+   mean-station rain per member) go to `data/forecast_archive/<slot>.npz`, so
+   the model can later be backtested and recalibrated on *real forecast rain*
+   instead of observed rain. `backfill_archive.py` rebuilt the archive from
+   the git history of `docs/forecast_data.json` back to 2026-09-27.
+2. **Model-error band** (`src/flag_predictor/prediction/model_error.py`,
+   `build_error_library.py`). The 50 lines only carry rain uncertainty. The
+   model was re-run every 6 h over the 2023 validation year and the
+   Nov 2024 – Jan 2026 test window with observed rain; each run's 10-day error
+   trajectory is stored with the situation it started from (level, 24 h
+   trend, forecast rain over 3 and 10 days, rain over the past week, season).
+   For a live forecast each rain member borrows errors from the 200 most
+   similar past starts, so the outcome cloud carries rain *and* model error.
+   The shaded band (10–90 %, 25–75 %) and the flag probabilities come from
+   that cloud. The neighbour count and a per-lead spread factor were chosen
+   by cross-validation between the two periods (errors from one period build
+   bands for the other): 80 % of held-out observations fall inside the
+   10–90 % band at every lead. Libraries: `models/error_library_<model>_<location>.npz`.
+   Rebuild after retraining the model:
+   `python build_error_library.py --family hybrid --tag hybrid_c1_ps --names hybrid_c1_ps,hybrid_c1_ps_s1,...`.
+3. **History views on the website**: under each chart, *Past forecast* (a
+   slider over archived forecasts, drawn against what the river then did,
+   with its error and flag hit rate) and *Forecasts of now* (what each
+   forecast from the last 10 days said the latest reading would be).
+
+A continuous-state version of the hybrid (soil and groundwater simulated
+continuously from 2000, hydrology pre-trained on the Farmoor flow record) was
+built and tested but not deployed; see the October section of `EXPERIMENTS.md`.
+
+`.github/workflows/preview_forecast.yml` runs the full live forecast on pull
+requests and uploads the site as an artifact, without publishing.
+
+---
+
 ## What changed in September 2026
 
 This is the model currently running on GitHub Pages. It keeps June's delta targets and
