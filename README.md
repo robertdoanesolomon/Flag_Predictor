@@ -2,8 +2,21 @@
 
 ## What changed in October 2026
 
-The forecast model is unchanged (the physics hybrid, `hybrid_c1_ps`, five seeds).
-Three additions around it:
+Godstow and Wallingford keep the physics hybrid (`hybrid_c1_ps`, five seeds). The
+Isis now uses `hybrid_simfeat`: the same hybrid with five extra encoder inputs
+from a rain-driven simulation of the catchment run continuously through the
+last ~2 years (soil wetness, simulated flow, groundwater outflow, water in the
+fast stores, simulated vs observed Farmoor flow). The simulation's hydrology
+was pre-trained on the Farmoor flow record from 2000 (NSE 0.92 on 2023, 0.91
+on Nov 2024 – Jan 2026). Isis test-window MAE falls 10 % (0.0312 → 0.0281 m,
+weekly starts; −7 %, 95 % CI −13 % to −0.4 %, on 6-hourly starts) and 2023
+MAE 8 %; the first storms after the dry summer of 2025 improve most. It did not
+help Godstow or Wallingford, so they are unchanged. If CI cannot assemble the
+2-year rain record the Isis falls back to the plain hybrid
+(`SIMFEAT_MODELS` in `src/flag_predictor/prediction/hybrid_live.py`). Details in
+the October section of `EXPERIMENTS.md`.
+
+Three further additions:
 
 1. **Forecast archive** (`src/flag_predictor/prediction/archive.py`). Every CI
    run adds to `docs/archive/`: the observed differential (the EA API only
@@ -34,9 +47,8 @@ Three additions around it:
    with its error and flag hit rate) and *Forecasts of now* (what each
    forecast from the last 10 days said the latest reading would be).
 
-A continuous-state version of the hybrid (soil and groundwater simulated
-continuously from 2000, hydrology pre-trained on the Farmoor flow record) was
-built and tested but not deployed; see the October section of `EXPERIMENTS.md`.
+Starting the forecast *from* the simulated state (rather than giving it to the
+encoder) was also tried and was worse; see `EXPERIMENTS.md`.
 
 `.github/workflows/preview_forecast.yml` runs the full live forecast on pull
 requests and uploads the site as an artifact, without publishing.

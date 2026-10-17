@@ -71,6 +71,8 @@ models/redesign_*
 !models/redesign_hybrid_c1_ps_godstow.*
 !models/redesign_hybrid_c1_ps_wallingford.*
 !models/redesign_hybrid_c1_ps_s[0-9]_*
+!models/redesign_hybrid_simfeat_isis.*
+!models/redesign_hybrid_simfeat_s[0-9]_isis.*
 data/stage1_flow_*.npz
 figures/eval/*
 !figures/eval/summary_*.csv

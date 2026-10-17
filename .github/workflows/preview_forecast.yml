@@ -47,7 +47,10 @@ jobs:
         run: |
           mkdir -p data/rainfall_training_data
           COUNT="$(find data/rainfall_training_data -maxdepth 1 -type f -name '*.csv' | wc -l | tr -d ' ')"
-          if [ "${COUNT:-0}" -lt 15 ]; then
+          NEWEST="$(python src/flag_predictor/data/rain_cache_newest.py data/rainfall_training_data)"
+          STALE="$(python -c "from datetime import date, timedelta; print(int(date.fromisoformat('${NEWEST}') < date.today() - timedelta(days=40)))")"
+          echo "cache: ${COUNT} files, newest reading ${NEWEST}"
+          if [ "${COUNT:-0}" -lt 15 ] || [ "$STALE" = "1" ]; then
             python src/flag_predictor/data/download_rainfall.py \
               --min-date "$(date -u -d '800 days ago' +%F)" --delay 1.5
           fi

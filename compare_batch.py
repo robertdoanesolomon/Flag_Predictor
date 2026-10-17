@@ -44,6 +44,7 @@ def main() -> None:
     args = ap.parse_args()
     torch.set_num_threads(1)
     rows = []
+    per_start = {}
     for loc in args.locations.split(','):
         data = load_location_data(loc, ROOT)
         t_idx = B.start_positions(data)[args.period]
@@ -59,6 +60,10 @@ def main() -> None:
                 fn = B.predict_hybrid if fam == 'hybrid' else B.predict_continuous
                 pred = fn(names.split('+'), loc, data, t_idx)
             err = np.abs(pred - obs)
+            label = names.split('+')[0] + (f' x{len(names.split("+"))}' if '+' in names else '')
+            per_start[f'{loc}|{label}|t0'] = t0.tz_convert('UTC').tz_localize(None).to_numpy().astype('datetime64[s]').astype('int64')
+            per_start[f'{loc}|{label}|mae'] = np.nanmean(err, axis=1)
+            per_start[f'{loc}|{label}|mae_1_72'] = np.nanmean(err[:, :72], axis=1)
             sets = {'all': np.ones(len(t_idx), bool)}
             for ep, (a, b) in EPISODES.items():
                 m = (t0 >= pd.Timestamp(a, tz='UTC')) & (t0 < pd.Timestamp(b, tz='UTC'))
@@ -75,6 +80,33 @@ def main() -> None:
         print(df.round(4).to_string(index=False))
     out = ROOT / 'figures' / f'compare_batch_{args.period}.csv'
     df.to_csv(out, index=False)
+    np.savez_compressed(ROOT / 'figures' / f'compare_batch_{args.period}_per_start.npz', **per_start)
+    paired_bootstrap(per_start)
+
+
+def paired_bootstrap(per_start: dict, block_days: int = 7, n_boot: int = 2000, seed: int = 0) -> None:
+    """95% intervals for the MAE difference between each model and the first, resampling whole weeks."""
+    rng = np.random.default_rng(seed)
+    locs = sorted({k.split('|')[0] for k in per_start})
+    for loc in locs:
+        labels = [k.split('|')[1] for k in per_start if k.startswith(loc + '|') and k.endswith('|mae')]
+        if len(labels) < 2:
+            continue
+        base = labels[0]
+        t0 = per_start[f'{loc}|{base}|t0']
+        week = (t0 - t0.min()) // (block_days * 86400)
+        weeks = np.unique(week)
+        for other in labels[1:]:
+            for metric in ('mae', 'mae_1_72'):
+                d = per_start[f'{loc}|{other}|{metric}'] - per_start[f'{loc}|{base}|{metric}']
+                rel = []
+                for _ in range(n_boot):
+                    pick = rng.choice(weeks, size=len(weeks), replace=True)
+                    idx = np.concatenate([np.where(week == w)[0] for w in pick])
+                    rel.append(np.nanmean(d[idx]) / np.nanmean(per_start[f'{loc}|{base}|{metric}'][idx]))
+                lo, hi = np.percentile(rel, [2.5, 97.5])
+                mean = np.nanmean(d) / np.nanmean(per_start[f'{loc}|{base}|{metric}'])
+                print(f'{loc:12s} {other} vs {base} [{metric}]: {mean:+.1%} (95% CI {lo:+.1%} to {hi:+.1%})')
 
 
 if __name__ == '__main__':

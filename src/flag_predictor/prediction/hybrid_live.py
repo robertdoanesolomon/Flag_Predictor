@@ -31,10 +31,15 @@ from ..models.candidates import ensemble_predictor
 
 HYBRID_MODELS = ['hybrid_c1_ps'] + [f'hybrid_c1_ps_s{i}' for i in range(1, 5)]
 MODEL_TAG = 'hybrid_c1_ps'
-# Optional: the hybrid with continuous-simulation encoder inputs (hybrid_simfeat,
-# see EXPERIMENTS.md). When set, it is used unless the 2-year rain spin-up is
-# incomplete, in which case the plain hybrid above runs instead.
-SIMFEAT_MODEL = None   # e.g. {'tag': 'hybrid_simfeat', 'core': 'cs_cos', 'names': [...]}
+# The hybrid with continuous-simulation encoder inputs (hybrid_simfeat, see the
+# October section of EXPERIMENTS.md), per location. Used only where it beat the
+# plain hybrid on the 2023 validation year (Isis); Godstow and Wallingford keep
+# the plain hybrid. If the ~2-year rain spin-up it needs is incomplete, the
+# plain hybrid runs instead. Set to {} to switch it off everywhere.
+SIMFEAT_MODELS = {
+    'isis': {'tag': 'hybrid_simfeat', 'core': 'cs_cos',
+             'names': ['hybrid_simfeat'] + [f'hybrid_simfeat_s{i}' for i in range(1, 5)]},
+}
 # Model-error library (build_error_library.py); missing file = rain spread only.
 ERROR_LIBRARY = 'error_library_{tag}_{location}.npz'
 HORIZON = 240
@@ -183,11 +188,12 @@ def forecast_with_uncertainty(
     gauges = TRAINING_GAUGES[location]
     names, tag = HYBRID_MODELS, MODEL_TAG
     extra = None
-    if SIMFEAT_MODEL:
+    simfeat = SIMFEAT_MODELS.get(location)
+    if simfeat:
         try:
             from .continuous_live import simulation_features
-            extra = simulation_features(location, frame, project_root, models_dir, SIMFEAT_MODEL['core'])
-            names, tag = SIMFEAT_MODEL['names'], SIMFEAT_MODEL['tag']
+            extra = simulation_features(location, frame, project_root, models_dir, simfeat['core'])
+            names, tag = simfeat['names'], simfeat['tag']
         except Exception as exc:
             print(f"  [simfeat] unavailable ({exc}); using {MODEL_TAG}")
     predict = ensemble_predictor(names, location, models_dir=models_dir, extra_features=extra)

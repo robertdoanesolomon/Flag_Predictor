@@ -899,7 +899,10 @@
         physics-based: a small neural network reads the recent past and sets the starting state of a rainfall-runoff
         model (soil wetness, fast and slow runoff stores, groundwater and the river channel). Forecast rain is routed
         through those stores hour by hour, and a rating curve that only ever increases turns river flow into the
-        differential. The forecast is the average of five independently trained copies.
+        differential. The forecast is the average of five independently trained copies. For the Isis, the
+        network also sees a simulation of the whole catchment run continuously through the last two years of
+        rain (how wet the soil is, how much water is in the groundwater), so it remembers dry summers and wet
+        winters for longer than the last month of data.
 
         <h3>Why hasn't the forecast updated recently?</h3>
         Usually it's just a temporary glitch in an Environment Agency sensor going briefly offline; the page will
