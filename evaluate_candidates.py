@@ -94,6 +94,15 @@ def resolve(cand: str):
         from flag_predictor.models.candidates import ensemble_predictor
         names = cand.split(':', 1)[1].split('+')
         return lambda location: ensemble_predictor(names, location)
+    if cand.startswith('continuous:'):
+        # Continuous-state hybrid: 'continuous:<name>+<name>...' (seeds averaged).
+        from flag_predictor.models.continuous_train import backtest_state_sims, continuous_predictor
+        names = cand.split(':', 1)[1].split('+')
+
+        def make(location):
+            sims, et0 = backtest_state_sims(names, location, PROJECT_ROOT, MODELS_DIR)
+            return continuous_predictor(names, location, MODELS_DIR, sims, et0)
+        return make
     if cand.startswith('redesign:'):
         from flag_predictor.models.candidates import redesign_predictor
         name = cand.split(':', 1)[1]

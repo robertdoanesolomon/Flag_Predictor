@@ -125,12 +125,15 @@ jobs:
             exit 0
           }
 
+          # docs/ holds the site (incl. docs/archive, the forecast history);
+          # data/forecast_archive holds the raw member rain of each archived forecast.
           commit_docs_if_changed() {
-            if git diff --quiet HEAD -- docs; then
-              echo "No changes under docs/"
+            git add docs/
+            if [ -d data/forecast_archive ]; then git add data/forecast_archive/; fi
+            if git diff --cached --quiet; then
+              echo "No changes under docs/ or data/forecast_archive/"
               return 1
             fi
-            git add docs/
             git commit -m "Update forecast figures [skip ci]"
             return 0
           }

@@ -1,0 +1,78 @@
+name: Preview forecast build
+
+# Runs the full live forecast on a pull request, exactly as the 15-minute job
+# does, but writes the site to an artifact instead of publishing it. Download
+# the "site-preview" artifact and open index.html (any static server) to check
+# a change before merging.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "models/**"
+      - "docs/index.html"
+      - "generate_all_location_figures.py"
+      - "requirements.txt"
+      - ".github/workflows/preview_forecast.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: preview-forecast-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Restore cached EA rainfall CSVs
+        uses: actions/cache/restore@v4
+        with:
+          path: data/rainfall_training_data
+          key: ea-rain-${{ runner.os }}-v1-preview
+          restore-keys: |
+            ea-rain-${{ runner.os }}-v1-
+      - name: Populate rainfall_training_data when cache miss
+        run: |
+          mkdir -p data/rainfall_training_data
+          COUNT="$(find data/rainfall_training_data -maxdepth 1 -type f -name '*.csv' | wc -l | tr -d ' ')"
+          if [ "${COUNT:-0}" -lt 15 ]; then
+            python src/flag_predictor/data/download_rainfall.py \
+              --min-date "$(date -u -d '800 days ago' +%F)" --delay 1.5
+          fi
+      - name: Download recent rainfall
+        continue-on-error: true
+        run: |
+          python src/flag_predictor/data/download_rainfall.py \
+            --min-date "$(date -u -d '50 days ago' +%F)" \
+            --output-dir data/recent_rainfall --delay 1.0 || true
+      - name: Build the site into site/
+        run: |
+          set -euo pipefail
+          cp -r docs site
+          rc=0
+          python generate_all_location_figures.py --primary hybrid --output-dir site --old-dir site/old || rc=$?
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then exit "$rc"; fi
+          python - <<'EOF'
+          import json
+          b = json.load(open('site/forecast_data.json'))
+          for k, loc in b['locations'].items():
+              tot = loc['ensemble'].get('total')
+              print(k, 'model:', loc.get('model'), '| likely-range band:', 'yes' if tot else 'NO',
+                    '| flag probabilities from:', loc['flag_probability'].get('source'))
+          idx = json.load(open('site/archive/index.json'))
+          print('archive issues:', len(idx['issues']), 'latest:', idx['issues'][-1]['slot'])
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-preview
+          path: site
+          retention-days: 7
