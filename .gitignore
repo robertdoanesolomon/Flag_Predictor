@@ -83,5 +83,5 @@ data/recent_rainfall/
 
 # Continuous-state hybrid: hourly gauge/flow files (from to_hourly.py), training logs
 data/hourly/
-data/era5/*.csv
+data/era5/
 logs/
