@@ -95,6 +95,14 @@ jobs:
               print()
               print('Notes:')
               print('\n'.join(notes))
+          try:
+              prev = json.load(open('site/previous/forecast_data.json'))
+              print()
+              print('Previous-model view (site/previous): ' + ', '.join(
+                  f"{k} {loc.get('model')} band={'yes' if loc['ensemble'].get('total') else 'no'}"
+                  for k, loc in prev['locations'].items()))
+          except Exception as exc:
+              print(f'Previous-model view missing: {exc}')
           idx = json.load(open('site/archive/index.json'))
           print()
           print(f"Archive: {len(idx['issues'])} forecasts, latest slot {idx['issues'][-1]['slot']}.")
