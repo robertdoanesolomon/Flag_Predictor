@@ -620,3 +620,100 @@ Why it matters: in the 81 archived operational forecasts (27 Sep – 17 Oct
 in 0–21 % of hours over the first three days (Isis 0–1 %), because the rain
 members barely disagree in dry weather while the river still moves by a
 centimetre or two (weirs, model error).
+
+## Lock-keeper step layer (flag-change box)
+
+Question from the site's user: if the flag is green, the river is heading up
+and the forecast takes it into amber soon, the forecast should show the
+*jump* (keepers move the gates mostly 08:00–16:00) instead of a smooth ramp
+that crosses the line overnight.
+
+What the 15-minute record says (steps ≥ 3 cm in 15 min, 4 cm at Wallingford,
+held 2 h): 56–79 % of steps fall 08:00–14:00 UK time; their direction follows
+the 24 h trend (Isis 73 % up when rising / 89 % down when falling;
+Wallingford 95 % / 95 %); stretches jump within about an hour of each other.
+At hourly resolution (as the live site sees it) about half of the *up*
+moves at Isis and Godstow are 08:00–14:00 but only 34–40 % of observed
+up-*flag-changes* fall 10:00–16:00 (rain-driven rises cross a line at any
+hour), against 65–70 % of down-changes.
+
+### Versions
+
+1. **Rules by hand** (mockups): jump towards the smooth curve in keeper hours.
+   Helped dry falls, made rises worse.
+2. **Hazard given the true future** (v1): logistic hazard fitted on the
+   observed record, conditioned on where the river *really* was 24 h later,
+   then driven by forecast outcomes. Wrong in principle: the hazard learned
+   "if the river will be 25 cm higher tomorrow, move now", and the smooth
+   outcome rises early, so jumps came up to a day early. Brier worse than the
+   smooth outcomes; even with the true future as input it was poor.
+3. **Hazard given the forecast** (deployed): rows are (forecast start, hour
+   1–72) on the training years with the hybrid's own forecasts (rain that
+   fell), starting each hour from where the river really was (teacher
+   forcing). Inputs: pending move to the forecast at +0/6/12/24 h, time of
+   day, weekend, past 24 h trend, rain over the past day, hours since the last
+   jump, forecast hour, and jumps by this / a neighbouring stretch in the 3 h
+   before the start. Jump size: fitted on the pending moves plus a factor drawn
+   from past jumps (median 0.8, 10–90 % 0.4–1.7: keepers often overshoot).
+   Drift between jumps: ridge regression on the pending moves. Outcomes keep
+   their borrowed model error smoothed over 25 h as the target, and the
+   error's hour-scale wobble (minus a 5 h running median) is added back after
+   stepping: without the wobble the stepped outcomes never brush a flag line
+   the way the real hourly readings do, and same-day changes came out too low.
+
+Hazard check (log loss, 2023 / test; constant rate in brackets): Isis up
+0.046 (0.055) / 0.021 (0.032), Godstow up 0.089 (0.103) / 0.052 (0.069),
+Wallingford up 0.040 (0.057) / 0.029 (0.043); down similar.
+
+### Backtest (2023 and Nov 2024 – Jan 2026, starts every 3 h, rain that fell)
+
+Out of sample for the hybrid, the step layer and the error library (errors
+borrowed from the other period). A flag change counts when the new flag holds
+for 3 hours.
+
+First 48 h, cm (smooth outcomes → stepped):
+
+| | CRPS | median MAE |
+|---|---|---|
+| Isis | 1.63 → **1.52** | 2.14 → **2.03** |
+| Godstow | 1.97 → **1.91** | 2.62 → **2.56** |
+| Wallingford | 2.54 → **2.48** | 3.31 → **3.25** |
+
+Flag change held 3 h, Brier (smooth → stepped; none of the differences is
+outside a weekly block-bootstrap 95 % interval on its own):
+
+| | up today | down today | up by end of tomorrow | down by end of tomorrow |
+|---|---|---|---|---|
+| Isis | 0.0173 → 0.0160 | 0.0214 → 0.0201 | 0.0440 → 0.0428 | 0.0310 → 0.0299 |
+| Godstow | 0.0109 → 0.0112 | 0.0100 → 0.0099 | 0.0324 → 0.0323 | 0.0220 → 0.0225 |
+
+When the smooth outcomes said a rise was ≥ 30 % likely by the end of tomorrow
+(Isis, 417 starts), they gave 47 % for *today* against 31 % observed; stepped
+36 % (Brier 0.163 → 0.147). By the end of tomorrow: 84 % smooth, 74 % stepped,
+68 % observed (0.180 → 0.160). Pooled over Isis and Godstow, both windows and
+both directions, the stepped probabilities are better calibrated:
+
+| forecast | 0.35–0.6 | 0.6–0.8 | 0.8–1 |
+|---|---|---|---|
+| smooth: observed share | 0.37 | 0.52 | 0.84 |
+| stepped: observed share | 0.42 | 0.65 | 0.89 |
+
+Timing of the first change by the end of tomorrow (share of outcomes within
+3 h of the real change): falls Isis 31 % → 41 %, Godstow 29 % → 40 %; rises
+Isis 28 % → 31 %, Godstow 24 % → 25 %.
+
+Neighbour / own jump in the 3 h before the start: once the forecast says the
+river is moving, it adds almost nothing (hazard log loss over the first 6 h
+0.0185 → 0.0184 Isis up, 0.0210 → 0.0207 Isis down, similar at Godstow; the
+fitted coefficients are slightly negative). Raw counts make it look strong
+(daytime: own up-jump in the next 3 h 13 % after a neighbour jumped vs 2 %
+otherwise) but given a forecast rise of ≥ 5 cm it is 39 % vs 27 %, and the
+forecast already carries most of that. Kept, since it costs nothing. Farmoor
+flow is not used: its live feed (EA hydrology API) could not be checked for
+delay from here.
+
+What it does not fix: where the river ends up. In the two big February 2025
+rises the hybrid (with the rain that fell) stopped 10–25 cm short; the step
+layer puts the jump on the right morning (Isis 10 Feb: smooth crossing
+08:00, stepped 11:00, real 11:30; Godstow 24 Feb: 14:00 / 11:00 / 11:15) but
+jumps to the level the outcomes say.

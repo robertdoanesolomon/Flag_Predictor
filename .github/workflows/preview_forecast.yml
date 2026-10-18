@@ -82,14 +82,17 @@ jobs:
           b = json.load(open('site/forecast_data.json'))
           print('### Preview forecast build')
           print()
-          print('| location | model | forecast start | likely-range band | band width 24 h / 240 h (m) | flag probabilities from |')
-          print('|---|---|---|---|---|---|')
+          print('| location | model | forecast start | likely-range band | band width 24 h / 240 h (m) | flag probabilities from | flag change, held 3 h (up / down: today, by end of tomorrow) |')
+          print('|---|---|---|---|---|---|---|')
           for k, loc in b['locations'].items():
               tot = loc['ensemble'].get('total')
               w = (f"{tot['p90'][24] - tot['p10'][24]:.3f} / {tot['p90'][-1] - tot['p10'][-1]:.3f}"
                    if tot else '-')
+              o = loc.get('flag_outlook')
+              ol = (f"now {o['current_flag']}; up {o['windows']['today']['up']:.0%}, {o['windows']['tomorrow']['up']:.0%} / "
+                    f"down {o['windows']['today']['down']:.0%}, {o['windows']['tomorrow']['down']:.0%}") if o else '-'
               print(f"| {k} | {loc.get('model', 'september')} | {loc['forecast_start']} | "
-                    f"{'yes' if tot else 'NO'} | {w} | {loc['flag_probability'].get('source')} |")
+                    f"{'yes' if tot else 'NO'} | {w} | {loc['flag_probability'].get('source')} | {ol} |")
           notes = [f"- {k}: {loc['model_note']}" for k, loc in b['locations'].items() if loc.get('model_note')]
           if notes:
               print()

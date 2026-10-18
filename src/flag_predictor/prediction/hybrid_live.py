@@ -41,6 +41,10 @@ SIMFEAT_MODELS: dict = {}
 ERROR_LIBRARY = 'error_library_{tag}_{location}.npz'
 HORIZON = 240
 HISTORY_DAYS = 60
+# Lock-keeper step layer (step_layer.py): re-times the first days of every
+# outcome into held levels and daytime jumps, and gives the flag-change box.
+# Off, or a missing models/step_layer_<location>.json, = smooth forecast.
+STEP_LAYER = True
 
 # Gauges each location's hybrid was trained on (the column order of the
 # training frame; the encoder's rain features sum over exactly these).
@@ -134,6 +138,9 @@ class LiveForecast:
     # The previous live model (plain hybrid) on the same rain, when the new forecast
     # used a different model; None means the members above are also the previous model's.
     previous_members: Optional[pd.DataFrame] = None
+    # Chance of a flag change today / by the end of tomorrow (step_layer.flag_outlook).
+    flag_outlook: Optional[dict] = None
+    stepped: bool = False                  # members / total_samples went through the step layer
 
 
 def forecast_ensemble(
@@ -231,8 +238,60 @@ def forecast_with_uncertainty(
     except Exception as exc:   # the spread is extra; never lose the forecast over it
         print(f"  [model error] failed ({exc}); showing rain spread only")
         total = None
+    outlook, stepped = None, False
+    if STEP_LAYER:
+        try:
+            members_df, total, outlook, stepped = step_forecast(location, frame, members_df, rain_df, total, models_dir)
+        except Exception as exc:   # never lose the forecast over the step layer either
+            print(f"  [step layer] failed ({type(exc).__name__}: {exc}); smooth forecast")
     return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag, note=note,
-                        previous_members=previous_df)
+                        previous_members=previous_df, flag_outlook=outlook, stepped=stepped)
+
+
+def _all_differentials() -> Dict[str, pd.Series]:
+    """Hourly differential of every stretch from one EA fetch (cached per process), for the jump triggers."""
+    if 'levels' not in _cache:
+        from ..data.api import (calculate_godstow_differential, calculate_isis_differential,
+                                calculate_wallingford_differential, fetch_river_level_data)
+        out: Dict[str, pd.Series] = {}
+        try:
+            levels = fetch_river_level_data(verbose=False)
+            for loc, fn in (('isis', calculate_isis_differential), ('godstow', calculate_godstow_differential),
+                            ('wallingford', calculate_wallingford_differential)):
+                try:
+                    out[loc] = _to_utc(fn(levels))['differential']
+                except Exception as exc:
+                    print(f"  [step layer] no {loc} differential for the jump triggers ({exc})")
+        except Exception as exc:
+            print(f"  [step layer] river-level fetch for the jump triggers failed ({exc})")
+        _cache['levels'] = out
+    return _cache['levels']
+
+
+def step_forecast(location: str, frame: pd.DataFrame, members_df: pd.DataFrame, rain_df: pd.DataFrame,
+                  total: Optional[np.ndarray], models_dir: Path):
+    """Members and outcomes after the step layer, plus the flag-change outlook."""
+    from ..config import get_flag_thresholds
+    from .step_layer import apply_live
+    t0 = members_df.index[0]
+    gauges = [g for g in TRAINING_GAUGES[location] if g in frame.columns]
+    level_hist = frame['differential'].loc[:t0].to_numpy()[-49:]
+    rain_hist = frame[gauges].clip(lower=0).mean(axis=1).fillna(0.0).loc[:t0].to_numpy()[-24:]
+    grid = pd.date_range(t0 - pd.Timedelta(hours=11), t0, freq='1h')
+    neighbours = {loc: ser.reindex(grid).to_numpy() for loc, ser in _all_differentials().items() if loc != location}
+    out = apply_live(location, level_hist, rain_hist, members_df.to_numpy().T, rain_df.to_numpy().T, total, t0,
+                     get_flag_thresholds(location), models_dir, neighbour_hists=neighbours)
+    if out is None:
+        print(f"  [step layer] no parameters for {location}; smooth forecast")
+        return members_df, total, None, False
+    members_out = pd.DataFrame(out.members.T, index=members_df.index, columns=members_df.columns)
+    o = out.outlook
+    print(f"  [step layer] jumps in the last 3 h: {out.triggers}")
+    if o:
+        w = o['windows']
+        print(f"  [step layer] flag now {o['current_flag']}; change up today {w['today']['up']:.0%} / by tomorrow "
+              f"{w['tomorrow']['up']:.0%}, down {w['today']['down']:.0%} / {w['tomorrow']['down']:.0%}")
+    return members_out, (out.total if out.total is not None else total), o, True
 
 
 def forecast_rain_gauges(location: str) -> List[str]:

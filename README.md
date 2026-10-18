@@ -39,6 +39,22 @@ Additions:
    slider over archived forecasts, drawn against what the river then did,
    with its error and flag hit rate) and *Forecasts of now* (what each
    forecast from the last 10 days said the latest reading would be).
+4. **Lock-keeper step layer and the flag-change box**
+   (`src/flag_predictor/prediction/step_layer.py`, `fit_step_layer.py`).
+   For the first three days, each outcome (rain member + borrowed model
+   error) is turned into held levels and jumps. An hourly logistic hazard
+   gives the chance of a jump up or down from how far the outcome says the
+   river still has to move over the next 0/6/12/24 h, time of day, weekends,
+   the past 24 h trend, recent rain, hours since the last jump, and whether
+   this or a neighbouring stretch jumped in the 3 h before the forecast;
+   jump sizes and the drift between jumps are also fitted. Everything was
+   fitted against the hybrid's own forecasts on the training years (teacher
+   forcing), so it learns when jumps come *given what the smooth forecast
+   says*. The box above the summary sentence gives the chance that the flag
+   changes and holds for 3 h today / by the end of tomorrow. Parameters:
+   `models/step_layer_<location>.json`; refit with `python fit_step_layer.py`
+   after retraining the hybrid. Switch off with `STEP_LAYER` in
+   `hybrid_live.py`. Results in `EXPERIMENTS.md`.
 
 Starting the forecast *from* the simulated state (rather than giving it to the
 encoder) was also tried and was worse; see `EXPERIMENTS.md`.

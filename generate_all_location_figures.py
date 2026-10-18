@@ -162,6 +162,7 @@ def build_location_payload(
     total_samples: Optional[np.ndarray] = None,
     model_name: Optional[str] = None,
     model_note: Optional[str] = None,
+    flag_outlook: Optional[dict] = None,
 ) -> dict:
     """Assemble a JSON-serialisable dict with everything the frontend needs.
 
@@ -314,6 +315,7 @@ def build_location_payload(
         **({"model": model_name} if model_name else {}),
         **({"model_note": model_note} if model_note else {}),
         "earliest_flag_changes": earliest,
+        **({"flag_outlook": flag_outlook} if flag_outlook else {}),
         "summary": {
             "last_24h_rain_mm": round(last24_rain, 2) if last24_rain is not None else None,
             "last_7d_rain_mm": round(last7d_rain, 2) if last7d_rain is not None else None,
@@ -628,6 +630,7 @@ def render_location_outputs(
     model_name: Optional[str] = None,
     model_note: Optional[str] = None,
     make_figures: bool = True,
+    flag_outlook: Optional[dict] = None,
 ) -> dict:
     """Figures and the JSON payload for one location's ensemble forecast (steps 5-7).
 
@@ -1035,6 +1038,7 @@ def render_location_outputs(
         total_samples=total_samples,
         model_name=model_name,
         model_note=model_note,
+        flag_outlook=flag_outlook,
     )
     return payload
 
@@ -1204,6 +1208,7 @@ def generate_spaghetti_figure(
                 total_samples=live.total_samples,
                 model_name=live.model_name,
                 model_note=live.note,
+                flag_outlook=live.flag_outlook,
             )
             LIVE_MEMBER_RAIN[location] = live.member_rain
         except Exception:

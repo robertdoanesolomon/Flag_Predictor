@@ -342,6 +342,34 @@
       color: var(--accent);
       font-weight: 800;
     }
+    /* Flag-change outlook (step layer): sits above the summary sentence. */
+    .flag-outlook {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin: 8px 0 10px 0;
+      padding: 12px 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border-strong);
+      border-left: 6px solid var(--outlook-color, var(--border-strong));
+      border-radius: var(--radius-md);
+    }
+    .flag-outlook .flag-swatch {
+      flex: 0 0 auto;
+      width: 22px;
+      height: 16px;
+      margin-top: 4px;
+      border-radius: 3px;
+      background: var(--outlook-color, var(--border-strong));
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+    }
+    .flag-outlook .outlook-text { margin: 0; line-height: 1.45; }
+    .flag-outlook .outlook-main { font-weight: 700; font-size: clamp(0.95rem, 2vw, 1.08rem); color: var(--text); }
+    .flag-outlook .outlook-sub { display: block; margin-top: 2px; font-size: 0.86rem; color: var(--text-muted); }
+    .flag-outlook.quiet .outlook-main { font-weight: 600; }
+    @media (prefers-color-scheme: dark) {
+      .flag-outlook .flag-swatch { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+    }
     .panel .sub {
       margin: 0 0 18px 0;
       color: var(--text-muted);
@@ -874,6 +902,26 @@
         flag probabilities underneath are worked out from the same outcomes, so they include the model's own
         uncertainty too.
 
+        <h3>What is the flag-change box, and why does the forecast jump?</h3>
+        The river does not rise and fall smoothly. Much of each change comes as a sudden jump when a lock keeper
+        adjusts the weir gates, mostly between 8am and 4pm and mostly when the river is already heading somewhere.
+        The model itself is smooth: when it isn't sure whether a jump comes this morning or tomorrow morning, it
+        spreads the change over both, so on its own it puts flag changes at any time of day. For the first three
+        days, every possible outcome is therefore turned into held levels and jumps. Each hour, the chance of a jump
+        depends on how far that outcome says the river still has to move over the next day, the time of day,
+        weekends, the trend over the past day, recent rain, how long since the last jump, and whether this stretch or
+        a neighbouring one jumped in the last three hours; how big a jump is (keepers often overshoot) comes from
+        past jumps. These rules were learned from the 15-minute river record and the model's own forecasts from
+        2019 to 2024 (without 2023), and checked on 2023 and on November 2024 to January 2026. Each outcome still
+        ends up where it was heading, so this mostly changes <em>when</em> the flag is forecast to change, not how high
+        the river gets.
+        <br><br>
+        The box above the summary is the share of those outcomes in which the flag changes, and stays changed for at
+        least three hours, today or by the end of tomorrow (UK time). In the check years, when the box would have said
+        "very likely" (over 80%), the change happened about 9 times in 10; "likely" (60&ndash;80%) about 6 to 7 times in
+        10. Those checks used the rain that actually fell, so with forecast rain the box will be a little less
+        certain.
+
         <h3>How have earlier forecasts done?</h3>
         Under each chart you can look back. <em>Past forecast</em>: drag the slider to any forecast from the last few
         weeks (one is saved every 6 hours) and see what it said against what the river then did, with its typical
@@ -1287,6 +1335,81 @@
     return SUMMARY_VERSION === 1 ? summariseForecastV1(loc) : summariseForecastV2(loc);
   }
 
+  /*
+   * Flag-change box (above the summary sentence). Probabilities come from the
+   * forecast outcomes after the lock-keeper step layer, so they count a change
+   * when the river is forecast to get there, at the time of day the keepers
+   * usually move the weirs.
+   */
+  const OUTLOOK_LEVELS = [[0.8, 'Very likely'], [0.6, 'Likely'], [0.35, 'Possible']];
+  function outlookWord(p) {
+    for (const [lo, w] of OUTLOOK_LEVELS) if (p >= lo) return w;
+    return null;
+  }
+  function outlookPct(p) {
+    if (p >= 0.95) return 'over 95%';
+    if (p < 0.05) return 'under 5%';
+    return `${Math.round(p * 20) * 5}%`;
+  }
+  function partOfDayUK(iso) {
+    const h = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone: TZ_UK }).format(new Date(iso)));
+    if (h >= 6 && h < 10) return 'early morning';
+    if (h >= 10 && h < 12) return 'late morning';
+    if (h >= 12 && h < 14) return 'around midday';
+    if (h >= 14 && h < 18) return 'in the afternoon';
+    if (h >= 18 && h < 22) return 'in the evening';
+    return 'overnight';
+  }
+  function renderFlagOutlookHtml(loc) {
+    const o = loc.flag_outlook;
+    if (!o || !o.windows || !o.windows.tomorrow) return '';
+    const today = o.windows.today || { up: 0, down: 0 };
+    const tom = o.windows.tomorrow;
+    const cands = ['up', 'down']
+      .filter((d) => o[d])
+      .map((d) => ({ dir: d, pToday: today[d] || 0, pTom: tom[d] || 0, info: o[d] }))
+      .sort((a, b) => b.pTom - a.pTom);
+    if (!cands.length) return '';
+    const best = cands[0];
+    const name = FLAG_LABELS[best.info.flag] || best.info.label || best.info.flag;
+    const curName = FLAG_LABELS[o.current_flag] || o.current_flag;
+    const verb = best.dir === 'up' ? 'up' : 'down';
+    const wordToday = outlookWord(best.pToday);
+    const wordTom = outlookWord(best.pTom);
+    if (!wordToday && !wordTom) {
+      const bits = cands.map((c) => `${c.dir} to ${FLAG_LABELS[c.info.flag] || c.info.flag} ${outlookPct(c.pTom)}`);
+      return `
+        <div class="flag-outlook quiet" style="--outlook-color:${FLAG_COLORS[o.current_flag] || 'var(--border-strong)'}">
+          <span class="flag-swatch" aria-hidden="true"></span>
+          <p class="outlook-text"><span class="outlook-main">Flag likely to stay ${curName} today and tomorrow</span>
+          <span class="outlook-sub">Chance of a change by the end of tomorrow: ${bits.join(', ')}.</span></p>
+        </div>`;
+    }
+    const whenIso = best.info.when && best.info.when.median_time;
+    const when = whenIso ? partOfDayUK(whenIso) : null;
+    const ukDate = (d) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ_UK, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+    const startIso = loc.forecast_start ? (/[zZ]|[+-]\d\d:?\d\d$/.test(loc.forecast_start) ? loc.forecast_start : loc.forecast_start + 'Z') : null;
+    const whenDay = whenIso && startIso ? (ukDate(new Date(whenIso)) === ukDate(new Date(startIso)) ? ' today' : ' tomorrow') : '';
+    const keeperHours = when === 'late morning' || when === 'around midday' || when === 'in the afternoon';
+    const parts = [];
+    let main;
+    if (wordToday) {
+      main = `${wordToday}: flag ${verb} to ${name} today (${outlookPct(best.pToday)})`;
+      if (best.pTom - best.pToday >= 0.1) parts.push(`By the end of tomorrow: ${outlookPct(best.pTom)}.`);
+    } else {
+      main = `${wordTom}: flag ${verb} to ${name} by tomorrow (${outlookPct(best.pTom)})`;
+      parts.push(`Today: ${outlookPct(best.pToday)}.`);
+    }
+    if (when) parts.push(`Most likely ${when}${whenDay}${keeperHours ? ', when the lock keepers usually adjust the weirs' : ''}.`);
+    const sub = parts.join(' ');
+    return `
+      <div class="flag-outlook" role="status" style="--outlook-color:${FLAG_COLORS[best.info.flag] || 'var(--border-strong)'}">
+        <span class="flag-swatch" aria-hidden="true"></span>
+        <p class="outlook-text"><span class="outlook-main">${main}</span>
+        <span class="outlook-sub">${sub}</span></p>
+      </div>`;
+  }
+
   /** Detect a dark theme and return Plotly template + grid colours. */
   function themeColors() {
     const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -1395,6 +1518,7 @@
               ${loc.display_name}
               ${stale}
             </h2>
+            ${renderFlagOutlookHtml(loc)}
             ${(() => {
               const s = summariseForecast(loc);
               return s
