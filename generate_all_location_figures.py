@@ -627,8 +627,13 @@ def render_location_outputs(
     total_samples: Optional[np.ndarray] = None,
     model_name: Optional[str] = None,
     model_note: Optional[str] = None,
+    make_figures: bool = True,
 ) -> dict:
-    """Figures and the JSON payload for one location's ensemble forecast (steps 5-7)."""
+    """Figures and the JSON payload for one location's ensemble forecast (steps 5-7).
+
+    ``make_figures=False`` builds only the JSON payload (no PNGs), e.g. for the
+    previous-model view, so the repository does not grow by another set of images per run.
+    """
     station_names_list = get_location_station_names(location)
 
     # ------------------------------------------------------------------
@@ -970,10 +975,10 @@ def render_location_outputs(
 
     # Save instead of showing
     output_path = output_dir / f"spaghetti_rain_{location.lower()}.png"
-    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    if make_figures:
+        fig.savefig(output_path, dpi=150, bbox_inches="tight")
+        print(f"\n✓ Spaghetti + rainfall figure saved to: {output_path}")
     plt.close(fig)
-
-    print(f"\n✓ Spaghetti + rainfall figure saved to: {output_path}")
 
     # ------------------------------------------------------------------
     # STEP 6: Generate combined spaghetti + probability figure
@@ -982,20 +987,21 @@ def render_location_outputs(
     print(f"STEP 6: Generating combined figure for {location.upper()}")
     print(f"{'=' * 70}")
 
-    generate_combined_figure(
-        location=location,
-        output_dir=output_dir,
-        plot_df=plot_df,
-        plot_stats=plot_stats,
-        historical_df=last_8_days,
-        historical_rainfall_daily=historical_rainfall_daily,
-        forecast_rain_mean=forecast_rain_mean,
-        forecast_rain_p10=forecast_rain_p10,
-        forecast_rain_p90=forecast_rain_p90,
-        flag_thresholds=flag_thresholds,
-        n_members_used=n_members_used,
-        title_suffix=title_suffix,
-    )
+    if make_figures:
+        generate_combined_figure(
+            location=location,
+            output_dir=output_dir,
+            plot_df=plot_df,
+            plot_stats=plot_stats,
+            historical_df=last_8_days,
+            historical_rainfall_daily=historical_rainfall_daily,
+            forecast_rain_mean=forecast_rain_mean,
+            forecast_rain_p10=forecast_rain_p10,
+            forecast_rain_p90=forecast_rain_p90,
+            flag_thresholds=flag_thresholds,
+            n_members_used=n_members_used,
+            title_suffix=title_suffix,
+        )
 
     # ------------------------------------------------------------------
     # STEP 7: Build JSON payload for the interactive frontend
@@ -1035,6 +1041,8 @@ def render_location_outputs(
 
 # Mean-station hourly rain per member, per location, from this run (for the archive).
 LIVE_MEMBER_RAIN: dict = {}
+# The previous live model's payload per location (docs/previous/forecast_data.json).
+PREVIOUS_PAYLOADS: dict = {}
 
 
 def generate_spaghetti_figure(
@@ -1200,6 +1208,24 @@ def generate_spaghetti_figure(
                 model_note=live.note,
             )
             LIVE_MEMBER_RAIN[location] = live.member_rain
+            # The previous live model (plain hybrid, rain spread only) for the site's model switch.
+            try:
+                PREVIOUS_PAYLOADS[location] = render_location_outputs(
+                    location=location,
+                    output_dir=beta_dir / "previous",
+                    merged_df=merged_df,
+                    ensemble_predictions=(live.previous_members if live.previous_members is not None
+                                          else live.members),
+                    rainfall_forecast=rain_forecast(n_members),
+                    config=config,
+                    flag_thresholds=flag_thresholds,
+                    title_suffix=" (previous model)",
+                    model_name="hybrid_c1_ps",
+                    make_figures=False,
+                )
+            except Exception:
+                print(f"\n[WARNING] Previous-model payload failed for '{location}':")
+                traceback.print_exc()
         except Exception:
             print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
             traceback.print_exc()
@@ -1386,6 +1412,11 @@ def main(argv: list[str] | None = None) -> None:
                 main_payloads[loc] = all_payloads[loc]
         write_forecast_bundle(output_dir, main_payloads, failed_locations)
         write_forecast_bundle(september_dir, dict(all_payloads), failed_locations)
+        if PREVIOUS_PAYLOADS:
+            previous_dir = output_dir / "previous"
+            previous_dir.mkdir(parents=True, exist_ok=True)
+            write_forecast_bundle(previous_dir, dict(PREVIOUS_PAYLOADS),
+                                  [loc for loc in locations_to_process if loc not in PREVIOUS_PAYLOADS])
         if not args.no_archive:
             archive_forecasts(output_dir, main_payloads)
     else:

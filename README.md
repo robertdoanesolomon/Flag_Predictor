@@ -16,6 +16,17 @@ help Godstow or Wallingford, so they are unchanged. If CI cannot assemble the
 (`SIMFEAT_MODELS` in `src/flag_predictor/prediction/hybrid_live.py`). Details in
 the October section of `EXPERIMENTS.md`.
 
+**Switching models.** Every run computes both the new forecast
+(`docs/forecast_data.json`) and the previous live model on the same rain
+(`docs/previous/forecast_data.json`: the September hybrid at all three
+locations, rain spread only). The site has a *New / Previous* switch at the
+top. To make the previous model the default for everyone, set
+`docs/model_config.json` to `{"default": "previous"}` (takes effect on the next
+Pages deploy; no retraining or CI change). A viewer's own click lasts for their
+browser tab, and `?model=new` / `?model=previous` in the address forces one.
+To stop computing the new Isis model altogether, set `SIMFEAT_MODELS = {}` in
+`src/flag_predictor/prediction/hybrid_live.py`.
+
 Three further additions:
 
 1. **Forecast archive** (`src/flag_predictor/prediction/archive.py`). Every CI

@@ -134,6 +134,9 @@ class LiveForecast:
     total_samples: Optional[np.ndarray]    # (S, 241) members + borrowed model errors, or None
     model_name: str
     note: Optional[str] = None             # why a preferred model was not used, if it wasn't
+    # The previous live model (plain hybrid) on the same rain, when the new forecast
+    # used a different model; None means the members above are also the previous model's.
+    previous_members: Optional[pd.DataFrame] = None
 
 
 def forecast_ensemble(
@@ -179,8 +182,14 @@ def forecast_with_uncertainty(
     project_root: Path,
     n_members: int = 50,
     models_dir: Optional[Path] = None,
+    with_previous: bool = True,
 ) -> LiveForecast:
-    """Hybrid-ensemble forecast plus the model-error outcome cloud."""
+    """Hybrid-ensemble forecast plus the model-error outcome cloud.
+
+    With ``with_previous``, a location whose new model differs from the plain
+    hybrid also gets the plain hybrid's members on the same rain, for the
+    website's "previous model" view.
+    """
     models_dir = models_dir or (project_root / 'models')
     frame = live_frame(location, merged_df, project_root)
     t0 = frame.index[-1]
@@ -200,7 +209,10 @@ def forecast_with_uncertainty(
             note = f"{simfeat['tag']} unavailable: {type(exc).__name__}: {exc}"[:300]
             print(f"  [simfeat] {note}; using {MODEL_TAG}")
     predict = ensemble_predictor(names, location, models_dir=models_dir, extra_features=extra)
+    predict_previous = (ensemble_predictor(HYBRID_MODELS, location, models_dir=models_dir)
+                        if with_previous and tag != MODEL_TAG else None)
     members: Dict[str, np.ndarray] = {}
+    previous: Dict[str, np.ndarray] = {}
     rain_means: Dict[str, np.ndarray] = {}
     for i in range(n_members):
         cols = {f'{g}_member_{i}': g for g in gauges if f'{g}_member_{i}' in forecast.columns}
@@ -208,17 +220,22 @@ def forecast_with_uncertainty(
             continue
         member_rain = forecast[list(cols)].rename(columns=cols).reindex(fut_idx).fillna(0.0)
         members[f'member_{i}'] = predict(frame, member_rain)
+        if predict_previous is not None:
+            previous[f'member_{i}'] = predict_previous(frame, member_rain)
         rain_means[f'member_{i}'] = member_rain.clip(lower=0).mean(axis=1).to_numpy()
     if not members:
         raise RuntimeError('no forecast-rain members available for the hybrid')
-    members_df = pd.DataFrame(members, index=pd.date_range(t0, periods=HORIZON + 1, freq='1h'))
+    index = pd.date_range(t0, periods=HORIZON + 1, freq='1h')
+    members_df = pd.DataFrame(members, index=index)
+    previous_df = pd.DataFrame(previous, index=index) if previous else None
     rain_df = pd.DataFrame(rain_means, index=fut_idx)
     try:
         total = model_error_samples(location, frame, members_df, rain_df, models_dir, tag=tag)
     except Exception as exc:   # the spread is extra; never lose the forecast over it
         print(f"  [model error] failed ({exc}); showing rain spread only")
         total = None
-    return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag, note=note)
+    return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag, note=note,
+                        previous_members=previous_df)
 
 
 def forecast_rain_gauges(location: str) -> List[str]:
