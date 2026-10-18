@@ -50,9 +50,18 @@ jobs:
           NEWEST="$(python src/flag_predictor/data/rain_cache_newest.py data/rainfall_training_data)"
           STALE="$(python -c "from datetime import date, timedelta; print(int(date.fromisoformat('${NEWEST}') < date.today() - timedelta(days=40)))")"
           echo "cache: ${COUNT} files, newest reading ${NEWEST}"
-          if [ "${COUNT:-0}" -lt 15 ] || [ "$STALE" = "1" ]; then
+          if [ "${COUNT:-0}" -lt 15 ]; then
             python src/flag_predictor/data/download_rainfall.py \
               --min-date "$(date -u -d '800 days ago' +%F)" --delay 1.5
+          elif [ "$STALE" = "1" ]; then
+            # download_rainfall.py never overwrites, so download into a fresh folder and swap.
+            rm -rf data/rainfall_refresh
+            if python src/flag_predictor/data/download_rainfall.py --min-date "$(date -u -d '800 days ago' +%F)" \
+                 --output-dir data/rainfall_refresh --delay 1.5 \
+               && [ "$(find data/rainfall_refresh -maxdepth 1 -name '*.csv' -size +1k | wc -l)" -ge 15 ]; then
+              mv -f data/rainfall_refresh/*.csv data/rainfall_training_data/
+            fi
+            rm -rf data/rainfall_refresh
           fi
       - name: Download recent rainfall
         continue-on-error: true

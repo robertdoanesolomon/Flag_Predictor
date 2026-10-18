@@ -71,9 +71,18 @@ jobs:
             python src/flag_predictor/data/download_rainfall.py --min-date "$MIN_DATE" --delay 1.5
           elif [ "$STALE" = "1" ] && [ "${{ steps.rainfall-cache.outputs.cache-hit }}" != "true" ]; then
             # Only on the first run of a week (new cache key), so the refreshed files are saved.
+            # download_rainfall.py never overwrites, so download into a fresh folder and swap.
             echo "Refreshing stale rainfall CSVs (newest reading ${NEWEST}) since ${MIN_DATE} ..."
-            python src/flag_predictor/data/download_rainfall.py --min-date "$MIN_DATE" --delay 1.5 \
-              || echo "Refresh failed; keeping the cached files (the Isis model falls back if needed)."
+            rm -rf data/rainfall_refresh
+            if python src/flag_predictor/data/download_rainfall.py --min-date "$MIN_DATE" \
+                 --output-dir data/rainfall_refresh --delay 1.5 \
+               && [ "$(find data/rainfall_refresh -maxdepth 1 -name '*.csv' -size +1k | wc -l)" -ge 15 ]; then
+              mv -f data/rainfall_refresh/*.csv data/rainfall_training_data/
+              echo "Refreshed: newest reading now $(python src/flag_predictor/data/rain_cache_newest.py data/rainfall_training_data)"
+            else
+              echo "Refresh failed; keeping the cached files (the Isis model falls back if needed)."
+            fi
+            rm -rf data/rainfall_refresh
           else
             echo "Rainfall_training_data cache usable (${COUNT} CSV files, newest reading ${NEWEST})."
           fi
