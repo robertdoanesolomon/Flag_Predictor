@@ -1341,7 +1341,7 @@
    * when the river is forecast to get there, at the time of day the keepers
    * usually move the weirs.
    */
-  const OUTLOOK_LEVELS = [[0.8, 'Very likely'], [0.6, 'Likely'], [0.35, 'Possible']];
+  const OUTLOOK_LEVELS = [[0.8, 'Very likely'], [0.6, 'Likely'], [0.35, 'Possible'], [0.2, 'Small chance']];
   function outlookWord(p) {
     for (const [lo, w] of OUTLOOK_LEVELS) if (p >= lo) return w;
     return null;
@@ -1400,10 +1400,12 @@
       main = `${wordTom}: flag ${verb} to ${name} by tomorrow (${outlookPct(best.pTom)})`;
       parts.push(`Today: ${outlookPct(best.pToday)}.`);
     }
-    if (when) parts.push(`Most likely ${when}${whenDay}${keeperHours ? ', when the lock keepers usually adjust the weirs' : ''}.`);
+    const pShown = wordToday ? best.pToday : best.pTom;
+    if (when) parts.push(`${pShown < 0.6 ? 'If it happens, most likely' : 'Most likely'} ${when}${whenDay}${keeperHours ? ', when the lock keepers usually adjust the weirs' : ''}.`);
     const sub = parts.join(' ');
+    const quiet = Math.max(best.pToday, best.pTom) < 0.35 ? ' quiet' : '';
     return `
-      <div class="flag-outlook" role="status" style="--outlook-color:${FLAG_COLORS[best.info.flag] || 'var(--border-strong)'}">
+      <div class="flag-outlook${quiet}" role="status" style="--outlook-color:${FLAG_COLORS[best.info.flag] || 'var(--border-strong)'}">
         <span class="flag-swatch" aria-hidden="true"></span>
         <p class="outlook-text"><span class="outlook-main">${main}</span>
         <span class="outlook-sub">${sub}</span></p>
