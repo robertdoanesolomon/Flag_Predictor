@@ -51,9 +51,11 @@ jobs:
         id: rainfall-cache
         with:
           path: data/rainfall_training_data
-          key: ea-rain-${{ runner.os }}-v1-${{ steps.rainfall-week.outputs.w }}
+          # v2: start from a fresh 800-day download (the v1 cache stopped at May 2026,
+          # because the downloader never overwrites existing files).
+          key: ea-rain-${{ runner.os }}-v2-${{ steps.rainfall-week.outputs.w }}
           restore-keys: |
-            ea-rain-${{ runner.os }}-v1-
+            ea-rain-${{ runner.os }}-v2-
 
       - name: Populate rainfall_training_data when cache miss
         run: |

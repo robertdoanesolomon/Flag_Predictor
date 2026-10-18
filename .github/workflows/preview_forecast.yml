@@ -40,8 +40,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: data/rainfall_training_data
-          key: ea-rain-${{ runner.os }}-v1-preview
+          key: ea-rain-${{ runner.os }}-v2-preview
           restore-keys: |
+            ea-rain-${{ runner.os }}-v2-
             ea-rain-${{ runner.os }}-v1-
       - name: Populate rainfall_training_data when cache miss
         run: |
