@@ -128,6 +128,21 @@ def _find_first_crossing(times: pd.Index, values, threshold: float) -> Optional[
     return pd.Timestamp(times[idx]).isoformat()
 
 
+def _smooth_lead(values: np.ndarray, window: int = 7) -> np.ndarray:
+    """Light centred smoothing over lead time (the outcome cloud is a finite sample).
+
+    Hour 0 (the observation) is left alone; the window shrinks near the start
+    so the band still opens from zero width.
+    """
+    v = np.asarray(values, dtype=float)
+    out = v.copy()
+    half = window // 2
+    for h in range(1, len(v)):
+        w = min(half, h - 1) if h > 1 else 0
+        out[h] = np.nanmean(v[max(1, h - w):h + w + 1])
+    return out
+
+
 def build_location_payload(
     *,
     location: str,
@@ -144,8 +159,16 @@ def build_location_payload(
     last_sensor_update: pd.Timestamp,
     display_name: str,
     latest_reading: Optional[pd.Timestamp] = None,
+    total_samples: Optional[np.ndarray] = None,
+    model_name: Optional[str] = None,
+    model_note: Optional[str] = None,
 ) -> dict:
-    """Assemble a JSON-serialisable dict with everything the frontend needs."""
+    """Assemble a JSON-serialisable dict with everything the frontend needs.
+
+    ``total_samples`` (S, len(plot_df)) are possible outcomes combining the rain
+    members with the model's own past errors (prediction/model_error.py). When
+    given, they provide the likely-range band and the flag probabilities.
+    """
     location = location.lower()
     forecast_start_time = plot_df.index[0]
     now_utc = pd.Timestamp.utcnow().tz_localize(None)
@@ -170,6 +193,14 @@ def build_location_payload(
 
     # Flag probability stack (skip the zero-width bands for Godstow).
     flag_probs_payload: dict = {}
+    total_payload = None
+    if total_samples is not None:
+        total_samples = np.asarray(total_samples, dtype=float)
+        total_payload = {
+            name: _safe_float_list(np.round(_smooth_lead(np.nanpercentile(total_samples, q, axis=0)), 4))
+            for name, q in (("p10", 10), ("p25", 25), ("p50", 50), ("p75", 75), ("p90", 90))
+        }
+        total_payload["n_samples"] = int(total_samples.shape[0])
     if location != "wallingford":
         n_members = len(plot_df.columns)
         if location == "godstow":
@@ -178,8 +209,12 @@ def build_location_payload(
             band_order = ["green", "light_blue", "dark_blue", "amber", "red"]
         for key in band_order:
             lo, hi = flag_thresholds[key]
-            in_range = ((plot_df >= lo) & (plot_df < hi)).sum(axis=1) / max(n_members, 1)
-            flag_probs_payload[key] = _safe_float_list(in_range.values)
+            if total_samples is not None:
+                in_range = ((total_samples >= lo) & (total_samples < hi)).mean(axis=0)
+                flag_probs_payload[key] = _safe_float_list(np.round(_smooth_lead(in_range), 4))
+            else:
+                in_range = ((plot_df >= lo) & (plot_df < hi)).sum(axis=1) / max(n_members, 1)
+                flag_probs_payload[key] = _safe_float_list(in_range.values)
 
     # Earliest predicted flag changes based on the ensemble mean.
     earliest: dict = {}
@@ -259,6 +294,7 @@ def build_location_payload(
             "mean": _safe_float_list(plot_stats["mean"].values),
             "p10": _safe_float_list(plot_stats["p10"].values),
             "p90": _safe_float_list(plot_stats["p90"].values),
+            **({"total": total_payload} if total_payload else {}),
         },
         "rainfall_historical": {
             "dates": _series_to_iso(historical_rainfall_daily.index),
@@ -273,7 +309,10 @@ def build_location_payload(
         "flag_probability": {
             "times": ensemble_times,
             "probabilities": flag_probs_payload,
+            "source": "rain+model" if total_samples is not None else "rain",
         },
+        **({"model": model_name} if model_name else {}),
+        **({"model_note": model_note} if model_note else {}),
         "earliest_flag_changes": earliest,
         "summary": {
             "last_24h_rain_mm": round(last24_rain, 2) if last24_rain is not None else None,
@@ -585,8 +624,16 @@ def render_location_outputs(
     config,
     flag_thresholds: dict,
     title_suffix: str = "",
+    total_samples: Optional[np.ndarray] = None,
+    model_name: Optional[str] = None,
+    model_note: Optional[str] = None,
+    make_figures: bool = True,
 ) -> dict:
-    """Figures and the JSON payload for one location's ensemble forecast (steps 5-7)."""
+    """Figures and the JSON payload for one location's ensemble forecast (steps 5-7).
+
+    ``make_figures=False`` builds only the JSON payload (no PNGs), e.g. for the
+    previous-model view, so the repository does not grow by another set of images per run.
+    """
     station_names_list = get_location_station_names(location)
 
     # ------------------------------------------------------------------
@@ -928,10 +975,10 @@ def render_location_outputs(
 
     # Save instead of showing
     output_path = output_dir / f"spaghetti_rain_{location.lower()}.png"
-    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    if make_figures:
+        fig.savefig(output_path, dpi=150, bbox_inches="tight")
+        print(f"\n✓ Spaghetti + rainfall figure saved to: {output_path}")
     plt.close(fig)
-
-    print(f"\n✓ Spaghetti + rainfall figure saved to: {output_path}")
 
     # ------------------------------------------------------------------
     # STEP 6: Generate combined spaghetti + probability figure
@@ -940,20 +987,21 @@ def render_location_outputs(
     print(f"STEP 6: Generating combined figure for {location.upper()}")
     print(f"{'=' * 70}")
 
-    generate_combined_figure(
-        location=location,
-        output_dir=output_dir,
-        plot_df=plot_df,
-        plot_stats=plot_stats,
-        historical_df=last_8_days,
-        historical_rainfall_daily=historical_rainfall_daily,
-        forecast_rain_mean=forecast_rain_mean,
-        forecast_rain_p10=forecast_rain_p10,
-        forecast_rain_p90=forecast_rain_p90,
-        flag_thresholds=flag_thresholds,
-        n_members_used=n_members_used,
-        title_suffix=title_suffix,
-    )
+    if make_figures:
+        generate_combined_figure(
+            location=location,
+            output_dir=output_dir,
+            plot_df=plot_df,
+            plot_stats=plot_stats,
+            historical_df=last_8_days,
+            historical_rainfall_daily=historical_rainfall_daily,
+            forecast_rain_mean=forecast_rain_mean,
+            forecast_rain_p10=forecast_rain_p10,
+            forecast_rain_p90=forecast_rain_p90,
+            flag_thresholds=flag_thresholds,
+            n_members_used=n_members_used,
+            title_suffix=title_suffix,
+        )
 
     # ------------------------------------------------------------------
     # STEP 7: Build JSON payload for the interactive frontend
@@ -984,8 +1032,17 @@ def render_location_outputs(
         last_sensor_update=last_update,
         display_name=config.display_name,
         latest_reading=latest_reading,
+        total_samples=total_samples,
+        model_name=model_name,
+        model_note=model_note,
     )
     return payload
+
+
+# Mean-station hourly rain per member, per location, from this run (for the archive).
+LIVE_MEMBER_RAIN: dict = {}
+# The previous live model's payload per location (docs/previous/forecast_data.json).
+PREVIOUS_PAYLOADS: dict = {}
 
 
 def generate_spaghetti_figure(
@@ -1131,22 +1188,44 @@ def generate_spaghetti_figure(
     if beta_dir is not None:
         # Physics-hybrid trial (beta page). Never allowed to affect the live output.
         try:
-            from flag_predictor.prediction.hybrid_live import forecast_ensemble, rain_forecast
+            from flag_predictor.prediction.hybrid_live import forecast_with_uncertainty, rain_forecast
 
             print(f"\n{'=' * 70}")
             print(f"BETA: physics hybrid for {location.upper()}")
             print(f"{'=' * 70}")
-            beta_predictions = forecast_ensemble(location, merged_df, project_root, n_members=n_members)
+            live = forecast_with_uncertainty(location, merged_df, project_root, n_members=n_members)
             beta_payload = render_location_outputs(
                 location=location,
                 output_dir=beta_dir,
                 merged_df=merged_df,
-                ensemble_predictions=beta_predictions,
+                ensemble_predictions=live.members,
                 rainfall_forecast=rain_forecast(n_members),
                 config=config,
                 flag_thresholds=flag_thresholds,
                 title_suffix=beta_title_suffix,
+                total_samples=live.total_samples,
+                model_name=live.model_name,
+                model_note=live.note,
             )
+            LIVE_MEMBER_RAIN[location] = live.member_rain
+            # The previous live model (plain hybrid, rain spread only) for the site's model switch.
+            try:
+                PREVIOUS_PAYLOADS[location] = render_location_outputs(
+                    location=location,
+                    output_dir=beta_dir / "previous",
+                    merged_df=merged_df,
+                    ensemble_predictions=(live.previous_members if live.previous_members is not None
+                                          else live.members),
+                    rainfall_forecast=rain_forecast(n_members),
+                    config=config,
+                    flag_thresholds=flag_thresholds,
+                    title_suffix=" (previous model)",
+                    model_name="hybrid_c1_ps",
+                    make_figures=False,
+                )
+            except Exception:
+                print(f"\n[WARNING] Previous-model payload failed for '{location}':")
+                traceback.print_exc()
         except Exception:
             print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
             traceback.print_exc()
@@ -1191,6 +1270,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="Do not add this run to docs/archive (forecast history for the website).",
+    )
+    parser.add_argument(
         "--old-dir",
         default=None,
         help="With --primary hybrid: where the September LSTM forecast is written (e.g. docs/old).",
@@ -1224,6 +1308,34 @@ def write_forecast_bundle(output_dir: Path, payloads: dict, failed_locations: li
         with open(json_path, "w") as f:
             json.dump(bundle, f, separators=(",", ":"))
         print(f"\n✓ Interactive JSON payload saved to: {json_path}")
+
+
+def archive_forecasts(output_dir: Path, payloads: dict) -> None:
+    """Add this run to docs/archive (and the raw member rain to data/forecast_archive).
+
+    Archiving must never stop the forecast from publishing, so errors are logged only.
+    """
+    try:
+        from flag_predictor.prediction.archive import fill_gaps_from_git, update_archive
+
+        try:
+            filled = fill_gaps_from_git(output_dir, PROJECT_ROOT)
+            if filled:
+                print(f"  Archive: filled {len(filled)} missed slot(s) from git history: {filled[0]} .. {filled[-1]}")
+        except Exception as exc:
+            print(f"  Archive: could not fill gaps from git history ({exc})")
+        models = sorted({p.get("model", "september") for p in payloads.values()})
+        result = update_archive(
+            output_dir,
+            payloads,
+            model="+".join(models),
+            member_rain=dict(LIVE_MEMBER_RAIN),
+            raw_dir=PROJECT_ROOT / "data" / "forecast_archive",
+        )
+        print(f"\n✓ Archive updated: {result}")
+    except Exception:
+        print("\n[WARNING] Forecast archive update failed:")
+        traceback.print_exc()
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -1300,6 +1412,13 @@ def main(argv: list[str] | None = None) -> None:
                 main_payloads[loc] = all_payloads[loc]
         write_forecast_bundle(output_dir, main_payloads, failed_locations)
         write_forecast_bundle(september_dir, dict(all_payloads), failed_locations)
+        if PREVIOUS_PAYLOADS:
+            previous_dir = output_dir / "previous"
+            previous_dir.mkdir(parents=True, exist_ok=True)
+            write_forecast_bundle(previous_dir, dict(PREVIOUS_PAYLOADS),
+                                  [loc for loc in locations_to_process if loc not in PREVIOUS_PAYLOADS])
+        if not args.no_archive:
+            archive_forecasts(output_dir, main_payloads)
     else:
         write_forecast_bundle(output_dir, all_payloads, failed_locations)
         if beta_dir is not None:

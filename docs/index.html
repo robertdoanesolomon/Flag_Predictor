@@ -750,6 +750,104 @@
       .flag-value small { font-size: 13px; }
       .tab { font-size: 12px; padding: 10px 4px; }
     }
+    /* ---------- MODEL SWITCH ---------- */
+    .hero-side {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      max-width: 360px;
+    }
+    .model-switch { display: flex; align-items: center; gap: 10px; }
+    .model-switch-label { font-size: 13px; font-weight: 600; color: var(--text-soft); }
+    .model-switch-note {
+      margin: 0;
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: var(--text-muted);
+      text-align: right;
+    }
+    .seg-btn:disabled { opacity: 0.45; cursor: default; }
+    @media (max-width: 720px) {
+      .hero-side { align-items: flex-start; max-width: none; }
+      .model-switch-note { text-align: left; }
+    }
+
+    /* ---------- FORECAST HISTORY ---------- */
+    .history-block {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+    .history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .history-head .chart-title { margin: 0; }
+    .seg {
+      display: inline-flex;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+    }
+    .seg-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--text-soft);
+      font: 600 13px/1 'Inter', sans-serif;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .seg-btn.active { background: var(--accent); color: #fff; }
+    @media (prefers-color-scheme: dark) { .seg-btn.active { color: #0b1815; } }
+    .history-controls {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0 4px;
+    }
+    .history-controls input[type=range] { width: 100%; accent-color: var(--accent-soft); min-height: 32px; }
+    .history-step {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      font: 700 16px/1 'Inter', sans-serif;
+      cursor: pointer;
+    }
+    .history-step:disabled { opacity: 0.4; cursor: default; }
+    .history-label {
+      font-size: 14px;
+      color: var(--text-soft);
+      margin: 2px 0 8px;
+    }
+    .history-label strong { color: var(--text); }
+    .history-score {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      font-size: 14px;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+    }
+    .history-score strong { color: var(--text); font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .history-note { font-size: 13px; color: var(--text-muted); margin: 8px 0 0; line-height: 1.5; }
+    .plot.hist { min-height: 340px; }
+    .history-empty { font-size: 14px; color: var(--text-muted); padding: 18px 0; }
+    @media (max-width: 720px) {
+      .plot.hist { min-height: 280px; }
+      .seg-btn { padding: 8px 11px; font-size: 12px; }
+    }
   </style>
 </head>
 
@@ -764,9 +862,19 @@
         run hourly with the latest rainfall ensemble forecasts.</p>
         <p class="hero-sub">Latest Experimental Forecasts</p>
       </div>
-      <div id="status-pill" class="status-pill" aria-live="polite">
-        <span class="dot"></span>
-        <span id="status-text">Loading latest forecast…</span>
+      <div class="hero-side">
+        <div id="status-pill" class="status-pill" aria-live="polite">
+          <span class="dot"></span>
+          <span id="status-text">Loading latest forecast…</span>
+        </div>
+        <div class="model-switch">
+          <span class="model-switch-label" id="model-switch-label">Model</span>
+          <div class="seg" role="group" aria-labelledby="model-switch-label">
+            <button type="button" class="seg-btn" data-model="new" aria-pressed="false">New</button>
+            <button type="button" class="seg-btn" data-model="previous" aria-pressed="false">Previous</button>
+          </div>
+        </div>
+        <p class="model-switch-note" id="model-switch-note"></p>
       </div>
     </header>
 
@@ -788,6 +896,24 @@
         red line marks "now". For Isis and Godstow, the stacked chart underneath shows the probability that the river
         will be in each flag colour at each point in the next 10 days.
 
+        <h3>What is the shaded band?</h3>
+        The 50 blue lines only show how much the rainfall forecasts disagree. Even with the rain exactly right the
+        model is sometimes wrong, and in the first day or two that is most of the real uncertainty, because the rain
+        forecasts barely disagree yet. The purple shading adds that in. The model was re-run every 6 hours over
+        periods it was never trained on (2023, and November 2024 to January 2026) using the rain that actually fell,
+        and every one of those forecasts' errors was kept. For today's forecast, each rain line borrows the errors
+        of past forecasts that started from a similar situation (similar river level, trend, recent and forecast
+        rain, and time of year). The outer shading holds 80% of the resulting outcomes and the inner shading 50%. The
+        flag probabilities underneath are worked out from the same outcomes, so they include the model's own
+        uncertainty too.
+
+        <h3>How have earlier forecasts done?</h3>
+        Under each chart you can look back. <em>Past forecast</em>: drag the slider to any forecast from the last few
+        weeks (one is saved every 6 hours) and see what it said against what the river then did, with its typical
+        error and how often it had the flag right. <em>Forecasts of now</em>: what every forecast from the last ten
+        days said the latest reading would be. Forecasts saved before the model-error band was added only show the rain spread, not
+        the model-error band.
+
         <h3>How reliable is the summary sentence?</h3>
         The summary sentence is simply a short description of the forecast, without any human intervention. The certainty
         bounds are just based off the spread of the forecast. Importantly, the summary sentence is based off the change
@@ -806,7 +932,10 @@
         physics-based: a small neural network reads the recent past and sets the starting state of a rainfall-runoff
         model (soil wetness, fast and slow runoff stores, groundwater and the river channel). Forecast rain is routed
         through those stores hour by hour, and a rating curve that only ever increases turns river flow into the
-        differential. The forecast is the average of five independently trained copies.
+        differential. The forecast is the average of five independently trained copies. For the Isis, the
+        network also sees a simulation of the whole catchment run continuously through the last two years of
+        rain (how wet the soil is, how much water is in the groundwater), so it remembers dry summers and wet
+        winters for longer than the last month of data.
 
         <h3>Why hasn't the forecast updated recently?</h3>
         Usually it's just a temporary glitch in an Environment Agency sensor going briefly offline; the page will
@@ -1209,7 +1338,10 @@
       nowLine: '#e0524d',
       rainHist: dark ? 'rgba(160,160,160,0.55)' : 'rgba(110,110,110,0.45)',
       rainForecast: dark ? 'rgba(110,160,240,0.65)' : 'rgba(100,149,237,0.6)',
-      rainError: dark ? 'rgba(220,220,220,0.7)' : 'rgba(40,55,100,0.7)'
+      rainError: dark ? 'rgba(220,220,220,0.7)' : 'rgba(40,55,100,0.7)',
+      bandOuter: dark ? 'rgba(176,120,232,0.16)' : 'rgba(138,57,208,0.11)',
+      bandInner: dark ? 'rgba(176,120,232,0.22)' : 'rgba(138,57,208,0.16)',
+      rainBand: dark ? 'rgba(120,180,220,0.22)' : 'rgba(70,130,180,0.18)'
     };
   }
 
@@ -1285,7 +1417,7 @@
 
       const probPlotHtml = isWallingford ? '' : `
         <div class="chart-block">
-          <h3 class="chart-title">Forecast flag probability</h3>
+          <h3 class="chart-title">Forecast flag probability${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
           ${renderProbLegendHtml(key)}
           <div id="prob-${key}" class="plot prob"></div>
         </div>`;
@@ -1312,6 +1444,7 @@
                 <button type="button" class="item" data-target="Historical Differential"><span class="swatch line" style="background:#0b1d18;"></span>Historical Differential</button>
                 <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:#4682b4;"></span>Ensemble Predictions (n=${loc.n_members})</button>
                 <button type="button" class="item" data-target="Ensemble Mean"><span class="swatch line" style="background:#8a39d0;"></span>Ensemble Mean</button>
+                ${loc.ensemble && loc.ensemble.total ? `<button type="button" class="item" data-target="Likely range"><span class="swatch square" style="background:rgba(138,57,208,0.28);"></span>Likely range (rain + model error)</button>` : ''}
                 <button type="button" class="item" data-target="Historical Rainfall"><span class="swatch square" style="background:#999;opacity:0.5;"></span>Historical Rainfall</button>
                 <button type="button" class="item" data-target="Forecast Rainfall"><span class="swatch square" style="background:#6495ed;opacity:0.6;"></span>Forecast Rainfall (mean &plusmn; P10&ndash;P90)</button>
               </div>
@@ -1346,6 +1479,8 @@
                 <div class="value">${fmtMm(loc.summary.next_7d_rain_mm ?? loc.summary.next_3d_rain_mm)}<small>mm</small></div>
               </div>
             </div>
+
+            ${renderHistoryBlockHtml(key)}
           </div>
         </section>
       `;
@@ -1404,6 +1539,24 @@
         },
         hovertemplate: '<b>%{x|%a %-d %b}</b><br>Mean %{y:.1f} mm<br>P10–P90 spread shown<extra>Forecast rain</extra>'
       });
+    }
+
+    // Likely range: rain-forecast spread combined with the model's own past
+    // errors (10-90% outer, 25-75% inner). Drawn under the spaghetti.
+    const total = loc.ensemble.total;
+    if (total && total.p10 && total.p90) {
+      const band = (lo, hi, fill, label) => {
+        traces.push({
+          type: 'scatter', mode: 'lines', x: tEns, y: lo,
+          line: { width: 0 }, hoverinfo: 'skip', name: `Likely range ${label} lower`, showlegend: false
+        });
+        traces.push({
+          type: 'scatter', mode: 'lines', x: tEns, y: hi, fill: 'tonexty', fillcolor: fill,
+          line: { width: 0 }, name: `Likely range ${label}`, hoverinfo: 'skip'
+        });
+      };
+      band(total.p10, total.p90, T.bandOuter, '10–90%');
+      if (total.p25 && total.p75) band(total.p25, total.p75, T.bandInner, '25–75%');
     }
 
     // Ensemble spaghetti — flatten all members into one trace separated by
@@ -1506,6 +1659,7 @@
     let dataMax = loc.historical.differential.reduce(reduceMax, -Infinity);
     dataMax = loc.ensemble.mean.reduce(reduceMax, dataMax);
     dataMax = loc.ensemble.p90.reduce(reduceMax, dataMax);
+    if (loc.ensemble.total && loc.ensemble.total.p90) dataMax = loc.ensemble.total.p90.reduce(reduceMax, dataMax);
     if (!isFinite(dataMax)) dataMax = 1;
     const flagMax = key === 'godstow' ? 1.2 : (key === 'isis' ? 0.8 : 3.0);
     const yMax = Math.max(dataMax + 0.15, flagMax);
@@ -1727,6 +1881,348 @@
     }
   }
 
+  /* ----------------------- FORECAST HISTORY ---------------------------- */
+  /*
+   * Data written by CI (src/flag_predictor/prediction/archive.py):
+   *   archive/index.json        list of archived forecasts (one per 6-hour slot)
+   *   archive/issues/<slot>.json   each forecast's mean and bands per location
+   *   archive/observed.json     hourly observed differential since archiving began
+   *   archive/now.json          what each recent forecast said about the latest reading
+   */
+  const HISTORY = { loading: null, index: null, observed: null, now: null, issues: new Map(), view: {}, pos: {} };
+  const HOUR_MS = 3600 * 1000;
+
+  function renderHistoryBlockHtml(key) {
+    return `
+      <div class="history-block" id="history-${key}" data-location="${key}">
+        <div class="history-head">
+          <h3 class="chart-title">How have earlier forecasts done?</h3>
+          <div class="seg" role="group" aria-label="History view">
+            <button type="button" class="seg-btn active" data-view="past" aria-pressed="true">Past forecast</button>
+            <button type="button" class="seg-btn" data-view="now" aria-pressed="false">Forecasts of now</button>
+          </div>
+        </div>
+        <div class="history-past">
+          <div class="history-controls">
+            <button type="button" class="history-step" data-step="-1" aria-label="Earlier forecast">&#8249;</button>
+            <input type="range" class="history-range" min="0" max="0" step="1" value="0" aria-label="Choose an earlier forecast">
+            <button type="button" class="history-step" data-step="1" aria-label="Later forecast">&#8250;</button>
+          </div>
+        </div>
+        <div class="history-label" aria-live="polite"></div>
+        <div class="history-score"></div>
+        <div id="hist-plot-${key}" class="plot hist"><div class="history-empty">Loading forecast history…</div></div>
+        <p class="history-note"></p>
+      </div>`;
+  }
+
+  function isoNaive(ms) { return new Date(ms).toISOString().slice(0, 19); }
+
+  function loadHistory() {
+    if (HISTORY.loading) return HISTORY.loading;
+    const get = (p) => fetch(p, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+    HISTORY.loading = Promise.all([get('archive/index.json'), get('archive/observed.json'), get('archive/now.json')])
+      .then(([index, observed, now]) => { HISTORY.index = index; HISTORY.observed = observed; HISTORY.now = now; });
+    return HISTORY.loading;
+  }
+
+  function fetchIssue(slot) {
+    if (!HISTORY.issues.has(slot)) {
+      HISTORY.issues.set(slot, fetch(`archive/issues/${slot}.json`).then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      }));
+    }
+    return HISTORY.issues.get(slot);
+  }
+
+  /** Observed series for a location as {t: [ms], y: [m]}: archive plus the latest payload. */
+  function observedFor(key, loc) {
+    const t = [], y = [];
+    const enc = HISTORY.observed && HISTORY.observed[key];
+    if (enc && enc.values) {
+      const start = parseUtc(enc.start).getTime();
+      const step = (enc.step_h || 1) * HOUR_MS;
+      enc.values.forEach((v, i) => { if (v !== null) { t.push(start + i * step); y.push(v); } });
+    }
+    const last = t.length ? t[t.length - 1] : -Infinity;
+    if (loc && loc.historical) {
+      loc.historical.times.forEach((iso, i) => {
+        const ms = parseUtc(iso).getTime();
+        const v = loc.historical.differential[i];
+        if (ms > last && v !== null) { t.push(ms); y.push(v); }
+      });
+    }
+    return { t, y };
+  }
+
+  function flagOf(value, thresholds, key) {
+    if (key === 'wallingford' || value === null || value === undefined) return null;
+    for (const k of Object.keys(thresholds)) {
+      const [lo, hi] = thresholds[k];
+      if (value >= lo && value < hi) return k;
+    }
+    return null;
+  }
+
+  function historyIssues(key) {
+    const list = (HISTORY.index && HISTORY.index.issues) || [];
+    return list.filter(e => e.t0 && e.t0[key]);
+  }
+
+  function setupHistory(key, loc) {
+    const block = document.getElementById(`history-${key}`);
+    if (!block) return;
+    const issues = historyIssues(key);
+    if (!issues.length) {
+      showEmpty(`hist-plot-${key}`, 'No archived forecasts yet — they are saved every 6 hours, so check back soon.');
+      block.querySelector('.history-past').hidden = true;
+      return;
+    }
+    const range = block.querySelector('.history-range');
+    range.max = String(issues.length - 1);
+    // Default: the forecast issued about three days before the latest reading.
+    if (HISTORY.pos[key] === undefined) {
+      const obs = observedFor(key, loc);
+      const target = (obs.t.length ? obs.t[obs.t.length - 1] : Date.now()) - 72 * HOUR_MS;
+      let best = issues.length - 1, bestD = Infinity;
+      issues.forEach((e, i) => {
+        const d = Math.abs(parseUtc(e.t0[key]).getTime() - target);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      HISTORY.pos[key] = best;
+    }
+    range.value = String(HISTORY.pos[key]);
+    if (!HISTORY.view[key]) HISTORY.view[key] = 'past';
+
+    if (!block.__wired) {
+      block.__wired = true;
+      range.addEventListener('input', () => { HISTORY.pos[key] = Number(range.value); drawHistory(key); });
+      block.querySelectorAll('.history-step').forEach(btn => btn.addEventListener('click', () => {
+        const n = historyIssues(key).length;
+        HISTORY.pos[key] = Math.min(n - 1, Math.max(0, HISTORY.pos[key] + Number(btn.dataset.step)));
+        range.value = String(HISTORY.pos[key]);
+        drawHistory(key);
+      }));
+      block.querySelectorAll('.seg-btn').forEach(btn => btn.addEventListener('click', () => {
+        HISTORY.view[key] = btn.dataset.view;
+        block.querySelectorAll('.seg-btn').forEach(b => {
+          const on = b === btn;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        drawHistory(key);
+      }));
+    }
+    drawHistory(key);
+  }
+
+  function showEmpty(plotId, message) {
+    const el = document.getElementById(plotId);
+    if (!el) return;
+    if (el.data && typeof Plotly !== 'undefined') Plotly.purge(el);
+    el.innerHTML = `<div class="history-empty">${message}</div>`;
+  }
+
+  function clearPlaceholder(plotId) {
+    const el = document.getElementById(plotId);
+    if (el && !el.data) el.innerHTML = '';
+  }
+
+  function drawHistory(key) {
+    const block = document.getElementById(`history-${key}`);
+    const bundle = window.__forecastBundle;
+    if (!block || !bundle || !HISTORY.index) return;
+    const loc = bundle.locations[key];
+    const view = HISTORY.view[key] || 'past';
+    block.querySelector('.history-past').hidden = view !== 'past';
+    const issues = historyIssues(key);
+    block.querySelectorAll('.history-step').forEach(btn => {
+      const next = HISTORY.pos[key] + Number(btn.dataset.step);
+      btn.disabled = next < 0 || next > issues.length - 1;
+    });
+    if (view === 'now') { drawNowView(key, loc, block); return; }
+    const entry = issues[HISTORY.pos[key]];
+    if (!entry) return;
+    fetchIssue(entry.slot)
+      .then(issue => drawPastView(key, loc, block, issue))
+      .catch(err => {
+        showEmpty(`hist-plot-${key}`, `Couldn't load that forecast (${err.message}).`);
+      });
+  }
+
+  function historyLayout(loc, key, T, xRange, yValues, extraShapes, yTitle) {
+    const compact = isCompactChartLayout();
+    const reduceMax = (acc, v) => (v !== null && v !== undefined && !Number.isNaN(v) && v > acc) ? v : acc;
+    const dataMax = yValues.reduce(reduceMax, -Infinity);
+    const flagMax = key === 'godstow' ? 1.2 : (key === 'isis' ? 0.8 : 3.0);
+    const yMax = Math.max(isFinite(dataMax) ? dataMax + 0.1 : 0.5, Math.min(flagMax, (isFinite(dataMax) ? dataMax : 0) + 0.4));
+    return {
+      paper_bgcolor: T.paper,
+      plot_bgcolor: T.plot,
+      font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
+      margin: compact ? { l: 42, r: 14, t: 12, b: 48 } : { l: 60, r: 24, t: 16, b: 48 },
+      showlegend: false,
+      hovermode: 'closest',
+      hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' } },
+      dragmode: false,
+      shapes: buildFlagBandShapes(loc, key).concat(extraShapes || []),
+      xaxis: {
+        type: 'date', range: xRange, gridcolor: T.grid, linecolor: T.axis,
+        tickfont: { color: T.font, size: compact ? 10 : 12 }, tickformat: '%-d %b', fixedrange: true
+      },
+      yaxis: {
+        title: { text: yTitle, font: { size: compact ? 11 : 13, color: T.font } },
+        range: [key === 'godstow' ? -0.05 : -0.1, yMax],
+        gridcolor: T.grid, linecolor: T.axis, zeroline: false, tickfont: { color: T.font }, fixedrange: true
+      }
+    };
+  }
+
+  function drawPastView(key, loc, block, issue) {
+    const v = issue.locations[key];
+    const plotId = `hist-plot-${key}`;
+    if (!v) return;
+    const T = themeColors();
+    const t0 = parseUtc(v.t0).getTime();
+    const times = v.mean.map((_, i) => isoNaive(t0 + i * HOUR_MS));
+    const hasTotal = !!(v.total_p10 && v.total_p90);
+    const lo = hasTotal ? v.total_p10 : v.p10;
+    const hi = hasTotal ? v.total_p90 : v.p90;
+    const obs = observedFor(key, loc);
+    const obsX = [], obsY = [];
+    const obsAt = new Map();
+    obs.t.forEach((ms, i) => {
+      if (ms >= t0 - 48 * HOUR_MS) { obsX.push(isoNaive(ms)); obsY.push(obs.y[i]); }
+      if (ms >= t0) obsAt.set(Math.round((ms - t0) / HOUR_MS), obs.y[i]);
+    });
+
+    const traces = [
+      { type: 'scatter', mode: 'lines', x: times, y: lo, line: { width: 0 }, hoverinfo: 'skip', name: 'lo' },
+      { type: 'scatter', mode: 'lines', x: times, y: hi, fill: 'tonexty', line: { width: 0 },
+        fillcolor: hasTotal ? T.bandOuter : T.rainBand, hoverinfo: 'skip', name: 'hi' },
+      { type: 'scatter', mode: 'lines', x: times, y: v.mean, line: { color: T.meanLine, width: 3 },
+        name: 'Forecast', hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>Forecast %{y:.2f} m<extra></extra>' },
+      { type: 'scatter', mode: 'lines', x: obsX, y: obsY, line: { color: T.historicalLine, width: 2.5 },
+        name: 'Observed', hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>Observed %{y:.2f} m<extra></extra>' }
+    ];
+    const issuedIso = isoNaive(t0);
+    const nowIso = isoNaive(Date.now());
+    const shapes = [
+      { type: 'line', x0: issuedIso, x1: issuedIso, yref: 'paper', y0: 0, y1: 1, line: { color: T.axis, width: 1.5, dash: 'dot' } },
+      { type: 'line', x0: nowIso, x1: nowIso, yref: 'paper', y0: 0, y1: 1, line: { color: T.nowLine, width: 2, dash: 'dash' } }
+    ];
+    const layout = historyLayout(loc, key, T, [isoNaive(t0 - 48 * HOUR_MS), isoNaive(t0 + 240 * HOUR_MS)],
+      [...obsY, ...v.mean, ...hi], shapes, 'Height differential (m)');
+    layout.annotations = [
+      { x: issuedIso, xref: 'x', y: 1, yref: 'paper', text: 'Issued', showarrow: false, xanchor: 'left', yanchor: 'top', xshift: 4,
+        font: { size: 11, color: T.font } },
+      { x: nowIso, xref: 'x', y: 1, yref: 'paper', text: 'Now', showarrow: false, xanchor: 'left', yanchor: 'top', xshift: 4,
+        font: { size: 11, color: T.nowLine } }
+    ];
+    clearPlaceholder(plotId);
+    Plotly.react(plotId, traces, layout, { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false });
+
+    // Scores over the hours observed so far.
+    let n = 0, absErr = 0, inBand = 0, flagN = 0, flagRight = 0;
+    for (let h = 1; h < v.mean.length; h++) {
+      const o = obsAt.get(h);
+      if (o === undefined || v.mean[h] === null) continue;
+      n++;
+      absErr += Math.abs(v.mean[h] - o);
+      if (lo[h] !== null && hi[h] !== null && o >= lo[h] && o <= hi[h]) inBand++;
+      const fo = flagOf(o, loc.thresholds, key);
+      const ff = flagOf(v.mean[h], loc.thresholds, key);
+      if (fo !== null && ff !== null) { flagN++; if (fo === ff) flagRight++; }
+    }
+    const ago = relativeTime(v.t0);
+    block.querySelector('.history-label').innerHTML =
+      `Forecast from <strong>${fmtShortDateTime(v.t0)}</strong> · ${ago}`;
+    const bandName = hasTotal ? 'likely range' : 'rain spread';
+    block.querySelector('.history-score').innerHTML = n
+      ? `<span><strong>${n}</strong> h observed since</span>` +
+        `<span>typical error <strong>${(100 * absErr / n).toFixed(1)} cm</strong></span>` +
+        `<span>inside the ${bandName} <strong>${Math.round(100 * inBand / n)}%</strong> of hours</span>` +
+        (flagN ? `<span>right flag <strong>${Math.round(100 * flagRight / flagN)}%</strong> of hours</span>` : '')
+      : '<span>No readings since this forecast yet.</span>';
+    block.querySelector('.history-note').innerHTML = hasTotal
+      ? 'Purple line: what the forecast said (ensemble mean). Shaded: its likely range, combining the rain-forecast spread with the model\'s own past errors. Black: what the river did.'
+      : 'Purple line: what the forecast said (ensemble mean). Blue shading: the spread from the rain forecast alone (this forecast was archived before the model-error range was added). Black: what the river did.';
+  }
+
+  function drawNowView(key, loc, block) {
+    const plotId = `hist-plot-${key}`;
+    const data = HISTORY.now && HISTORY.now.locations && HISTORY.now.locations[key];
+    if (!data || !data.forecasts || !data.forecasts.length) {
+      showEmpty(plotId, 'Not enough archived forecasts yet.');
+      block.querySelector('.history-label').innerHTML = '';
+      block.querySelector('.history-score').innerHTML = '';
+      return;
+    }
+    const T = themeColors();
+    const rows = data.forecasts.slice().sort((a, b) => parseUtc(a.t0) - parseUtc(b.t0));
+    const target = parseUtc(data.target).getTime();
+    const x = rows.map(r => isoNaive(parseUtc(r.t0).getTime()));
+    const y = rows.map(r => r.mean);
+    const useTotal = rows.some(r => r.total_p10 !== undefined);
+    const lo = rows.map(r => (r.total_p10 !== undefined ? r.total_p10 : r.p10));
+    const hi = rows.map(r => (r.total_p90 !== undefined ? r.total_p90 : r.p90));
+    const custom = rows.map((r, i) => [(r.lead_h / 24).toFixed(1), lo[i], hi[i]]);
+    const traces = [{
+      type: 'scatter', mode: 'markers', x, y,
+      marker: { color: T.meanLine, size: 8, line: { color: T.paper === 'rgba(0,0,0,0)' ? '#fff' : T.paper, width: 1 } },
+      error_y: { type: 'data', symmetric: false, array: y.map((m, i) => Math.max(0, hi[i] - m)),
+                 arrayminus: y.map((m, i) => Math.max(0, m - lo[i])), color: T.meanLine, thickness: 1.2, width: 0 },
+      customdata: custom,
+      hovertemplate: 'Issued <b>%{x|%H:%M %a %d %b}</b> (%{customdata[0]} days ahead)<br>' +
+        'Forecast %{y:.2f} m (%{customdata[1]:.2f} to %{customdata[2]:.2f})<extra></extra>'
+    }];
+    const targetIso = isoNaive(target);
+    const xStart = isoNaive(target - 10.5 * 24 * HOUR_MS);
+    const shapes = [
+      { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: data.observed, y1: data.observed,
+        line: { color: T.historicalLine, width: 2, dash: 'dash' } },
+      { type: 'line', x0: targetIso, x1: targetIso, yref: 'paper', y0: 0, y1: 1, line: { color: T.nowLine, width: 2, dash: 'dash' } }
+    ];
+    const layout = historyLayout(loc, key, T, [xStart, isoNaive(target + 12 * HOUR_MS)], [...hi, data.observed], shapes,
+      'Forecast for the latest reading (m)');
+    layout.xaxis.title = { text: 'When the forecast was issued', font: { size: 12, color: T.font } };
+    layout.annotations = [{
+      xref: 'paper', x: 0.01, y: data.observed, yref: 'y', yanchor: 'bottom', xanchor: 'left', showarrow: false,
+      text: `Observed ${fmtDiff(data.observed)} m`, font: { size: 11, color: T.font },
+      bgcolor: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(22,34,31,0.85)' : 'rgba(255,255,255,0.85)'
+    }];
+    clearPlaceholder(plotId);
+    Plotly.react(plotId, traces, layout, { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false });
+
+    const errs = (fromH, toH) => {
+      const e = rows.filter(r => r.lead_h >= fromH && r.lead_h < toH).map(r => Math.abs(r.mean - data.observed));
+      return e.length ? (100 * e.reduce((a, b) => a + b, 0) / e.length).toFixed(1) : null;
+    };
+    const flagNow = flagOf(data.observed, loc.thresholds, key);
+    const flagHits = rows.filter(r => flagOf(r.mean, loc.thresholds, key) === flagNow).length;
+    block.querySelector('.history-label').innerHTML =
+      `What each forecast from the last 10 days said the differential would be at <strong>${fmtShortDateTime(data.target)}</strong>, the latest reading`;
+    const e1 = errs(0, 48), e2 = errs(48, 120), e3 = errs(120, 260);
+    block.querySelector('.history-score').innerHTML =
+      (e1 !== null ? `<span>issued 0–2 days before: off by <strong>${e1} cm</strong></span>` : '') +
+      (e2 !== null ? `<span>2–5 days before: <strong>${e2} cm</strong></span>` : '') +
+      (e3 !== null ? `<span>5–10 days before: <strong>${e3} cm</strong></span>` : '') +
+      (flagNow !== null ? `<span>right flag in <strong>${flagHits} of ${rows.length}</strong></span>` : '');
+    block.querySelector('.history-note').innerHTML =
+      `Each dot is one archived forecast (saved every 6 hours); the bar is its ${useTotal ? 'likely range' : 'rain-forecast spread'}` +
+      (useTotal && rows.some(r => r.total_p10 === undefined) ? ' (rain spread only for forecasts saved before the likely range was added)' : '') + '. ' +
+      'The dashed line is what the river actually read. Forecasts closer to the right were issued nearer the time.';
+  }
+
+  function initHistory(bundle) {
+    loadHistory().then(() => {
+      bundle.location_order.forEach(k => {
+        try { setupHistory(k, bundle.locations[k]); } catch (err) { console.error('history failed', k, err); }
+      });
+    });
+  }
+
   /* ----------------------- WIRE-UP ---------------------------- */
 
   function setActiveTab(key) {
@@ -1742,11 +2238,15 @@
       if (plot && plot.data) Plotly.Plots.resize(plot);
       const prob = document.getElementById(`prob-${key}`);
       if (prob && prob.data) Plotly.Plots.resize(prob);
+      const hist = document.getElementById(`hist-plot-${key}`);
+      if (hist && hist.data) Plotly.Plots.resize(hist);
     });
   }
 
   function renderAll(bundle) {
     const root = document.getElementById('content');
+    const activeTab = document.querySelector('.tab.active');
+    const keep = activeTab && bundle.location_order.includes(activeTab.dataset.location) ? activeTab.dataset.location : null;
     const firstKey = bundle.location_order[0];
     root.innerHTML = `
       ${renderTabs(bundle, firstKey)}
@@ -1765,6 +2265,9 @@
 
     // Plot every location.
     bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
+    window.__forecastBundle = bundle;
+    initHistory(bundle);
+    if (keep && keep !== firstKey) setActiveTab(keep);
 
     // Wire legend-toggle interactivity (matches Plotly's "click to hide" behaviour).
     document.querySelectorAll('.chart-legend[data-plot]').forEach(legend => {
@@ -1812,13 +2315,15 @@
             if (plot && plot.layout) Plotly.Plots.resize(plot);
             const prob = document.getElementById(`prob-${k}`);
             if (prob && prob.layout) Plotly.Plots.resize(prob);
+            const hist = document.getElementById(`hist-plot-${k}`);
+            if (hist && hist.layout) Plotly.Plots.resize(hist);
           });
         }, 140);
       });
       const replotForecast = () => {
         const b = window.__forecastBundle;
         if (!b || typeof Plotly === 'undefined') return;
-        b.location_order.forEach(k => plotLocation(k, b.locations[k]));
+        b.location_order.forEach(k => { plotLocation(k, b.locations[k]); drawHistory(k); });
       };
       const mqCompact = window.matchMedia('(max-width: 720px)');
       if (mqCompact.addEventListener) mqCompact.addEventListener('change', replotForecast);
@@ -1852,19 +2357,92 @@
     }
   }
 
-  // Load the forecast JSON written by generate_all_location_figures.py.
-  fetch('forecast_data.json', { cache: 'no-store' })
-    .then(r => {
+  /* ----------------------- MODEL SWITCH ---------------------------- */
+  /*
+   * "new": docs/forecast_data.json — the current model (October 2026): the Isis
+   *        forecast also uses a simulated catchment state, and the likely-range band
+   *        and flag probabilities include the model's own past errors.
+   * "previous": docs/previous/forecast_data.json — the September 2026 physics hybrid
+   *        on the same rain, with the rain spread only (as the site was before).
+   * The default comes from docs/model_config.json ({"default": "new"} or "previous");
+   * a viewer's own choice is remembered for this browser tab, and ?model=new|previous
+   * in the address overrides both.
+   */
+  const MODEL_SOURCES = { new: 'forecast_data.json', previous: 'previous/forecast_data.json' };
+  const MODEL_NOTES = {
+    new: 'New (Oct 2026): the Isis forecast also tracks soil and groundwater through the last two years of rain; the shaded band and flag probabilities include the model\'s own past errors.',
+    previous: 'Previous (Sep 2026): the same physics model without the catchment simulation; the spread shows rain uncertainty only.'
+  };
+  const MODEL_STORE_KEY = 'flagPredictorModel';
+  let currentModel = null;
+
+  function storedModel() {
+    try { return sessionStorage.getItem(MODEL_STORE_KEY); } catch (e) { return null; }
+  }
+  function rememberModel(m) {
+    try { sessionStorage.setItem(MODEL_STORE_KEY, m); } catch (e) { /* private mode etc. */ }
+  }
+
+  function updateModelSwitch() {
+    document.querySelectorAll('.model-switch .seg-btn').forEach(b => {
+      const on = b.dataset.model === currentModel;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    const note = document.getElementById('model-switch-note');
+    if (note) note.textContent = MODEL_NOTES[currentModel] || '';
+  }
+
+  function fetchBundle(model) {
+    return fetch(MODEL_SOURCES[model], { cache: 'no-store' }).then(r => {
       if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
       return r.json();
-    })
-    .then(safeRenderAll)
-    .catch(err => {
-      console.error('forecast load failed', err);
-      renderError(
-        "Couldn't load <code>forecast_data.json</code>.",
-        (err && (err.stack || err.message)) ? String(err.stack || err.message) : String(err)
-      );
+    });
+  }
+
+  function loadModel(model, fallback) {
+    return fetchBundle(model)
+      .then(bundle => {
+        currentModel = model;
+        updateModelSwitch();
+        safeRenderAll(bundle);
+      })
+      .catch(err => {
+        console.error(`forecast load failed (${model})`, err);
+        if (fallback && fallback !== model) {
+          // e.g. the previous-model file is not there yet: show the other one.
+          const btn = document.querySelector(`.model-switch .seg-btn[data-model="${model}"]`);
+          if (btn) btn.disabled = true;
+          return loadModel(fallback, null);
+        }
+        renderError(
+          `Couldn't load <code>${MODEL_SOURCES[model]}</code>.`,
+          (err && (err.stack || err.message)) ? String(err.stack || err.message) : String(err)
+        );
+      });
+  }
+
+  document.querySelectorAll('.model-switch .seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const m = btn.dataset.model;
+      if (m === currentModel || btn.disabled) return;
+      rememberModel(m);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('model');
+      window.history.replaceState(null, '', url);
+      loadModel(m, null);
+    });
+  });
+
+  // Start: ?model= beats the viewer's remembered choice, which beats model_config.json.
+  fetch('model_config.json', { cache: 'no-store' })
+    .then(r => (r.ok ? r.json() : {}))
+    .catch(() => ({}))
+    .then(cfg => {
+      const valid = (m) => (m === 'new' || m === 'previous') ? m : null;
+      const param = valid(new URLSearchParams(window.location.search).get('model'));
+      const start = param || valid(storedModel()) || valid(cfg && cfg.default) || 'new';
+      return loadModel(start, start === 'new' ? 'previous' : 'new');
     });
   </script>
 </body>

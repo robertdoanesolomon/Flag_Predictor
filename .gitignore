@@ -71,6 +71,8 @@ models/redesign_*
 !models/redesign_hybrid_c1_ps_godstow.*
 !models/redesign_hybrid_c1_ps_wallingford.*
 !models/redesign_hybrid_c1_ps_s[0-9]_*
+!models/redesign_hybrid_simfeat_isis.*
+!models/redesign_hybrid_simfeat_s[0-9]_isis.*
 data/stage1_flow_*.npz
 figures/eval/*
 !figures/eval/summary_*.csv
@@ -80,3 +82,8 @@ figures/eval/*
 !figures/eval/feb2025_*_sept_vs_hybrid.png
 !figures/eval/now_*_sept_vs_hybrid.png
 data/recent_rainfall/
+
+# Continuous-state hybrid: hourly gauge/flow files (from to_hourly.py), training logs
+data/hourly/
+data/era5/
+logs/

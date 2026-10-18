@@ -51,9 +51,11 @@ jobs:
         id: rainfall-cache
         with:
           path: data/rainfall_training_data
-          key: ea-rain-${{ runner.os }}-v1-${{ steps.rainfall-week.outputs.w }}
+          # v2: start from a fresh 800-day download (the v1 cache stopped at May 2026,
+          # because the downloader never overwrites existing files).
+          key: ea-rain-${{ runner.os }}-v2-${{ steps.rainfall-week.outputs.w }}
           restore-keys: |
-            ea-rain-${{ runner.os }}-v1-
+            ea-rain-${{ runner.os }}-v2-
 
       - name: Populate rainfall_training_data when cache miss
         run: |
@@ -61,11 +63,30 @@ jobs:
           mkdir -p data/rainfall_training_data
           COUNT="$(find data/rainfall_training_data -maxdepth 1 -type f -name '*.csv' | wc -l | tr -d ' ')"
           MIN_DATE="$(python -c "from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc) - timedelta(days=800)).strftime('%Y-%m-%d'))")"
+          # The Isis model simulates the catchment through the last ~2 years of rain, so a
+          # cache whose newest reading is older than the 50-day recent-rain folder would
+          # leave a hole (it then falls back to the plain hybrid). Refresh it when stale.
+          NEWEST="$(python src/flag_predictor/data/rain_cache_newest.py data/rainfall_training_data)"
+          STALE="$(python -c "from datetime import date, timedelta; print(int(date.fromisoformat('${NEWEST}') < date.today() - timedelta(days=40)))")"
           if [ "${COUNT:-0}" -lt 15 ]; then
             echo "Downloading EA qualified rainfall CSVs since ${MIN_DATE} (had ${COUNT} files) ..."
             python src/flag_predictor/data/download_rainfall.py --min-date "$MIN_DATE" --delay 1.5
+          elif [ "$STALE" = "1" ] && [ "${{ steps.rainfall-cache.outputs.cache-hit }}" != "true" ]; then
+            # Only on the first run of a week (new cache key), so the refreshed files are saved.
+            # download_rainfall.py never overwrites, so download into a fresh folder and swap.
+            echo "Refreshing stale rainfall CSVs (newest reading ${NEWEST}) since ${MIN_DATE} ..."
+            rm -rf data/rainfall_refresh
+            if python src/flag_predictor/data/download_rainfall.py --min-date "$MIN_DATE" \
+                 --output-dir data/rainfall_refresh --delay 1.5 \
+               && [ "$(find data/rainfall_refresh -maxdepth 1 -name '*.csv' -size +1k | wc -l)" -ge 15 ]; then
+              mv -f data/rainfall_refresh/*.csv data/rainfall_training_data/
+              echo "Refreshed: newest reading now $(python src/flag_predictor/data/rain_cache_newest.py data/rainfall_training_data)"
+            else
+              echo "Refresh failed; keeping the cached files (the Isis model falls back if needed)."
+            fi
+            rm -rf data/rainfall_refresh
           else
-            echo "Rainfall_training_data cache usable (${COUNT} CSV files)."
+            echo "Rainfall_training_data cache usable (${COUNT} CSV files, newest reading ${NEWEST})."
           fi
 
       # The physics hybrid (main page) needs ~5 weeks of continuous gauge rain. The weekly
@@ -125,12 +146,15 @@ jobs:
             exit 0
           }
 
+          # docs/ holds the site (incl. docs/archive, the forecast history);
+          # data/forecast_archive holds the raw member rain of each archived forecast.
           commit_docs_if_changed() {
-            if git diff --quiet HEAD -- docs; then
-              echo "No changes under docs/"
+            git add docs/
+            if [ -d data/forecast_archive ]; then git add data/forecast_archive/; fi
+            if git diff --cached --quiet; then
+              echo "No changes under docs/ or data/forecast_archive/"
               return 1
             fi
-            git add docs/
             git commit -m "Update forecast figures [skip ci]"
             return 0
           }

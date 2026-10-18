@@ -474,3 +474,147 @@ loading different weights:
    (15 weight files of about 300 kB, plus their small configs).
 4. **Drop the clamps.** None of `apply_hourly_physics` / `apply_recession_limit`
    / the flow blend applies; the model doesn't use stage-1 flow at all.
+
+---
+
+# October 2026: continuous state, flow pre-training, model-error spread
+
+Branch `forecast-improvements`. Three ideas from the review of the September
+hybrid: (1) archive the live forecasts, (2) track the catchment state
+continuously instead of inferring it from 100 h of features, (3) pre-train the
+hydrology on the long Farmoor flow record. Plus a model-error spread for the
+forecast band.
+
+## Hydrology pre-trained on Farmoor flow (idea 3)
+
+`train_continuous_models.py pretrain`. The reservoir model of the hybrid
+(soil bucket → quick / 3-cascade medium / groundwater → channel), plus a small
+direct-runoff share `f_direct` that ignores soil wetness, driven only by
+mean-station gauge rain from 2000 and fitted to Farmoor flow (mm/h over the
+1609 km² catchment) by multiple shooting (12-week chunks simulated in parallel,
+each starting where the previous one ended on the previous epoch). Train:
+2001 – Nov 2022 and Jan – Oct 2024; validation 2023; test from Nov 2024.
+
+| core | ET | train NSE / log-NSE | 2023 NSE / log-NSE | test NSE / log-NSE | bias (test) |
+|---|---|---|---|---|---|
+| `cs_cos` | seasonal cosine | 0.90 / 0.88 | **0.92 / 0.96** | 0.91 / 0.91 | +1 % |
+| `cs_pet` | k_et × ERA5 ET0 | 0.88 / 0.88 | 0.87 / 0.92 | 0.92 / 0.89 | −8 % |
+
+A rain-only simulation reproduces Farmoor flow well, including the first
+rises after the dry summer of 2025 (`figures/core_cs_cos_flow.csv.gz`). Real
+ET0 (ERA5 via Open-Meteo, fetched by the one-off workflow on the
+`data/era5-et` branch) did not help: the learned crop factor is ≈ 1.0 and the
+fit is no better than with the seasonal cosine, so it was not used further.
+
+Learned parameters (`cs_cos`): quick 24 h, medium 25 h ×3, groundwater 480 h,
+channel 35 h, β 4.4, soil capacity 259 mm, f_direct 2 %, runoff split
+quick / medium / groundwater 8 / 10 / 82 %. Fitted to *flow volume* the
+catchment is groundwater-dominated (consistent with the high baseflow of the
+Cotswold limestone tributaries); fitted to the *differential* the September hybrid put only
+24 % through groundwater: the differential is far more sensitive to the quick
+response than the volume is.
+
+## Continuous state (idea 2)
+
+Three ways of using the continuous simulation in the forecast, all with the
+same windows, encoder features and loss as the September hybrid
+(validation MAE, 2023, seed 0; September hybrid seed 0: 0.0506 / 0.0506 / 0.0719,
+its five seeds span 0.0491–0.0518 / 0.0501–0.0530 / 0.0719–0.0755):
+
+| variant | what | Isis | Godstow | Wallingford |
+|---|---|---|---|---|
+| `hybrid_cs_cos` | forecast starts from the simulated state (encoder only nudges it); flow-trained hydrology frozen | 0.0533 | 0.0573 | 0.0849 |
+| `hybrid_cs_ft` | same, hydrology fine-tuned on the differential (re-simulated every epoch) | 0.0485 | 0.0525 | 0.0806 |
+| `hybrid_cs_cap` | + quick/medium stores capped by 72 h / 336 h rain instead of 24 h / 168 h | 0.0515 | 0.0542 | – |
+| `hybrid_cs_old` | starts from the simulated state, hydrology = the September hybrid's | 0.0504 | 0.0597 | 0.0845 |
+| `hybrid_simfeat` | September hybrid unchanged, simulated soil wetness, flow, groundwater outflow, fast-store water and sim/observed flow ratio added as encoder inputs | **0.0476** | **0.0502** | **0.0686** |
+
+Test window, every 6 h (MAE, m, seed 0, observed rain; `compare_batch.py`):
+
+| | Isis | Godstow | Wallingford | autumn 2025 Isis / Godstow / Wallingford |
+|---|---|---|---|---|
+| September hybrid | 0.0299 | 0.0472 | 0.0659 | 0.046 / 0.073 / 0.110 |
+| `hybrid_cs_ft` | 0.0379 | 0.0462 | 0.0713 | 0.080 / 0.085 / 0.098 |
+| `hybrid_cs_old` | 0.0352 | 0.0498 | 0.0772 | 0.064 / 0.084 / 0.164 |
+| `hybrid_simfeat` | 0.0293 | 0.0477 | 0.0629 | 0.053 / 0.078 / 0.104 |
+
+Starting the forecast *from* the simulated state is worse than letting the
+encoder infer the state, at every location on the test window. The river
+itself integrates the catchment's memory: the current differential, its
+recession and Farmoor flow already tell the encoder most of what the soil and
+groundwater stores hold, and pinning the start to a rain-only simulation
+imports the simulation's own errors (e.g. wherever gauge rain under- or
+over-catches). Giving the simulation to the encoder as extra information
+(`hybrid_simfeat`) is the variant that can only help, and it is level with or
+slightly better than the September hybrid for seed 0.
+
+### Five seeds of `hybrid_simfeat` against the deployed five-seed hybrid
+
+Validation MAE of the extra seeds (Isis / Godstow / Wallingford): s1 0.0530 /
+0.0555 / 0.0724, s2 0.0478 / 0.0519 / –, s3 0.0491 / 0.0536 / 0.0761,
+s4 0.0507 / 0.0538 / 0.0701; seed 0 was a lucky draw. Ensembles of five,
+every 6 h (`compare_batch.py`), with 95 % intervals from a paired block
+bootstrap over whole weeks:
+
+| | 2023 (validation) | Nov 2024 – Jan 2026 (test) |
+|---|---|---|
+| Isis | 0.0468 → 0.0456 (−2.8 %, CI −6.0 to +0.3) | 0.0298 → 0.0277 (**−7.0 %, CI −13.4 to −0.4**) |
+| Godstow | 0.0481 → 0.0503 (+4.4 %, CI −3.0 to +12.5) | 0.0432 → 0.0426 (−1.3 %, CI −6.0 to +4.2) |
+| Wallingford | 0.0661 → 0.0658 (−0.4 %, CI −6.5 to +6.6) | 0.0585 → 0.0588 (+0.5 %, CI −4.5 to +7.5) |
+
+First storms after the 2025 drought (starts 20 Oct – 15 Dec 2025): Isis
+0.049 → 0.042, Godstow 0.069 → 0.065, Wallingford 0.107 → 0.103.
+
+The weekly-start harness at Isis (`evaluate_candidates.py`, realism included):
+
+| Isis | MAE | 1–24 h | winter | perturbed rain | right flag | ≥ 2 colours off | max kink (mm/h²) |
+|---|---|---|---|---|---|---|---|
+| 2023: hybrid ×5 | 0.0423 | 0.0169 | 0.0486 | 0.0569 | 88.1 % | 1.8 % | 0.80 |
+| 2023: simfeat ×5 | **0.0388** | **0.0155** | **0.0430** | **0.0544** | 87.7 % | **1.3 %** | 0.69 |
+| test: hybrid ×5 | 0.0312 | 0.0146 | 0.0575 | 0.0401 | 89.0 % | 2.4 % | 0.61 |
+| test: simfeat ×5 | **0.0281** | **0.0132** | **0.0514** | **0.0378** | **90.3 %** | **1.7 %** | 0.54 |
+
+Same architecture, so the same structural guarantees (no dry climbs, rain
+monotonicity 0 %, no late climb without rain).
+
+**Decision: `hybrid_simfeat` for the Isis only** (chosen on 2023, confirmed on
+the test window). Godstow is worse on 2023 and level on test; Wallingford is
+level on both, so both keep the simpler plain hybrid. Live, the Isis
+simulation needs ~760 days of gauge rain; CI keeps the long EA rain CSVs and
+refreshes them weekly when stale; with < 90 % coverage the Isis falls back to
+the plain hybrid. Model-error library for it: `models/error_library_hybrid_simfeat_isis.npz`
+(CRPS 0.0270 vs point MAE 0.0341 in cross-validation).
+
+## Model-error spread
+
+`build_error_library.py`. For each location, the deployed ensemble is re-run
+every 6 h over 2023 and the test window (≈ 2,400–2,800 starts) with observed
+rain. Each start's 240 h error trajectory is stored with six descriptors
+(level, 24 h trend, log rain over the next 3 and 10 days, log rain over the
+past week, season). A forecast member borrows 10 trajectories from its k
+nearest past starts (weighted standardised distance; level counts double).
+Whole trajectories are borrowed, so errors keep their persistence.
+
+Cross-validation between the two periods (errors from one build bands for
+the other), hybrid ×5:
+
+| k | Isis CRPS raw / calibrated | Godstow | Wallingford | raw share in 10–90 % band |
+|---|---|---|---|---|
+| 40 | 0.0303 / 0.0436 | 0.0371 / 0.0460 | 0.0504 / 0.0620 | 64–67 % |
+| 100 | 0.0288 / 0.0318 | 0.0351 / 0.0368 | 0.0477 / 0.0502 | 69–71 % |
+| 200 | **0.0280 / 0.0288** | **0.0343 / 0.0349** | **0.0471 / 0.0479** | 72–74 % |
+| 500 (Isis) | 0.0285 / 0.0288 | | | 77 % |
+| 1100 (Isis) | 0.0304 / 0.0313 | | | 76 % |
+
+Point MAE of the same starts: 0.0359 / 0.0449 / 0.0614. Conditioning helps a
+little (k = 200 beats near-unconditional sampling) and the raw bands are a
+little too narrow across periods, because each period alone has seen fewer
+kinds of weather; a per-lead factor (1.15–1.2 at 24 h, 1.25–1.4 at 240 h),
+fitted so 80 % of held-out observations fall in the 10–90 % band, is stored
+with each library.
+
+Why it matters: in the 81 archived operational forecasts (27 Sep – 17 Oct
+2026, a dry spell) the observation was inside the rain-only 10–90 % spread
+in 0–21 % of hours over the first three days (Isis 0–1 %), because the rain
+members barely disagree in dry weather while the river still moves by a
+centimetre or two (weirs, model error).
