@@ -133,6 +133,7 @@ class LiveForecast:
     member_rain: pd.DataFrame              # (240, members) mean-station forecast rain (mm/h)
     total_samples: Optional[np.ndarray]    # (S, 241) members + borrowed model errors, or None
     model_name: str
+    note: Optional[str] = None             # why a preferred model was not used, if it wasn't
 
 
 def forecast_ensemble(
@@ -188,6 +189,7 @@ def forecast_with_uncertainty(
     gauges = TRAINING_GAUGES[location]
     names, tag = HYBRID_MODELS, MODEL_TAG
     extra = None
+    note = None
     simfeat = SIMFEAT_MODELS.get(location)
     if simfeat:
         try:
@@ -195,7 +197,8 @@ def forecast_with_uncertainty(
             extra = simulation_features(location, frame, project_root, models_dir, simfeat['core'])
             names, tag = simfeat['names'], simfeat['tag']
         except Exception as exc:
-            print(f"  [simfeat] unavailable ({exc}); using {MODEL_TAG}")
+            note = f"{simfeat['tag']} unavailable: {type(exc).__name__}: {exc}"[:300]
+            print(f"  [simfeat] {note}; using {MODEL_TAG}")
     predict = ensemble_predictor(names, location, models_dir=models_dir, extra_features=extra)
     members: Dict[str, np.ndarray] = {}
     rain_means: Dict[str, np.ndarray] = {}
@@ -215,7 +218,7 @@ def forecast_with_uncertainty(
     except Exception as exc:   # the spread is extra; never lose the forecast over it
         print(f"  [model error] failed ({exc}); showing rain spread only")
         total = None
-    return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag)
+    return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag, note=note)
 
 
 def forecast_rain_gauges(location: str) -> List[str]:

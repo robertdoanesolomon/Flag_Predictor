@@ -221,6 +221,56 @@ def write_raw_inputs(raw_dir: Path, slot: str, member_rain: Dict[str, pd.DataFra
     return path
 
 
+def fill_gaps_from_git(docs_dir: Path, repo_root: Path, now: Optional[pd.Timestamp] = None,
+                       max_days: int = 30, default_model: str = 'hybrid_c1_ps') -> list:
+    """Archive slots missed since the last archived one, from the git history of forecast_data.json.
+
+    Every CI run commits docs/forecast_data.json, so after an outage of the
+    archive (or before this code was merged) the forecasts are still in git.
+    Needs a full clone (CI checks out with fetch-depth 0).
+    """
+    import subprocess
+    archive_dir = Path(docs_dir) / 'archive'
+    index = _load_json(archive_dir / 'index.json', {}).get('issues', [])
+    now = pd.Timestamp.utcnow() if now is None else pd.Timestamp(now)
+    now = now.tz_convert('UTC').tz_localize(None) if now.tzinfo else now
+    if index:
+        since = pd.Timestamp(index[-1]['slot'].replace('T', ' ') + ':00') + pd.Timedelta(hours=SLOT_HOURS)
+    else:
+        since = now - pd.Timedelta(days=max_days)
+    since = max(since, now - pd.Timedelta(days=max_days))
+    if slot_id(since) >= slot_id(now):
+        return []
+    log = subprocess.run(['git', 'log', '--format=%H %cI', f'--since={since.isoformat()}Z', '--reverse',
+                          '--', 'docs/forecast_data.json'], cwd=repo_root, capture_output=True, text=True, check=True)
+    first_in_slot = {}
+    for line in log.stdout.split('\n'):
+        if not line.strip():
+            continue
+        sha, date = line.split()
+        first_in_slot.setdefault(slot_id(pd.Timestamp(date)), sha)
+    written = []
+    for slot, sha in sorted(first_in_slot.items()):
+        if slot >= slot_id(now) or (archive_dir / 'issues' / f'{slot}.json').exists():
+            continue
+        try:
+            raw = subprocess.run(['git', 'show', f'{sha}:docs/forecast_data.json'], cwd=repo_root,
+                                 capture_output=True, text=True, check=True).stdout
+            bundle = json.loads(raw)
+        except Exception:
+            continue
+        payloads = bundle.get('locations', {})
+        for p in payloads.values():
+            p.setdefault('model', default_model)
+        issued = pd.Timestamp(bundle.get('generated_at', slot))
+        merge_observed(archive_dir, payloads)
+        if write_issue(archive_dir, slot, payloads, f'{default_model} (from git history)', issued):
+            written.append(slot)
+    if written:
+        rebuild_index(archive_dir)
+    return written
+
+
 def update_archive(docs_dir: Path, payloads: Dict[str, dict], model: str,
                    member_rain: Optional[Dict[str, pd.DataFrame]] = None,
                    raw_dir: Optional[Path] = None, now: Optional[pd.Timestamp] = None) -> dict:

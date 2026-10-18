@@ -186,5 +186,32 @@ class ArchiveTests(unittest.TestCase):
             np.testing.assert_allclose(z['isis_rain_cmm'] / 100, rain.to_numpy().T, atol=0.006)
 
 
+class ArchiveGapFillTests(unittest.TestCase):
+    def test_fill_gaps_from_git(self):
+        import os
+        import subprocess
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            (repo / 'docs').mkdir()
+            env = dict(os.environ, GIT_AUTHOR_NAME='t', GIT_AUTHOR_EMAIL='t@t', GIT_COMMITTER_NAME='t',
+                       GIT_COMMITTER_EMAIL='t@t')
+            subprocess.run(['git', 'init', '-q'], cwd=repo, check=True)
+            for i, when in enumerate(['2026-10-15T13:05:00Z', '2026-10-15T14:00:00Z', '2026-10-15T19:30:00Z',
+                                      '2026-10-16T02:00:00Z']):
+                p = ArchiveTests.payload(when[:16].replace('T', ' '), 0.1 * i)
+                (repo / 'docs' / 'forecast_data.json').write_text(json.dumps(
+                    {'generated_at': when, 'location_order': ['isis'], 'locations': {'isis': p}}))
+                subprocess.run(['git', 'add', '-A'], cwd=repo, check=True)
+                subprocess.run(['git', 'commit', '-q', '-m', f'c{i}'], cwd=repo, check=True,
+                               env=dict(env, GIT_COMMITTER_DATE=when, GIT_AUTHOR_DATE=when))
+            written = archive.fill_gaps_from_git(repo / 'docs', repo, now=pd.Timestamp('2026-10-16 07:00', tz='UTC'))
+            self.assertEqual(written, ['2026-10-15T12', '2026-10-15T18', '2026-10-16T00'])
+            issue = json.loads((repo / 'docs' / 'archive' / 'issues' / '2026-10-15T12.json').read_text())
+            self.assertEqual(issue['locations']['isis']['d0'], 0.0)   # first commit in the slot
+            # Nothing new to fill on a second call.
+            self.assertEqual(archive.fill_gaps_from_git(repo / 'docs', repo,
+                                                        now=pd.Timestamp('2026-10-16 07:00', tz='UTC')), [])
+
+
 if __name__ == '__main__':
     unittest.main()

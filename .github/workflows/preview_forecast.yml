@@ -80,10 +80,19 @@ jobs:
                    if tot else '-')
               print(f"| {k} | {loc.get('model', 'september')} | {loc['forecast_start']} | "
                     f"{'yes' if tot else 'NO'} | {w} | {loc['flag_probability'].get('source')} |")
+          notes = [f"- {k}: {loc['model_note']}" for k, loc in b['locations'].items() if loc.get('model_note')]
+          if notes:
+              print()
+              print('Notes:')
+              print('\n'.join(notes))
           idx = json.load(open('site/archive/index.json'))
           print()
           print(f"Archive: {len(idx['issues'])} forecasts, latest slot {idx['issues'][-1]['slot']}.")
           EOF
+          {
+            echo
+            echo "Rain caches: long CSVs $(ls data/rainfall_training_data/*.csv 2>/dev/null | wc -l) files, newest reading $(python src/flag_predictor/data/rain_cache_newest.py data/rainfall_training_data); recent CSVs newest reading $(python src/flag_predictor/data/rain_cache_newest.py data/recent_rainfall)."
+          } >> preview_summary.md
           cat preview_summary.md >> "$GITHUB_STEP_SUMMARY"
       - name: Comment the summary on the pull request
         if: github.event_name == 'pull_request'

@@ -161,6 +161,7 @@ def build_location_payload(
     latest_reading: Optional[pd.Timestamp] = None,
     total_samples: Optional[np.ndarray] = None,
     model_name: Optional[str] = None,
+    model_note: Optional[str] = None,
 ) -> dict:
     """Assemble a JSON-serialisable dict with everything the frontend needs.
 
@@ -311,6 +312,7 @@ def build_location_payload(
             "source": "rain+model" if total_samples is not None else "rain",
         },
         **({"model": model_name} if model_name else {}),
+        **({"model_note": model_note} if model_note else {}),
         "earliest_flag_changes": earliest,
         "summary": {
             "last_24h_rain_mm": round(last24_rain, 2) if last24_rain is not None else None,
@@ -624,6 +626,7 @@ def render_location_outputs(
     title_suffix: str = "",
     total_samples: Optional[np.ndarray] = None,
     model_name: Optional[str] = None,
+    model_note: Optional[str] = None,
 ) -> dict:
     """Figures and the JSON payload for one location's ensemble forecast (steps 5-7)."""
     station_names_list = get_location_station_names(location)
@@ -1025,6 +1028,7 @@ def render_location_outputs(
         latest_reading=latest_reading,
         total_samples=total_samples,
         model_name=model_name,
+        model_note=model_note,
     )
     return payload
 
@@ -1193,6 +1197,7 @@ def generate_spaghetti_figure(
                 title_suffix=beta_title_suffix,
                 total_samples=live.total_samples,
                 model_name=live.model_name,
+                model_note=live.note,
             )
             LIVE_MEMBER_RAIN[location] = live.member_rain
         except Exception:
@@ -1285,8 +1290,14 @@ def archive_forecasts(output_dir: Path, payloads: dict) -> None:
     Archiving must never stop the forecast from publishing, so errors are logged only.
     """
     try:
-        from flag_predictor.prediction.archive import update_archive
+        from flag_predictor.prediction.archive import fill_gaps_from_git, update_archive
 
+        try:
+            filled = fill_gaps_from_git(output_dir, PROJECT_ROOT)
+            if filled:
+                print(f"  Archive: filled {len(filled)} missed slot(s) from git history: {filled[0]} .. {filled[-1]}")
+        except Exception as exc:
+            print(f"  Archive: could not fill gaps from git history ({exc})")
         models = sorted({p.get("model", "september") for p in payloads.values()})
         result = update_archive(
             output_dir,
