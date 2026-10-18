@@ -1041,8 +1041,6 @@ def render_location_outputs(
 
 # Mean-station hourly rain per member, per location, from this run (for the archive).
 LIVE_MEMBER_RAIN: dict = {}
-# The previous live model's payload per location (docs/previous/forecast_data.json).
-PREVIOUS_PAYLOADS: dict = {}
 
 
 def generate_spaghetti_figure(
@@ -1208,24 +1206,6 @@ def generate_spaghetti_figure(
                 model_note=live.note,
             )
             LIVE_MEMBER_RAIN[location] = live.member_rain
-            # The previous live model (plain hybrid, rain spread only) for the site's model switch.
-            try:
-                PREVIOUS_PAYLOADS[location] = render_location_outputs(
-                    location=location,
-                    output_dir=beta_dir / "previous",
-                    merged_df=merged_df,
-                    ensemble_predictions=(live.previous_members if live.previous_members is not None
-                                          else live.members),
-                    rainfall_forecast=rain_forecast(n_members),
-                    config=config,
-                    flag_thresholds=flag_thresholds,
-                    title_suffix=" (previous model)",
-                    model_name="hybrid_c1_ps",
-                    make_figures=False,
-                )
-            except Exception:
-                print(f"\n[WARNING] Previous-model payload failed for '{location}':")
-                traceback.print_exc()
         except Exception:
             print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
             traceback.print_exc()
@@ -1412,11 +1392,6 @@ def main(argv: list[str] | None = None) -> None:
                 main_payloads[loc] = all_payloads[loc]
         write_forecast_bundle(output_dir, main_payloads, failed_locations)
         write_forecast_bundle(september_dir, dict(all_payloads), failed_locations)
-        if PREVIOUS_PAYLOADS:
-            previous_dir = output_dir / "previous"
-            previous_dir.mkdir(parents=True, exist_ok=True)
-            write_forecast_bundle(previous_dir, dict(PREVIOUS_PAYLOADS),
-                                  [loc for loc in locations_to_process if loc not in PREVIOUS_PAYLOADS])
         if not args.no_archive:
             archive_forecasts(output_dir, main_payloads)
     else:

@@ -577,8 +577,10 @@ The weekly-start harness at Isis (`evaluate_candidates.py`, realism included):
 Same architecture, so the same structural guarantees (no dry climbs, rain
 monotonicity 0 %, no late climb without rain).
 
-**Decision: `hybrid_simfeat` for the Isis only** (chosen on 2023, confirmed on
-the test window). Godstow is worse on 2023 and level on test; Wallingford is
+**Decision (17 Oct): `hybrid_simfeat` for the Isis only** (chosen on 2023,
+confirmed on the test window). **Revised 18 Oct: one model for all three
+locations, so the plain hybrid runs everywhere; `hybrid_simfeat` is kept but
+switched off (`SIMFEAT_MODELS = {}`).** The original reasoning, for reference: Godstow is worse on 2023 and level on test; Wallingford is
 level on both, so both keep the simpler plain hybrid. Live, the Isis
 simulation needs ~760 days of gauge rain; CI keeps the long EA rain CSVs and
 refreshes them weekly when stale; with < 90 % coverage the Isis falls back to

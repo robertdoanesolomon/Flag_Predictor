@@ -750,29 +750,6 @@
       .flag-value small { font-size: 13px; }
       .tab { font-size: 12px; padding: 10px 4px; }
     }
-    /* ---------- MODEL SWITCH ---------- */
-    .hero-side {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 10px;
-      max-width: 360px;
-    }
-    .model-switch { display: flex; align-items: center; gap: 10px; }
-    .model-switch-label { font-size: 13px; font-weight: 600; color: var(--text-soft); }
-    .model-switch-note {
-      margin: 0;
-      font-size: 12.5px;
-      line-height: 1.45;
-      color: var(--text-muted);
-      text-align: right;
-    }
-    .seg-btn:disabled { opacity: 0.45; cursor: default; }
-    @media (max-width: 720px) {
-      .hero-side { align-items: flex-start; max-width: none; }
-      .model-switch-note { text-align: left; }
-    }
-
     /* ---------- FORECAST HISTORY ---------- */
     .history-block {
       margin-top: 22px;
@@ -862,19 +839,9 @@
         run hourly with the latest rainfall ensemble forecasts.</p>
         <p class="hero-sub">Latest Experimental Forecasts</p>
       </div>
-      <div class="hero-side">
-        <div id="status-pill" class="status-pill" aria-live="polite">
-          <span class="dot"></span>
-          <span id="status-text">Loading latest forecast…</span>
-        </div>
-        <div class="model-switch">
-          <span class="model-switch-label" id="model-switch-label">Model</span>
-          <div class="seg" role="group" aria-labelledby="model-switch-label">
-            <button type="button" class="seg-btn" data-model="new" aria-pressed="false">New</button>
-            <button type="button" class="seg-btn" data-model="previous" aria-pressed="false">Previous</button>
-          </div>
-        </div>
-        <p class="model-switch-note" id="model-switch-note"></p>
+      <div id="status-pill" class="status-pill" aria-live="polite">
+        <span class="dot"></span>
+        <span id="status-text">Loading latest forecast…</span>
       </div>
     </header>
 
@@ -932,10 +899,7 @@
         physics-based: a small neural network reads the recent past and sets the starting state of a rainfall-runoff
         model (soil wetness, fast and slow runoff stores, groundwater and the river channel). Forecast rain is routed
         through those stores hour by hour, and a rating curve that only ever increases turns river flow into the
-        differential. The forecast is the average of five independently trained copies. For the Isis, the
-        network also sees a simulation of the whole catchment run continuously through the last two years of
-        rain (how wet the soil is, how much water is in the groundwater), so it remembers dry summers and wet
-        winters for longer than the last month of data.
+        differential. The forecast is the average of five independently trained copies.
 
         <h3>Why hasn't the forecast updated recently?</h3>
         Usually it's just a temporary glitch in an Environment Agency sensor going briefly offline; the page will
@@ -1339,8 +1303,8 @@
       rainHist: dark ? 'rgba(160,160,160,0.55)' : 'rgba(110,110,110,0.45)',
       rainForecast: dark ? 'rgba(110,160,240,0.65)' : 'rgba(100,149,237,0.6)',
       rainError: dark ? 'rgba(220,220,220,0.7)' : 'rgba(40,55,100,0.7)',
-      bandOuter: dark ? 'rgba(176,120,232,0.16)' : 'rgba(138,57,208,0.11)',
-      bandInner: dark ? 'rgba(176,120,232,0.22)' : 'rgba(138,57,208,0.16)',
+      bandOuter: dark ? 'rgba(176,120,232,0.28)' : 'rgba(118,46,186,0.22)',
+      bandInner: dark ? 'rgba(176,120,232,0.40)' : 'rgba(118,46,186,0.34)',
       rainBand: dark ? 'rgba(120,180,220,0.22)' : 'rgba(70,130,180,0.18)'
     };
   }
@@ -1444,7 +1408,7 @@
                 <button type="button" class="item" data-target="Historical Differential"><span class="swatch line" style="background:#0b1d18;"></span>Historical Differential</button>
                 <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:#4682b4;"></span>Ensemble Predictions (n=${loc.n_members})</button>
                 <button type="button" class="item" data-target="Ensemble Mean"><span class="swatch line" style="background:#8a39d0;"></span>Ensemble Mean</button>
-                ${loc.ensemble && loc.ensemble.total ? `<button type="button" class="item" data-target="Likely range"><span class="swatch square" style="background:rgba(138,57,208,0.28);"></span>Likely range (rain + model error)</button>` : ''}
+                ${loc.ensemble && loc.ensemble.total ? `<button type="button" class="item" data-target="Likely range"><span class="swatch square" style="background:rgba(118,46,186,0.45);"></span>Likely range (rain + model error)</button>` : ''}
                 <button type="button" class="item" data-target="Historical Rainfall"><span class="swatch square" style="background:#999;opacity:0.5;"></span>Historical Rainfall</button>
                 <button type="button" class="item" data-target="Forecast Rainfall"><span class="swatch square" style="background:#6495ed;opacity:0.6;"></span>Forecast Rainfall (mean &plusmn; P10&ndash;P90)</button>
               </div>
@@ -2357,92 +2321,19 @@
     }
   }
 
-  /* ----------------------- MODEL SWITCH ---------------------------- */
-  /*
-   * "new": docs/forecast_data.json — the current model (October 2026): the Isis
-   *        forecast also uses a simulated catchment state, and the likely-range band
-   *        and flag probabilities include the model's own past errors.
-   * "previous": docs/previous/forecast_data.json — the September 2026 physics hybrid
-   *        on the same rain, with the rain spread only (as the site was before).
-   * The default comes from docs/model_config.json ({"default": "new"} or "previous");
-   * a viewer's own choice is remembered for this browser tab, and ?model=new|previous
-   * in the address overrides both.
-   */
-  const MODEL_SOURCES = { new: 'forecast_data.json', previous: 'previous/forecast_data.json' };
-  const MODEL_NOTES = {
-    new: 'New (Oct 2026): the Isis forecast also tracks soil and groundwater through the last two years of rain; the shaded band and flag probabilities include the model\'s own past errors.',
-    previous: 'Previous (Sep 2026): the same physics model without the catchment simulation; the spread shows rain uncertainty only.'
-  };
-  const MODEL_STORE_KEY = 'flagPredictorModel';
-  let currentModel = null;
-
-  function storedModel() {
-    try { return sessionStorage.getItem(MODEL_STORE_KEY); } catch (e) { return null; }
-  }
-  function rememberModel(m) {
-    try { sessionStorage.setItem(MODEL_STORE_KEY, m); } catch (e) { /* private mode etc. */ }
-  }
-
-  function updateModelSwitch() {
-    document.querySelectorAll('.model-switch .seg-btn').forEach(b => {
-      const on = b.dataset.model === currentModel;
-      b.classList.toggle('active', on);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-    const note = document.getElementById('model-switch-note');
-    if (note) note.textContent = MODEL_NOTES[currentModel] || '';
-  }
-
-  function fetchBundle(model) {
-    return fetch(MODEL_SOURCES[model], { cache: 'no-store' }).then(r => {
+  // Load the forecast JSON written by generate_all_location_figures.py.
+  fetch('forecast_data.json', { cache: 'no-store' })
+    .then(r => {
       if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
       return r.json();
-    });
-  }
-
-  function loadModel(model, fallback) {
-    return fetchBundle(model)
-      .then(bundle => {
-        currentModel = model;
-        updateModelSwitch();
-        safeRenderAll(bundle);
-      })
-      .catch(err => {
-        console.error(`forecast load failed (${model})`, err);
-        if (fallback && fallback !== model) {
-          // e.g. the previous-model file is not there yet: show the other one.
-          const btn = document.querySelector(`.model-switch .seg-btn[data-model="${model}"]`);
-          if (btn) btn.disabled = true;
-          return loadModel(fallback, null);
-        }
-        renderError(
-          `Couldn't load <code>${MODEL_SOURCES[model]}</code>.`,
-          (err && (err.stack || err.message)) ? String(err.stack || err.message) : String(err)
-        );
-      });
-  }
-
-  document.querySelectorAll('.model-switch .seg-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const m = btn.dataset.model;
-      if (m === currentModel || btn.disabled) return;
-      rememberModel(m);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('model');
-      window.history.replaceState(null, '', url);
-      loadModel(m, null);
-    });
-  });
-
-  // Start: ?model= beats the viewer's remembered choice, which beats model_config.json.
-  fetch('model_config.json', { cache: 'no-store' })
-    .then(r => (r.ok ? r.json() : {}))
-    .catch(() => ({}))
-    .then(cfg => {
-      const valid = (m) => (m === 'new' || m === 'previous') ? m : null;
-      const param = valid(new URLSearchParams(window.location.search).get('model'));
-      const start = param || valid(storedModel()) || valid(cfg && cfg.default) || 'new';
-      return loadModel(start, start === 'new' ? 'previous' : 'new');
+    })
+    .then(safeRenderAll)
+    .catch(err => {
+      console.error('forecast load failed', err);
+      renderError(
+        "Couldn't load <code>forecast_data.json</code>.",
+        (err && (err.stack || err.message)) ? String(err.stack || err.message) : String(err)
+      );
     });
   </script>
 </body>

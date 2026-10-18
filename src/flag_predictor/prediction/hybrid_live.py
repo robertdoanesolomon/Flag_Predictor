@@ -31,15 +31,12 @@ from ..models.candidates import ensemble_predictor
 
 HYBRID_MODELS = ['hybrid_c1_ps'] + [f'hybrid_c1_ps_s{i}' for i in range(1, 5)]
 MODEL_TAG = 'hybrid_c1_ps'
-# The hybrid with continuous-simulation encoder inputs (hybrid_simfeat, see the
-# October section of EXPERIMENTS.md), per location. Used only where it beat the
-# plain hybrid on the 2023 validation year (Isis); Godstow and Wallingford keep
-# the plain hybrid. If the ~2-year rain spin-up it needs is incomplete, the
-# plain hybrid runs instead. Set to {} to switch it off everywhere.
-SIMFEAT_MODELS = {
-    'isis': {'tag': 'hybrid_simfeat', 'core': 'cs_cos',
-             'names': ['hybrid_simfeat'] + [f'hybrid_simfeat_s{i}' for i in range(1, 5)]},
-}
+# Optional per-location override with the hybrid that also gets continuous-
+# simulation encoder inputs (hybrid_simfeat; see the October section of
+# EXPERIMENTS.md). Off: all three locations use the plain hybrid above.
+# Example: {'isis': {'tag': 'hybrid_simfeat', 'core': 'cs_cos',
+#                    'names': ['hybrid_simfeat'] + [f'hybrid_simfeat_s{i}' for i in range(1, 5)]}}
+SIMFEAT_MODELS: dict = {}
 # Model-error library (build_error_library.py); missing file = rain spread only.
 ERROR_LIBRARY = 'error_library_{tag}_{location}.npz'
 HORIZON = 240
