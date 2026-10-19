@@ -3,7 +3,7 @@ Which flag alerts to send after a forecast run (pure logic, no network).
 
 Per stretch (Isis, Godstow), from the preview bundle (docs/preview/forecast_data.json):
 
-* the official OURCs flag has changed since the last run      -> "Official flag now Amber (was Red)"
+* the official OURCs flag has changed since the last run      -> "Official Flag now Amber (was Red)"
 * the official flag is likely to change: chance >= LIKELY today, or by the end of tomorrow
                                                                -> "Flag likely down to Amber by tomorrow (70%) ..."
 * Isis only: Black likely by the end of tomorrow (>= BLACK_LIKELY), or, when Black, likely back to Red.
@@ -60,7 +60,7 @@ def _when(iso: Optional[str], now: datetime) -> str:
 
 
 def _msg(river: str, body: str) -> dict:
-    return {'river': river, 'title': f'{NAMES[river]} flag', 'body': body, 'url': SITE_URL, 'tag': f'flag-{river}'}
+    return {'river': river, 'title': f'{NAMES[river]} Flag', 'body': body, 'url': SITE_URL, 'tag': f'flag-{river}'}
 
 
 def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[List[dict], dict]:
@@ -80,7 +80,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
         prev = (state or {}).get(river) or {}
         sent = set(prev.get('sent', []))
         if prev.get('flag') and prev['flag'] != flag:
-            msgs.append(_msg(river, f"Official flag now {_label(flag)} (was {_label(prev['flag'])})."))
+            msgs.append(_msg(river, f"Official Flag now {_label(flag)} (was {_label(prev['flag'])})."))
             sent = set()
         if loc.get('stale') or off.get('forecast_stale'):
             new_state[river] = {'flag': flag, 'sent': sorted(sent)}
@@ -101,10 +101,10 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 continue
             when = _when((info.get('when') or {}).get('median_time'), now)
             if p_today >= LIKELY and k_today not in sent:
-                msgs.append(_msg(river, f'Official flag likely {d} to {_label(target)} today ({_pct(p_today)}).{when}'))
+                msgs.append(_msg(river, f'Official Flag likely {d} to {_label(target)} today ({_pct(p_today)}).{when}'))
                 sent |= {k_today, k_tom}
             elif p_tom >= LIKELY and k_tom not in sent:
-                msgs.append(_msg(river, f'Official flag likely {d} to {_label(target)} by the end of tomorrow '
+                msgs.append(_msg(river, f'Official Flag likely {d} to {_label(target)} by the end of tomorrow '
                                         f'({_pct(p_tom)}).{when}'))
                 sent.add(k_tom)
 
@@ -119,8 +119,8 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 sent.discard(key)
             elif p_tom >= (LIKELY if is_black else BLACK_LIKELY) and key not in sent:
                 when = _when((bk.get('when') or {}).get('median_time'), now)
-                text = (f'Black flag likely back to Red by the end of tomorrow ({_pct(p_tom)}).{when}' if is_black
-                        else f'Black flag likely by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
+                text = (f'Black Flag likely back to Red by the end of tomorrow ({_pct(p_tom)}).{when}' if is_black
+                        else f'Black Flag likely by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
                              f"{bk.get('level_m', 0):.2f} m.{when}")
                 msgs.append(_msg(river, text))
                 sent.add(key)

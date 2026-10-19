@@ -1,6 +1,6 @@
 {
   "name": "Flag Predictor",
-  "short_name": "Flags",
+  "short_name": "Flag Predictor",
   "description": "River differential and OURCs flag forecast for the Isis and Godstow, with flag alerts.",
   "start_url": "./",
   "scope": "./",

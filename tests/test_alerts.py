@@ -49,7 +49,7 @@ class AlertTests(unittest.TestCase):
         msgs, st = decide(bundle(flag='red'), {}, NOW)               # first run: just remember
         self.assertEqual(msgs, [])
         msgs, st = decide(bundle(flag='amber'), st, NOW)
-        self.assertEqual([m['body'] for m in msgs], ['Official flag now Amber (was Red).'])
+        self.assertEqual([m['body'] for m in msgs], ['Official Flag now Amber (was Red).'])
         self.assertEqual(st['isis']['flag'], 'amber')
 
     def test_stale_or_old_bundle_sends_nothing_new(self):
@@ -63,7 +63,7 @@ class AlertTests(unittest.TestCase):
               'when': {'median_time': '2026-02-12T11:00:00+00:00'}}
         msgs, st = decide(bundle(black=bk), {'isis': {'flag': 'red', 'sent': []}}, NOW)
         self.assertEqual(len(msgs), 1)
-        self.assertIn('Black flag likely by the end of tomorrow (55%)', msgs[0]['body'])
+        self.assertIn('Black Flag likely by the end of tomorrow (55%)', msgs[0]['body'])
         self.assertIn('0.39 m', msgs[0]['body'])
         self.assertIn('Probably mid-morning today', msgs[0]['body'])
         self.assertEqual(decide(bundle(black=bk), st, NOW)[0], [])
