@@ -201,7 +201,8 @@ def recalibrate_down(p: float) -> float:
 
 def outlook(river: str, flags: np.ndarray, flag0: int, t0: pd.Timestamp) -> dict:
     """Chance the official flag has changed by the end of today / tomorrow, where to, and when
-    (the chance of coming down recalibrated: recalibrate_down)."""
+    (the chance of coming down recalibrated: recalibrate_down). ``split``: the chance of each
+    destination of the first change by the end of tomorrow (going up can skip a flag)."""
     names = order(river)
     S, H1 = flags.shape
     win = day_windows(t0, H1 - 1)
@@ -229,7 +230,12 @@ def outlook(river: str, flags: np.ndarray, flag0: int, t0: pd.Timestamp) -> dict
             dest = seg[hit, :][np.arange(hit.sum()), first]
             vals, cnt = np.unique(dest, return_counts=True)
             to = names[int(vals[np.argmax(cnt)])]
-        res[direction] = {'flag': to, 'when': when}
+            # where the first change goes, as chances that add up to the window's chance by tomorrow
+            p_tom = res['windows']['tomorrow'][direction]
+            split = {names[int(v)]: round(float(c) / hit.sum() * p_tom, 3) for v, c in zip(vals, cnt)}
+        else:
+            split = {}
+        res[direction] = {'flag': to, 'when': when, 'split': split}
     return res
 
 

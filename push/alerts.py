@@ -6,6 +6,8 @@ Per stretch (Isis, Godstow), from the preview bundle (docs/preview/forecast_data
 * (the official flag has changed: sent within a minute by the Cloudflare Worker, push/worker)
 * the official flag is likely to change: chance >= LIKELY today, or by the end of tomorrow
                                                                -> "Flag likely down to Amber by tomorrow (70%) ..."
+* escalation: after an "up" alert, a higher flag becomes >= LIKELY (going up can skip a flag)
+                                                               -> "Isis Flag now likely up to Red by tomorrow (70%)"
 * Isis only: Black likely by the end of tomorrow (>= LIKELY), or, when Black, likely back to Red.
 
 Each "likely" alert is sent once per flag; it can be sent again only after its chance has
@@ -24,6 +26,8 @@ RIVERS = ('isis', 'godstow')
 NAMES = {'isis': 'Isis', 'godstow': 'Godstow'}
 LIKELY = 0.6
 RESET = 0.3
+SEVERITY = ['green', 'light_blue', 'blue', 'dark_blue', 'amber', 'red', 'black']
+CLEAR = 0.75     # name the destination only when this share of the outcomes that change agree on it
 MAX_BUNDLE_AGE_H = 3.0
 SITE_URL = 'https://flagpredictor.com/preview/'
 UK = ZoneInfo('Europe/London')
@@ -35,6 +39,17 @@ LABELS = {'green': 'Green', 'light_blue': 'Light Blue', 'dark_blue': 'Dark Blue'
 
 def _label(key: Optional[str]) -> str:
     return LABELS.get(key or '', (key or '?').replace('_', ' ').title())
+
+
+def _word(p: float) -> str:
+    """Same words as the website, set a little cautiously: very likely 90%+, likely 70%+, else possibly."""
+    r = round(p * 20) / 20
+    return 'very likely' if r >= 0.9 else 'likely' if r >= 0.7 else 'possibly'
+
+
+def _if_so(when: str, p: float) -> str:
+    """' Probably mid-morning.' -> ' If so, probably mid-morning.' when the change is only possible."""
+    return when.replace(' Probably', ' If so, probably') if when and _word(p) == 'possibly' else when
 
 
 def _pct(p: float) -> str:
@@ -69,7 +84,7 @@ def _msg(river: str, body: str, flag: Optional[str] = None, direction: Optional[
         body = f'{EMOJI[flag]} {body}'
     if direction in ARROW:
         body = f'{ARROW[direction]} {body}'
-    return {'river': river, 'title': f'{NAMES[river]} Flag', 'body': body, 'url': SITE_URL, 'tag': f'flag-{river}'}
+    return {'river': river, 'title': 'Flag Predictor', 'body': body, 'url': SITE_URL, 'tag': f'flag-{river}'}
 
 
 def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[List[dict], dict]:
@@ -88,10 +103,11 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
         flag = off['flag']
         prev = (state or {}).get(river) or {}
         sent = set(prev.get('sent', []))
+        up_top = prev.get('up_top')          # highest flag an "up" alert has said is likely
         if prev.get('flag') and prev['flag'] != flag:
-            sent = set()             # the change itself is alerted by the Worker; start afresh
+            sent, up_top = set(), None       # the change itself is alerted by the Worker; start afresh
         if loc.get('stale') or off.get('forecast_stale'):
-            new_state[river] = {'flag': flag, 'sent': sorted(sent)}
+            new_state[river] = {'flag': flag, 'sent': sorted(sent), 'up_top': up_top}
             continue
 
         oo = loc.get('official_outlook') or {}
@@ -103,18 +119,48 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
             p_today = (win.get('today') or {}).get(d, 0.0) or 0.0
             p_tom = (win.get('tomorrow') or {}).get(d, 0.0) or 0.0
             target = info.get('flag')
-            k_today, k_tom = f'{d}:{target}:today', f'{d}:{target}:tomorrow'
+            split = {k: v for k, v in (info.get('split') or {}).items() if v > 0}
+            total = sum(split.values())
+            clear = not split or max(split.values()) / total >= CLEAR
+            k_today, k_tom = f'{d}:today', f'{d}:tomorrow'
             if p_tom < RESET:
                 sent -= {k for k in sent if k.startswith(f'{d}:')}
+                if d == 'up':
+                    up_top = None
                 continue
             when = _when((info.get('when') or {}).get('median_time'), now)
+            # chance of getting at least as far as each flag (going up can skip a flag)
+            reach = {k: sum(v for k2, v in split.items() if SEVERITY.index(k2) >= SEVERITY.index(k))
+                     for k in split if k in SEVERITY}
+            likely_top = max((k for k, v in reach.items() if v >= LIKELY), key=SEVERITY.index, default=None)
+            if clear:
+                where, emoji = f' to {_label(target)}', target
+                detail = ''
+            else:                     # e.g. up from Dark Blue: Amber or straight to Red
+                where, emoji = '', None
+                parts = sorted(split.items(), key=lambda kv: -kv[1])
+                detail = ': ' + ', '.join(f'{EMOJI.get(k, "")} {_label(k)} {_pct(v)}'.strip() for k, v in parts if v >= 0.05)
             if p_today >= LIKELY and k_today not in sent:
-                msgs.append(_msg(river, f'Official Flag likely {d} to {_label(target)} today ({_pct(p_today)}).{when}', target, d))
+                verb = f'{_word(p_today)} {d}' if clear else f'{_word(p_today)} to go {d}'
+                when_today = '' if when.endswith('tomorrow.') else when          # a today alert only gives a time today
+                msgs.append(_msg(river, f'{NAMES[river]} Flag {verb}{where} today ({_pct(p_today)}){detail}.{_if_so(when_today, p_today)}', emoji, d))
                 sent |= {k_today, k_tom}
+                if d == 'up':
+                    up_top = likely_top or target
             elif p_tom >= LIKELY and k_tom not in sent:
-                msgs.append(_msg(river, f'Official Flag likely {d} to {_label(target)} by the end of tomorrow '
-                                        f'({_pct(p_tom)}).{when}', target, d))
+                verb = f'{_word(p_tom)} {d}' if clear else f'{_word(p_tom)} to go {d}'
+                msgs.append(_msg(river, f'{NAMES[river]} Flag {verb}{where} by the end of tomorrow ({_pct(p_tom)}){detail}.{_if_so(when, p_tom)}',
+                                 emoji, d))
                 sent.add(k_tom)
+                if d == 'up':
+                    up_top = likely_top or target
+            elif (d == 'up' and up_top in SEVERITY and likely_top
+                  and SEVERITY.index(likely_top) > SEVERITY.index(up_top) and k_tom in sent):
+                # escalation: after an "up" alert, a higher flag has become 60%+ likely
+                pr = reach[likely_top]
+                msgs.append(_msg(river, f'{NAMES[river]} Flag now {_word(pr)} up to {_label(likely_top)} by the end of tomorrow '
+                                        f'({_pct(pr)}).{_if_so(when, pr)}', likely_top, 'up'))
+                up_top = likely_top
 
         bk = loc.get('black') if river == 'isis' else None
         if bk and bk.get('windows'):
@@ -127,10 +173,10 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 sent.discard(key)
             elif p_tom >= LIKELY and key not in sent:
                 when = _when((bk.get('when') or {}).get('median_time'), now)
-                text = (f'Black Flag likely back to Red by the end of tomorrow ({_pct(p_tom)}).{when}' if is_black
-                        else f'Black Flag likely by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
-                             f"{bk.get('level_m', 0):.2f} m.{when}")
+                text = (f'{NAMES[river]} Flag {_word(p_tom)} back to Red from Black by the end of tomorrow ({_pct(p_tom)}).{_if_so(when, p_tom)}' if is_black
+                        else f'{NAMES[river]} Flag {_word(p_tom)} to go Black by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
+                             f"{bk.get('level_m', 0):.2f} m.{_if_so(when, p_tom)}")
                 msgs.append(_msg(river, text, 'red' if is_black else 'black', 'down' if is_black else 'up'))
                 sent.add(key)
-        new_state[river] = {'flag': flag, 'sent': sorted(sent)}
+        new_state[river] = {'flag': flag, 'sent': sorted(sent), 'up_top': up_top}
     return msgs, new_state

@@ -92,7 +92,7 @@ def main() -> None:
 
     if args.test:
         rivers = RIVERS if args.test == 'all' else (args.test,)
-        msgs = [{'river': r, 'title': f'{NAMES[r]} Flag', 'tag': f'test-{r}', 'url': SITE_URL,
+        msgs = [{'river': r, 'title': 'Flag Predictor', 'tag': f'test-{r}', 'url': SITE_URL,
                  'body': f'Test alert: {NAMES[r]} Flag alerts are working.'} for r in rivers]
         print('[alerts] sending test:', json.dumps(msgs))
         print('[alerts]', send(cf, msgs, subs))
