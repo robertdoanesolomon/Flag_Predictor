@@ -409,7 +409,7 @@
     }
     body.preview details.preview-banner { display: block; }
     .alerts-card {
-      margin: 0 0 14px 0;
+      margin: 20px 0 14px 0;
       padding: 12px 14px;
       border-radius: var(--radius-md);
       border: 1px solid var(--border-strong);
@@ -951,19 +951,6 @@
             when they come back, the gap is bridged.</li>
           </ul>
         </details>
-        <section class="alerts-card only-preview" id="alerts-card" aria-labelledby="alerts-title">
-          <div class="alerts-head">
-            <h2 id="alerts-title">Flag alerts on your phone</h2>
-            <span class="alerts-status" id="alerts-status"></span>
-          </div>
-          <p class="alerts-help" id="alerts-help">A notification when the official flag changes, or is likely to change today or by tomorrow (60% or more), and when Black is likely on the Isis.</p>
-          <div class="alerts-controls" id="alerts-controls">
-            <label class="alerts-river"><input type="checkbox" value="isis" checked> Isis</label>
-            <label class="alerts-river"><input type="checkbox" value="godstow" checked> Godstow</label>
-            <button type="button" class="alerts-btn" id="alerts-on">Turn on alerts</button>
-            <button type="button" class="alerts-btn secondary" id="alerts-off" hidden>Turn off</button>
-          </div>
-        </section>
       </div>
       <div id="status-pill" class="status-pill" aria-live="polite">
         <span class="dot"></span>
@@ -978,6 +965,19 @@
       </div>
     </div>
 
+    <section class="alerts-card only-preview" id="alerts-card" aria-labelledby="alerts-title">
+      <div class="alerts-head">
+        <h2 id="alerts-title">Flag alerts on your phone</h2>
+        <span class="alerts-status" id="alerts-status"></span>
+      </div>
+      <p class="alerts-help" id="alerts-help">A notification when the official flag changes, or is likely to change today or by tomorrow (60% or more), and when Black is likely on the Isis.</p>
+      <div class="alerts-controls" id="alerts-controls">
+        <label class="alerts-river"><input type="checkbox" value="isis" checked> Isis</label>
+        <label class="alerts-river"><input type="checkbox" value="godstow" checked> Godstow</label>
+        <button type="button" class="alerts-btn" id="alerts-on">Turn on alerts</button>
+        <button type="button" class="alerts-btn secondary" id="alerts-off" hidden>Turn off</button>
+      </div>
+    </section>
     <details class="about">
       <summary>About these forecasts</summary>
       <div class="about-body">
