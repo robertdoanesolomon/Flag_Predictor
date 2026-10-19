@@ -763,3 +763,21 @@ weekend, hours since the flag was set, 6 h trend. A change up goes to the band
 the river is in; a change down one flag. Leave-one-season-out log loss vs a
 constant rate: Isis up 0.0189 (0.0216), down 0.0309 (0.0427); Godstow up
 0.0089 (0.0173), down 0.0204 (0.0300).
+
+Backtest of the official-flag box (starts every 3 h; Isis 2023 + Nov 2024 – Jan
+2026, Godstow Nov 2024 – Jan 2026; flag model refitted without the period it is
+tested on; rain that fell). Event: the official flag has changed by the end of
+today / tomorrow (UK). Brier, flag model vs the flag-band outlook used as a
+forecast of the official flag (climatology in brackets):
+
+| | up today | down today | up by tomorrow | down by tomorrow |
+|---|---|---|---|---|
+| Isis | **0.024** vs 0.036 (0.038) | 0.037 vs 0.042 (0.052) | **0.040** vs 0.051 (0.081) | 0.065 vs 0.068 (0.114) |
+| Godstow | **0.013** vs 0.021 (0.030) | **0.022** vs 0.032 (0.037) | **0.021** vs 0.032 (0.064) | **0.033** vs 0.049 (0.084) |
+
+Bold: weekly block-bootstrap 95 % interval of the difference excludes zero. The
+gain is mostly when the flag and band disagree at the start (Isis down by
+tomorrow 0.146 vs 0.282; Godstow 0.173 vs 0.666). Going up the flag model is
+well calibrated (Isis: forecast 0.6–0.8 → 69 %, > 0.8 → 87 %); coming down it
+is too cautious (Isis forecast 0.2–0.35 → 46 % happened, 0.35–0.6 → 69 %), so
+a recalibration of the "down" hazard is the obvious next step.
