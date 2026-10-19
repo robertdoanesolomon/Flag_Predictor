@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b3d2e">
-  <meta name="description" content="An AI-powered forecast of OURCs flag colours and river height differentials on the Oxford Thames (Isis, Godstow and Wallingford stretches).">
+  <meta name="description" content="A forecast of OURCs flag colours and river height differentials on the Oxford Thames (Isis, Godstow and Wallingford stretches).">
   <title>Flag Predictor</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -349,6 +349,8 @@
       gap: 16px;
       margin: 10px 0 14px 0;
     }
+    .fc-card.fc-compact { padding-top: 8px; padding-bottom: 8px; }
+    .fc-compact-text { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); }
     .flag-head.no-tile { grid-template-columns: minmax(0, 1fr); }
     .flag-tile-wrap { display: flex; flex-direction: column; gap: 8px; }
     .flag-tile {
@@ -933,10 +935,8 @@
     <header class="hero">
       <div class="hero-text">
         <h1>Flag&nbsp;Predictor</h1>
-        <p>An AI-powered 10-day forecast of the river height differential and OURCs flag colours for the
-        Isis, Godstow and Wallingford stretches of the Thames. Trained on historical rainfall + river data and
-        run hourly with the latest rainfall ensemble forecasts.</p>
-        <p class="hero-sub">Latest Experimental Forecasts</p>
+        <p>A 10-day forecast of the river height differential and OURCs flags on the Isis, Godstow and
+        Wallingford stretches of the Thames, updated hourly. Experimental.</p>
         <details class="preview-banner only-preview" open>
           <summary><strong>Preview:</strong> what is new here. <a href="../">The main forecast is here.</a></summary>
           <ul>
@@ -985,123 +985,36 @@
     <details class="about">
       <summary>About these forecasts</summary>
       <div class="about-body">
-        <div class="only-preview">
-        <h3>How do I read the chart?</h3>
-        The chart shows the recent observed river height differential (the black line) and a 10-day probabilistic
-        forecast. Each thin purple line is one possible future driven by a different rainfall forecast; the bold
-        purple line is their average, and the purple shading is the likely range (rain and model error together).
-        Horizontal bands shade the flag bands, daily rainfall is shown as bars on the right axis, and the dashed red
-        line marks "now". For Isis and Godstow, the stacked chart underneath shows the chance that the river will be
-        in each flag band at each point in the next 10 days.
+        <h3>Reading the page</h3>
+        The big tile is the official OURCs flag, from
+        <a href="https://ourcs.co.uk/information/flags/" target="_blank" rel="noopener">ourcs.co.uk</a>. The cards give
+        the chance it changes today or by the end of tomorrow, and where the differential is heading. In the chart, the
+        black line is the measured differential; each thin purple line is one possible future from a different rain
+        forecast, the bold line is their average, and the shading is the likely range (rain and model error together;
+        outer 80%, inner 50%). The chart below it gives the chance of each band over the next 10 days.
 
-        <h3>Flag bands and the official flag</h3>
-        The coloured bands are ranges of the differential that roughly match the OURCs flags. They are not the flag:
-        OURCs sets the flag by hand (on the Isis by counting the bucks at Iffley weir; at Godstow from the lock
-        differential, since September 2024), and the official flag is shown above the chart, from
-        <a href="https://ourcs.co.uk/information/flags/" target="_blank" rel="noopener">ourcs.co.uk</a>. Comparing the
-        two since 2019, the flag and the band agree about 80&ndash;87% of the time. Going up, the flag usually changes
-        within an hour or two of the band, in daylight. Coming down it lags: it usually waits until the river is a few
-        centimetres below the line and has stayed there for a few daylight hours (at Godstow, Red often stays until
-        the differential is near 0.6). Flag changes almost always happen between 8am and 8pm. When the two disagree,
-        the official-flag card says so.
-        <br><br>
-        Black (Isis) is not a band: in big floods the differential stops rising (around 0.95), so the page watches the
-        river level at Iffley Lock instead. Since 2019 the official flag has gone Black once Iffley reached about
-        0.42&nbsp;m and come back to Red once it fell below about 0.22&nbsp;m, which matches the flag in 98% of Red/Black
-        hours. Iffley's level 1&ndash;48 hours ahead is forecast from its level and trend now, the Isis and Godstow
-        differentials now, and the rain that has fallen and is forecast (the differential forecasts do not help: Iffley
-        is also fed by the Cherwell). A Black card appears only when Black is close: the flag is Black, Iffley is within
-        a few centimetres of the line, or there is at least a 10% chance of Black by the end of tomorrow.
-        </div>
-        <div class="only-main">
-        <h3>How do I read the chart?</h3>
-        The chart shows the recent observed river height differential (the black line) and a 10-day probabilistic
-        forecast (the blue spaghetti). Each thin blue line is one possible future trajectory driven by a different
-        rainfall ensemble member; the bold purple line is the ensemble mean and is the single most likely outcome.
-        Horizontal bands shade the flag colours, daily rainfall is shown as bars on the right axis, and the dashed
-        red line marks "now". For Isis and Godstow, the stacked chart underneath shows the probability that the river
-        will be in each flag colour at each point in the next 10 days.
-        </div>
+        <h3>The flag and the differential</h3>
+        The coloured bands are ranges of the differential that roughly match the flags, but OURCs sets the flag by hand,
+        so the two agree only about 80&ndash;87% of the time. Flags go up within an hour or two of the differential
+        crossing a line, come down later once it is clearly below, and almost only change between 8am and 8pm; the flag
+        card's chances come from a model fitted to the OURCs flag history. For the first three days the forecast moves in
+        held levels and daytime jumps, as lock keepers adjust the weirs, rather than a smooth line. Black (Isis) is
+        forecast from the Iffley Lock level (Black from about 0.42&nbsp;m, back to Red below 0.22&nbsp;m), and its card
+        appears only when Black is close.
 
-        <h3>What is the shaded band?</h3>
-        The 50 blue lines only show how much the rainfall forecasts disagree. Even with the rain exactly right the
-        model is sometimes wrong, and in the first day or two that is most of the real uncertainty, because the rain
-        forecasts barely disagree yet. The purple shading adds that in. The model was re-run every 6 hours over
-        periods it was never trained on (2023, and November 2024 to January 2026) using the rain that actually fell,
-        and every one of those forecasts' errors was kept. For today's forecast, each rain line borrows the errors
-        of past forecasts that started from a similar situation (similar river level, trend, recent and forecast
-        rain, and time of year). The outer shading holds 80% of the resulting outcomes and the inner shading 50%. The
-        flag probabilities underneath are worked out from the same outcomes, so they include the model's own
-        uncertainty too. That is why they can show a small chance of a higher flag even when every rain line
-        stays in the current one.
+        <h3>How good is it?</h3>
+        Treat it as <strong>experimental</strong>. Checked on years it was not trained on, cards saying 80% or more came
+        true about 9 times in 10, and 60&ndash;80% about 6 to 7 times in 10. Under each chart you can compare any recent
+        forecast with what the river then did. The model cannot rise without rain, but it can overshoot after heavy rain
+        and still misses some weir changes. The summary sentence is written automatically from the average forecast.
 
-        <div class="only-preview">
-        <h3>What are the flag cards, and why does the forecast jump?</h3>
-        The river does not rise and fall smoothly. Much of each change comes as a sudden jump when a lock keeper
-        adjusts the weir gates, mostly between 8am and 4pm and mostly when the river is already heading somewhere.
-        The model itself is smooth: when it isn't sure whether a jump comes this morning or tomorrow morning, it
-        spreads the change over both, so on its own it puts flag changes at any time of day. For the first three
-        days, every possible outcome is therefore turned into held levels and jumps. Each hour, the chance of a jump
-        depends on how far that outcome says the river still has to move over the next day, the time of day,
-        weekends, the trend over the past day, recent rain, how long since the last jump, and whether this stretch or
-        a neighbouring one jumped in the last three hours; how big a jump is (keepers often overshoot) comes from
-        past jumps. These rules were learned from the 15-minute river record and the model's own forecasts from
-        2019 to 2024 (without 2023), and checked on 2023 and on November 2024 to January 2026. Each outcome still
-        ends up where it was heading, so this mostly changes <em>when</em> the flag is forecast to change, not how high
-        the river gets.
-        <br><br>
-        The cards above the summary give the share of those outcomes in which the flag changes, and stays changed for at
-        least three hours, today or by the end of tomorrow (UK time). In the check years, when a card would have said
-        80% or more, the change happened about 9 times in 10; 60&ndash;80% about 6 to 7 times in 10. The words are
-        set a little cautiously: "very likely" from 90%, "likely" from 70%, "possibly" from 40%. Those checks used the rain that actually fell, so with forecast rain the cards will be a little less
-        certain. The first card is the official flag: a model of when the flag gets changed (how far past
-        the line the river is, for how long, the time of day and weekends), fitted on the OURCs flag history (the Isis
-        since November 2021; Godstow since September 2024, when its flag started being set from this differential),
-        is run along every outcome starting from the flag flying now; its chance of the flag coming down is then adjusted, because on its own it was too cautious about that in the check years. The second card is the differential: which band it is forecast to be in.
-        </div>
-
-        <h3>How have earlier forecasts done?</h3>
-        Under each chart you can look back. <em>Past forecast</em>: drag the slider to any forecast from the last few
-        weeks (one is saved every 6 hours) and see what it said against what the river then did, with its typical
-        error and how often it had the flag right. <em>Forecasts of now</em>: what every forecast from the last ten
-        days said the latest reading would be. Forecasts saved before the model-error band was added only show the rain spread, not
-        the model-error band.
-
-        <h3>How reliable is the summary sentence?</h3>
-        <span class="only-preview-inline">The summary sentence is written automatically from the
-        average forecast (the purple line), starting from the latest river reading, so it includes the first few
-        hours. How certain it says it is comes from the spread of the forecast. It's meant to give a general idea of
-        the next 10 days, not a precise prediction.</span>
-        <span class="only-main-inline">The summary sentence is simply a short description of the forecast, without any human intervention. The certainty
-        bounds are just based off the spread of the forecast. Importantly, the summary sentence is based off the change
-        from the first (+2h) prediction, so it doesn't take into account the initial jump at t=0. This summary sentence
-        is meant to give a general idea of the forecast, which is probably more reliable than the prediction chart itself.</span>
-        <!-- Summary version 2 text:
-        The summary sentence is written automatically from the average forecast (the purple line), starting from the
-        latest river reading. How certain it says it is combines two things: how much the 50 rainfall forecasts disagree,
-        and how wrong the model itself has typically been at that river level when given the rain that actually fell.
-        It's meant to give a general idea of the next 10 days, not a precise prediction.
-        -->
-
-        <h3>Where does the data come from?</h3>
-        Historical river levels and rainfall come from the Environment Agency's flood-monitoring and hydrology APIs.
-        Rainfall forecasts come from the ECMWF AI Forecasting System (ECMWF-AIFS) via Open-Meteo. The model is
-        physics-based: a small neural network reads the recent past and sets the starting state of a rainfall-runoff
-        model (soil wetness, fast and slow runoff stores, groundwater and the river channel). Forecast rain is routed
-        through those stores hour by hour, and a rating curve that only ever increases turns river flow into the
-        differential. The forecast is the average of five independently trained copies.
-
-        <h3>Why hasn't the forecast updated recently?</h3>
-        Usually it's just a temporary glitch in an Environment Agency sensor going briefly offline; the page will
-        fall back to the latest successful forecast. If a sensor has been offline for more than four hours the page
-        flags the forecast as <em>stale</em>. Updates are also scheduled hourly via GitHub Actions and sometimes
-        queue up, so refreshes may not land exactly on the hour.
-
-        <h3>Is the forecast reliable?</h3>
-        Please treat this as <strong>experimental</strong>. The model starts exactly at the latest observation and
-        cannot rise without rain, but it can overshoot after heavy rain and still misses some sudden weir changes. Issues and improvements get written up on the
-        <a href="https://robertdoanesolomon.substack.com" target="_blank" rel="noopener">substack</a>; bug reports
-        and ideas are very welcome on
+        <h3>Data and updates</h3>
+        River levels and rain from the Environment Agency; rain forecasts from ECMWF AIFS (50 members) via Open-Meteo.
+        The model is a physics-based rainfall&ndash;runoff model whose starting state is set by a small neural network,
+        averaged over five trained copies. It runs hourly; if a gauge has been offline for more than four hours the
+        forecast is marked stale and no flag-change forecast is shown. Write-ups are on the
+        <a href="https://robertdoanesolomon.substack.com" target="_blank" rel="noopener">substack</a>; bug reports and
+        ideas are welcome on
         <a href="https://github.com/robertdoanesolomon/Flag_Predictor" target="_blank" rel="noopener">GitHub</a>.
       </div>
     </details>
@@ -1673,7 +1586,11 @@
         }
         cards.push(cardHtml('Official flag', offCard, outOfSync));
       }
-      if (diffCard) cards.push(cardHtml(`Differential &middot; <span class="fc-value">${fmtDiff(loc.current.differential)} m</span>`, diffCard, false));
+      const gist = (c) => c && c.main.replace(/ (in|into) /g, ' ').replace(/\s*\(\d+%\)/, '');
+      if (diffCard && offCard && !outOfSync && gist(diffCard) === gist(offCard)) {
+        const band = FLAG_LABELS[loc.flag_outlook.current_flag] || loc.current.flag_label;
+        cards.push(`<div class="fc-card fc-compact"><div class="fc-head"><span class="fc-label">Differential &middot; <span class="fc-value">${fmtDiff(loc.current.differential)} m</span></span><span class="fc-compact-text">${chipHtml(loc.flag_outlook.current_flag)} ${band} band &middot; same outlook as the flag</span></div></div>`);
+      } else if (diffCard) cards.push(cardHtml(`Differential &middot; <span class="fc-value">${fmtDiff(loc.current.differential)} m</span>`, diffCard, false));
       const blk = blackCard(loc.black, off, loc);
       if (blk && offCard && off.flag === 'red' && offCard.strength === 0 && blk.strength >= 0.2) {
         cards[0] = cardHtml('Official flag', { ...offCard, main: 'No change expected, other than to Black' }, outOfSync);
@@ -1838,24 +1755,12 @@
 
             <div class="stats-grid stats-grid--below-charts">
               <div class="stat">
-                <div class="label">Now</div>
-                <div class="value">${fmtDiff(loc.current.differential)}<small>m</small></div>
-              </div>
-              <div class="stat">
                 <div class="label">Estimated 10-day peak</div>
                 <div class="value" style="font-size:16px;">${fmtDiff(peakInfo.value)}m <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;">on ${peakInfo.time ? fmtShortDate(peakInfo.time) : '—'}</small></div>
               </div>
               <div class="stat">
-                <div class="label">Rain last 24 h</div>
-                <div class="value">${fmtMm(loc.summary.last_24h_rain_mm)}<small>mm</small></div>
-              </div>
-              <div class="stat">
                 <div class="label">Rain last 7 d</div>
                 <div class="value">${fmtMm(loc.summary.last_7d_rain_mm)}<small>mm</small></div>
-              </div>
-              <div class="stat">
-                <div class="label">Rain next 24 h</div>
-                <div class="value">${fmtMm(loc.summary.next_24h_rain_mm)}<small>mm</small></div>
               </div>
               <div class="stat">
                 <div class="label">Rain next 7 d</div>
@@ -2527,7 +2432,6 @@
     block.querySelector('.history-score').innerHTML = n
       ? `<span><strong>${n}</strong> h observed since</span>` +
         `<span>typical error <strong>${(100 * absErr / n).toFixed(1)} cm</strong></span>` +
-        `<span>inside the ${bandName} <strong>${Math.round(100 * inBand / n)}%</strong> of hours</span>` +
         (flagN ? `<span>right ${BAND_WORD} <strong>${Math.round(100 * flagRight / flagN)}%</strong> of hours</span>` : '')
       : '<span>No readings since this forecast yet.</span>';
     block.querySelector('.history-note').innerHTML = PREVIEW
