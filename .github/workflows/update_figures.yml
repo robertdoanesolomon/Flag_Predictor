@@ -13,7 +13,7 @@ on:
 # One run at a time. Runs take 8-20 min, so don't cancel a run in progress when the
 # next trigger arrives: queue it instead (GitHub keeps at most one pending run).
 concurrency:
-  group: update-forecast-figures
+  group: update-forecast-figures-v2   # renamed 19 Oct 2026: a stuck run held the old group
   cancel-in-progress: false
 
 jobs:

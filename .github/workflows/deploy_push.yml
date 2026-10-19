@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-flag-alerts
+  group: deploy-flag-alerts-v2   # renamed 19 Oct 2026: a stuck run held the old group
   cancel-in-progress: false
 
 jobs:
