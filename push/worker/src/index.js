@@ -60,7 +60,14 @@ const NAMES = { isis: 'Isis', godstow: 'Godstow' };
 const LETTERS = { G: 'green', LB: 'light_blue', DB: 'dark_blue', B: 'blue', A: 'amber', R: 'red', K: 'black',
   BL: 'black', X: 'grey', GR: 'grey', GY: 'grey' };
 const SITE_URL = 'https://flagpredictor.com/preview/';
-const EMOJI = { green: '🟢', light_blue: '🩵', blue: '🔵', dark_blue: '🔵', amber: '🟠', red: '🔴', black: '⚫', grey: '⚪' };
+const EMOJI = { green: '🟢', light_blue: '🔷', blue: '🔵', dark_blue: '🔵', amber: '🟠', red: '🔴', black: '⚫', grey: '⚪' };
+const SEVERITY = ['green', 'light_blue', 'blue', 'dark_blue', 'amber', 'red', 'black'];   // grey: not monitored, no order
+/** "⬇️ 🟠 " for a change down to Amber: an arrow (if both flags have an order) and the new flag's colour. */
+export function changeMark(from, to) {
+  const a = SEVERITY.indexOf(from), b = SEVERITY.indexOf(to);
+  const arrow = a >= 0 && b >= 0 && a !== b ? (b > a ? '⬆️ ' : '⬇️ ') : '';
+  return arrow + (EMOJI[to] ? EMOJI[to] + ' ' : '');
+}
 
 export function flagFromStatus(j) {
   const text = String((j && j.status_text) || '').trim();
@@ -111,7 +118,7 @@ export async function checkFlags(env, fetchStatus = (r) => fetch(`https://ourcs.
   for (const { river, flag, prev } of changes) {
     const payload = {
       title: `${NAMES[river]} Flag`,
-      body: `${EMOJI[flag.key] ? EMOJI[flag.key] + ' ' : ''}Official Flag now ${flag.label}.`,
+      body: `${changeMark(prev.key, flag.key)}Official Flag now ${flag.label}.`,
       url: SITE_URL,
       // one tag per change, shown without a second buzz if it ever arrives twice
       tag: `flag-change-${river}-${flag.setAt || flag.key}`,

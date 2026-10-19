@@ -27,7 +27,7 @@ RESET = 0.3
 MAX_BUNDLE_AGE_H = 3.0
 SITE_URL = 'https://flagpredictor.com/preview/'
 UK = ZoneInfo('Europe/London')
-EMOJI = {'green': '🟢', 'light_blue': '🩵', 'blue': '🔵', 'dark_blue': '🔵', 'amber': '🟠', 'red': '🔴',
+EMOJI = {'green': '🟢', 'light_blue': '🔷', 'blue': '🔵', 'dark_blue': '🔵', 'amber': '🟠', 'red': '🔴',
          'black': '⚫', 'grey': '⚪'}
 LABELS = {'green': 'Green', 'light_blue': 'Light Blue', 'dark_blue': 'Dark Blue', 'amber': 'Amber',
           'red': 'Red', 'black': 'Black', 'grey': 'Grey'}
@@ -60,10 +60,15 @@ def _when(iso: Optional[str], now: datetime) -> str:
     return f' Probably {part} {day}.'
 
 
-def _msg(river: str, body: str, flag: Optional[str] = None) -> dict:
-    """An alert; ``flag`` (the flag it is about) puts its colour emoji in front."""
+ARROW = {'up': '⬆️', 'down': '⬇️'}
+
+
+def _msg(river: str, body: str, flag: Optional[str] = None, direction: Optional[str] = None) -> dict:
+    """An alert; an arrow for the direction and the colour emoji of the flag it is about go in front."""
     if flag in EMOJI:
         body = f'{EMOJI[flag]} {body}'
+    if direction in ARROW:
+        body = f'{ARROW[direction]} {body}'
     return {'river': river, 'title': f'{NAMES[river]} Flag', 'body': body, 'url': SITE_URL, 'tag': f'flag-{river}'}
 
 
@@ -104,11 +109,11 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 continue
             when = _when((info.get('when') or {}).get('median_time'), now)
             if p_today >= LIKELY and k_today not in sent:
-                msgs.append(_msg(river, f'Official Flag likely {d} to {_label(target)} today ({_pct(p_today)}).{when}', target))
+                msgs.append(_msg(river, f'Official Flag likely {d} to {_label(target)} today ({_pct(p_today)}).{when}', target, d))
                 sent |= {k_today, k_tom}
             elif p_tom >= LIKELY and k_tom not in sent:
                 msgs.append(_msg(river, f'Official Flag likely {d} to {_label(target)} by the end of tomorrow '
-                                        f'({_pct(p_tom)}).{when}', target))
+                                        f'({_pct(p_tom)}).{when}', target, d))
                 sent.add(k_tom)
 
         bk = loc.get('black') if river == 'isis' else None
@@ -125,7 +130,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 text = (f'Black Flag likely back to Red by the end of tomorrow ({_pct(p_tom)}).{when}' if is_black
                         else f'Black Flag likely by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
                              f"{bk.get('level_m', 0):.2f} m.{when}")
-                msgs.append(_msg(river, text, 'red' if is_black else 'black'))
+                msgs.append(_msg(river, text, 'red' if is_black else 'black', 'down' if is_black else 'up'))
                 sent.add(key)
         new_state[river] = {'flag': flag, 'sent': sorted(sent)}
     return msgs, new_state
