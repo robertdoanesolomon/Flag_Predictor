@@ -428,6 +428,7 @@
       min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--accent);
       background: var(--accent); color: #fff; font: inherit; font-weight: 700; font-size: 0.95rem; cursor: pointer;
     }
+    .alerts-privacy { margin: 10px 0 0 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
     .alerts-btn.secondary { background: transparent; color: var(--accent-soft); border-color: var(--border-strong); }
     .alerts-btn:disabled { opacity: 0.6; cursor: default; }
     @media (prefers-color-scheme: dark) { .alerts-btn:not(.secondary) { color: #0b1815; } }
@@ -977,6 +978,7 @@
         <button type="button" class="alerts-btn" id="alerts-on">Turn on alerts</button>
         <button type="button" class="alerts-btn secondary" id="alerts-off" hidden>Turn off</button>
       </div>
+      <p class="alerts-privacy">Alerts store only an anonymous push address for this device and the stretches you choose. Turn off deletes it.</p>
     </section>
     <details class="about">
       <summary>About these forecasts</summary>
