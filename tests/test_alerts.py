@@ -52,7 +52,7 @@ class AlertTests(unittest.TestCase):
         self.assertTrue(st['isis']['sent'])
         msgs, st = decide(bundle(flag='amber'), st, NOW)       # the change itself: sent by the Worker
         self.assertEqual(msgs, [])
-        self.assertEqual(st['isis'], {'flag': 'amber', 'sent': []})
+        self.assertEqual(st['isis'], {'flag': 'amber', 'sent': [], 'up_top': None})
 
     def test_stale_or_old_bundle_sends_nothing_new(self):
         self.assertEqual(decide(bundle(down_tom=0.9, stale=True), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
@@ -70,6 +70,25 @@ class AlertTests(unittest.TestCase):
         oo['up']['split'] = {'amber': 0.6, 'red': 0.1}                 # 86% agree on Amber: named
         msgs, _ = decide(b, {'isis': {'flag': 'dark_blue', 'sent': []}}, NOW)
         self.assertEqual(msgs[0]['body'], '⬆️ 🟠 Official Flag likely up to Amber by the end of tomorrow (70%).')
+
+    def test_escalation_to_a_higher_flag(self):
+        b = bundle(flag='green')
+        oo = b['locations']['isis']['official_outlook']
+        oo['down'] = None
+        oo['windows']['tomorrow']['up'] = 0.85
+        oo['up'] = {'flag': 'light_blue', 'when': None,
+                    'split': {'light_blue': 0.45, 'dark_blue': 0.2, 'amber': 0.1, 'red': 0.05}}
+        msgs, st = decide(b, {'isis': {'flag': 'green', 'sent': []}}, NOW)
+        self.assertIn('likely to go up by the end of tomorrow (85%): Light Blue 45%, Dark Blue 20%, Amber 10%, Red 5%', msgs[0]['body'])
+        self.assertEqual(decide(b, st, NOW)[0], [])                       # same forecast: quiet
+        oo['windows']['tomorrow']['up'] = 0.9
+        oo['up']['split'] = {'light_blue': 0.1, 'dark_blue': 0.1, 'amber': 0.2, 'red': 0.5}   # Amber or higher 70%
+        msgs, st = decide(b, st, NOW)
+        self.assertEqual([m['body'] for m in msgs], ['⬆️ 🟠 Official Flag now likely up to Amber by the end of tomorrow (70%).'])
+        self.assertEqual(decide(b, st, NOW)[0], [])
+        oo['up']['split'] = {'amber': 0.2, 'red': 0.7}
+        msgs, st = decide(b, st, NOW)
+        self.assertEqual([m['body'] for m in msgs], ['⬆️ 🔴 Official Flag now likely up to Red by the end of tomorrow (70%).'])
 
     def test_black(self):
         bk = {'black_now': False, 'level_m': 0.39, 'windows': {'today': 0.2, 'tomorrow': 0.65},
