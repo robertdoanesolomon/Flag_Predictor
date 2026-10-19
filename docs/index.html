@@ -1504,8 +1504,11 @@
     if (!PREVIEW) return '';
     const rows = [];
     const off = loc.official_flag;
-    const offRow = outlookRow(loc.official_outlook, 'Official flag', loc);
-    const bandRow = outlookRow(loc.flag_outlook, 'Flag band', loc);
+    // A stale forecast (gauges offline) starts in the past: its "today / tomorrow" would be wrong
+    // and the band would be compared with the flag flying now, so show neither.
+    const stale = !!loc.stale || !!(off && off.forecast_stale);
+    const offRow = stale ? null : outlookRow(loc.official_outlook, 'Official flag', loc);
+    const bandRow = stale ? null : outlookRow(loc.flag_outlook, 'Flag band', loc);
     if (offRow) rows.push(offRow);
     if (bandRow) rows.push(bandRow);
     let html = '';
@@ -1517,7 +1520,7 @@
         <span>${setAt.replace(/^ · /, '')}</span>
         <a href="${off.url || 'https://ourcs.co.uk/information/flags/'}" target="_blank" rel="noopener">ourcs.co.uk</a></div>`;
       const sy = off.sync;
-      if (sy && sy.in_sync === false && off.flag !== 'grey') {
+      if (!stale && sy && sy.in_sync === false && off.flag !== 'grey') {
         const bandName = FLAG_LABELS[sy.band] || sy.band;
         const hrs = sy.hours_out_of_sync;
         const since = hrs === null || hrs === undefined ? '' : hrs >= 48 ? ` for ${Math.round(hrs / 24)} days` : hrs >= 2 ? ` for ${hrs} hours` : '';
@@ -1539,6 +1542,11 @@
         msg = `The river at Iffley Lock is at ${lvl}. The official flag usually goes Black once it reaches about ${bk.up_m.toFixed(2)} m.`;
       }
       html += `<div class="flag-sync-note" style="border-left-color:#111">${msg}</div>`;
+    }
+    if (stale) {
+      const lastAt = loc.latest_reading || loc.last_sensor_update;
+      const last = lastAt ? ` since ${fmtShortDateTime(lastAt)}` : '';
+      html += `<div class="flag-outlook quiet" role="status"><div class="outlook-rows"><div>No flag-change forecast: the river gauges for this stretch have not reported${last}. It comes back with the next update after they do.</div></div></div>`;
     }
     if (rows.length) {
       const lead = rows.reduce((a, b) => (b.strength > a.strength ? b : a), rows[0]);

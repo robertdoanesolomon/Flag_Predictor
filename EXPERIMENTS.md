@@ -781,3 +781,42 @@ tomorrow 0.146 vs 0.282; Godstow 0.173 vs 0.666). Going up the flag model is
 well calibrated (Isis: forecast 0.6–0.8 → 69 %, > 0.8 → 87 %); coming down it
 is too cautious (Isis forecast 0.2–0.35 → 46 % happened, 0.35–0.6 → 69 %), so
 a recalibration of the "down" hazard is the obvious next step.
+
+## Gauge outages (Isis gauges offline from 13 Oct 2026)
+
+When a gauge stops, the stretch's forecast freezes at its last reading and the
+page says so ("Stale forecast — sensor offline"). On `/preview` the flag-change
+box is replaced by a note, and no sync note or official-flag outlook is worked
+out, because both would compare an old differential with the flag flying now.
+A Black note needs an Iffley reading less than 4 h old.
+
+When the gauge comes back, the production history has a hole of several days.
+The hybrid's encoder (100 h window) only bridges holes of up to a day, so the
+rest is NaN. Test: 40 random starts Nov 2024 – Jan 2026, Isis, rain that fell,
+with a 3–12-day hole ending 1–24 h before the start. Mean absolute error (m)
+over the first 48 h / 10 days. No hole: 0.0186 / 0.0349.
+
+| hole, back for | left as NaN | straight line | shaped by Godstow |
+|---|---|---|---|
+| 7 days, 1 h | 0.0298 / 0.0429 | 0.0210 / 0.0446 | **0.0196** / 0.0437 |
+| 12 days, 1 h | 0.0333 / 0.0502 | 0.0224 / 0.0508 | **0.0207** / 0.0486 |
+| 7 days, 24 h | **0.0185** / **0.0327** | 0.0205 / 0.0400 | 0.0198 / 0.0388 |
+| 12 days, 24 h | **0.0188** / **0.0328** | 0.0201 / 0.0387 | 0.0197 / 0.0392 |
+
+"Shaped by Godstow" means: during the hole, the Isis differential = b × the
+Godstow differential, plus a residual drawn straight between the readings
+either side. b is the 2019–2026 slope of 24 h changes (0.67), pulled towards
+the slope fitted on the two weeks before the hole when Godstow moved enough
+then to show it. It reconstructs the hole about twice as well as a straight
+line for 7–12-day holes: mean error 2.2 vs 3.8 cm and 3.1 vs 6.5 cm at the
+Isis, with similar gains at Godstow (from the Isis) and Wallingford (from the
+Isis).
+
+So `hybrid_live.live_frame` bridges an outage of up to 14 days, shaped by the
+neighbour, for the first 12 h after the gauge is back. After that the hole is
+left to the encoder as before. In one example (Isis, 12 Feb 2025, a 6-day hole
+ending 5 h before the start), the chance of Red→Amber by the end of tomorrow
+was 96 % unbridged, 85 % bridged and 92 % with no hole.
+
+The page's history line now breaks at missing hours rather than drawing a
+straight line across them.

@@ -46,6 +46,17 @@ HISTORY_DAYS = 60
 # The main page keeps the smooth forecast. Off, or a missing
 # models/step_layer_<location>.json, = no stepped copy.
 STEP_LAYER = True
+# Gauge outages up to this long, once the gauge is back, are bridged before the encoder sees
+# them (fill_outage; gap test in EXPERIMENTS.md "Gauge outages")...
+OUTAGE_FILL_MAX_H = 14 * 24
+# ...but only for the first hours after it is back: by then the bridge helps the first two
+# days a lot (Isis, 7-12 day outage, 1 h back: 48 h error 2.0 cm vs 3.0-3.3 cm unbridged,
+# 1.9 cm with no outage); a day after, the unbridged forecast is as good or better.
+OUTAGE_BRIDGE_FOR_H = 12
+# Neighbouring stretch for each, with the 2019-2026 slope of 24 h changes (this on neighbour);
+# the slope used is this, pulled towards the slope fitted on the two weeks before the outage
+# when the neighbour moved enough then to show it.
+OUTAGE_NEIGHBOUR = {'isis': ('godstow', 0.67), 'godstow': ('isis', 0.96), 'wallingford': ('isis', 1.18)}
 
 # Gauges each location's hybrid was trained on (the column order of the
 # training frame; the encoder's rain features sum over exactly these).
@@ -110,6 +121,69 @@ def rain_forecast(n_members: int) -> pd.DataFrame:
     return _cache[key]
 
 
+def fill_outage(diff: pd.Series, neighbour: Optional[pd.Series] = None, slope: float = 1.0,
+                max_hours: int = OUTAGE_FILL_MAX_H, fit_hours: int = 14 * 24) -> pd.Series:
+    """Bridge gauge outages (runs of missing hours between two readings).
+
+    The encoder only interpolates gaps up to a day itself; a longer hole left as NaN
+    inside its 100 h window skews the forecast once the gauge is back. A hole longer
+    than a day is shaped by a neighbouring stretch's differential when that has data
+    through the hole (d = b * neighbour + a residual drawn straight between the
+    readings either side; b is ``slope`` pulled towards the slope fitted on the
+    ``fit_hours`` before the hole when the neighbour moved enough then), otherwise
+    bridged with a straight line. Holes at the start of the frame (before the API
+    window) and runs longer than ``max_hours`` stay NaN.
+    """
+    na = diff.isna().to_numpy()
+    if not na.any() or (~na).sum() < 2:
+        return diff
+    out = diff.copy()
+    straight = diff.interpolate(method='time', limit_area='inside')
+    nb = neighbour.reindex(diff.index) if neighbour is not None else None
+    edges = np.flatnonzero(np.diff(np.r_[0, na.astype(int), 0]))
+    shaped = bridged = 0
+    for i0, i1 in zip(edges[::2], edges[1::2]):          # missing run diff[i0:i1]
+        if i0 == 0 or i1 == len(diff) or i1 - i0 > max_hours:
+            continue
+        seg = straight.iloc[i0:i1]
+        if nb is not None and i1 - i0 > 24 and nb.iloc[i0:i1].notna().mean() > 0.8:
+            pre = pd.DataFrame({'d': diff.iloc[max(0, i0 - fit_hours):i0],
+                                'n': nb.iloc[max(0, i0 - fit_hours):i0]}).dropna()
+            ends = nb.iloc[[i0 - 1, i1]]
+            if len(pre) >= 48 and ends.notna().all():
+                var = float(pre['n'].var())
+                fit = float(np.polyfit(pre['n'], pre['d'], 1)[0]) if var > 0 else slope
+                w = var / (var + 0.03 ** 2)
+                b = float(np.clip(w * fit + (1 - w) * slope, 0.0, 2.5))
+                n_seg = nb.iloc[i0 - 1:i1 + 1].interpolate(limit_area='inside')
+                r = (diff.iloc[i0 - 1:i1 + 1] - b * n_seg).interpolate(method='time', limit_area='inside')
+                seg = (r + b * n_seg).iloc[1:-1]
+                shaped += i1 - i0
+        out.iloc[i0:i1] = seg.to_numpy()
+        bridged += i1 - i0
+    if bridged:
+        print(f"  [beta] bridged {bridged} missing differential hours (gauge outage); "
+              f"{shaped} shaped by the neighbouring stretch, the rest a straight line")
+    return out
+
+
+def _hours_since_outage(diff: pd.Series) -> Optional[int]:
+    """Hours of readings since the last run of more than a day of missing hours, or None."""
+    na = diff.isna().to_numpy()
+    edges = np.flatnonzero(np.diff(np.r_[0, na.astype(int), 0]))
+    ends = [i1 for i0, i1 in zip(edges[::2], edges[1::2]) if i0 > 0 and i1 < len(na) and i1 - i0 > 24]
+    return len(na) - ends[-1] if ends else None
+
+
+def _neighbour_differential(location: str, grid: pd.DatetimeIndex) -> Optional[pd.Series]:
+    """The best-correlated other stretch's hourly differential (EA, ~4 weeks), or None."""
+    other = OUTAGE_NEIGHBOUR.get(location, (None, 1.0))[0]
+    ser = _all_differentials().get(other) if other else None
+    if ser is None or len(ser) == 0:
+        return None
+    return ser.resample('1h').mean().reindex(grid)
+
+
 def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd.DataFrame:
     """Continuous hourly history ending at the production frame's last hour."""
     merged = _to_utc(merged_df)
@@ -121,6 +195,9 @@ def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd
     rain = api.reindex(index=grid, columns=gauges).combine_first(csv) if len(api) else csv
     flow = merged['flow_m3s_Farmoor'].reindex(grid).ffill(limit=6) if 'flow_m3s_Farmoor' in merged else np.nan
     diff = merged['differential'].reindex(grid)
+    back = _hours_since_outage(diff)
+    if back is not None and back <= OUTAGE_BRIDGE_FOR_H:
+        diff = fill_outage(diff, _neighbour_differential(location, grid), OUTAGE_NEIGHBOUR[location][1])
     frame = pd.concat([diff.rename('differential'), rain], axis=1)
     frame['flow_m3s_Farmoor'] = flow
     missing = rain.isna().all(axis=1).loc[t0 - pd.Timedelta(days=35):].mean()

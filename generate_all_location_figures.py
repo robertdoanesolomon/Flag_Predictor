@@ -1019,6 +1019,12 @@ def render_location_outputs(
     historical_to_plot_full = historical_to_plot_full[
         historical_to_plot_full.index <= forecast_start_time
     ]
+    # Hours with no reading (a gauge outage) become nulls so the page breaks the line there
+    # instead of drawing a straight line across the gap as if it had been measured.
+    if len(historical_to_plot_full) > 1:
+        historical_to_plot_full = historical_to_plot_full.reindex(
+            pd.date_range(historical_to_plot_full.index[0], historical_to_plot_full.index[-1], freq="1h")
+        )
 
     latest_reading = None
     if len(historical_to_plot_full) > 0:

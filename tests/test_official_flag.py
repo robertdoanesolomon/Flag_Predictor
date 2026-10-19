@@ -97,6 +97,32 @@ class OfficialFlagTests(unittest.TestCase):
         near = OF.black_indicator(pd.Series([0.2, 0.3, 0.36], idx[:3]))
         self.assertTrue(near['near'])
 
+    def test_stale_forecast_gets_no_outlook_or_sync(self):
+        """Gauges offline: the forecast starts days ago, so no outlook / sync note; an old
+        Iffley reading gets no Black note. Fresh again: both come back."""
+        import flag_predictor.prediction.hybrid_live as HL
+        names = OF.order('isis')
+        t0 = pd.Timestamp('2026-10-13 20:00', tz='UTC')
+        live = SimpleNamespace(members=pd.DataFrame({'m': np.full(73, 0.3)}, index=pd.date_range(t0, periods=73, freq='1h')),
+                               level_hist=np.full(49, 0.3), stepped_total=np.full((50, 73), 0.3), total_samples=None)
+        HL._cache['levels'] = {}
+        HL._cache['iffley_upstream'] = pd.Series([0.1, 0.12], pd.date_range(t0 - pd.Timedelta(hours=1), periods=2, freq='1h'))
+        OF._STATUS['isis'] = {'river': 'isis', 'flag': 'green', 'label': 'Green', 'notices': [], 'set_at': '2026-10-10T09:48:00Z'}
+        try:
+            out = OF.official_flag_payload('isis', live, now=t0 + pd.Timedelta(days=5))
+            self.assertTrue(out['official_flag']['forecast_stale'])
+            self.assertNotIn('official_outlook', out)
+            self.assertNotIn('sync', out['official_flag'])
+            self.assertNotIn('black', out)
+            out = OF.official_flag_payload('isis', live, now=t0 + pd.Timedelta(hours=1))
+            self.assertNotIn('forecast_stale', out['official_flag'])
+            self.assertEqual(out['official_flag']['sync']['band'], names[names.index('dark_blue') - 1])
+            self.assertIn('official_outlook', out)
+            self.assertIn('black', out)
+        finally:
+            OF._STATUS.pop('isis')
+            HL._cache.pop('levels'); HL._cache.pop('iffley_upstream')
+
     def test_payload_without_status_or_flags(self):
         OF._STATUS['godstow'] = None
         self.assertEqual(OF.official_flag_payload('godstow', SimpleNamespace()), {})

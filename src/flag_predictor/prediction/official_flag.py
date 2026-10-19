@@ -46,6 +46,10 @@ SINCE_CAP_H = 24 * 30
 FEATURES = ['day', 'mid', 'weekend', 'margin', 'margin_above', 'log_run', 'day_log_run', 'log_since', 'trend6',
             'isis', 'isis_margin', 'isis_margin_above']
 PARAMS_FILE = 'official_flag.json'
+# A forecast that starts longer ago than this (gauges offline) gets no official-flag outlook
+# or sync note: both would compare an old differential with the flag flying now. Same 4 h
+# as the page's "stale" label. An Iffley reading older than this gets no Black note.
+STALE_AFTER_H = 4.0
 OURCS_URL = 'https://ourcs.co.uk/information/flags/'
 
 
@@ -259,22 +263,35 @@ def black_indicator(iu: Optional[pd.Series]) -> Optional[dict]:
             'near': bool(not state and v.iloc[-1] >= BLACK_UP_M - 0.08)}
 
 
-def official_flag_payload(location: str, live, models_dir: Optional[Path] = None, seed: int = 0) -> dict:
-    """Preview-page fields: {'official_flag': {...}, 'official_outlook': {...} or absent}."""
+def official_flag_payload(location: str, live, models_dir: Optional[Path] = None, seed: int = 0,
+                          now: Optional[pd.Timestamp] = None) -> dict:
+    """Preview-page fields: {'official_flag': {...}, 'black': {...}, 'official_outlook': {...}}, each
+    only when it can be worked out. ``now`` (default: the clock) decides whether the forecast or
+    the Iffley reading is too old to compare with the flag flying now."""
     if location not in LINES:
         return {}
     status = current_status(location)
     if not status:
         return {}
+    now = pd.Timestamp.now(tz='UTC') if now is None else pd.Timestamp(now)
     out = {'official_flag': {**status, 'url': OURCS_URL}}
     if location == 'isis':
         try:
             from .hybrid_live import iffley_upstream_level
             b = black_indicator(iffley_upstream_level())
-            if b:
+            if b and (now - pd.Timestamp(b['at'])).total_seconds() / 3600 <= STALE_AFTER_H:
                 out['black'] = b
         except Exception as exc:
             print(f"  [official flag] black indicator skipped ({exc})")
+    members = getattr(live, 'members', None)
+    if members is None or len(members) == 0:
+        return out
+    t0 = pd.Timestamp(members.index[0])
+    t0 = t0.tz_localize('UTC') if t0.tz is None else t0
+    if (now - t0).total_seconds() / 3600 > STALE_AFTER_H:
+        out['official_flag']['forecast_stale'] = True
+        print(f"  [official flag] forecast starts {t0} (gauges offline?); no sync note or outlook")
+        return out
     flag = status['flag']
     names = order(location)
     hist = getattr(live, 'level_hist', None)
@@ -288,7 +305,6 @@ def official_flag_payload(location: str, live, models_dir: Optional[Path] = None
     if not pfile.exists() or paths is None or hist is None:
         return out
     params = FlagParams.load(pfile)
-    t0 = pd.Timestamp(live.members.index[0])
     set_at = pd.Timestamp(status['set_at']) if status.get('set_at') else None
     since = (t0 - set_at).total_seconds() / 3600 if set_at is not None else 24 * 30
     flags = simulate(params, location, names.index(flag), max(since, 0.0), hist, np.asarray(paths), t0,
