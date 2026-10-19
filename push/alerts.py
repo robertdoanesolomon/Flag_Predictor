@@ -139,7 +139,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
             else:                     # e.g. up from Dark Blue: Amber or straight to Red
                 where, emoji = '', None
                 parts = sorted(split.items(), key=lambda kv: -kv[1])
-                detail = ': ' + ', '.join(f'{_label(k)} {_pct(v)}' for k, v in parts if v >= 0.05)
+                detail = ': ' + ', '.join(f'{EMOJI.get(k, "")} {_label(k)} {_pct(v)}'.strip() for k, v in parts if v >= 0.05)
             if p_today >= LIKELY and k_today not in sent:
                 verb = f'{_word(p_today)} {d}' if clear else f'{_word(p_today)} to go {d}'
                 when_today = '' if when.endswith('tomorrow.') else when          # a today alert only gives a time today

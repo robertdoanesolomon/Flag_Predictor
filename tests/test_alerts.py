@@ -66,7 +66,7 @@ class AlertTests(unittest.TestCase):
         oo['up'] = {'flag': 'amber', 'when': None, 'split': {'amber': 0.4, 'red': 0.3}}
         msgs, _ = decide(b, {'isis': {'flag': 'dark_blue', 'sent': []}}, NOW)
         self.assertEqual(len(msgs), 1)
-        self.assertEqual(msgs[0]['body'], '⬆️ Isis Flag likely to go up by the end of tomorrow (70%): Amber 40%, Red 30%.')
+        self.assertEqual(msgs[0]['body'], '⬆️ Isis Flag likely to go up by the end of tomorrow (70%): 🟠 Amber 40%, 🔴 Red 30%.')
         oo['up']['split'] = {'amber': 0.6, 'red': 0.1}                 # 86% agree on Amber: named
         msgs, _ = decide(b, {'isis': {'flag': 'dark_blue', 'sent': []}}, NOW)
         self.assertEqual(msgs[0]['body'], '⬆️ 🟠 Isis Flag likely up to Amber by the end of tomorrow (70%).')
@@ -79,7 +79,7 @@ class AlertTests(unittest.TestCase):
         oo['up'] = {'flag': 'light_blue', 'when': None,
                     'split': {'light_blue': 0.45, 'dark_blue': 0.2, 'amber': 0.1, 'red': 0.05}}
         msgs, st = decide(b, {'isis': {'flag': 'green', 'sent': []}}, NOW)
-        self.assertIn('likely to go up by the end of tomorrow (85%): Light Blue 45%, Dark Blue 20%, Amber 10%, Red 5%', msgs[0]['body'])
+        self.assertIn('likely to go up by the end of tomorrow (85%): 🔷 Light Blue 45%, 🔵 Dark Blue 20%, 🟠 Amber 10%, 🔴 Red 5%', msgs[0]['body'])
         self.assertEqual(decide(b, st, NOW)[0], [])                       # same forecast: quiet
         oo['windows']['tomorrow']['up'] = 0.9
         oo['up']['split'] = {'light_blue': 0.1, 'dark_blue': 0.1, 'amber': 0.2, 'red': 0.5}   # Amber or higher 70%
