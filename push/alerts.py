@@ -142,7 +142,8 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 detail = ': ' + ', '.join(f'{_label(k)} {_pct(v)}' for k, v in parts if v >= 0.05)
             if p_today >= LIKELY and k_today not in sent:
                 verb = f'{_word(p_today)} {d}' if clear else f'{_word(p_today)} to go {d}'
-                msgs.append(_msg(river, f'Official Flag {verb}{where} today ({_pct(p_today)}){detail}.{_if_so(when, p_today)}', emoji, d))
+                when_today = '' if when.endswith('tomorrow.') else when          # a today alert only gives a time today
+                msgs.append(_msg(river, f'Official Flag {verb}{where} today ({_pct(p_today)}){detail}.{_if_so(when_today, p_today)}', emoji, d))
                 sent |= {k_today, k_tom}
                 if d == 'up':
                     up_top = likely_top or target
