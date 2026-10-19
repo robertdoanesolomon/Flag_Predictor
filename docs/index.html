@@ -342,6 +342,74 @@
       color: var(--accent);
       font-weight: 800;
     }
+    /* Flag-change outlook (step layer): sits above the summary sentence. */
+    .flag-outlook {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin: 8px 0 10px 0;
+      padding: 12px 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border-strong);
+      border-left: 6px solid var(--outlook-color, var(--border-strong));
+      border-radius: var(--radius-md);
+    }
+    .flag-outlook .flag-swatch {
+      flex: 0 0 auto;
+      width: 22px;
+      height: 16px;
+      margin-top: 4px;
+      border-radius: 3px;
+      background: var(--outlook-color, var(--border-strong));
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+    }
+    .flag-outlook .outlook-text { margin: 0; line-height: 1.45; }
+    .flag-outlook .outlook-main { font-weight: 700; font-size: clamp(0.95rem, 2vw, 1.08rem); color: var(--text); }
+    .flag-outlook .outlook-sub { display: block; margin-top: 2px; font-size: 0.86rem; color: var(--text-muted); }
+    .flag-outlook.quiet .outlook-main { font-weight: 600; }
+    .flag-outlook .outlook-rows { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .flag-outlook .outlook-row { display: flex; align-items: flex-start; gap: 12px; }
+    /* Preview page (docs/preview/, same file): blocks shown on one page only. */
+    .only-preview { display: none; }
+    body.preview .only-preview { display: block; }
+    body.preview .only-main { display: none; }
+    .only-preview-inline { display: none; }
+    body.preview .only-preview-inline { display: inline; }
+    body.preview .only-main-inline { display: none; }
+    .preview-banner {
+      margin: 0 0 14px 0;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border-strong);
+      background: var(--surface-soft);
+      color: var(--text-soft);
+      font-size: 0.92rem;
+    }
+    .official-flag {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      margin: 0 0 10px 0;
+      font-size: 0.95rem;
+      color: var(--text-soft);
+    }
+    .official-flag .flag-badge { font-size: 12px; padding: 4px 10px; }
+    .official-flag a { color: var(--accent-soft); }
+    .flag-sync-note {
+      margin: 0 0 12px 0;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--warning);
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+    .flag-card .official-mini { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+    @media (prefers-color-scheme: dark) {
+      .flag-outlook .flag-swatch { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+    }
     .panel .sub {
       margin: 0 0 18px 0;
       color: var(--text-muted);
@@ -838,6 +906,9 @@
         Isis, Godstow and Wallingford stretches of the Thames. Trained on historical rainfall + river data and
         run hourly with the latest rainfall ensemble forecasts.</p>
         <p class="hero-sub">Latest Experimental Forecasts</p>
+        <p class="preview-banner only-preview"><strong>Preview.</strong> New features being tried out: the
+        forecast in held levels and lock-keeper jumps, a flag-change box, and the official OURCs flag next to the
+        flag bands. <a href="../">The main forecast is here.</a></p>
       </div>
       <div id="status-pill" class="status-pill" aria-live="polite">
         <span class="dot"></span>
@@ -855,6 +926,32 @@
     <details class="about">
       <summary>About these forecasts</summary>
       <div class="about-body">
+        <div class="only-preview">
+        <h3>How do I read the chart?</h3>
+        The chart shows the recent observed river height differential (the black line) and a 10-day probabilistic
+        forecast. Each thin purple line is one possible future driven by a different rainfall forecast; the bold
+        purple line is their average, and the purple shading is the likely range (rain and model error together).
+        Horizontal bands shade the flag bands, daily rainfall is shown as bars on the right axis, and the dashed red
+        line marks "now". For Isis and Godstow, the stacked chart underneath shows the chance that the river will be
+        in each flag band at each point in the next 10 days.
+
+        <h3>Flag bands and the official flag</h3>
+        The coloured bands are ranges of the differential that roughly match the OURCs flags. They are not the flag:
+        OURCs sets the flag by hand (on the Isis by counting the bucks at Iffley weir; at Godstow from the lock
+        differential, since September 2024), and the official flag is shown above the chart, from
+        <a href="https://ourcs.co.uk/information/flags/" target="_blank" rel="noopener">ourcs.co.uk</a>. Comparing the
+        two since 2019, the flag and the band agree about 80&ndash;87% of the time. Going up, the flag usually changes
+        within an hour or two of the band, in daylight. Coming down it lags: it usually waits until the river is a few
+        centimetres below the line and has stayed there for a few daylight hours (at Godstow, Red often stays until
+        the differential is near 0.6). Flag changes almost always happen between 8am and 8pm. When the two disagree,
+        a note appears above the chart.
+        <br><br>
+        Black (Isis) is not a band: in big floods the differential stops rising (around 0.95), so the page watches the
+        river level at Iffley Lock instead. Since 2019 the official flag has gone Black once Iffley reached about
+        0.42&nbsp;m and come back to Red once it fell below about 0.22&nbsp;m, which matches the flag in 98% of Red/Black
+        hours. A note appears when Iffley is near or above that level. The forecast does not predict Iffley's level yet.
+        </div>
+        <div class="only-main">
         <h3>How do I read the chart?</h3>
         The chart shows the recent observed river height differential (the black line) and a 10-day probabilistic
         forecast (the blue spaghetti). Each thin blue line is one possible future trajectory driven by a different
@@ -862,6 +959,7 @@
         Horizontal bands shade the flag colours, daily rainfall is shown as bars on the right axis, and the dashed
         red line marks "now". For Isis and Godstow, the stacked chart underneath shows the probability that the river
         will be in each flag colour at each point in the next 10 days.
+        </div>
 
         <h3>What is the shaded band?</h3>
         The 50 blue lines only show how much the rainfall forecasts disagree. Even with the rain exactly right the
@@ -874,6 +972,31 @@
         flag probabilities underneath are worked out from the same outcomes, so they include the model's own
         uncertainty too.
 
+        <div class="only-preview">
+        <h3>What is the flag-change box, and why does the forecast jump?</h3>
+        The river does not rise and fall smoothly. Much of each change comes as a sudden jump when a lock keeper
+        adjusts the weir gates, mostly between 8am and 4pm and mostly when the river is already heading somewhere.
+        The model itself is smooth: when it isn't sure whether a jump comes this morning or tomorrow morning, it
+        spreads the change over both, so on its own it puts flag changes at any time of day. For the first three
+        days, every possible outcome is therefore turned into held levels and jumps. Each hour, the chance of a jump
+        depends on how far that outcome says the river still has to move over the next day, the time of day,
+        weekends, the trend over the past day, recent rain, how long since the last jump, and whether this stretch or
+        a neighbouring one jumped in the last three hours; how big a jump is (keepers often overshoot) comes from
+        past jumps. These rules were learned from the 15-minute river record and the model's own forecasts from
+        2019 to 2024 (without 2023), and checked on 2023 and on November 2024 to January 2026. Each outcome still
+        ends up where it was heading, so this mostly changes <em>when</em> the flag is forecast to change, not how high
+        the river gets.
+        <br><br>
+        The box above the summary is the share of those outcomes in which the flag changes, and stays changed for at
+        least three hours, today or by the end of tomorrow (UK time). In the check years, when the box would have said
+        "very likely" (over 80%), the change happened about 9 times in 10; "likely" (60&ndash;80%) about 6 to 7 times in
+        10. Those checks used the rain that actually fell, so with forecast rain the box will be a little less
+        certain. The first line of the box is the official flag: a model of when the flag gets changed (how far past
+        the line the river is, for how long, the time of day and weekends), fitted on the OURCs flag history (the Isis
+        since November 2021; Godstow since September 2024, when its flag started being set from this differential),
+        is run along every outcome starting from the flag flying now. The second line is the flag band.
+        </div>
+
         <h3>How have earlier forecasts done?</h3>
         Under each chart you can look back. <em>Past forecast</em>: drag the slider to any forecast from the last few
         weeks (one is saved every 6 hours) and see what it said against what the river then did, with its typical
@@ -882,10 +1005,14 @@
         the model-error band.
 
         <h3>How reliable is the summary sentence?</h3>
-        The summary sentence is simply a short description of the forecast, without any human intervention. The certainty
+        <span class="only-preview-inline">The summary sentence is written automatically from the
+        average forecast (the purple line), starting from the latest river reading, so it includes the first few
+        hours. How certain it says it is comes from the spread of the forecast. It's meant to give a general idea of
+        the next 10 days, not a precise prediction.</span>
+        <span class="only-main-inline">The summary sentence is simply a short description of the forecast, without any human intervention. The certainty
         bounds are just based off the spread of the forecast. Importantly, the summary sentence is based off the change
         from the first (+2h) prediction, so it doesn't take into account the initial jump at t=0. This summary sentence
-        is meant to give a general idea of the forecast, which is probably more reliable than the prediction chart itself.
+        is meant to give a general idea of the forecast, which is probably more reliable than the prediction chart itself.</span>
         <!-- Summary version 2 text:
         The summary sentence is written automatically from the average forecast (the purple line), starting from the
         latest river reading. How certain it says it is combines two things: how much the 50 rainfall forecasts disagree,
@@ -917,7 +1044,9 @@
     </details>
 
     <div class="footer">
-      Built by Rob Doane-Solomon — data from the Environment Agency &amp; Open-Meteo · model: physics hybrid, 5 trained copies × 50 rain members · <a href="old/">previous LSTM model</a>.
+      Built by Rob Doane-Solomon — data from the Environment Agency &amp; Open-Meteo · model: physics hybrid, 5 trained copies × 50 rain members ·
+      <span class="only-main-inline"><a href="old/">previous LSTM model</a> · <a href="preview/">preview of new features</a>.</span>
+      <span class="only-preview-inline"><a href="../">main forecast</a> · official flags from <a href="https://ourcs.co.uk/information/flags/" target="_blank" rel="noopener">OURCs</a>.</span>
     </div>
   </div>
 
@@ -926,19 +1055,30 @@
      Flag Predictor — interactive frontend
      ===================================================================== */
 
+  /** The preview page (docs/preview/) is this same file; it switches on the features being tried out. */
+  const PREVIEW = /\/preview(\/|\/index\.html)?$/.test(window.location.pathname)
+    || new URLSearchParams(window.location.search).has('preview');
+  if (PREVIEW) document.body.classList.add('preview');
+  const ARCHIVE_BASE = PREVIEW ? '../archive/' : 'archive/';
+  const BAND_WORD = PREVIEW ? 'flag band' : 'flag';
+
   const FLAG_COLORS = {
     green: '#008001',
     light_blue: '#02bfff',
     dark_blue: '#000080',
     amber: '#ffa503',
-    red: '#ff0000'
+    red: '#ff0000',
+    black: '#111111',
+    grey: '#9e9e9e'
   };
   const FLAG_LABELS = {
     green: 'Green',
     light_blue: 'Light Blue',
     dark_blue: 'Dark Blue',
     amber: 'Amber',
-    red: 'Red'
+    red: 'Red',
+    black: 'Black',
+    grey: 'Grey'
   };
   const LOCATION_LABELS = {
     isis: 'Isis',
@@ -1287,6 +1427,135 @@
     return SUMMARY_VERSION === 1 ? summariseForecastV1(loc) : summariseForecastV2(loc);
   }
 
+  /*
+   * Flag-change box (above the summary sentence), preview page only. Two rows:
+   *  - the official OURCs flag: a model of when the flag officer changes it
+   *    (it follows the bands with lags, and comes down later than it goes up);
+   *  - the flag band: the forecast outcomes after the lock-keeper step layer.
+   * A change counts when it holds for 3 hours.
+   */
+  const OUTLOOK_LEVELS = [[0.8, 'Very likely'], [0.6, 'Likely'], [0.35, 'Possible'], [0.2, 'Small chance']];
+  function outlookWord(p) {
+    const r = Math.round(p * 20) / 20;           // same rounding as the percentage shown
+    for (const [lo, w] of OUTLOOK_LEVELS) if (r >= lo - 1e-9) return w;
+    return null;
+  }
+  function outlookPct(p) {
+    if (p >= 0.95) return 'over 95%';
+    if (p < 0.05) return 'under 5%';
+    return `${Math.round(p * 20) * 5}%`;
+  }
+  function partOfDayUK(iso) {
+    const h = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone: TZ_UK }).format(new Date(iso)));
+    if (h >= 6 && h < 9) return 'early morning';
+    if (h >= 9 && h < 12) return 'mid-morning';
+    if (h >= 12 && h < 15) return 'early afternoon';
+    if (h >= 15 && h < 18) return 'late afternoon';
+    if (h >= 18 && h < 22) return 'in the evening';
+    return 'overnight';
+  }
+  function asUtcIso(iso) {
+    return iso && !/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso + 'Z' : iso;
+  }
+  /** One row of the box: {main, sub, color, strength} for an outlook ({windows, up, down, current_flag}). */
+  function outlookRow(o, subject, loc) {
+    if (!o || !o.windows || !o.windows.tomorrow) return null;
+    const today = o.windows.today || { up: 0, down: 0 };
+    const tom = o.windows.tomorrow;
+    const cands = ['up', 'down']
+      .filter((d) => o[d])
+      .map((d) => ({ dir: d, pToday: today[d] || 0, pTom: tom[d] || 0, info: o[d] }))
+      .sort((a, b) => b.pTom - a.pTom);
+    const curName = FLAG_LABELS[o.current_flag] || o.current_flag;
+    if (!cands.length) return null;
+    const best = cands[0];
+    const name = FLAG_LABELS[best.info.flag] || best.info.flag;
+    const wordToday = outlookWord(best.pToday);
+    const wordTom = outlookWord(best.pTom);
+    if (!wordToday && !wordTom) {
+      const bits = cands.map((c) => `${c.dir} to ${FLAG_LABELS[c.info.flag] || c.info.flag} ${outlookPct(c.pTom)}`);
+      return { main: `${subject} likely to stay ${curName} today and tomorrow`,
+               sub: `Chance of a change by the end of tomorrow: ${bits.join(', ')}.`,
+               color: FLAG_COLORS[o.current_flag], strength: 0 };
+    }
+    const whenIso = best.info.when && best.info.when.median_time;
+    const ukDate = (d) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ_UK, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+    const startIso = asUtcIso(loc.forecast_start);
+    const whenDay = whenIso && startIso ? (ukDate(new Date(whenIso)) === ukDate(new Date(startIso)) ? ' today' : ' tomorrow') : '';
+    const parts = [];
+    let main, p;
+    if (wordToday) {
+      p = best.pToday;
+      main = `${wordToday}: ${subject.toLowerCase()} ${best.dir} to ${name} today (${outlookPct(best.pToday)})`;
+      if (best.pTom - best.pToday >= 0.1) parts.push(`By the end of tomorrow: ${outlookPct(best.pTom)}.`);
+    } else {
+      p = best.pTom;
+      main = `${wordTom}: ${subject.toLowerCase()} ${best.dir} to ${name} by tomorrow (${outlookPct(best.pTom)})`;
+      parts.push(`Today: ${outlookPct(best.pToday)}.`);
+    }
+    if (whenIso) parts.push(`${p < 0.6 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.`);
+    return { main, sub: parts.join(' '), color: FLAG_COLORS[best.info.flag], strength: p };
+  }
+  function boxRowHtml(r) {
+    return `<div class="outlook-row"><span class="flag-swatch" style="background:${r.color || 'var(--border-strong)'}" aria-hidden="true"></span>
+      <p class="outlook-text"><span class="outlook-main">${r.main}</span><span class="outlook-sub">${r.sub}</span></p></div>`;
+  }
+  function renderFlagOutlookHtml(loc) {
+    if (!PREVIEW) return '';
+    const rows = [];
+    const off = loc.official_flag;
+    // A stale forecast (gauges offline) starts in the past: its "today / tomorrow" would be wrong
+    // and the band would be compared with the flag flying now, so show neither.
+    const stale = !!loc.stale || !!(off && off.forecast_stale);
+    const offRow = stale ? null : outlookRow(loc.official_outlook, 'Official flag', loc);
+    const bandRow = stale ? null : outlookRow(loc.flag_outlook, 'Flag band', loc);
+    if (offRow) rows.push(offRow);
+    if (bandRow) rows.push(bandRow);
+    let html = '';
+    if (off) {
+      const fg = readableTextColor(FLAG_COLORS[off.flag] || '#cccccc');
+      const setAt = off.set_at ? ` · set ${fmtShortDateTime(off.set_at)}` : '';
+      html += `<div class="official-flag">Official OURCs flag:
+        <span class="flag-badge" style="--flag-bg:${FLAG_COLORS[off.flag] || '#cccccc'}; --flag-text:${fg};">${off.label}</span>
+        <span>${setAt.replace(/^ · /, '')}</span>
+        <a href="${off.url || 'https://ourcs.co.uk/information/flags/'}" target="_blank" rel="noopener">ourcs.co.uk</a></div>`;
+      const sy = off.sync;
+      if (!stale && sy && sy.in_sync === false && off.flag !== 'grey') {
+        const bandName = FLAG_LABELS[sy.band] || sy.band;
+        const hrs = sy.hours_out_of_sync;
+        const since = hrs === null || hrs === undefined ? '' : hrs >= 48 ? ` for ${Math.round(hrs / 24)} days` : hrs >= 2 ? ` for ${hrs} hours` : '';
+        const why = sy.band_above_flag
+          ? 'Flags usually go up within an hour or two once the river is past the line, in daylight.'
+          : 'Flags usually come down a few daylight hours after the river is clearly (a few cm) below the line, so they lag the bands on the way down.';
+        html += `<div class="flag-sync-note">The official flag is <strong>${off.label}</strong> but the differential has been in the <strong>${bandName}</strong> band${since}. ${why}</div>`;
+      }
+    }
+    const bk = loc.black;
+    if (bk && (bk.black || bk.near || (off && off.flag === 'black'))) {
+      const lvl = `${bk.level_m.toFixed(2)} m`;
+      let msg;
+      if (bk.black) {
+        msg = `<strong>Black flag conditions:</strong> the river at Iffley Lock is at ${lvl}. The official flag usually goes Black once Iffley reaches about ${bk.up_m.toFixed(2)} m and stays Black until it drops below about ${bk.down_m.toFixed(2)} m (the differential cannot tell Red from Black in big floods).`;
+      } else if (off && off.flag === 'black') {
+        msg = `The river at Iffley Lock is at ${lvl}, below the ${bk.down_m.toFixed(2)} m at which the Black flag usually comes down to Red.`;
+      } else {
+        msg = `The river at Iffley Lock is at ${lvl}. The official flag usually goes Black once it reaches about ${bk.up_m.toFixed(2)} m.`;
+      }
+      html += `<div class="flag-sync-note" style="border-left-color:#111">${msg}</div>`;
+    }
+    if (stale) {
+      const lastAt = loc.latest_reading || loc.last_sensor_update;
+      const last = lastAt ? ` since ${fmtShortDateTime(lastAt)}` : '';
+      html += `<div class="flag-outlook quiet" role="status"><div class="outlook-rows"><div>No flag-change forecast: the river gauges for this stretch have not reported${last}. It comes back with the next update after they do.</div></div></div>`;
+    }
+    if (rows.length) {
+      const lead = rows.reduce((a, b) => (b.strength > a.strength ? b : a), rows[0]);
+      html += `<div class="flag-outlook${lead.strength < 0.35 ? ' quiet' : ''}" role="status" style="--outlook-color:${lead.color || 'var(--border-strong)'}">
+        <div class="outlook-rows">${rows.map(boxRowHtml).join('')}</div></div>`;
+    }
+    return html;
+  }
+
   /** Detect a dark theme and return Plotly template + grid colours. */
   function themeColors() {
     const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -1297,7 +1566,9 @@
       grid: dark ? 'rgba(255,255,255,0.07)' : 'rgba(15,40,30,0.08)',
       axis: dark ? 'rgba(255,255,255,0.5)' : 'rgba(15,40,30,0.5)',
       historicalLine: dark ? '#e7efeb' : '#0b1d18',
-      ensembleLine: dark ? 'rgba(120,180,220,0.45)' : 'rgba(70,130,180,0.45)',
+      ensembleLine: PREVIEW
+        ? (dark ? 'rgba(190,140,240,0.30)' : 'rgba(138,57,208,0.22)')
+        : (dark ? 'rgba(120,180,220,0.45)' : 'rgba(70,130,180,0.45)'),
       meanLine: '#8a39d0',
       nowLine: '#e0524d',
       rainHist: dark ? 'rgba(160,160,160,0.55)' : 'rgba(110,110,110,0.45)',
@@ -1326,7 +1597,9 @@
       const fg = readableTextColor(bg);
       const flagHtml = isWallingford
         ? `<span class="flag-badge no-flag">No flag</span>`
-        : `<span class="flag-badge" style="--flag-bg:${bg}; --flag-text:${fg};">${cur.flag_label} flag</span>`;
+        : `<span class="flag-badge" style="--flag-bg:${bg}; --flag-text:${fg};">${cur.flag_label} ${PREVIEW ? 'band' : 'flag'}</span>`;
+      const off = PREVIEW && loc.official_flag ? loc.official_flag : null;
+      const offHtml = off ? `<div class="official-mini">Official OURCs flag: <strong>${off.label}</strong></div>` : '';
       const peakInfo = computePeak(loc);
       const peak = fmtDiff(peakInfo.value);
       const peakDate = peakInfo.time ? fmtShortDate(peakInfo.time) : '—';
@@ -1338,6 +1611,7 @@
             ${flagHtml}
           </div>
           <div class="flag-value">${fmtDiff(cur.differential)}<small>m differential</small></div>
+          ${offHtml}
           <div class="flag-card-footer">
             <span>${relativeTime(loc.latest_reading || cur.timestamp)}</span>
             <span class="peak">Est. 10-day peak: ${peak} m · ${peakDate}</span>
@@ -1381,7 +1655,7 @@
 
       const probPlotHtml = isWallingford ? '' : `
         <div class="chart-block">
-          <h3 class="chart-title">Forecast flag probability${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
+          <h3 class="chart-title">Forecast ${BAND_WORD} probability${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
           ${renderProbLegendHtml(key)}
           <div id="prob-${key}" class="plot prob"></div>
         </div>`;
@@ -1395,6 +1669,7 @@
               ${loc.display_name}
               ${stale}
             </h2>
+            ${renderFlagOutlookHtml(loc)}
             ${(() => {
               const s = summariseForecast(loc);
               return s
@@ -1406,7 +1681,7 @@
             <div class="chart-block">
               <div class="chart-legend" data-plot="plot-${key}">
                 <button type="button" class="item" data-target="Historical Differential"><span class="swatch line" style="background:#0b1d18;"></span>Historical Differential</button>
-                <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:#4682b4;"></span>Ensemble Predictions (n=${loc.n_members})</button>
+                <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:${PREVIEW ? 'rgba(138,57,208,0.55)' : '#4682b4'};"></span>Ensemble Predictions (n=${loc.n_members})</button>
                 <button type="button" class="item" data-target="Ensemble Mean"><span class="swatch line" style="background:#8a39d0;"></span>Ensemble Mean</button>
                 ${loc.ensemble && loc.ensemble.total ? `<button type="button" class="item" data-target="Likely range"><span class="swatch square" style="background:rgba(118,46,186,0.45);"></span>Likely range (rain + model error)</button>` : ''}
                 <button type="button" class="item" data-target="Historical Rainfall"><span class="swatch square" style="background:#999;opacity:0.5;"></span>Historical Rainfall</button>
@@ -1885,14 +2160,14 @@
   function loadHistory() {
     if (HISTORY.loading) return HISTORY.loading;
     const get = (p) => fetch(p, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
-    HISTORY.loading = Promise.all([get('archive/index.json'), get('archive/observed.json'), get('archive/now.json')])
+    HISTORY.loading = Promise.all([get(ARCHIVE_BASE + 'index.json'), get(ARCHIVE_BASE + 'observed.json'), get(ARCHIVE_BASE + 'now.json')])
       .then(([index, observed, now]) => { HISTORY.index = index; HISTORY.observed = observed; HISTORY.now = now; });
     return HISTORY.loading;
   }
 
   function fetchIssue(slot) {
     if (!HISTORY.issues.has(slot)) {
-      HISTORY.issues.set(slot, fetch(`archive/issues/${slot}.json`).then(r => {
+      HISTORY.issues.set(slot, fetch(`${ARCHIVE_BASE}issues/${slot}.json`).then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       }));
@@ -2064,7 +2339,7 @@
     const traces = [
       { type: 'scatter', mode: 'lines', x: times, y: lo, line: { width: 0 }, hoverinfo: 'skip', name: 'lo' },
       { type: 'scatter', mode: 'lines', x: times, y: hi, fill: 'tonexty', line: { width: 0 },
-        fillcolor: hasTotal ? T.bandOuter : T.rainBand, hoverinfo: 'skip', name: 'hi' },
+        fillcolor: (hasTotal || PREVIEW) ? T.bandOuter : T.rainBand, hoverinfo: 'skip', name: 'hi' },
       { type: 'scatter', mode: 'lines', x: times, y: v.mean, line: { color: T.meanLine, width: 3 },
         name: 'Forecast', hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>Forecast %{y:.2f} m<extra></extra>' },
       { type: 'scatter', mode: 'lines', x: obsX, y: obsY, line: { color: T.historicalLine, width: 2.5 },
@@ -2107,9 +2382,11 @@
       ? `<span><strong>${n}</strong> h observed since</span>` +
         `<span>typical error <strong>${(100 * absErr / n).toFixed(1)} cm</strong></span>` +
         `<span>inside the ${bandName} <strong>${Math.round(100 * inBand / n)}%</strong> of hours</span>` +
-        (flagN ? `<span>right flag <strong>${Math.round(100 * flagRight / flagN)}%</strong> of hours</span>` : '')
+        (flagN ? `<span>right ${BAND_WORD} <strong>${Math.round(100 * flagRight / flagN)}%</strong> of hours</span>` : '')
       : '<span>No readings since this forecast yet.</span>';
-    block.querySelector('.history-note').innerHTML = hasTotal
+    block.querySelector('.history-note').innerHTML = PREVIEW
+      ? 'Shaded: its likely range. Black: what the river did.'
+      : hasTotal
       ? 'Purple line: what the forecast said (ensemble mean). Shaded: its likely range, combining the rain-forecast spread with the model\'s own past errors. Black: what the river did.'
       : 'Purple line: what the forecast said (ensemble mean). Blue shading: the spread from the rain forecast alone (this forecast was archived before the model-error range was added). Black: what the river did.';
   }
@@ -2172,9 +2449,10 @@
       (e1 !== null ? `<span>issued 0–2 days before: off by <strong>${e1} cm</strong></span>` : '') +
       (e2 !== null ? `<span>2–5 days before: <strong>${e2} cm</strong></span>` : '') +
       (e3 !== null ? `<span>5–10 days before: <strong>${e3} cm</strong></span>` : '') +
-      (flagNow !== null ? `<span>right flag in <strong>${flagHits} of ${rows.length}</strong></span>` : '');
-    block.querySelector('.history-note').innerHTML =
-      `Each dot is one archived forecast (saved every 6 hours); the bar is its ${useTotal ? 'likely range' : 'rain-forecast spread'}` +
+      (flagNow !== null ? `<span>right ${BAND_WORD} in <strong>${flagHits} of ${rows.length}</strong></span>` : '');
+    block.querySelector('.history-note').innerHTML = PREVIEW
+      ? 'Dots: what each forecast said. Bars: its likely range. Dashed: what the river read.'
+      : `Each dot is one archived forecast (saved every 6 hours); the bar is its ${useTotal ? 'likely range' : 'rain-forecast spread'}` +
       (useTotal && rows.some(r => r.total_p10 === undefined) ? ' (rain spread only for forecasts saved before the likely range was added)' : '') + '. ' +
       'The dashed line is what the river actually read. Forecasts closer to the right were issued nearer the time.';
   }

@@ -215,3 +215,42 @@ class ArchiveGapFillTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class OutageFillTests(unittest.TestCase):
+    def test_outage_bridged_leading_hole_and_long_runs_kept(self):
+        from flag_predictor.prediction.hybrid_live import fill_outage
+        idx = pd.date_range('2026-10-01', periods=400, freq='1h', tz='UTC')
+        d = pd.Series(np.nan, idx)
+        d.iloc[50:100] = 0.3                     # leading hole 0-49 (before the API window)
+        d.iloc[250:] = 0.5                       # 150 h outage 100-249, gauge back at 250
+        f = fill_outage(d)
+        self.assertTrue(f.iloc[:50].isna().all())
+        self.assertTrue(f.iloc[100:250].notna().all())
+        self.assertAlmostEqual(f.iloc[175], 0.3 + 0.2 * 76 / 151, places=6)
+        self.assertTrue(fill_outage(d, max_hours=100).iloc[100:250].isna().all())
+
+    def test_hours_since_outage(self):
+        from flag_predictor.prediction.hybrid_live import _hours_since_outage
+        idx = pd.date_range('2026-10-01', periods=300, freq='1h', tz='UTC')
+        d = pd.Series(0.3, idx)
+        d.iloc[:40] = np.nan                      # leading hole: not an outage
+        self.assertIsNone(_hours_since_outage(d))
+        d.iloc[100:120] = np.nan                  # under a day: the encoder copes
+        self.assertIsNone(_hours_since_outage(d))
+        d.iloc[150:295] = np.nan                  # gauge back 5 h ago
+        self.assertEqual(_hours_since_outage(d), 5)
+
+    def test_outage_shaped_by_neighbour(self):
+        from flag_predictor.prediction.hybrid_live import fill_outage
+        idx = pd.date_range('2026-09-01', periods=600, freq='1h', tz='UTC')
+        nb = pd.Series(0.2 + 0.3 * np.exp(-((np.arange(600) - 450) / 30.0) ** 2), idx)   # a flood peak
+        d = 0.05 + 1.5 * nb + 0.01 * np.sin(np.arange(600) / 7.0)
+        gappy = d.copy()
+        gappy.iloc[400:500] = np.nan                                     # outage over the peak
+        shaped = fill_outage(gappy, nb, slope=1.4)
+        straight = fill_outage(gappy)
+        err = lambda f: float((f.iloc[400:500] - d.iloc[400:500]).abs().mean())
+        self.assertLess(err(shaped), 0.02)
+        self.assertGreater(err(straight), 0.15)
+        self.assertTrue(np.allclose(shaped.iloc[:400], d.iloc[:400]))

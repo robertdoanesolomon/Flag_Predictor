@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import math
 import os
 import sys
@@ -162,6 +163,8 @@ def build_location_payload(
     total_samples: Optional[np.ndarray] = None,
     model_name: Optional[str] = None,
     model_note: Optional[str] = None,
+    flag_outlook: Optional[dict] = None,
+    extra: Optional[dict] = None,
 ) -> dict:
     """Assemble a JSON-serialisable dict with everything the frontend needs.
 
@@ -314,6 +317,8 @@ def build_location_payload(
         **({"model": model_name} if model_name else {}),
         **({"model_note": model_note} if model_note else {}),
         "earliest_flag_changes": earliest,
+        **({"flag_outlook": flag_outlook} if flag_outlook else {}),
+        **(extra or {}),
         "summary": {
             "last_24h_rain_mm": round(last24_rain, 2) if last24_rain is not None else None,
             "last_7d_rain_mm": round(last7d_rain, 2) if last7d_rain is not None else None,
@@ -628,6 +633,8 @@ def render_location_outputs(
     model_name: Optional[str] = None,
     model_note: Optional[str] = None,
     make_figures: bool = True,
+    flag_outlook: Optional[dict] = None,
+    extra: Optional[dict] = None,
 ) -> dict:
     """Figures and the JSON payload for one location's ensemble forecast (steps 5-7).
 
@@ -1012,6 +1019,12 @@ def render_location_outputs(
     historical_to_plot_full = historical_to_plot_full[
         historical_to_plot_full.index <= forecast_start_time
     ]
+    # Hours with no reading (a gauge outage) become nulls so the page breaks the line there
+    # instead of drawing a straight line across the gap as if it had been measured.
+    if len(historical_to_plot_full) > 1:
+        historical_to_plot_full = historical_to_plot_full.reindex(
+            pd.date_range(historical_to_plot_full.index[0], historical_to_plot_full.index[-1], freq="1h")
+        )
 
     latest_reading = None
     if len(historical_to_plot_full) > 0:
@@ -1035,12 +1048,29 @@ def render_location_outputs(
         total_samples=total_samples,
         model_name=model_name,
         model_note=model_note,
+        flag_outlook=flag_outlook,
+        extra=extra,
     )
     return payload
 
 
 # Mean-station hourly rain per member, per location, from this run (for the archive).
 LIVE_MEMBER_RAIN: dict = {}
+# Preview page payloads (stepped forecast, flag-band outlook, official flag), per location.
+PREVIEW_PAYLOADS: dict = {}
+
+
+def preview_extras(location: str, live) -> dict:
+    """Extra preview-page fields: the official OURCs flag and its forecast."""
+    out: dict = {}
+    if live.step_triggers:
+        out["step_triggers"] = live.step_triggers
+    try:
+        from flag_predictor.prediction.official_flag import official_flag_payload
+        out.update(official_flag_payload(location, live))
+    except Exception as exc:
+        print(f"  [official flag] skipped for {location} ({type(exc).__name__}: {exc})")
+    return out
 
 
 def generate_spaghetti_figure(
@@ -1051,6 +1081,7 @@ def generate_spaghetti_figure(
     beta_dir: Path | None = None,
     live_title_suffix: str = "",
     beta_title_suffix: str = " (beta)",
+    preview_dir: Path | None = None,
 ) -> tuple[dict | None, dict | None]:
     """
     Generate the spaghetti + rainfall figure for a single location and save it.
@@ -1206,6 +1237,27 @@ def generate_spaghetti_figure(
                 model_note=live.note,
             )
             LIVE_MEMBER_RAIN[location] = live.member_rain
+            if preview_dir is not None and live.stepped_members is not None:
+                try:
+                    PREVIEW_PAYLOADS[location] = render_location_outputs(
+                        location=location,
+                        output_dir=preview_dir,
+                        merged_df=merged_df,
+                        ensemble_predictions=live.stepped_members,
+                        rainfall_forecast=rain_forecast(n_members),
+                        config=config,
+                        flag_thresholds=flag_thresholds,
+                        title_suffix=" (preview)",
+                        total_samples=live.stepped_total,
+                        model_name=live.model_name,
+                        model_note=live.note,
+                        make_figures=False,
+                        flag_outlook=live.flag_outlook,
+                        extra=preview_extras(location, live),
+                    )
+                except Exception:
+                    print(f"\n[WARNING] Preview payload failed for '{location}':")
+                    traceback.print_exc()
         except Exception:
             print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
             traceback.print_exc()
@@ -1255,6 +1307,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Do not add this run to docs/archive (forecast history for the website).",
     )
     parser.add_argument(
+        "--preview-dir",
+        default=None,
+        help=(
+            "With --primary hybrid: also write the preview page (stepped forecast, flag-change box, "
+            "official OURCs flag) here, e.g. docs/preview. Failures never affect the main page."
+        ),
+    )
+    parser.add_argument(
         "--old-dir",
         default=None,
         help="With --primary hybrid: where the September LSTM forecast is written (e.g. docs/old).",
@@ -1288,6 +1348,21 @@ def write_forecast_bundle(output_dir: Path, payloads: dict, failed_locations: li
         with open(json_path, "w") as f:
             json.dump(bundle, f, separators=(",", ":"))
         print(f"\n✓ Interactive JSON payload saved to: {json_path}")
+
+
+def write_preview(output_dir: Path, preview_dir: Path, locations: list) -> None:
+    """Preview page: same page as the main one (it switches its preview features on from its
+    path), its own forecast_data.json. Never affects the main page."""
+    try:
+        failed = [loc for loc in locations if loc not in PREVIEW_PAYLOADS]
+        write_forecast_bundle(preview_dir, dict(PREVIEW_PAYLOADS), failed)
+        page = output_dir / "index.html"
+        if page.exists():
+            shutil.copyfile(page, preview_dir / "index.html")
+        print(f"  [preview] written to {preview_dir} ({len(PREVIEW_PAYLOADS)} locations)")
+    except Exception:
+        print("\n[WARNING] Preview page failed:")
+        traceback.print_exc()
 
 
 def archive_forecasts(output_dir: Path, payloads: dict) -> None:
@@ -1344,6 +1419,7 @@ def main(argv: list[str] | None = None) -> None:
         return path
 
     hybrid_primary = args.primary == "hybrid"
+    preview_dir = _resolve(args.preview_dir) if hybrid_primary else None
     if hybrid_primary:
         # September renders into old_dir, the hybrid into the main output_dir.
         main_dir = output_dir
@@ -1369,6 +1445,7 @@ def main(argv: list[str] | None = None) -> None:
                 beta_dir=beta_dir,
                 live_title_suffix=live_suffix,
                 beta_title_suffix=beta_suffix,
+                preview_dir=preview_dir,
             )
         except Exception:
             failed_locations.append(location)
@@ -1394,6 +1471,8 @@ def main(argv: list[str] | None = None) -> None:
         write_forecast_bundle(september_dir, dict(all_payloads), failed_locations)
         if not args.no_archive:
             archive_forecasts(output_dir, main_payloads)
+        if preview_dir is not None:
+            write_preview(output_dir, preview_dir, locations_to_process)
     else:
         write_forecast_bundle(output_dir, all_payloads, failed_locations)
         if beta_dir is not None:

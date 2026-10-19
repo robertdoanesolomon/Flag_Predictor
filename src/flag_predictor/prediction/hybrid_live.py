@@ -41,6 +41,22 @@ SIMFEAT_MODELS: dict = {}
 ERROR_LIBRARY = 'error_library_{tag}_{location}.npz'
 HORIZON = 240
 HISTORY_DAYS = 60
+# Lock-keeper step layer (step_layer.py): a stepped copy of every outcome (held
+# levels and daytime jumps) plus the flag-change box, for the preview page.
+# The main page keeps the smooth forecast. Off, or a missing
+# models/step_layer_<location>.json, = no stepped copy.
+STEP_LAYER = True
+# Gauge outages up to this long, once the gauge is back, are bridged before the encoder sees
+# them (fill_outage; gap test in EXPERIMENTS.md "Gauge outages")...
+OUTAGE_FILL_MAX_H = 14 * 24
+# ...but only for the first hours after it is back: by then the bridge helps the first two
+# days a lot (Isis, 7-12 day outage, 1 h back: 48 h error 2.0 cm vs 3.0-3.3 cm unbridged,
+# 1.9 cm with no outage); a day after, the unbridged forecast is as good or better.
+OUTAGE_BRIDGE_FOR_H = 12
+# Neighbouring stretch for each, with the 2019-2026 slope of 24 h changes (this on neighbour);
+# the slope used is this, pulled towards the slope fitted on the two weeks before the outage
+# when the neighbour moved enough then to show it.
+OUTAGE_NEIGHBOUR = {'isis': ('godstow', 0.67), 'godstow': ('isis', 0.96), 'wallingford': ('isis', 1.18)}
 
 # Gauges each location's hybrid was trained on (the column order of the
 # training frame; the encoder's rain features sum over exactly these).
@@ -105,6 +121,69 @@ def rain_forecast(n_members: int) -> pd.DataFrame:
     return _cache[key]
 
 
+def fill_outage(diff: pd.Series, neighbour: Optional[pd.Series] = None, slope: float = 1.0,
+                max_hours: int = OUTAGE_FILL_MAX_H, fit_hours: int = 14 * 24) -> pd.Series:
+    """Bridge gauge outages (runs of missing hours between two readings).
+
+    The encoder only interpolates gaps up to a day itself; a longer hole left as NaN
+    inside its 100 h window skews the forecast once the gauge is back. A hole longer
+    than a day is shaped by a neighbouring stretch's differential when that has data
+    through the hole (d = b * neighbour + a residual drawn straight between the
+    readings either side; b is ``slope`` pulled towards the slope fitted on the
+    ``fit_hours`` before the hole when the neighbour moved enough then), otherwise
+    bridged with a straight line. Holes at the start of the frame (before the API
+    window) and runs longer than ``max_hours`` stay NaN.
+    """
+    na = diff.isna().to_numpy()
+    if not na.any() or (~na).sum() < 2:
+        return diff
+    out = diff.copy()
+    straight = diff.interpolate(method='time', limit_area='inside')
+    nb = neighbour.reindex(diff.index) if neighbour is not None else None
+    edges = np.flatnonzero(np.diff(np.r_[0, na.astype(int), 0]))
+    shaped = bridged = 0
+    for i0, i1 in zip(edges[::2], edges[1::2]):          # missing run diff[i0:i1]
+        if i0 == 0 or i1 == len(diff) or i1 - i0 > max_hours:
+            continue
+        seg = straight.iloc[i0:i1]
+        if nb is not None and i1 - i0 > 24 and nb.iloc[i0:i1].notna().mean() > 0.8:
+            pre = pd.DataFrame({'d': diff.iloc[max(0, i0 - fit_hours):i0],
+                                'n': nb.iloc[max(0, i0 - fit_hours):i0]}).dropna()
+            ends = nb.iloc[[i0 - 1, i1]]
+            if len(pre) >= 48 and ends.notna().all():
+                var = float(pre['n'].var())
+                fit = float(np.polyfit(pre['n'], pre['d'], 1)[0]) if var > 0 else slope
+                w = var / (var + 0.03 ** 2)
+                b = float(np.clip(w * fit + (1 - w) * slope, 0.0, 2.5))
+                n_seg = nb.iloc[i0 - 1:i1 + 1].interpolate(limit_area='inside')
+                r = (diff.iloc[i0 - 1:i1 + 1] - b * n_seg).interpolate(method='time', limit_area='inside')
+                seg = (r + b * n_seg).iloc[1:-1]
+                shaped += i1 - i0
+        out.iloc[i0:i1] = seg.to_numpy()
+        bridged += i1 - i0
+    if bridged:
+        print(f"  [beta] bridged {bridged} missing differential hours (gauge outage); "
+              f"{shaped} shaped by the neighbouring stretch, the rest a straight line")
+    return out
+
+
+def _hours_since_outage(diff: pd.Series) -> Optional[int]:
+    """Hours of readings since the last run of more than a day of missing hours, or None."""
+    na = diff.isna().to_numpy()
+    edges = np.flatnonzero(np.diff(np.r_[0, na.astype(int), 0]))
+    ends = [i1 for i0, i1 in zip(edges[::2], edges[1::2]) if i0 > 0 and i1 < len(na) and i1 - i0 > 24]
+    return len(na) - ends[-1] if ends else None
+
+
+def _neighbour_differential(location: str, grid: pd.DatetimeIndex) -> Optional[pd.Series]:
+    """The best-correlated other stretch's hourly differential (EA, ~4 weeks), or None."""
+    other = OUTAGE_NEIGHBOUR.get(location, (None, 1.0))[0]
+    ser = _all_differentials().get(other) if other else None
+    if ser is None or len(ser) == 0:
+        return None
+    return ser.resample('1h').mean().reindex(grid)
+
+
 def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd.DataFrame:
     """Continuous hourly history ending at the production frame's last hour."""
     merged = _to_utc(merged_df)
@@ -116,6 +195,9 @@ def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd
     rain = api.reindex(index=grid, columns=gauges).combine_first(csv) if len(api) else csv
     flow = merged['flow_m3s_Farmoor'].reindex(grid).ffill(limit=6) if 'flow_m3s_Farmoor' in merged else np.nan
     diff = merged['differential'].reindex(grid)
+    back = _hours_since_outage(diff)
+    if back is not None and back <= OUTAGE_BRIDGE_FOR_H:
+        diff = fill_outage(diff, _neighbour_differential(location, grid), OUTAGE_NEIGHBOUR[location][1])
     frame = pd.concat([diff.rename('differential'), rain], axis=1)
     frame['flow_m3s_Farmoor'] = flow
     missing = rain.isna().all(axis=1).loc[t0 - pd.Timedelta(days=35):].mean()
@@ -134,6 +216,13 @@ class LiveForecast:
     # The previous live model (plain hybrid) on the same rain, when the new forecast
     # used a different model; None means the members above are also the previous model's.
     previous_members: Optional[pd.DataFrame] = None
+    # Stepped copies (step_layer.py) for the preview page; None if the step layer is off or failed.
+    stepped_members: Optional[pd.DataFrame] = None
+    stepped_total: Optional[np.ndarray] = None
+    # Chance of a flag-band change today / by the end of tomorrow (step_layer.flag_outlook).
+    flag_outlook: Optional[dict] = None
+    step_triggers: Optional[dict] = None
+    level_hist: Optional[np.ndarray] = None       # hourly observed differential, last 49 h to t0
 
 
 def forecast_ensemble(
@@ -231,8 +320,71 @@ def forecast_with_uncertainty(
     except Exception as exc:   # the spread is extra; never lose the forecast over it
         print(f"  [model error] failed ({exc}); showing rain spread only")
         total = None
+    stepped = (None, None, None, None)
+    if STEP_LAYER:
+        try:
+            stepped = step_forecast(location, frame, members_df, rain_df, total, models_dir)
+        except Exception as exc:   # never lose the forecast over the step layer either
+            print(f"  [step layer] failed ({type(exc).__name__}: {exc}); no stepped copy")
     return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag, note=note,
-                        previous_members=previous_df)
+                        previous_members=previous_df, stepped_members=stepped[0], stepped_total=stepped[1],
+                        flag_outlook=stepped[2], step_triggers=stepped[3],
+                        level_hist=frame['differential'].loc[:t0].to_numpy()[-49:])
+
+
+def _all_differentials() -> Dict[str, pd.Series]:
+    """Hourly differential of every stretch from one EA fetch (cached per process), for the jump triggers."""
+    if 'levels' not in _cache:
+        from ..data.api import (calculate_godstow_differential, calculate_isis_differential,
+                                calculate_wallingford_differential, fetch_river_level_data)
+        out: Dict[str, pd.Series] = {}
+        try:
+            levels = fetch_river_level_data(verbose=False)
+            iu = levels.get('iffley_upstream')
+            if iu is not None and not iu.empty and 'level' in iu.columns:
+                _cache['iffley_upstream'] = _to_utc(iu[['level']])['level']
+            for loc, fn in (('isis', calculate_isis_differential), ('godstow', calculate_godstow_differential),
+                            ('wallingford', calculate_wallingford_differential)):
+                try:
+                    out[loc] = _to_utc(fn(levels))['differential']
+                except Exception as exc:
+                    print(f"  [step layer] no {loc} differential for the jump triggers ({exc})")
+        except Exception as exc:
+            print(f"  [step layer] river-level fetch for the jump triggers failed ({exc})")
+        _cache['levels'] = out
+    return _cache['levels']
+
+
+def iffley_upstream_level() -> Optional[pd.Series]:
+    """Iffley Lock upstream stage (m), last ~4 weeks, for the Black-flag indicator."""
+    _all_differentials()
+    return _cache.get('iffley_upstream')
+
+
+def step_forecast(location: str, frame: pd.DataFrame, members_df: pd.DataFrame, rain_df: pd.DataFrame,
+                  total: Optional[np.ndarray], models_dir: Path):
+    """(stepped members, stepped outcomes, flag-band outlook, triggers seen); Nones without parameters."""
+    from ..config import get_flag_thresholds
+    from .step_layer import apply_live
+    t0 = members_df.index[0]
+    gauges = [g for g in TRAINING_GAUGES[location] if g in frame.columns]
+    level_hist = frame['differential'].loc[:t0].to_numpy()[-49:]
+    rain_hist = frame[gauges].clip(lower=0).mean(axis=1).fillna(0.0).loc[:t0].to_numpy()[-24:]
+    grid = pd.date_range(t0 - pd.Timedelta(hours=11), t0, freq='1h')
+    neighbours = {loc: ser.reindex(grid).to_numpy() for loc, ser in _all_differentials().items() if loc != location}
+    out = apply_live(location, level_hist, rain_hist, members_df.to_numpy().T, rain_df.to_numpy().T, total, t0,
+                     get_flag_thresholds(location), models_dir, neighbour_hists=neighbours)
+    if out is None:
+        print(f"  [step layer] no parameters for {location}; no stepped copy")
+        return None, None, None, None
+    members_out = pd.DataFrame(out.members.T, index=members_df.index, columns=members_df.columns)
+    o = out.outlook
+    print(f"  [step layer] jumps in the last 3 h: {out.triggers}")
+    if o:
+        w = o['windows']
+        print(f"  [step layer] flag now {o['current_flag']}; change up today {w['today']['up']:.0%} / by tomorrow "
+              f"{w['tomorrow']['up']:.0%}, down {w['today']['down']:.0%} / {w['tomorrow']['down']:.0%}")
+    return members_out, out.total, o, out.triggers
 
 
 def forecast_rain_gauges(location: str) -> List[str]:
