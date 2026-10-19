@@ -183,3 +183,13 @@ jobs:
 
           echo "Failed to push after retries"
           exit 1
+
+      # Flag alerts (push/send_push.py): after the forecast, whether or not every location
+      # succeeded. Does nothing until the Cloudflare secrets are set; never fails the run.
+      - name: Send flag alerts
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: python push/send_push.py

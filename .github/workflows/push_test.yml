@@ -1,0 +1,26 @@
+name: Send a test flag alert
+
+# Sends "Test alert: ... flag alerts are working." to every phone signed up for the chosen stretch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stretch:
+        description: "Who to send it to"
+        type: choice
+        options: [all, isis, godstow]
+        default: all
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests pywebpush
+      - run: python push/send_push.py --test ${{ inputs.stretch }}
