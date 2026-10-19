@@ -1,0 +1,10 @@
+# Cloudflare Worker that stores alert sign-ups (push/worker/src/index.js).
+# Deployed by .github/workflows/deploy_push.yml, which fills in the KV namespace id.
+name = "flagpredictor-alerts"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "SUBS"
+id = "__KV_NAMESPACE_ID__"

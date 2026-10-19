@@ -70,6 +70,15 @@ Additions:
    is bridged for the first 12 h (`fill_outage` in `hybrid_live.py`). No OURCs
    officer's name is stored or shown.
 
+6. **Flag alerts** (preview page): the page can be installed on a phone
+   (`docs/preview/manifest.webmanifest`, `sw.js`, `icons/`) and send Web Push
+   notifications when the official flag changes or is likely to (60%+) today or by
+   tomorrow, and when Black is likely. Sign-ups go to a small Cloudflare Worker
+   (`push/worker/`, KV storage); the hourly run decides and sends the alerts
+   (`push/alerts.py`, `push/send_push.py`). Set-up: add the repository secrets
+   `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, then run the "Deploy flag
+   alerts" workflow; "Send a test flag alert" checks it end to end.
+
 Starting the forecast *from* the simulated state (rather than giving it to the
 encoder) was also tried and was worse; see `EXPERIMENTS.md`.
 

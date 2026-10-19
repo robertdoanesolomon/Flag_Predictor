@@ -12,3 +12,4 @@ shap>=0.43.0
 jupyter>=1.0.0
 nbconvert>=7.0.0
 ipykernel>=6.25.0
+pywebpush>=2.0

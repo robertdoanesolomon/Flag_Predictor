@@ -408,6 +408,29 @@
       font-size: 0.92rem;
     }
     body.preview details.preview-banner { display: block; }
+    .alerts-card {
+      margin: 0 0 14px 0;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+    }
+    body.preview .alerts-card { display: block; }
+    .alerts-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+    .alerts-head h2 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--text); }
+    .alerts-status { font-size: 0.86rem; font-weight: 600; color: var(--accent-soft); }
+    .alerts-help { margin: 6px 0 10px 0; font-size: 0.9rem; color: var(--text-soft); line-height: 1.45; }
+    .alerts-card [hidden] { display: none !important; }
+    .alerts-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+    .alerts-river { display: inline-flex; align-items: center; gap: 6px; font-size: 0.95rem; color: var(--text); min-height: 44px; cursor: pointer; }
+    .alerts-river input { width: 20px; height: 20px; accent-color: var(--accent-soft); }
+    .alerts-btn {
+      min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--accent);
+      background: var(--accent); color: #fff; font: inherit; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+    }
+    .alerts-btn.secondary { background: transparent; color: var(--accent-soft); border-color: var(--border-strong); }
+    .alerts-btn:disabled { opacity: 0.6; cursor: default; }
+    @media (prefers-color-scheme: dark) { .alerts-btn:not(.secondary) { color: #0b1815; } }
     .preview-banner summary { cursor: pointer; line-height: 1.5; }
     .preview-banner summary strong { color: var(--text); }
     .preview-banner ul { margin: 8px 0 2px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; line-height: 1.45; }
@@ -928,6 +951,19 @@
             when they come back, the gap is bridged.</li>
           </ul>
         </details>
+        <section class="alerts-card only-preview" id="alerts-card" aria-labelledby="alerts-title">
+          <div class="alerts-head">
+            <h2 id="alerts-title">Flag alerts on your phone</h2>
+            <span class="alerts-status" id="alerts-status"></span>
+          </div>
+          <p class="alerts-help" id="alerts-help">A notification when the official flag changes, or is likely to change today or by tomorrow (60% or more), and when Black is likely on the Isis.</p>
+          <div class="alerts-controls" id="alerts-controls">
+            <label class="alerts-river"><input type="checkbox" value="isis" checked> Isis</label>
+            <label class="alerts-river"><input type="checkbox" value="godstow" checked> Godstow</label>
+            <button type="button" class="alerts-btn" id="alerts-on">Turn on alerts</button>
+            <button type="button" class="alerts-btn secondary" id="alerts-off" hidden>Turn off</button>
+          </div>
+        </section>
       </div>
       <div id="status-pill" class="status-pill" aria-live="polite">
         <span class="dot"></span>
@@ -1082,6 +1118,17 @@
   const PREVIEW = /\/preview(\/|\/index\.html)?$/.test(window.location.pathname)
     || new URLSearchParams(window.location.search).has('preview');
   if (PREVIEW) document.body.classList.add('preview');
+  // Preview page: installable (manifest, icons, service worker) with flag alerts.
+  if (PREVIEW) {
+    const addHead = (tag, attrs) => { const el = document.createElement(tag); Object.assign(el, attrs); document.head.appendChild(el); };
+    addHead('link', { rel: 'manifest', href: 'manifest.webmanifest' });
+    addHead('link', { rel: 'apple-touch-icon', href: 'icons/apple-touch-icon.png' });
+    addHead('meta', { name: 'theme-color', content: '#0b3d2e' });
+    addHead('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
+    addHead('meta', { name: 'apple-mobile-web-app-title', content: 'Flag Predictor' });
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch((e) => console.warn('service worker', e));
+    window.addEventListener('DOMContentLoaded', setupAlerts);
+  }
   // The "what is new" summary starts folded on phones, where it would fill the first screen.
   if (PREVIEW && window.matchMedia && window.matchMedia('(max-width: 720px)').matches) {
     const pb = document.querySelector('details.preview-banner');
@@ -2545,6 +2592,87 @@
       bundle.location_order.forEach(k => {
         try { setupHistory(k, bundle.locations[k]); } catch (err) { console.error('history failed', k, err); }
       });
+    });
+  }
+
+  /* ----------------------- FLAG ALERTS (preview) ---------------------------- */
+
+  /** Turn the "Flag alerts" card on: subscribe this device for Web Push via the alerts Worker. */
+  async function setupAlerts() {
+    const card = document.getElementById('alerts-card');
+    if (!card) return;
+    const status = document.getElementById('alerts-status');
+    const help = document.getElementById('alerts-help');
+    const controls = document.getElementById('alerts-controls');
+    const onBtn = document.getElementById('alerts-on');
+    const offBtn = document.getElementById('alerts-off');
+    const boxes = [...card.querySelectorAll('.alerts-river input')];
+    const rivers = () => boxes.filter((b) => b.checked).map((b) => b.value);
+    const STORE = 'flag-alert-rivers';
+    const save = (v) => { try { v ? localStorage.setItem(STORE, JSON.stringify(v)) : localStorage.removeItem(STORE); } catch (e) {} };
+    const saved = () => { try { return JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) { return null; } };
+    const names = { isis: 'Isis', godstow: 'Godstow' };
+    const setStatus = (t) => { status.textContent = t || ''; };
+    const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      controls.hidden = true;
+      help.innerHTML = ios && !standalone
+        ? 'On iPhone, alerts work from the home-screen app: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>, open Flag Predictor from your home screen, and turn alerts on there.'
+        : 'This browser cannot receive alerts. Try Chrome or Safari on your phone, added to the home screen.';
+      return;
+    }
+    let cfg = null;
+    try { const r = await fetch('push_config.json', { cache: 'no-store' }); if (r.ok) cfg = await r.json(); } catch (e) {}
+    if (!cfg || !cfg.worker || !cfg.vapid_public) {
+      controls.hidden = true;
+      setStatus('Coming soon');
+      return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const keyBytes = (b64) => {
+      const s = atob(b64.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - b64.length % 4) % 4));
+      return Uint8Array.from(s, (c) => c.charCodeAt(0));
+    };
+    const post = (path, body) => fetch(cfg.worker + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const show = (sub) => {
+      const on = !!sub && Notification.permission === 'granted';
+      const rv = on ? (saved() || ['isis', 'godstow']) : null;
+      if (rv) boxes.forEach((b) => { b.checked = rv.includes(b.value); });
+      setStatus(on ? `On for ${rv.map((r) => names[r]).join(' and ')}` : '');
+      onBtn.textContent = on ? 'Update' : 'Turn on alerts';
+      offBtn.hidden = !on;
+    };
+    show(await reg.pushManager.getSubscription());
+
+    onBtn.addEventListener('click', async () => {
+      const rv = rivers();
+      if (!rv.length) { setStatus('Tick at least one stretch'); return; }
+      onBtn.disabled = true;
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') { setStatus('Notifications are blocked in your settings'); return; }
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(cfg.vapid_public) });
+        const r = await post('/subscribe', { subscription: sub.toJSON(), rivers: rv });
+        if (!r.ok) throw new Error('signup ' + r.status);
+        save(rv);
+        show(sub);
+      } catch (e) {
+        console.warn('alerts', e);
+        setStatus('Could not turn alerts on; try again');
+      } finally { onBtn.disabled = false; }
+    });
+    offBtn.addEventListener('click', async () => {
+      offBtn.disabled = true;
+      try {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) { await post('/unsubscribe', { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); }
+        save(null);
+        show(null);
+        setStatus('Off');
+      } finally { offBtn.disabled = false; }
     });
   }
 

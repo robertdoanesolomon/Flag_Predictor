@@ -1,0 +1,73 @@
+"""Checks for the flag-alert rules (push/alerts.py)."""
+
+import sys
+import unittest
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'push'))
+
+from alerts import decide  # noqa: E402
+
+NOW = datetime(2026, 2, 12, 7, 0, tzinfo=timezone.utc)
+
+
+def bundle(flag='red', down_today=0.0, down_tom=0.0, stale=False, black=None, age_h=0.5):
+    loc = {'stale': stale,
+           'official_flag': {'flag': flag, 'label': flag.title()},
+           'official_outlook': {'current_flag': flag,
+                                'windows': {'today': {'up': 0.0, 'down': down_today}, 'tomorrow': {'up': 0.0, 'down': down_tom}},
+                                'up': None,
+                                'down': {'flag': 'amber', 'when': {'median_time': '2026-02-13T10:00:00+00:00'}}}}
+    if black is not None:
+        loc['black'] = black
+    return {'generated_at': (NOW - timedelta(hours=age_h)).isoformat(), 'locations': {'isis': loc}}
+
+
+class AlertTests(unittest.TestCase):
+    def test_likely_change_once_then_today(self):
+        msgs, st = decide(bundle(down_tom=0.7), {'isis': {'flag': 'red', 'sent': []}}, NOW)
+        self.assertEqual(len(msgs), 1)
+        self.assertIn('likely down to Amber by the end of tomorrow (70%)', msgs[0]['body'])
+        self.assertIn('Probably mid-morning tomorrow', msgs[0]['body'])
+        msgs, st = decide(bundle(down_tom=0.75), st, NOW)            # same forecast an hour later: quiet
+        self.assertEqual(msgs, [])
+        msgs, st = decide(bundle(down_today=0.65, down_tom=0.8), st, NOW)   # now today too: one more
+        self.assertEqual(len(msgs), 1)
+        self.assertIn('today (65%)', msgs[0]['body'])
+        msgs, st = decide(bundle(down_today=0.7, down_tom=0.8), st, NOW)
+        self.assertEqual(msgs, [])
+
+    def test_reset_after_the_chance_drops(self):
+        _, st = decide(bundle(down_tom=0.7), {'isis': {'flag': 'red', 'sent': []}}, NOW)
+        _, st = decide(bundle(down_tom=0.5), st, NOW)                # hovering: no reset
+        self.assertEqual(decide(bundle(down_tom=0.7), st, NOW)[0], [])
+        _, st = decide(bundle(down_tom=0.1), st, NOW)                # dropped well below
+        self.assertEqual(len(decide(bundle(down_tom=0.7), st, NOW)[0]), 1)
+
+    def test_flag_change_and_first_run(self):
+        msgs, st = decide(bundle(flag='red'), {}, NOW)               # first run: just remember
+        self.assertEqual(msgs, [])
+        msgs, st = decide(bundle(flag='amber'), st, NOW)
+        self.assertEqual([m['body'] for m in msgs], ['Official flag now Amber (was Red).'])
+        self.assertEqual(st['isis']['flag'], 'amber')
+
+    def test_stale_or_old_bundle_sends_nothing_new(self):
+        self.assertEqual(decide(bundle(down_tom=0.9, stale=True), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
+        self.assertEqual(decide(bundle(down_tom=0.9, age_h=5), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
+        msgs, _ = decide(bundle(flag='amber', stale=True), {'isis': {'flag': 'red', 'sent': []}}, NOW)
+        self.assertEqual(len(msgs), 1)                              # a real flag change still counts
+
+    def test_black(self):
+        bk = {'black_now': False, 'level_m': 0.39, 'windows': {'today': 0.2, 'tomorrow': 0.55},
+              'when': {'median_time': '2026-02-12T11:00:00+00:00'}}
+        msgs, st = decide(bundle(black=bk), {'isis': {'flag': 'red', 'sent': []}}, NOW)
+        self.assertEqual(len(msgs), 1)
+        self.assertIn('Black flag likely by the end of tomorrow (55%)', msgs[0]['body'])
+        self.assertIn('0.39 m', msgs[0]['body'])
+        self.assertIn('Probably mid-morning today', msgs[0]['body'])
+        self.assertEqual(decide(bundle(black=bk), st, NOW)[0], [])
+
+
+if __name__ == '__main__':
+    unittest.main()
