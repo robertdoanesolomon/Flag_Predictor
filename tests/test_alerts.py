@@ -58,6 +58,19 @@ class AlertTests(unittest.TestCase):
         self.assertEqual(decide(bundle(down_tom=0.9, stale=True), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
         self.assertEqual(decide(bundle(down_tom=0.9, age_h=5), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
 
+    def test_unclear_destination_gives_the_split(self):
+        b = bundle(flag='dark_blue')
+        oo = b['locations']['isis']['official_outlook']
+        oo['windows']['tomorrow']['up'] = 0.7
+        oo['down'] = None
+        oo['up'] = {'flag': 'amber', 'when': None, 'split': {'amber': 0.4, 'red': 0.3}}
+        msgs, _ = decide(b, {'isis': {'flag': 'dark_blue', 'sent': []}}, NOW)
+        self.assertEqual(len(msgs), 1)
+        self.assertEqual(msgs[0]['body'], '⬆️ Official Flag likely to go up by the end of tomorrow (70%): Amber 40%, Red 30%.')
+        oo['up']['split'] = {'amber': 0.6, 'red': 0.1}                 # 86% agree on Amber: named
+        msgs, _ = decide(b, {'isis': {'flag': 'dark_blue', 'sent': []}}, NOW)
+        self.assertEqual(msgs[0]['body'], '⬆️ 🟠 Official Flag likely up to Amber by the end of tomorrow (70%).')
+
     def test_black(self):
         bk = {'black_now': False, 'level_m': 0.39, 'windows': {'today': 0.2, 'tomorrow': 0.65},
               'when': {'median_time': '2026-02-12T11:00:00+00:00'}}

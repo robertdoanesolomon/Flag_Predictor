@@ -1566,6 +1566,11 @@
                sub: `${bits.join('. ')}.`, now: cur, tomorrow, strength: 0 };
     }
     const lead = (w) => (w === 'Possible' ? 'Possibly' : w === 'Small chance' ? 'Small chance:' : w);
+    // Going up can skip a flag: name the destination only when 75%+ of the outcomes that change agree.
+    const split = Object.entries(best.info.split || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    const splitTotal = split.reduce((t, [, v]) => t + v, 0);
+    const unclear = split.length > 1 && split[0][1] / splitTotal < 0.75;
+    const splitText = unclear ? split.filter(([, v]) => v >= 0.05).map(([k, v]) => `${FLAG_LABELS[k] || k} ${outlookPct(v)}`).join(', ') + '.' : '';
     const whenIso = best.info.when && best.info.when.median_time;
     const ukDate = (d) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ_UK, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
     const startIso = asUtcIso(loc.forecast_start);
@@ -1573,17 +1578,20 @@
     const parts = [];
     let main, p;
     // Lead with today only when most of the chance is today (same word); else with tomorrow.
+    const dest = unclear ? '' : ` ${to} ${name}`;
     if (wordToday && wordToday === wordTom) {
       p = best.pToday;
-      main = `${lead(wordToday)} ${best.dir} ${to} ${name} today (${outlookPct(best.pToday)})`;
+      main = `${lead(wordToday)} ${best.dir}${dest} today (${outlookPct(best.pToday)})`;
       if (best.pTom - best.pToday >= 0.1) parts.push(`By the end of tomorrow: ${outlookPct(best.pTom)}.`);
     } else {
       p = best.pTom;
-      main = `${lead(wordTom)} ${best.dir} ${to} ${name} by tomorrow (${outlookPct(best.pTom)})`;
+      main = `${lead(wordTom)} ${best.dir}${dest} by tomorrow (${outlookPct(best.pTom)})`;
       parts.push(`Today: ${outlookPct(best.pToday)}.`);
     }
+    if (splitText) parts.unshift(splitText);
     if (whenIso) parts.push(`${p < 0.6 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.`);
-    return { main, sub: parts.join(' '), now: cur, tomorrow, strength: p };
+    const tomChips = unclear ? [cur, ...split.slice(0, 2).map(([k]) => k)] : tomorrow;
+    return { main, sub: parts.join(' '), now: cur, tomorrow: tomChips, strength: p };
   }
   function chipHtml(key) {
     return `<span class="fc-chip" style="background:${FLAG_COLORS[key] || 'var(--border-strong)'}" title="${FLAG_LABELS[key] || key}"></span>`;

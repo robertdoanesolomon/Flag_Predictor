@@ -24,6 +24,7 @@ RIVERS = ('isis', 'godstow')
 NAMES = {'isis': 'Isis', 'godstow': 'Godstow'}
 LIKELY = 0.6
 RESET = 0.3
+CLEAR = 0.75     # name the destination only when this share of the outcomes that change agree on it
 MAX_BUNDLE_AGE_H = 3.0
 SITE_URL = 'https://flagpredictor.com/preview/'
 UK = ZoneInfo('Europe/London')
@@ -103,17 +104,28 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
             p_today = (win.get('today') or {}).get(d, 0.0) or 0.0
             p_tom = (win.get('tomorrow') or {}).get(d, 0.0) or 0.0
             target = info.get('flag')
-            k_today, k_tom = f'{d}:{target}:today', f'{d}:{target}:tomorrow'
+            split = {k: v for k, v in (info.get('split') or {}).items() if v > 0}
+            total = sum(split.values())
+            clear = not split or max(split.values()) / total >= CLEAR
+            k_today, k_tom = f'{d}:today', f'{d}:tomorrow'
             if p_tom < RESET:
                 sent -= {k for k in sent if k.startswith(f'{d}:')}
                 continue
             when = _when((info.get('when') or {}).get('median_time'), now)
+            if clear:
+                where, emoji = f' to {_label(target)}', target
+                detail = ''
+            else:                     # e.g. up from Dark Blue: Amber or straight to Red
+                where, emoji = '', None
+                parts = sorted(split.items(), key=lambda kv: -kv[1])
+                detail = ': ' + ', '.join(f'{_label(k)} {_pct(v)}' for k, v in parts if v >= 0.05)
+            verb = f'likely {d}' if clear else f'likely to go {d}'
             if p_today >= LIKELY and k_today not in sent:
-                msgs.append(_msg(river, f'Official Flag likely {d} to {_label(target)} today ({_pct(p_today)}).{when}', target, d))
+                msgs.append(_msg(river, f'Official Flag {verb}{where} today ({_pct(p_today)}){detail}.{when}', emoji, d))
                 sent |= {k_today, k_tom}
             elif p_tom >= LIKELY and k_tom not in sent:
-                msgs.append(_msg(river, f'Official Flag likely {d} to {_label(target)} by the end of tomorrow '
-                                        f'({_pct(p_tom)}).{when}', target, d))
+                msgs.append(_msg(river, f'Official Flag {verb}{where} by the end of tomorrow ({_pct(p_tom)}){detail}.{when}',
+                                 emoji, d))
                 sent.add(k_tom)
 
         bk = loc.get('black') if river == 'isis' else None
