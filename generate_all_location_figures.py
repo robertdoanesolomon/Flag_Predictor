@@ -165,6 +165,9 @@ def build_location_payload(
     model_note: Optional[str] = None,
     flag_outlook: Optional[dict] = None,
     extra: Optional[dict] = None,
+    historical_rainfall_hourly: Optional[pd.Series] = None,
+    forecast_rain_hourly: Optional[pd.Series] = None,
+    now: Optional[pd.Timestamp] = None,
 ) -> dict:
     """Assemble a JSON-serialisable dict with everything the frontend needs.
 
@@ -245,6 +248,21 @@ def build_location_payload(
     if len(forecast_rain_mean) > 0:
         next24_rain = float(forecast_rain_mean.iloc[0]) if len(forecast_rain_mean) >= 1 else None
         next7d_rain = float(forecast_rain_mean.iloc[:7].sum()) if len(forecast_rain_mean) >= 1 else None
+
+    # Rolling windows from the hourly series when we have them: "next 24 h" means the 24 hours
+    # from now, not today's calendar-day total (which includes hours already past).
+    if historical_rainfall_hourly is not None and len(historical_rainfall_hourly.dropna()) > 0:
+        h = historical_rainfall_hourly.dropna()
+        end = h.index[-1]
+        last24_rain = float(h[h.index > end - pd.Timedelta(hours=24)].sum())
+        last7d_rain = float(h[h.index > end - pd.Timedelta(days=7)].sum())
+    if forecast_rain_hourly is not None and len(forecast_rain_hourly) > 0:
+        f = forecast_rain_hourly
+        t0 = (now if now is not None else pd.Timestamp.now(tz="UTC").tz_localize(None)).floor("h")
+        f = f[f.index > t0]
+        if len(f) > 0:
+            next24_rain = float(f[f.index <= t0 + pd.Timedelta(hours=24)].sum())
+            next7d_rain = float(f[f.index <= t0 + pd.Timedelta(days=7)].sum())
 
     # Forecast peak (ensemble mean) within the visible window — i.e. up to
     # the day after the last full rainfall forecast day. This matches the
@@ -758,6 +776,7 @@ def render_location_outputs(
 
     # Calculate rainfall ensemble statistics
     forecast_rain_mean = member_totals_daily.mean(axis=1)
+    forecast_rain_hourly = member_totals.mean(axis=1)
     forecast_rain_p10 = member_totals_daily.quantile(0.10, axis=1)
     forecast_rain_p90 = member_totals_daily.quantile(0.90, axis=1)
 
@@ -1036,6 +1055,8 @@ def render_location_outputs(
         plot_stats=plot_stats,
         historical_to_plot=historical_to_plot_full,
         historical_rainfall_daily=historical_rainfall_daily,
+        historical_rainfall_hourly=historical_rainfall_hourly,
+        forecast_rain_hourly=forecast_rain_hourly,
         forecast_rain_mean=forecast_rain_mean,
         forecast_rain_p10=forecast_rain_p10,
         forecast_rain_p90=forecast_rain_p90,
