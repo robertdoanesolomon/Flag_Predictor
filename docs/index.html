@@ -407,6 +407,11 @@
       color: var(--text-soft);
       font-size: 0.92rem;
     }
+    body.preview details.preview-banner { display: block; }
+    .preview-banner summary { cursor: pointer; line-height: 1.5; }
+    .preview-banner summary strong { color: var(--text); }
+    .preview-banner ul { margin: 8px 0 2px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; line-height: 1.45; }
+    .preview-banner li strong { color: var(--text); font-weight: 600; }
     .flag-card .official-mini { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
     .panel .sub {
       margin: 0 0 18px 0;
@@ -906,9 +911,21 @@
         Isis, Godstow and Wallingford stretches of the Thames. Trained on historical rainfall + river data and
         run hourly with the latest rainfall ensemble forecasts.</p>
         <p class="hero-sub">Latest Experimental Forecasts</p>
-        <p class="preview-banner only-preview"><strong>Preview.</strong> New features being tried out: the
-        forecast in held levels and lock-keeper jumps, a flag-change box, and the official OURCs flag next to the
-        flag bands. <a href="../">The main forecast is here.</a></p>
+        <details class="preview-banner only-preview" open>
+          <summary><strong>Preview:</strong> what is new here. <a href="../">The main forecast is here.</a></summary>
+          <ul>
+            <li><strong>Official OURCs flag</strong> as a big tile, with cards for the chance it changes today or by the
+            end of tomorrow, and where the differential is heading. Flags lag the differential coming down; that is
+            built in.</li>
+            <li><strong>Black flag (Isis)</strong>: a card appears only when Black is close, from a forecast of the
+            Iffley Lock level.</li>
+            <li><strong>Lock-keeper jumps</strong>: for the first three days the forecast moves in held levels and
+            daytime jumps, as the weirs are adjusted, instead of a smooth line.</li>
+            <li><strong>Gauge outages</strong>: a stretch whose gauges are offline shows no flag-change forecast;
+            when they come back, the gap is bridged.</li>
+            <li>Purple forecast lines, and the band chart is now "Chance the differential is in each band".</li>
+          </ul>
+        </details>
       </div>
       <div id="status-pill" class="status-pill" aria-live="polite">
         <span class="dot"></span>
@@ -973,10 +990,11 @@
         of past forecasts that started from a similar situation (similar river level, trend, recent and forecast
         rain, and time of year). The outer shading holds 80% of the resulting outcomes and the inner shading 50%. The
         flag probabilities underneath are worked out from the same outcomes, so they include the model's own
-        uncertainty too.
+        uncertainty too. That is why they can show a small chance of a higher flag even when every rain line
+        stays in the current one.
 
         <div class="only-preview">
-        <h3>What is the flag-change box, and why does the forecast jump?</h3>
+        <h3>What are the flag cards, and why does the forecast jump?</h3>
         The river does not rise and fall smoothly. Much of each change comes as a sudden jump when a lock keeper
         adjusts the weir gates, mostly between 8am and 4pm and mostly when the river is already heading somewhere.
         The model itself is smooth: when it isn't sure whether a jump comes this morning or tomorrow morning, it
@@ -1062,6 +1080,11 @@
   const PREVIEW = /\/preview(\/|\/index\.html)?$/.test(window.location.pathname)
     || new URLSearchParams(window.location.search).has('preview');
   if (PREVIEW) document.body.classList.add('preview');
+  // The "what is new" summary starts folded on phones, where it would fill the first screen.
+  if (PREVIEW && window.matchMedia && window.matchMedia('(max-width: 720px)').matches) {
+    const pb = document.querySelector('details.preview-banner');
+    if (pb) pb.open = false;
+  }
   const ARCHIVE_BASE = PREVIEW ? '../archive/' : 'archive/';
   const BAND_WORD = PREVIEW ? 'flag band' : 'flag';
 
@@ -1653,7 +1676,7 @@
       const fg = readableTextColor(bg);
       const flagHtml = isWallingford
         ? `<span class="flag-badge no-flag">No flag</span>`
-        : `<span class="flag-badge" style="--flag-bg:${bg}; --flag-text:${fg};">${cur.flag_label} ${PREVIEW ? 'band' : 'flag'}</span>`;
+        : `<span class="flag-badge" style="--flag-bg:${bg}; --flag-text:${fg};">${PREVIEW ? `Differential: ${cur.flag_label}` : `${cur.flag_label} flag`}</span>`;
       const off = PREVIEW && loc.official_flag ? loc.official_flag : null;
       const offHtml = off ? `<div class="official-mini">Official OURCs flag: <strong>${off.label}</strong></div>` : '';
       const peakInfo = computePeak(loc);
@@ -1711,7 +1734,7 @@
 
       const probPlotHtml = isWallingford ? '' : `
         <div class="chart-block">
-          <h3 class="chart-title">Forecast ${BAND_WORD} probability${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
+          <h3 class="chart-title">${PREVIEW ? 'Chance the differential is in each band' : 'Forecast flag probability'}${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
           ${renderProbLegendHtml(key)}
           <div id="prob-${key}" class="plot prob"></div>
         </div>`;
@@ -2122,7 +2145,7 @@
         fixedrange: true
       },
       yaxis: {
-        title: { text: 'Flag probability', font: { size: compact ? 11 : 13, color: T.font } },
+        title: { text: PREVIEW ? 'Chance' : 'Flag probability', font: { size: compact ? 11 : 13, color: T.font } },
         range: [0, 1],
         tickformat: '.0%',
         gridcolor: T.grid,
