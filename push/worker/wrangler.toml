@@ -8,3 +8,7 @@ workers_dev = true
 [[kv_namespaces]]
 binding = "SUBS"
 id = "__KV_NAMESPACE_ID__"
+
+# Check the official OURCs flags every minute and alert on a change (checkFlags in src/index.js).
+[triggers]
+crons = ["* * * * *"]

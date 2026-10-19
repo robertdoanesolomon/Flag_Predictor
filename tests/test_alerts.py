@@ -48,22 +48,24 @@ class AlertTests(unittest.TestCase):
     def test_flag_change_and_first_run(self):
         msgs, st = decide(bundle(flag='red'), {}, NOW)               # first run: just remember
         self.assertEqual(msgs, [])
-        msgs, st = decide(bundle(flag='amber'), st, NOW)
-        self.assertEqual([m['body'] for m in msgs], ['Official Flag now Amber (was Red).'])
-        self.assertEqual(st['isis']['flag'], 'amber')
+        _, st = decide(bundle(flag='red', down_tom=0.7), st, NOW)
+        self.assertTrue(st['isis']['sent'])
+        msgs, st = decide(bundle(flag='amber'), st, NOW)       # the change itself: sent by the Worker
+        self.assertEqual(msgs, [])
+        self.assertEqual(st['isis'], {'flag': 'amber', 'sent': []})
 
     def test_stale_or_old_bundle_sends_nothing_new(self):
         self.assertEqual(decide(bundle(down_tom=0.9, stale=True), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
         self.assertEqual(decide(bundle(down_tom=0.9, age_h=5), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
-        msgs, _ = decide(bundle(flag='amber', stale=True), {'isis': {'flag': 'red', 'sent': []}}, NOW)
-        self.assertEqual(len(msgs), 1)                              # a real flag change still counts
 
     def test_black(self):
-        bk = {'black_now': False, 'level_m': 0.39, 'windows': {'today': 0.2, 'tomorrow': 0.55},
+        bk = {'black_now': False, 'level_m': 0.39, 'windows': {'today': 0.2, 'tomorrow': 0.65},
               'when': {'median_time': '2026-02-12T11:00:00+00:00'}}
         msgs, st = decide(bundle(black=bk), {'isis': {'flag': 'red', 'sent': []}}, NOW)
         self.assertEqual(len(msgs), 1)
-        self.assertIn('Black Flag likely by the end of tomorrow (55%)', msgs[0]['body'])
+        self.assertIn('Black Flag likely by the end of tomorrow (65%)', msgs[0]['body'])
+        low = dict(bk, windows={'today': 0.2, 'tomorrow': 0.55})              # 55%: below the 60% line
+        self.assertEqual(decide(bundle(black=low), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
         self.assertIn('0.39 m', msgs[0]['body'])
         self.assertIn('Probably mid-morning today', msgs[0]['body'])
         self.assertEqual(decide(bundle(black=bk), st, NOW)[0], [])

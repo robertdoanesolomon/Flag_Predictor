@@ -11,7 +11,7 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(msg.title || 'Flag Predictor', {
     body: msg.body || '',
     tag: msg.tag || 'flag',
-    renotify: true,
+    renotify: msg.renotify !== false,
     icon: 'icons/icon-192.png',
     badge: 'icons/badge-72.png',
     data: { url },

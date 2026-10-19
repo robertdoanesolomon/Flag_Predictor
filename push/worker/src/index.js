@@ -1,13 +1,17 @@
+import { sendPush } from './webpush.js';
+
 /**
- * Flag Predictor alerts: stores Web Push subscriptions for the site.
+ * Flag Predictor alerts: stores Web Push subscriptions for the site, and every minute (cron)
+ * checks the official OURCs flags and alerts everyone signed up for a stretch the moment its
+ * flag changes.
  *
  *   GET  /vapid        -> { publicKey }      (the VAPID public key, base64url)
  *   POST /subscribe    { subscription, rivers: ["isis", "godstow"] }
  *   POST /unsubscribe  { endpoint }
  *
- * Subscriptions live in the SUBS KV namespace as "sub:<sha-256 of the endpoint>".
- * The hourly forecast job (send_push.py) reads them, and the VAPID private key, through the
- * Cloudflare API and sends the notifications; this Worker never sends anything.
+ * Subscriptions live in the SUBS KV namespace as "sub:<sha-256 of the endpoint>". The forecast
+ * alerts ("likely to change") are sent by the hourly forecast job (push/send_push.py); the
+ * "flag has changed" alerts by this Worker's scheduled handler, so they arrive within a minute.
  */
 
 const RIVERS = ['isis', 'godstow'];
@@ -51,7 +55,83 @@ function validSubscription(s) {
   return typeof k.p256dh === 'string' && typeof k.auth === 'string' && k.p256dh.length < 200 && k.auth.length < 100;
 }
 
+// ---- official flag watch (cron, every minute) ----
+const NAMES = { isis: 'Isis', godstow: 'Godstow' };
+const LETTERS = { G: 'green', LB: 'light_blue', DB: 'dark_blue', B: 'blue', A: 'amber', R: 'red', K: 'black',
+  BL: 'black', X: 'grey', GR: 'grey', GY: 'grey' };
+const SITE_URL = 'https://flagpredictor.com/preview/';
+
+export function flagFromStatus(j) {
+  const text = String((j && j.status_text) || '').trim();
+  if (text) return { key: text.toLowerCase().replace(/\s+/g, '_').replace('gray', 'grey'), label: text };
+  const key = LETTERS[String((j && j.status) || '').toUpperCase()];
+  return key ? { key, label: key.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase()) } : null;
+}
+
+async function subscriptions(env) {
+  const out = [];
+  let cursor;
+  do {
+    const page = await env.SUBS.list({ prefix: 'sub:', cursor });
+    for (const k of page.keys) {
+      const raw = await env.SUBS.get(k.name);
+      if (raw) { try { out.push({ key: k.name, ...JSON.parse(raw) }); } catch (e) { /* skip */ } }
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  return out;
+}
+
+export async function checkFlags(env, fetchStatus = (r) => fetch(`https://ourcs.co.uk/api/flags/status/${r}/`, {
+  headers: { 'User-Agent': 'FlagPredictor alerts (flagpredictor.com)' }, signal: AbortSignal.timeout(10000),
+})) {
+  const changes = [];
+  for (const river of RIVERS) {
+    let flag;
+    try {
+      const res = await fetchStatus(river);
+      if (!res.ok) continue;
+      const j = await res.json();
+      flag = flagFromStatus(j);
+      if (flag) flag.setAt = j.set_date || null;
+    } catch (e) { continue; }                 // OURCs unreachable: try again next minute
+    if (!flag) continue;
+    const stateKey = `flag:${river}`;
+    const prev = JSON.parse((await env.SUBS.get(stateKey)) || 'null');
+    if (prev && prev.key === flag.key) continue;
+    await env.SUBS.put(stateKey, JSON.stringify(flag));    // first, so the next minute does not send it again
+    if (prev) changes.push({ river, flag, prev });
+  }
+  if (!changes.length) return [];
+  const [privatePem, publicKey] = await Promise.all([env.SUBS.get('config:vapid_private'), env.SUBS.get('config:vapid_public')]);
+  if (!privatePem || !publicKey) return changes;
+  const vapid = { privatePem, publicKey, subject: 'https://flagpredictor.com' };
+  const subs = await subscriptions(env);
+  for (const { river, flag, prev } of changes) {
+    const payload = {
+      title: `${NAMES[river]} Flag`,
+      body: `Official Flag now ${flag.label} (was ${prev.label}).`,
+      url: SITE_URL,
+      // one tag per change, shown without a second buzz if it ever arrives twice
+      tag: `flag-change-${river}-${flag.setAt || flag.key}`,
+      renotify: false,
+    };
+    for (const s of subs) {
+      if (!(s.rivers || []).includes(river)) continue;
+      try {
+        const status = await sendPush(s.subscription, payload, vapid);
+        if (status === 404 || status === 410) await env.SUBS.delete(s.key);
+      } catch (e) { /* one bad subscription must not stop the rest */ }
+    }
+  }
+  return changes;
+}
+
 export default {
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(checkFlags(env));
+  },
+
   async fetch(request, env) {
     const origin = request.headers.get('Origin');
     const { pathname } = new URL(request.url);

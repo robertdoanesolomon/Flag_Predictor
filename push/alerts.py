@@ -3,10 +3,10 @@ Which flag alerts to send after a forecast run (pure logic, no network).
 
 Per stretch (Isis, Godstow), from the preview bundle (docs/preview/forecast_data.json):
 
-* the official OURCs flag has changed since the last run      -> "Official Flag now Amber (was Red)"
+* (the official flag has changed: sent within a minute by the Cloudflare Worker, push/worker)
 * the official flag is likely to change: chance >= LIKELY today, or by the end of tomorrow
                                                                -> "Flag likely down to Amber by tomorrow (70%) ..."
-* Isis only: Black likely by the end of tomorrow (>= BLACK_LIKELY), or, when Black, likely back to Red.
+* Isis only: Black likely by the end of tomorrow (>= LIKELY), or, when Black, likely back to Red.
 
 Each "likely" alert is sent once per flag; it can be sent again only after its chance has
 dropped below RESET (so a forecast hovering around the threshold does not alert every hour), or
@@ -23,7 +23,6 @@ from zoneinfo import ZoneInfo
 RIVERS = ('isis', 'godstow')
 NAMES = {'isis': 'Isis', 'godstow': 'Godstow'}
 LIKELY = 0.6
-BLACK_LIKELY = 0.5
 RESET = 0.3
 MAX_BUNDLE_AGE_H = 3.0
 SITE_URL = 'https://flagpredictor.com/preview/'
@@ -80,8 +79,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
         prev = (state or {}).get(river) or {}
         sent = set(prev.get('sent', []))
         if prev.get('flag') and prev['flag'] != flag:
-            msgs.append(_msg(river, f"Official Flag now {_label(flag)} (was {_label(prev['flag'])})."))
-            sent = set()
+            sent = set()             # the change itself is alerted by the Worker; start afresh
         if loc.get('stale') or off.get('forecast_stale'):
             new_state[river] = {'flag': flag, 'sent': sorted(sent)}
             continue
@@ -117,7 +115,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
             sent.discard(other)
             if p_tom < RESET:
                 sent.discard(key)
-            elif p_tom >= (LIKELY if is_black else BLACK_LIKELY) and key not in sent:
+            elif p_tom >= LIKELY and key not in sent:
                 when = _when((bk.get('when') or {}).get('median_time'), now)
                 text = (f'Black Flag likely back to Red by the end of tomorrow ({_pct(p_tom)}).{when}' if is_black
                         else f'Black Flag likely by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
