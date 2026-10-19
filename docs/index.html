@@ -342,33 +342,64 @@
       color: var(--accent);
       font-weight: 800;
     }
-    /* Flag-change outlook (step layer): sits above the summary sentence. */
-    .flag-outlook {
+    /* Preview page: official flag tile + forecast cards (above the summary sentence). */
+    .flag-head {
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr);
+      gap: 16px;
+      margin: 10px 0 14px 0;
+    }
+    .flag-head.no-tile { grid-template-columns: minmax(0, 1fr); }
+    .flag-tile-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .flag-tile {
+      box-sizing: border-box;
+      min-height: 150px;
+      padding: 16px 18px;
+      border-radius: var(--radius-md);
+      background: var(--flag-bg, #ccc);
+      color: var(--flag-text, #fff);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
       display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      margin: 8px 0 10px 0;
-      padding: 12px 16px;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .flag-tile-icon { width: 26px; height: 30px; }
+    .flag-tile-name { font-size: 36px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+    .flag-tile-meta { font-size: 13px; line-height: 1.45; color: var(--text-soft); }
+    .fc-cards { display: flex; flex-direction: column; gap: 10px; }
+    .fc-card {
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+    }
+    .fc-card.warn { background: #fff4e3; border-color: #f0c27a; }
+    .fc-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+    .fc-label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-soft); }
+    .fc-label .fc-value { text-transform: none; letter-spacing: 0.02em; }
+    .fc-chips { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); }
+    .fc-chip { display: inline-block; width: 14px; height: 14px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15); }
+    .fc-main { margin-top: 6px; font-size: clamp(0.95rem, 2vw, 1.02rem); font-weight: 700; color: var(--text); line-height: 1.35; }
+    .fc-sub { margin-top: 3px; font-size: 0.88rem; color: var(--text-soft); line-height: 1.45; }
+    .flag-note {
+      margin: 0 0 12px 0;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
       background: var(--surface-soft);
       border: 1px solid var(--border-strong);
-      border-left: 6px solid var(--outlook-color, var(--border-strong));
-      border-radius: var(--radius-md);
+      font-size: 0.92rem;
+      color: var(--text);
     }
-    .flag-outlook .flag-swatch {
-      flex: 0 0 auto;
-      width: 22px;
-      height: 16px;
-      margin-top: 4px;
-      border-radius: 3px;
-      background: var(--outlook-color, var(--border-strong));
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+    @media (max-width: 640px) {
+      .flag-head { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+      .flag-tile { min-height: 0; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; padding: 14px 16px; }
+      .flag-tile-name { font-size: 30px; }
     }
-    .flag-outlook .outlook-text { margin: 0; line-height: 1.45; }
-    .flag-outlook .outlook-main { font-weight: 700; font-size: clamp(0.95rem, 2vw, 1.08rem); color: var(--text); }
-    .flag-outlook .outlook-sub { display: block; margin-top: 2px; font-size: 0.86rem; color: var(--text-muted); }
-    .flag-outlook.quiet .outlook-main { font-weight: 600; }
-    .flag-outlook .outlook-rows { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-    .flag-outlook .outlook-row { display: flex; align-items: flex-start; gap: 12px; }
+    @media (prefers-color-scheme: dark) {
+      .flag-tile { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); }
+      .fc-card.warn { background: rgba(240, 168, 90, 0.12); border-color: rgba(240, 168, 90, 0.5); }
+      .fc-chip { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+    }
     /* Preview page (docs/preview/, same file): blocks shown on one page only. */
     .only-preview { display: none; }
     body.preview .only-preview { display: block; }
@@ -385,31 +416,7 @@
       color: var(--text-soft);
       font-size: 0.92rem;
     }
-    .official-flag {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px 12px;
-      margin: 0 0 10px 0;
-      font-size: 0.95rem;
-      color: var(--text-soft);
-    }
-    .official-flag .flag-badge { font-size: 12px; padding: 4px 10px; }
-    .official-flag a { color: var(--accent-soft); }
-    .flag-sync-note {
-      margin: 0 0 12px 0;
-      padding: 10px 14px;
-      border-radius: var(--radius-md);
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--warning);
-      font-size: 0.92rem;
-      color: var(--text);
-    }
     .flag-card .official-mini { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
-    @media (prefers-color-scheme: dark) {
-      .flag-outlook .flag-swatch { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
-    }
     .panel .sub {
       margin: 0 0 18px 0;
       color: var(--text-muted);
@@ -987,14 +994,14 @@
         ends up where it was heading, so this mostly changes <em>when</em> the flag is forecast to change, not how high
         the river gets.
         <br><br>
-        The box above the summary is the share of those outcomes in which the flag changes, and stays changed for at
-        least three hours, today or by the end of tomorrow (UK time). In the check years, when the box would have said
+        The cards above the summary give the share of those outcomes in which the flag changes, and stays changed for at
+        least three hours, today or by the end of tomorrow (UK time). In the check years, when a card would have said
         "very likely" (over 80%), the change happened about 9 times in 10; "likely" (60&ndash;80%) about 6 to 7 times in
-        10. Those checks used the rain that actually fell, so with forecast rain the box will be a little less
-        certain. The first line of the box is the official flag: a model of when the flag gets changed (how far past
+        10. Those checks used the rain that actually fell, so with forecast rain the cards will be a little less
+        certain. The first card is the official flag: a model of when the flag gets changed (how far past
         the line the river is, for how long, the time of day and weekends), fitted on the OURCs flag history (the Isis
         since November 2021; Godstow since September 2024, when its flag started being set from this differential),
-        is run along every outcome starting from the flag flying now. The second line is the flag band.
+        is run along every outcome starting from the flag flying now. The second card is the differential: which band it is forecast to be in.
         </div>
 
         <h3>How have earlier forecasts done?</h3>
@@ -1428,10 +1435,11 @@
   }
 
   /*
-   * Flag-change box (above the summary sentence), preview page only. Two rows:
+   * Flag-change cards (above the summary sentence), preview page only. Two cards:
    *  - the official OURCs flag: a model of when the flag officer changes it
    *    (it follows the bands with lags, and comes down later than it goes up);
-   *  - the flag band: the forecast outcomes after the lock-keeper step layer.
+   *  - the differential: which band the forecast outcomes (after the lock-keeper
+   *    step layer) are in.
    * A change counts when it holds for 3 hours.
    */
   const OUTLOOK_LEVELS = [[0.8, 'Very likely'], [0.6, 'Likely'], [0.35, 'Possible'], [0.2, 'Small chance']];
@@ -1457,8 +1465,11 @@
   function asUtcIso(iso) {
     return iso && !/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso + 'Z' : iso;
   }
-  /** One row of the box: {main, sub, color, strength} for an outlook ({windows, up, down, current_flag}). */
-  function outlookRow(o, subject, loc) {
+  /**
+   * One forecast card: {main, sub, now, tomorrow: [flag keys], strength}.
+   * kind 'flag' (official OURCs flag: "down to Amber") or 'diff' (the differential: "down into Amber").
+   */
+  function outlookCard(o, kind, loc) {
     if (!o || !o.windows || !o.windows.tomorrow) return null;
     const today = o.windows.today || { up: 0, down: 0 };
     const tom = o.windows.tomorrow;
@@ -1466,69 +1477,103 @@
       .filter((d) => o[d])
       .map((d) => ({ dir: d, pToday: today[d] || 0, pTom: tom[d] || 0, info: o[d] }))
       .sort((a, b) => b.pTom - a.pTom);
-    const curName = FLAG_LABELS[o.current_flag] || o.current_flag;
-    if (!cands.length) return null;
+    const cur = o.current_flag;
+    const curName = FLAG_LABELS[cur] || cur;
+    const to = kind === 'diff' ? 'into' : 'to';
+    if (!cands.length) {
+      return { main: kind === 'diff' ? `Likely to stay in ${curName} today and tomorrow` : `Likely to stay ${curName} today and tomorrow`,
+               sub: '', now: cur, tomorrow: [cur], strength: 0 };
+    }
     const best = cands[0];
-    const name = FLAG_LABELS[best.info.flag] || best.info.flag;
+    const nextKey = best.info.flag;
+    const name = FLAG_LABELS[nextKey] || nextKey;
     const wordToday = outlookWord(best.pToday);
     const wordTom = outlookWord(best.pTom);
+    const tomorrow = best.pTom >= 0.5 ? [nextKey] : best.pTom >= 0.2 ? [cur, nextKey] : [cur];
     if (!wordToday && !wordTom) {
-      const bits = cands.map((c) => `${c.dir} to ${FLAG_LABELS[c.info.flag] || c.info.flag} ${outlookPct(c.pTom)}`);
-      return { main: `${subject} likely to stay ${curName} today and tomorrow`,
-               sub: `Chance of a change by the end of tomorrow: ${bits.join(', ')}.`,
-               color: FLAG_COLORS[o.current_flag], strength: 0 };
+      const bits = cands.map((c) => `${c.dir === 'up' ? 'Up' : 'Down'} ${to} ${FLAG_LABELS[c.info.flag] || c.info.flag} by the end of tomorrow: ${outlookPct(c.pTom)}`);
+      return { main: kind === 'diff' ? `Likely to stay in ${curName} today and tomorrow` : `Likely to stay ${curName} today and tomorrow`,
+               sub: `${bits.join('. ')}.`, now: cur, tomorrow, strength: 0 };
     }
+    const lead = (w) => (w === 'Possible' ? 'Possibly' : w === 'Small chance' ? 'Small chance:' : w);
     const whenIso = best.info.when && best.info.when.median_time;
     const ukDate = (d) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ_UK, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
     const startIso = asUtcIso(loc.forecast_start);
     const whenDay = whenIso && startIso ? (ukDate(new Date(whenIso)) === ukDate(new Date(startIso)) ? ' today' : ' tomorrow') : '';
     const parts = [];
     let main, p;
-    if (wordToday) {
+    // Lead with today only when most of the chance is today (same word); else with tomorrow.
+    if (wordToday && wordToday === wordTom) {
       p = best.pToday;
-      main = `${wordToday}: ${subject.toLowerCase()} ${best.dir} to ${name} today (${outlookPct(best.pToday)})`;
+      main = `${lead(wordToday)} ${best.dir} ${to} ${name} today (${outlookPct(best.pToday)})`;
       if (best.pTom - best.pToday >= 0.1) parts.push(`By the end of tomorrow: ${outlookPct(best.pTom)}.`);
     } else {
       p = best.pTom;
-      main = `${wordTom}: ${subject.toLowerCase()} ${best.dir} to ${name} by tomorrow (${outlookPct(best.pTom)})`;
+      main = `${lead(wordTom)} ${best.dir} ${to} ${name} by tomorrow (${outlookPct(best.pTom)})`;
       parts.push(`Today: ${outlookPct(best.pToday)}.`);
     }
     if (whenIso) parts.push(`${p < 0.6 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.`);
-    return { main, sub: parts.join(' '), color: FLAG_COLORS[best.info.flag], strength: p };
+    return { main, sub: parts.join(' '), now: cur, tomorrow, strength: p };
   }
-  function boxRowHtml(r) {
-    return `<div class="outlook-row"><span class="flag-swatch" style="background:${r.color || 'var(--border-strong)'}" aria-hidden="true"></span>
-      <p class="outlook-text"><span class="outlook-main">${r.main}</span><span class="outlook-sub">${r.sub}</span></p></div>`;
+  function chipHtml(key) {
+    return `<span class="fc-chip" style="background:${FLAG_COLORS[key] || 'var(--border-strong)'}" title="${FLAG_LABELS[key] || key}"></span>`;
   }
+  function cardHtml(label, c, warn) {
+    const names = (ks) => ks.map((k) => FLAG_LABELS[k] || k).join(' or ');
+    const chips = c.now
+      ? `<span class="fc-chips" aria-label="Now ${names([c.now])}; tomorrow ${names(c.tomorrow)}">Now ${chipHtml(c.now)} <span aria-hidden="true">&rarr;</span> tomorrow ${c.tomorrow.map(chipHtml).join('')}</span>`
+      : '';
+    return `<div class="fc-card${warn ? ' warn' : ''}">
+        <div class="fc-head"><span class="fc-label">${label}</span>${chips}</div>
+        <div class="fc-main">${c.main}</div>${c.sub ? `<div class="fc-sub">${c.sub}</div>` : ''}</div>`;
+  }
+  /** Preview page: the official flag as a big tile, with an official-flag card and a differential card beside it. */
   function renderFlagOutlookHtml(loc) {
     if (!PREVIEW) return '';
-    const rows = [];
     const off = loc.official_flag;
     // A stale forecast (gauges offline) starts in the past: its "today / tomorrow" would be wrong
-    // and the band would be compared with the flag flying now, so show neither.
+    // and the differential would be compared with the flag flying now, so show neither.
     const stale = !!loc.stale || !!(off && off.forecast_stale);
-    const offRow = stale ? null : outlookRow(loc.official_outlook, 'Official flag', loc);
-    const bandRow = stale ? null : outlookRow(loc.flag_outlook, 'Flag band', loc);
-    if (offRow) rows.push(offRow);
-    if (bandRow) rows.push(bandRow);
-    let html = '';
-    if (off) {
-      const fg = readableTextColor(FLAG_COLORS[off.flag] || '#cccccc');
-      const setAt = off.set_at ? ` · set ${fmtShortDateTime(off.set_at)}` : '';
-      html += `<div class="official-flag">Official OURCs flag:
-        <span class="flag-badge" style="--flag-bg:${FLAG_COLORS[off.flag] || '#cccccc'}; --flag-text:${fg};">${off.label}</span>
-        <span>${setAt.replace(/^ · /, '')}</span>
-        <a href="${off.url || 'https://ourcs.co.uk/information/flags/'}" target="_blank" rel="noopener">ourcs.co.uk</a></div>`;
-      const sy = off.sync;
-      if (!stale && sy && sy.in_sync === false && off.flag !== 'grey') {
-        const bandName = FLAG_LABELS[sy.band] || sy.band;
-        const hrs = sy.hours_out_of_sync;
-        const since = hrs === null || hrs === undefined ? '' : hrs >= 48 ? ` for ${Math.round(hrs / 24)} days` : hrs >= 2 ? ` for ${hrs} hours` : '';
-        const why = sy.band_above_flag
-          ? 'Flags usually go up within an hour or two once the river is past the line, in daylight.'
-          : 'Flags usually come down a few daylight hours after the river is clearly (a few cm) below the line, so they lag the bands on the way down.';
-        html += `<div class="flag-sync-note">The official flag is <strong>${off.label}</strong> but the differential has been in the <strong>${bandName}</strong> band${since}. ${why}</div>`;
+    const cards = [];
+    if (stale) {
+      const lastAt = loc.latest_reading || loc.last_sensor_update;
+      const last = lastAt ? ` since ${fmtShortDateTime(lastAt)}` : '';
+      cards.push(cardHtml('Forecast', { main: 'No flag-change forecast',
+        sub: `The river gauges for this stretch have not reported${last}. It comes back with the next update after they do.` }, false));
+    } else {
+      const offCard = outlookCard(loc.official_outlook, 'flag', loc);
+      const diffCard = outlookCard(loc.flag_outlook, 'diff', loc);
+      const sy = off && off.sync;
+      const outOfSync = !!(sy && sy.in_sync === false && off.flag !== 'grey');
+      if (offCard) {
+        if (outOfSync) {
+          const bandName = FLAG_LABELS[sy.band] || sy.band;
+          const hrs = sy.hours_out_of_sync;
+          const since = hrs === null || hrs === undefined ? '' : hrs >= 48 ? ` for ${Math.round(hrs / 24)} days` : hrs >= 2 ? ` for ${hrs} hours` : '';
+          offCard.sub += `${offCard.sub ? ' ' : ''}The differential has been in ${bandName}${since}; ` + (sy.band_above_flag
+            ? 'flags usually go up within an hour or two once the river is past the line, in daylight.'
+            : 'flags come down a few daylight hours after the river is clearly below the line.');
+        }
+        cards.push(cardHtml('Official flag', offCard, outOfSync));
       }
+      if (diffCard) cards.push(cardHtml(`Differential &middot; <span class="fc-value">${fmtDiff(loc.current.differential)} m</span>`, diffCard, false));
+    }
+    let tile = '';
+    if (off) {
+      const bg = FLAG_COLORS[off.flag] || '#cccccc';
+      const fg = readableTextColor(bg);
+      const setAt = off.set_at ? `<br>set ${fmtShortDateTime(off.set_at)}` : '';
+      tile = `<div class="flag-tile-wrap">
+          <div class="flag-tile" style="--flag-bg:${bg}; --flag-text:${fg};">
+            <svg class="flag-tile-icon" viewBox="0 0 34 40" aria-hidden="true"><path d="M4 2v36" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"></path><path d="M6 4h24l-5 8 5 8H6z" fill="currentColor" fill-opacity="0.9"></path></svg>
+            <span class="flag-tile-name">${off.label}</span>
+          </div>
+          <div class="flag-tile-meta">Official OURCs flag${setAt} &middot; <a href="${off.url || 'https://ourcs.co.uk/information/flags/'}" target="_blank" rel="noopener">ourcs.co.uk</a></div>
+        </div>`;
+    }
+    let html = '';
+    if (tile || cards.length) {
+      html += `<div class="flag-head${tile ? '' : ' no-tile'}" role="status">${tile}${cards.length ? `<div class="fc-cards">${cards.join('')}</div>` : ''}</div>`;
     }
     const bk = loc.black;
     if (bk && (bk.black || bk.near || (off && off.flag === 'black'))) {
@@ -1541,17 +1586,7 @@
       } else {
         msg = `The river at Iffley Lock is at ${lvl}. The official flag usually goes Black once it reaches about ${bk.up_m.toFixed(2)} m.`;
       }
-      html += `<div class="flag-sync-note" style="border-left-color:#111">${msg}</div>`;
-    }
-    if (stale) {
-      const lastAt = loc.latest_reading || loc.last_sensor_update;
-      const last = lastAt ? ` since ${fmtShortDateTime(lastAt)}` : '';
-      html += `<div class="flag-outlook quiet" role="status"><div class="outlook-rows"><div>No flag-change forecast: the river gauges for this stretch have not reported${last}. It comes back with the next update after they do.</div></div></div>`;
-    }
-    if (rows.length) {
-      const lead = rows.reduce((a, b) => (b.strength > a.strength ? b : a), rows[0]);
-      html += `<div class="flag-outlook${lead.strength < 0.35 ? ' quiet' : ''}" role="status" style="--outlook-color:${lead.color || 'var(--border-strong)'}">
-        <div class="outlook-rows">${rows.map(boxRowHtml).join('')}</div></div>`;
+      html += `<div class="flag-note">${msg}</div>`;
     }
     return html;
   }
