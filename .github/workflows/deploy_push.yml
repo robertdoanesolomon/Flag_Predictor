@@ -52,11 +52,21 @@ jobs:
           python push/setup_push.py keys
 
       - name: Deploy the Worker
+        id: deploy
         working-directory: push/worker
-        run: npx --yes wrangler@4 deploy
+        run: |
+          npx --yes wrangler@4 deploy 2>&1 | tee ../../wrangler-deploy.log
+          URL=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' ../../wrangler-deploy.log | head -1 || true)
+          echo "Worker address from deploy: ${URL:-not printed}"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          # leave the checkout clean (the namespace id was filled in above)
+          git checkout -- wrangler.toml
 
       - name: Write the page's alerts config
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.url }}
         run: |
+          rm -f wrangler-deploy.log
           python push/setup_push.py config
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -64,7 +74,7 @@ jobs:
           if git diff --cached --quiet; then echo "config unchanged"; exit 0; fi
           git commit -m "Flag alerts config [skip ci]"
           for i in 1 2 3 4 5; do
-            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            git pull --rebase --autostash origin main && git push origin HEAD:main && exit 0
             sleep $((i * 5))
           done
           exit 1

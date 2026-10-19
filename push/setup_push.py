@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -59,7 +60,13 @@ def main() -> None:
     elif cmd == 'config':
         if not cf.find_namespace():
             sys.exit('no KV namespace yet')
-        url, pub = cf.worker_url(), cf.get('config:vapid_public')
+        url = os.environ.get('WORKER_URL') or None
+        if not url:
+            try:
+                url = cf.worker_url()
+            except Exception as exc:       # token without the account-settings permission
+                print(f'could not look up the workers.dev address: {exc}')
+        pub = cf.get('config:vapid_public')
         if not url or not pub:
             sys.exit(f'missing worker address ({url}) or public key ({bool(pub)}): '
                      'open Workers & Pages in the Cloudflare dashboard once to choose a workers.dev subdomain')
