@@ -41,9 +41,10 @@ SIMFEAT_MODELS: dict = {}
 ERROR_LIBRARY = 'error_library_{tag}_{location}.npz'
 HORIZON = 240
 HISTORY_DAYS = 60
-# Lock-keeper step layer (step_layer.py): re-times the first days of every
-# outcome into held levels and daytime jumps, and gives the flag-change box.
-# Off, or a missing models/step_layer_<location>.json, = smooth forecast.
+# Lock-keeper step layer (step_layer.py): a stepped copy of every outcome (held
+# levels and daytime jumps) plus the flag-change box, for the preview page.
+# The main page keeps the smooth forecast. Off, or a missing
+# models/step_layer_<location>.json, = no stepped copy.
 STEP_LAYER = True
 
 # Gauges each location's hybrid was trained on (the column order of the
@@ -138,9 +139,13 @@ class LiveForecast:
     # The previous live model (plain hybrid) on the same rain, when the new forecast
     # used a different model; None means the members above are also the previous model's.
     previous_members: Optional[pd.DataFrame] = None
-    # Chance of a flag change today / by the end of tomorrow (step_layer.flag_outlook).
+    # Stepped copies (step_layer.py) for the preview page; None if the step layer is off or failed.
+    stepped_members: Optional[pd.DataFrame] = None
+    stepped_total: Optional[np.ndarray] = None
+    # Chance of a flag-band change today / by the end of tomorrow (step_layer.flag_outlook).
     flag_outlook: Optional[dict] = None
-    stepped: bool = False                  # members / total_samples went through the step layer
+    step_triggers: Optional[dict] = None
+    level_hist: Optional[np.ndarray] = None       # hourly observed differential, last 49 h to t0
 
 
 def forecast_ensemble(
@@ -238,14 +243,16 @@ def forecast_with_uncertainty(
     except Exception as exc:   # the spread is extra; never lose the forecast over it
         print(f"  [model error] failed ({exc}); showing rain spread only")
         total = None
-    outlook, stepped = None, False
+    stepped = (None, None, None, None)
     if STEP_LAYER:
         try:
-            members_df, total, outlook, stepped = step_forecast(location, frame, members_df, rain_df, total, models_dir)
+            stepped = step_forecast(location, frame, members_df, rain_df, total, models_dir)
         except Exception as exc:   # never lose the forecast over the step layer either
-            print(f"  [step layer] failed ({type(exc).__name__}: {exc}); smooth forecast")
+            print(f"  [step layer] failed ({type(exc).__name__}: {exc}); no stepped copy")
     return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag, note=note,
-                        previous_members=previous_df, flag_outlook=outlook, stepped=stepped)
+                        previous_members=previous_df, stepped_members=stepped[0], stepped_total=stepped[1],
+                        flag_outlook=stepped[2], step_triggers=stepped[3],
+                        level_hist=frame['differential'].loc[:t0].to_numpy()[-49:])
 
 
 def _all_differentials() -> Dict[str, pd.Series]:
@@ -256,6 +263,9 @@ def _all_differentials() -> Dict[str, pd.Series]:
         out: Dict[str, pd.Series] = {}
         try:
             levels = fetch_river_level_data(verbose=False)
+            iu = levels.get('iffley_upstream')
+            if iu is not None and not iu.empty and 'level' in iu.columns:
+                _cache['iffley_upstream'] = _to_utc(iu[['level']])['level']
             for loc, fn in (('isis', calculate_isis_differential), ('godstow', calculate_godstow_differential),
                             ('wallingford', calculate_wallingford_differential)):
                 try:
@@ -268,9 +278,15 @@ def _all_differentials() -> Dict[str, pd.Series]:
     return _cache['levels']
 
 
+def iffley_upstream_level() -> Optional[pd.Series]:
+    """Iffley Lock upstream stage (m), last ~4 weeks, for the Black-flag indicator."""
+    _all_differentials()
+    return _cache.get('iffley_upstream')
+
+
 def step_forecast(location: str, frame: pd.DataFrame, members_df: pd.DataFrame, rain_df: pd.DataFrame,
                   total: Optional[np.ndarray], models_dir: Path):
-    """Members and outcomes after the step layer, plus the flag-change outlook."""
+    """(stepped members, stepped outcomes, flag-band outlook, triggers seen); Nones without parameters."""
     from ..config import get_flag_thresholds
     from .step_layer import apply_live
     t0 = members_df.index[0]
@@ -282,8 +298,8 @@ def step_forecast(location: str, frame: pd.DataFrame, members_df: pd.DataFrame, 
     out = apply_live(location, level_hist, rain_hist, members_df.to_numpy().T, rain_df.to_numpy().T, total, t0,
                      get_flag_thresholds(location), models_dir, neighbour_hists=neighbours)
     if out is None:
-        print(f"  [step layer] no parameters for {location}; smooth forecast")
-        return members_df, total, None, False
+        print(f"  [step layer] no parameters for {location}; no stepped copy")
+        return None, None, None, None
     members_out = pd.DataFrame(out.members.T, index=members_df.index, columns=members_df.columns)
     o = out.outlook
     print(f"  [step layer] jumps in the last 3 h: {out.triggers}")
@@ -291,7 +307,7 @@ def step_forecast(location: str, frame: pd.DataFrame, members_df: pd.DataFrame, 
         w = o['windows']
         print(f"  [step layer] flag now {o['current_flag']}; change up today {w['today']['up']:.0%} / by tomorrow "
               f"{w['tomorrow']['up']:.0%}, down {w['today']['down']:.0%} / {w['tomorrow']['down']:.0%}")
-    return members_out, (out.total if out.total is not None else total), o, True
+    return members_out, out.total, o, out.triggers
 
 
 def forecast_rain_gauges(location: str) -> List[str]:

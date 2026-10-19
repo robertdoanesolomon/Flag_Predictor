@@ -369,6 +369,27 @@ def day_windows(t0: pd.Timestamp, n_hours: int) -> Dict[str, int]:
     return {'today': int(np.max(np.where(dd == 0)[0])), 'tomorrow': int(np.max(np.where(dd <= 1)[0]))}
 
 
+PARTS_OF_DAY = ((6, 9), (9, 12), (12, 15), (15, 18), (18, 22))
+
+
+def likely_time(first: np.ndarray, local: pd.DatetimeIndex) -> Optional[str]:
+    """Most common (day, part of day) among the first-change hours; returns its median time (ISO, UTC).
+
+    A plain median can land between two clusters (this afternoon / tomorrow morning) at night."""
+    if len(first) == 0:
+        return None
+    t = local[np.asarray(first, dtype=int)]
+    h = t.hour.to_numpy()
+    part = np.full(len(h), 5)                     # 5 = overnight (22:00-06:00)
+    for i, (a, b) in enumerate(PARTS_OF_DAY):
+        part[(h >= a) & (h < b)] = i
+    day = (t - pd.Timedelta(hours=6)).normalize()    # overnight counts with the evening before
+    key = pd.Series(list(zip(day, part)))
+    best = key.value_counts().idxmax()
+    sel = np.asarray(first)[(key == best).to_numpy()]
+    return local[int(np.median(sel))].tz_convert('UTC').isoformat()
+
+
 def held(moved: np.ndarray, hours: int = HELD_H) -> np.ndarray:
     """(..., H) True where the change has started and holds for `hours` hours (or to the end of the forecast)."""
     ok = moved.copy()
@@ -410,6 +431,6 @@ def flag_outlook(stepped: np.ndarray, thresholds: Dict[str, List[float]], t0: pd
         when = None
         if any_hit.any():
             first = seg.argmax(axis=1)[any_hit] + 1
-            when = {'median_time': local[int(np.median(first))].isoformat()}
+            when = {'median_time': likely_time(first, local)}
         out[direction] = {'flag': flags[nxt][0], 'label': labels.get(flags[nxt][0], flags[nxt][0]), 'when': when}
     return out

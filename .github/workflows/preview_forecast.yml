@@ -75,11 +75,13 @@ jobs:
           set -euo pipefail
           cp -r docs site
           rc=0
-          python generate_all_location_figures.py --primary hybrid --output-dir site --old-dir site/old || rc=$?
+          python generate_all_location_figures.py --primary hybrid --output-dir site --old-dir site/old --preview-dir site/preview || rc=$?
           if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then exit "$rc"; fi
           python - <<'EOF' | tee preview_summary.md
           import json
           b = json.load(open('site/forecast_data.json'))
+          import os
+          pv = json.load(open('site/preview/forecast_data.json')) if os.path.exists('site/preview/forecast_data.json') else {'locations': {}}
           print('### Preview forecast build')
           print()
           print('| location | model | forecast start | likely-range band | band width 24 h / 240 h (m) | flag probabilities from | flag change, held 3 h (up / down: today, by end of tomorrow) |')
@@ -88,11 +90,19 @@ jobs:
               tot = loc['ensemble'].get('total')
               w = (f"{tot['p90'][24] - tot['p10'][24]:.3f} / {tot['p90'][-1] - tot['p10'][-1]:.3f}"
                    if tot else '-')
-              o = loc.get('flag_outlook')
+              ploc = pv['locations'].get(k, {})
+              o = ploc.get('flag_outlook')
               ol = (f"now {o['current_flag']}; up {o['windows']['today']['up']:.0%}, {o['windows']['tomorrow']['up']:.0%} / "
                     f"down {o['windows']['today']['down']:.0%}, {o['windows']['tomorrow']['down']:.0%}") if o else '-'
               print(f"| {k} | {loc.get('model', 'september')} | {loc['forecast_start']} | "
                     f"{'yes' if tot else 'NO'} | {w} | {loc['flag_probability'].get('source')} | {ol} |")
+          print()
+          print('Preview page: official flag / sync / official-flag outlook (up today, by tomorrow / down today, by tomorrow)')
+          for k, ploc in pv['locations'].items():
+              off = ploc.get('official_flag') or {}
+              oo = ploc.get('official_outlook')
+              w = (f"up {oo['windows']['today']['up']:.0%}, {oo['windows']['tomorrow']['up']:.0%} / down {oo['windows']['today']['down']:.0%}, {oo['windows']['tomorrow']['down']:.0%}") if oo else '-'
+              print(f"- {k}: official {off.get('label', '-')} (set {off.get('set_at', '-')}), sync {off.get('sync')}, official outlook {w}, jump triggers {ploc.get('step_triggers')}")
           notes = [f"- {k}: {loc['model_note']}" for k, loc in b['locations'].items() if loc.get('model_note')]
           if notes:
               print()

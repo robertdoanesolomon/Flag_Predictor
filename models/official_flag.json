@@ -1,0 +1,96 @@
+{
+ "features": [
+  "day",
+  "mid",
+  "weekend",
+  "margin",
+  "margin_above",
+  "log_run",
+  "day_log_run",
+  "log_since",
+  "trend6",
+  "isis",
+  "isis_margin",
+  "isis_margin_above"
+ ],
+ "lines": {
+  "isis": {
+   "green": -9.0,
+   "light_blue": 0.215,
+   "dark_blue": 0.33,
+   "amber": 0.44,
+   "red": 0.535
+  },
+  "godstow": {
+   "green": -9.0,
+   "amber": 0.45,
+   "red": 0.75
+  }
+ },
+ "coef": {
+  "up": [
+   1.116800986871703,
+   0.06728228123162411,
+   -0.5093544894900522,
+   1.3514052918072736,
+   -1.1597531804261105,
+   -0.1561909575773685,
+   0.6980023126787153,
+   -0.057802636759858486,
+   0.874920596976314,
+   0.1509680973518725,
+   -0.08913402290171199,
+   -0.46966059748786276
+  ],
+  "down": [
+   1.238110953218968,
+   0.08763199956918286,
+   0.0937071140935659,
+   2.017228156193054,
+   -2.0072973134759016,
+   -0.1430364211940259,
+   0.28390077553504256,
+   0.07182552978631673,
+   -0.7404338679537896,
+   -0.2347737764827922,
+   0.6594069010786814,
+   -0.564229040629361
+  ]
+ },
+ "intercept": {
+  "up": -4.997134317366043,
+  "down": -5.489079675153428
+ },
+ "notes": {
+  "up_isis": {
+   "changes": 57,
+   "hours": 17834,
+   "cv_log_loss": 0.0189,
+   "cv_log_loss_constant_rate": 0.0216
+  },
+  "up_godstow": {
+   "changes": 17,
+   "hours": 6885,
+   "cv_log_loss": 0.0089,
+   "cv_log_loss_constant_rate": 0.0173
+  },
+  "down_isis": {
+   "changes": 70,
+   "hours": 9709,
+   "cv_log_loss": 0.0309,
+   "cv_log_loss_constant_rate": 0.0427
+  },
+  "down_godstow": {
+   "changes": 19,
+   "hours": 4025,
+   "cv_log_loss": 0.0204,
+   "cv_log_loss_constant_rate": 0.03
+  },
+  "black_rule_isis": {
+   "red_black_hours": 9201,
+   "agreement": 0.978,
+   "black_hours_caught": 0.92,
+   "false_black": 0.014
+  }
+ }
+}
