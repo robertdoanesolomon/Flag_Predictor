@@ -59,7 +59,7 @@ function validSubscription(s) {
 const NAMES = { isis: 'Isis', godstow: 'Godstow' };
 const LETTERS = { G: 'green', LB: 'light_blue', DB: 'dark_blue', B: 'blue', A: 'amber', R: 'red', K: 'black',
   BL: 'black', X: 'grey', GR: 'grey', GY: 'grey' };
-const SITE_URL = 'https://flagpredictor.com/preview/';
+const SITE_URL = 'https://flagpredictor.com/';
 const EMOJI = { green: '🟢', light_blue: '🔷', blue: '🔵', dark_blue: '🔵', amber: '🟠', red: '🔴', black: '⚫', grey: '⚪' };
 const SEVERITY = ['green', 'light_blue', 'blue', 'dark_blue', 'amber', 'red', 'black'];   // grey: not monitored, no order
 /** "⬇️ 🟠 " for a change down to Amber: an arrow (if both flags have an order) and the new flag's colour. */

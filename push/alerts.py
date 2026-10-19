@@ -29,7 +29,7 @@ RESET = 0.3
 SEVERITY = ['green', 'light_blue', 'blue', 'dark_blue', 'amber', 'red', 'black']
 CLEAR = 0.75     # name the destination only when this share of the outcomes that change agree on it
 MAX_BUNDLE_AGE_H = 3.0
-SITE_URL = 'https://flagpredictor.com/preview/'
+SITE_URL = 'https://flagpredictor.com/'
 UK = ZoneInfo('Europe/London')
 EMOJI = {'green': '🟢', 'light_blue': '🔷', 'blue': '🔵', 'dark_blue': '🔵', 'amber': '🟠', 'red': '🔴',
          'black': '⚫', 'grey': '⚪'}

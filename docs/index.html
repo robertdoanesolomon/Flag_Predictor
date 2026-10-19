@@ -407,7 +407,9 @@
       color: var(--text-soft);
       font-size: 0.92rem;
     }
-    body.preview details.preview-banner { display: block; }
+    body:not(.on-preview-page) details.preview-banner { display: none; }
+    .only-preview-page { display: none; }
+    body.on-preview-page .only-preview-page { display: inline; }
     .alerts-card {
       margin: 20px 0 14px 0;
       padding: 12px 14px;
@@ -1107,7 +1109,7 @@
     <div class="footer">
       Built by Rob Doane-Solomon — data from the Environment Agency &amp; Open-Meteo · model: physics hybrid, 5 trained copies × 50 rain members ·
       <span class="only-main-inline"><a href="old/">previous LSTM model</a> · <a href="preview/">preview of new features</a>.</span>
-      <span class="only-preview-inline"><a href="../">main forecast</a> · official flags from <a href="https://ourcs.co.uk/information/flags/" target="_blank" rel="noopener">OURCs</a>.</span>
+      <span class="only-preview-inline"><span class="only-preview-page"><a href="../">main forecast</a> · </span><a href="/old/">previous LSTM model</a> · official flags from <a href="https://ourcs.co.uk/information/flags/" target="_blank" rel="noopener">OURCs</a>.</span>
     </div>
   </div>
 
@@ -1116,11 +1118,15 @@
      Flag Predictor — interactive frontend
      ===================================================================== */
 
-  /** The preview page (docs/preview/) is this same file; it switches on the features being tried out. */
-  const PREVIEW = /\/preview(\/|\/index\.html)?$/.test(window.location.pathname)
+  /** The newer features (flag tile and cards, jump forecast, alerts) are on for the main page too
+      since October 2026; PREVIEW stays as their switch. docs/preview/ is the same file, kept so
+      apps installed from there keep working; only it shows the "what is new" summary. */
+  const ON_PREVIEW_PAGE = /\/preview(\/|\/index\.html)?$/.test(window.location.pathname)
     || new URLSearchParams(window.location.search).has('preview');
-  if (PREVIEW) document.body.classList.add('preview');
-  // Preview page: installable (manifest, icons, service worker) with flag alerts.
+  const PREVIEW = true;
+  document.body.classList.add('preview');
+  if (ON_PREVIEW_PAGE) document.body.classList.add('on-preview-page');
+  // Installable (manifest, icons, service worker) with flag alerts.
   if (PREVIEW) {
     const addHead = (tag, attrs) => { const el = document.createElement(tag); Object.assign(el, attrs); document.head.appendChild(el); };
     addHead('link', { rel: 'manifest', href: 'manifest.webmanifest' });
@@ -1132,11 +1138,11 @@
     window.addEventListener('DOMContentLoaded', setupAlerts);
   }
   // The "what is new" summary starts folded on phones, where it would fill the first screen.
-  if (PREVIEW && window.matchMedia && window.matchMedia('(max-width: 720px)').matches) {
+  if (ON_PREVIEW_PAGE && window.matchMedia && window.matchMedia('(max-width: 720px)').matches) {
     const pb = document.querySelector('details.preview-banner');
     if (pb) pb.open = false;
   }
-  const ARCHIVE_BASE = PREVIEW ? '../archive/' : 'archive/';
+  const ARCHIVE_BASE = ON_PREVIEW_PAGE ? '../archive/' : 'archive/';
   const BAND_WORD = PREVIEW ? 'flag band' : 'flag';
 
   const FLAG_COLORS = {

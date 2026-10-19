@@ -1462,7 +1462,11 @@ def main(argv: list[str] | None = None) -> None:
         # for any location where the hybrid failed.
         main_payloads = {}
         for loc in locations_to_process:
-            if loc in beta_payloads:
+            # Since October 2026 the main page shows the preview forecast (jump layer, official
+            # flag, flag cards); the smooth hybrid if that failed; else September.
+            if loc in PREVIEW_PAYLOADS:
+                main_payloads[loc] = PREVIEW_PAYLOADS[loc]
+            elif loc in beta_payloads:
                 main_payloads[loc] = beta_payloads[loc]
             elif loc in all_payloads:
                 print(f"  [primary] hybrid missing for '{loc}'; main page shows the September forecast")

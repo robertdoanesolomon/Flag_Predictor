@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cloudflare import Cloudflare  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / 'docs' / 'preview' / 'push_config.json'
+CONFIGS = [ROOT / 'docs' / 'push_config.json', ROOT / 'docs' / 'preview' / 'push_config.json']
 
 
 def b64url(b: bytes) -> str:
@@ -70,9 +70,10 @@ def main() -> None:
         if not url or not pub:
             sys.exit(f'missing worker address ({url}) or public key ({bool(pub)}): '
                      'open Workers & Pages in the Cloudflare dashboard once to choose a workers.dev subdomain')
-        CONFIG.parent.mkdir(parents=True, exist_ok=True)
-        CONFIG.write_text(json.dumps({'worker': url, 'vapid_public': pub}, indent=1) + '\n')
-        print(f'wrote {CONFIG.relative_to(ROOT)}: {url}')
+        for config in CONFIGS:
+            config.parent.mkdir(parents=True, exist_ok=True)
+            config.write_text(json.dumps({'worker': url, 'vapid_public': pub}, indent=1) + '\n')
+            print(f'wrote {config.relative_to(ROOT)}: {url}')
     else:
         sys.exit(__doc__)
 
