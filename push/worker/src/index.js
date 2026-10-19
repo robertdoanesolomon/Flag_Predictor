@@ -117,8 +117,8 @@ export async function checkFlags(env, fetchStatus = (r) => fetch(`https://ourcs.
   const subs = await subscriptions(env);
   for (const { river, flag, prev } of changes) {
     const payload = {
-      title: `${NAMES[river]} Flag`,
-      body: `${changeMark(prev.key, flag.key)}Official Flag now ${flag.label}.`,
+      title: 'Flag Predictor',
+      body: `${changeMark(prev.key, flag.key)}${NAMES[river]} Flag now ${flag.label}.`,
       url: SITE_URL,
       // one tag per change, shown without a second buzz if it ever arrives twice
       tag: `flag-change-${river}-${flag.setAt || flag.key}`,

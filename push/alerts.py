@@ -7,7 +7,7 @@ Per stretch (Isis, Godstow), from the preview bundle (docs/preview/forecast_data
 * the official flag is likely to change: chance >= LIKELY today, or by the end of tomorrow
                                                                -> "Flag likely down to Amber by tomorrow (70%) ..."
 * escalation: after an "up" alert, a higher flag becomes >= LIKELY (going up can skip a flag)
-                                                               -> "Official Flag now likely up to Red by tomorrow (70%)"
+                                                               -> "Isis Flag now likely up to Red by tomorrow (70%)"
 * Isis only: Black likely by the end of tomorrow (>= LIKELY), or, when Black, likely back to Red.
 
 Each "likely" alert is sent once per flag; it can be sent again only after its chance has
@@ -84,7 +84,7 @@ def _msg(river: str, body: str, flag: Optional[str] = None, direction: Optional[
         body = f'{EMOJI[flag]} {body}'
     if direction in ARROW:
         body = f'{ARROW[direction]} {body}'
-    return {'river': river, 'title': f'{NAMES[river]} Flag', 'body': body, 'url': SITE_URL, 'tag': f'flag-{river}'}
+    return {'river': river, 'title': 'Flag Predictor', 'body': body, 'url': SITE_URL, 'tag': f'flag-{river}'}
 
 
 def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[List[dict], dict]:
@@ -143,13 +143,13 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
             if p_today >= LIKELY and k_today not in sent:
                 verb = f'{_word(p_today)} {d}' if clear else f'{_word(p_today)} to go {d}'
                 when_today = '' if when.endswith('tomorrow.') else when          # a today alert only gives a time today
-                msgs.append(_msg(river, f'Official Flag {verb}{where} today ({_pct(p_today)}){detail}.{_if_so(when_today, p_today)}', emoji, d))
+                msgs.append(_msg(river, f'{NAMES[river]} Flag {verb}{where} today ({_pct(p_today)}){detail}.{_if_so(when_today, p_today)}', emoji, d))
                 sent |= {k_today, k_tom}
                 if d == 'up':
                     up_top = likely_top or target
             elif p_tom >= LIKELY and k_tom not in sent:
                 verb = f'{_word(p_tom)} {d}' if clear else f'{_word(p_tom)} to go {d}'
-                msgs.append(_msg(river, f'Official Flag {verb}{where} by the end of tomorrow ({_pct(p_tom)}){detail}.{_if_so(when, p_tom)}',
+                msgs.append(_msg(river, f'{NAMES[river]} Flag {verb}{where} by the end of tomorrow ({_pct(p_tom)}){detail}.{_if_so(when, p_tom)}',
                                  emoji, d))
                 sent.add(k_tom)
                 if d == 'up':
@@ -158,7 +158,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                   and SEVERITY.index(likely_top) > SEVERITY.index(up_top) and k_tom in sent):
                 # escalation: after an "up" alert, a higher flag has become 60%+ likely
                 pr = reach[likely_top]
-                msgs.append(_msg(river, f'Official Flag now {_word(pr)} up to {_label(likely_top)} by the end of tomorrow '
+                msgs.append(_msg(river, f'{NAMES[river]} Flag now {_word(pr)} up to {_label(likely_top)} by the end of tomorrow '
                                         f'({_pct(pr)}).{_if_so(when, pr)}', likely_top, 'up'))
                 up_top = likely_top
 
@@ -173,8 +173,8 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 sent.discard(key)
             elif p_tom >= LIKELY and key not in sent:
                 when = _when((bk.get('when') or {}).get('median_time'), now)
-                text = (f'Black Flag {_word(p_tom)} back to Red by the end of tomorrow ({_pct(p_tom)}).{_if_so(when, p_tom)}' if is_black
-                        else f'Black Flag {_word(p_tom)} by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
+                text = (f'{NAMES[river]} Flag {_word(p_tom)} back to Red from Black by the end of tomorrow ({_pct(p_tom)}).{_if_so(when, p_tom)}' if is_black
+                        else f'{NAMES[river]} Flag {_word(p_tom)} to go Black by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
                              f"{bk.get('level_m', 0):.2f} m.{_if_so(when, p_tom)}")
                 msgs.append(_msg(river, text, 'red' if is_black else 'black', 'down' if is_black else 'up'))
                 sent.add(key)

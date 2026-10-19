@@ -66,10 +66,10 @@ class AlertTests(unittest.TestCase):
         oo['up'] = {'flag': 'amber', 'when': None, 'split': {'amber': 0.4, 'red': 0.3}}
         msgs, _ = decide(b, {'isis': {'flag': 'dark_blue', 'sent': []}}, NOW)
         self.assertEqual(len(msgs), 1)
-        self.assertEqual(msgs[0]['body'], '⬆️ Official Flag likely to go up by the end of tomorrow (70%): Amber 40%, Red 30%.')
+        self.assertEqual(msgs[0]['body'], '⬆️ Isis Flag likely to go up by the end of tomorrow (70%): Amber 40%, Red 30%.')
         oo['up']['split'] = {'amber': 0.6, 'red': 0.1}                 # 86% agree on Amber: named
         msgs, _ = decide(b, {'isis': {'flag': 'dark_blue', 'sent': []}}, NOW)
-        self.assertEqual(msgs[0]['body'], '⬆️ 🟠 Official Flag likely up to Amber by the end of tomorrow (70%).')
+        self.assertEqual(msgs[0]['body'], '⬆️ 🟠 Isis Flag likely up to Amber by the end of tomorrow (70%).')
 
     def test_escalation_to_a_higher_flag(self):
         b = bundle(flag='green')
@@ -84,18 +84,18 @@ class AlertTests(unittest.TestCase):
         oo['windows']['tomorrow']['up'] = 0.9
         oo['up']['split'] = {'light_blue': 0.1, 'dark_blue': 0.1, 'amber': 0.2, 'red': 0.5}   # Amber or higher 70%
         msgs, st = decide(b, st, NOW)
-        self.assertEqual([m['body'] for m in msgs], ['⬆️ 🟠 Official Flag now likely up to Amber by the end of tomorrow (70%).'])
+        self.assertEqual([m['body'] for m in msgs], ['⬆️ 🟠 Isis Flag now likely up to Amber by the end of tomorrow (70%).'])
         self.assertEqual(decide(b, st, NOW)[0], [])
         oo['up']['split'] = {'amber': 0.2, 'red': 0.7}
         msgs, st = decide(b, st, NOW)
-        self.assertEqual([m['body'] for m in msgs], ['⬆️ 🔴 Official Flag now likely up to Red by the end of tomorrow (70%).'])
+        self.assertEqual([m['body'] for m in msgs], ['⬆️ 🔴 Isis Flag now likely up to Red by the end of tomorrow (70%).'])
 
     def test_black(self):
         bk = {'black_now': False, 'level_m': 0.39, 'windows': {'today': 0.2, 'tomorrow': 0.65},
               'when': {'median_time': '2026-02-12T11:00:00+00:00'}}
         msgs, st = decide(bundle(black=bk), {'isis': {'flag': 'red', 'sent': []}}, NOW)
         self.assertEqual(len(msgs), 1)
-        self.assertIn('Black Flag possibly by the end of tomorrow (65%)', msgs[0]['body'])
+        self.assertIn('Isis Flag possibly to go Black by the end of tomorrow (65%)', msgs[0]['body'])
         low = dict(bk, windows={'today': 0.2, 'tomorrow': 0.55})              # 55%: below the 60% line
         self.assertEqual(decide(bundle(black=low), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
         self.assertIn('0.39 m', msgs[0]['body'])
