@@ -717,3 +717,49 @@ rises the hybrid (with the rain that fell) stopped 10–25 cm short; the step
 layer puts the jump on the right morning (Isis 10 Feb: smooth crossing
 08:00, stepped 11:00, real 11:30; Godstow 24 Feb: 14:00 / 11:00 / 11:15) but
 jumps to the level the outcomes say.
+
+## Official OURCs flag vs the bands (preview page)
+
+Data: the OURCs flag history pages (every change since Dec 2018, UK time; saved
+without names as `data/flags/history_<river>.csv`), the 15-minute differential
+(extended to Oct 2026 from flags.jamesonlee.com, identical on the overlap) and
+the Iffley Lock upstream stage since 2017 (EA hydrology API, station 1501TH).
+The Isis flag is set by counting bucks at Iffley weir; Godstow's from this
+differential only since Sep 2024.
+
+Agreement (share of monitored time the flag equals the band): Isis 81 % (since
+Nov 2021, when Light/Dark Blue started), Godstow 87 % (since 2019).
+
+Flag changes (single steps), differential at the change, median:
+
+| Isis | going up | coming down |
+|---|---|---|
+| Green ↔ Light Blue (line 0.215) | 0.231 | 0.165 |
+| Light ↔ Dark Blue (0.33) | 0.332 | 0.267 |
+| Dark Blue ↔ Amber (0.44) | 0.422 | 0.381 |
+| Amber ↔ Red (0.535) | 0.597 (0.563 over 2019–2026) | 0.499 |
+
+Godstow: Green → Amber 0.49, Amber → Red 0.82; Red → Amber 0.61, Amber → Green
+0.38. Going up the flag usually follows the band within an hour or two (median
+0.5 h Isis, 1.5 h Godstow); coming down it lags (median 3.8 h / 5.8 h after the
+band, 5–8 cm below the line). 93 % of changes are between 08:00 and 20:00.
+
+Bands kept as they are: the Isis Amber/Red line at 0.535 matches the flag best
+over 2019–2026 (92 % of Amber/Red time; 0.56: 89 %, 0.60: 85 %).
+
+**Black (Isis)** is not a differential band: the differential saturates near
+0.95 (Black-flag hours: 10–90 % range 0.81–0.99, overlapping Red). On the
+Iffley upstream stage the flag went Black at 0.36–0.47 m and back to Red at
+0.03–0.25 m. Rule: Black once Iffley ≥ 0.42 m, Red again below 0.22 m —
+matches the flag in 97.8 % of Red/Black hours since 2019 (92 % of Black hours
+caught, 1.4 % false Black). No single threshold does as well (≥ 0.45 m: never
+wrong but catches only 37 % of Black hours).
+
+**Official-flag model** (`official_flag.py`, `fit_official_flag.py`): hourly
+logistic hazard of a change up / down, pooled over both rivers with a river
+term. Inputs: how far past the next line (up) or below the flag's own line
+(down) the river is, hours it has been there, daylight (08–20) and 10–17,
+weekend, hours since the flag was set, 6 h trend. A change up goes to the band
+the river is in; a change down one flag. Leave-one-season-out log loss vs a
+constant rate: Isis up 0.0189 (0.0216), down 0.0309 (0.0427); Godstow up
+0.0089 (0.0173), down 0.0204 (0.0300).

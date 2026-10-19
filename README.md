@@ -54,7 +54,17 @@ Additions:
    changes and holds for 3 h today / by the end of tomorrow. Parameters:
    `models/step_layer_<location>.json`; refit with `python fit_step_layer.py`
    after retraining the hybrid. Switch off with `STEP_LAYER` in
-   `hybrid_live.py`. Results in `EXPERIMENTS.md`.
+   `hybrid_live.py`. Results in `EXPERIMENTS.md`. Shown on the preview page only.
+5. **Preview page** (`docs/preview/`, written with `--preview-dir docs/preview`;
+   the same `index.html` switches its preview features on from its path): the
+   stepped forecast, the official OURCs flag (status API) with a note when it
+   and the differential band disagree, a two-line box (official flag and flag
+   band, today / by the end of tomorrow), and a Black-flag note from the Iffley
+   Lock upstream level. The official-flag model
+   (`src/flag_predictor/prediction/official_flag.py`, `fit_official_flag.py`,
+   `models/official_flag.json`) is fitted on the OURCs flag history
+   (`data/flags/`); refit with `python fit_official_flag.py --refresh`. No
+   OURCs officer's name is stored or shown.
 
 Starting the forecast *from* the simulated state (rather than giving it to the
 encoder) was also tried and was worse; see `EXPERIMENTS.md`.
