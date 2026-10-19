@@ -2431,7 +2431,7 @@
     const bandName = hasTotal ? 'likely range' : 'rain spread';
     block.querySelector('.history-score').innerHTML = n
       ? `<span><strong>${n}</strong> h observed since</span>` +
-        `<span>typical error <strong>${(100 * absErr / n).toFixed(1)} cm</strong></span>` +
+        `<span>typical error <strong>${(absErr / n).toFixed(2)} m</strong></span>` +
         (flagN ? `<span>right ${BAND_WORD} <strong>${Math.round(100 * flagRight / flagN)}%</strong> of hours</span>` : '')
       : '<span>No readings since this forecast yet.</span>';
     block.querySelector('.history-note').innerHTML = PREVIEW
@@ -2488,7 +2488,7 @@
 
     const errs = (fromH, toH) => {
       const e = rows.filter(r => r.lead_h >= fromH && r.lead_h < toH).map(r => Math.abs(r.mean - data.observed));
-      return e.length ? (100 * e.reduce((a, b) => a + b, 0) / e.length).toFixed(1) : null;
+      return e.length ? (e.reduce((a, b) => a + b, 0) / e.length).toFixed(2) : null;
     };
     const flagNow = flagOf(data.observed, loc.thresholds, key);
     const flagHits = rows.filter(r => flagOf(r.mean, loc.thresholds, key) === flagNow).length;
@@ -2496,9 +2496,9 @@
       `What each forecast from the last 10 days said the differential would be at <strong>${fmtShortDateTime(data.target)}</strong>, the latest reading`;
     const e1 = errs(0, 48), e2 = errs(48, 120), e3 = errs(120, 260);
     block.querySelector('.history-score').innerHTML =
-      (e1 !== null ? `<span>issued 0–2 days before: off by <strong>${e1} cm</strong></span>` : '') +
-      (e2 !== null ? `<span>2–5 days before: <strong>${e2} cm</strong></span>` : '') +
-      (e3 !== null ? `<span>5–10 days before: <strong>${e3} cm</strong></span>` : '') +
+      (e1 !== null ? `<span>issued 0–2 days before: off by <strong>${e1} m</strong></span>` : '') +
+      (e2 !== null ? `<span>2–5 days before: <strong>${e2} m</strong></span>` : '') +
+      (e3 !== null ? `<span>5–10 days before: <strong>${e3} m</strong></span>` : '') +
       (flagNow !== null ? `<span>right ${BAND_WORD} in <strong>${flagHits} of ${rows.length}</strong></span>` : '');
     block.querySelector('.history-note').innerHTML = PREVIEW
       ? 'Dots: what each forecast said. Bars: its likely range. Dashed: what the river read.'
