@@ -1050,8 +1050,8 @@
         <br><br>
         The cards above the summary give the share of those outcomes in which the flag changes, and stays changed for at
         least three hours, today or by the end of tomorrow (UK time). In the check years, when a card would have said
-        "very likely" (over 80%), the change happened about 9 times in 10; "likely" (60&ndash;80%) about 6 to 7 times in
-        10. Those checks used the rain that actually fell, so with forecast rain the cards will be a little less
+        80% or more, the change happened about 9 times in 10; 60&ndash;80% about 6 to 7 times in 10. The words are
+        set a little cautiously: "very likely" from 90%, "likely" from 70%, "possibly" from 40%. Those checks used the rain that actually fell, so with forecast rain the cards will be a little less
         certain. The first card is the official flag: a model of when the flag gets changed (how far past
         the line the river is, for how long, the time of day and weekends), fitted on the OURCs flag history (the Isis
         since November 2021; Godstow since September 2024, when its flag started being set from this differential),
@@ -1512,7 +1512,7 @@
    *    step layer) are in.
    * A change counts when it holds for 3 hours.
    */
-  const OUTLOOK_LEVELS = [[0.8, 'Very likely'], [0.6, 'Likely'], [0.35, 'Possible'], [0.2, 'Small chance']];
+  const OUTLOOK_LEVELS = [[0.9, 'Very likely'], [0.7, 'Likely'], [0.4, 'Possible'], [0.2, 'Small chance']];
   function outlookWord(p) {
     const r = Math.round(p * 20) / 20;           // same rounding as the percentage shown
     for (const [lo, w] of OUTLOOK_LEVELS) if (r >= lo - 1e-9) return w;
@@ -1589,7 +1589,7 @@
       parts.push(`Today: ${outlookPct(best.pToday)}.`);
     }
     if (splitText) parts.unshift(splitText);
-    if (whenIso) parts.push(`${p < 0.6 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.`);
+    if (whenIso) parts.push(`${p < 0.7 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.`);
     const tomChips = unclear ? [cur, ...split.slice(0, 2).map(([k]) => k)] : tomorrow;
     return { main, sub: parts.join(' '), now: cur, tomorrow: tomChips, strength: p };
   }
@@ -1620,7 +1620,7 @@
     const startIso = asUtcIso(loc.forecast_start);
     const whenIso = b.when && b.when.median_time;
     const whenDay = whenIso && startIso ? (ukDate(new Date(whenIso)) === ukDate(new Date(startIso)) ? ' today' : ' tomorrow') : '';
-    const when = whenIso ? ` ${pM < 0.6 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.` : '';
+    const when = whenIso ? ` ${pM < 0.7 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.` : '';
     const lead = (w) => (w === 'Possible' ? 'Possibly' : w === 'Small chance' ? 'Small chance:' : w);
     const wT = outlookWord(pT), wM = outlookWord(pM);
     let main;

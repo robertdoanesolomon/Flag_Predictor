@@ -38,6 +38,17 @@ def _label(key: Optional[str]) -> str:
     return LABELS.get(key or '', (key or '?').replace('_', ' ').title())
 
 
+def _word(p: float) -> str:
+    """Same words as the website, set a little cautiously: very likely 90%+, likely 70%+, else possibly."""
+    r = round(p * 20) / 20
+    return 'very likely' if r >= 0.9 else 'likely' if r >= 0.7 else 'possibly'
+
+
+def _if_so(when: str, p: float) -> str:
+    """' Probably mid-morning.' -> ' If so, probably mid-morning.' when the change is only possible."""
+    return when.replace(' Probably', ' If so, probably') if when and _word(p) == 'possibly' else when
+
+
 def _pct(p: float) -> str:
     if p >= 0.95:
         return 'over 95%'
@@ -119,12 +130,13 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 where, emoji = '', None
                 parts = sorted(split.items(), key=lambda kv: -kv[1])
                 detail = ': ' + ', '.join(f'{_label(k)} {_pct(v)}' for k, v in parts if v >= 0.05)
-            verb = f'likely {d}' if clear else f'likely to go {d}'
             if p_today >= LIKELY and k_today not in sent:
-                msgs.append(_msg(river, f'Official Flag {verb}{where} today ({_pct(p_today)}){detail}.{when}', emoji, d))
+                verb = f'{_word(p_today)} {d}' if clear else f'{_word(p_today)} to go {d}'
+                msgs.append(_msg(river, f'Official Flag {verb}{where} today ({_pct(p_today)}){detail}.{_if_so(when, p_today)}', emoji, d))
                 sent |= {k_today, k_tom}
             elif p_tom >= LIKELY and k_tom not in sent:
-                msgs.append(_msg(river, f'Official Flag {verb}{where} by the end of tomorrow ({_pct(p_tom)}){detail}.{when}',
+                verb = f'{_word(p_tom)} {d}' if clear else f'{_word(p_tom)} to go {d}'
+                msgs.append(_msg(river, f'Official Flag {verb}{where} by the end of tomorrow ({_pct(p_tom)}){detail}.{_if_so(when, p_tom)}',
                                  emoji, d))
                 sent.add(k_tom)
 
@@ -139,9 +151,9 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 sent.discard(key)
             elif p_tom >= LIKELY and key not in sent:
                 when = _when((bk.get('when') or {}).get('median_time'), now)
-                text = (f'Black Flag likely back to Red by the end of tomorrow ({_pct(p_tom)}).{when}' if is_black
-                        else f'Black Flag likely by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
-                             f"{bk.get('level_m', 0):.2f} m.{when}")
+                text = (f'Black Flag {_word(p_tom)} back to Red by the end of tomorrow ({_pct(p_tom)}).{_if_so(when, p_tom)}' if is_black
+                        else f'Black Flag {_word(p_tom)} by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '
+                             f"{bk.get('level_m', 0):.2f} m.{_if_so(when, p_tom)}")
                 msgs.append(_msg(river, text, 'red' if is_black else 'black', 'down' if is_black else 'up'))
                 sent.add(key)
         new_state[river] = {'flag': flag, 'sent': sorted(sent)}

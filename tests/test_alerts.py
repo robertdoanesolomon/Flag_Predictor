@@ -34,7 +34,7 @@ class AlertTests(unittest.TestCase):
         self.assertEqual(msgs, [])
         msgs, st = decide(bundle(down_today=0.65, down_tom=0.8), st, NOW)   # now today too: one more
         self.assertEqual(len(msgs), 1)
-        self.assertIn('today (65%)', msgs[0]['body'])
+        self.assertIn('possibly down to Amber today (65%)', msgs[0]['body'])
         msgs, st = decide(bundle(down_today=0.7, down_tom=0.8), st, NOW)
         self.assertEqual(msgs, [])
 
@@ -76,11 +76,11 @@ class AlertTests(unittest.TestCase):
               'when': {'median_time': '2026-02-12T11:00:00+00:00'}}
         msgs, st = decide(bundle(black=bk), {'isis': {'flag': 'red', 'sent': []}}, NOW)
         self.assertEqual(len(msgs), 1)
-        self.assertIn('Black Flag likely by the end of tomorrow (65%)', msgs[0]['body'])
+        self.assertIn('Black Flag possibly by the end of tomorrow (65%)', msgs[0]['body'])
         low = dict(bk, windows={'today': 0.2, 'tomorrow': 0.55})              # 55%: below the 60% line
         self.assertEqual(decide(bundle(black=low), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
         self.assertIn('0.39 m', msgs[0]['body'])
-        self.assertIn('Probably mid-morning today', msgs[0]['body'])
+        self.assertIn('If so, probably mid-morning today', msgs[0]['body'])
         self.assertEqual(decide(bundle(black=bk), st, NOW)[0], [])
 
 
