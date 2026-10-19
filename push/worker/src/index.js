@@ -60,6 +60,7 @@ const NAMES = { isis: 'Isis', godstow: 'Godstow' };
 const LETTERS = { G: 'green', LB: 'light_blue', DB: 'dark_blue', B: 'blue', A: 'amber', R: 'red', K: 'black',
   BL: 'black', X: 'grey', GR: 'grey', GY: 'grey' };
 const SITE_URL = 'https://flagpredictor.com/preview/';
+const EMOJI = { green: '🟢', light_blue: '🩵', blue: '🔵', dark_blue: '🔵', amber: '🟠', red: '🔴', black: '⚫', grey: '⚪' };
 
 export function flagFromStatus(j) {
   const text = String((j && j.status_text) || '').trim();
@@ -110,7 +111,7 @@ export async function checkFlags(env, fetchStatus = (r) => fetch(`https://ourcs.
   for (const { river, flag, prev } of changes) {
     const payload = {
       title: `${NAMES[river]} Flag`,
-      body: `Official Flag now ${flag.label} (was ${prev.label}).`,
+      body: `${EMOJI[flag.key] ? EMOJI[flag.key] + ' ' : ''}Official Flag now ${flag.label}.`,
       url: SITE_URL,
       // one tag per change, shown without a second buzz if it ever arrives twice
       tag: `flag-change-${river}-${flag.setAt || flag.key}`,
