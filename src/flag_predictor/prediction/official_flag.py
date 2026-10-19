@@ -43,6 +43,13 @@ RUN_CAP_H = 72
 BLACK_UP_M = 0.42
 BLACK_DOWN_M = 0.22
 SINCE_CAP_H = 24 * 30
+# The simulated chance of the flag coming down is too cautious (forecast 0.2-0.35 -> 46% happened
+# at the Isis, 70% at Godstow; also with the observed river as the path, so it is the hazard, not
+# the forecast). Platt recalibration of the "down" window chances, one function for today and by
+# tomorrow, fitted on the box backtest (Isis 2023 + Nov 2024 - Jan 2026, Godstow Nov 2024 - Jan
+# 2026): logit(q) = a + b logit(p). Cross-fitted by 3-month blocks it lowers the Brier score at
+# both rivers and both windows (EXPERIMENTS.md "Coming down"). "Up" is well calibrated: unchanged.
+DOWN_RECALIBRATION = (1.114, 1.171)
 FEATURES = ['day', 'mid', 'weekend', 'margin', 'margin_above', 'log_run', 'day_log_run', 'log_since', 'trend6',
             'isis', 'isis_margin', 'isis_margin_above']
 PARAMS_FILE = 'official_flag.json'
@@ -183,8 +190,18 @@ def day_windows(t0: pd.Timestamp, n_hours: int) -> Dict[str, int]:
     return dw(t0, n_hours)
 
 
+def recalibrate_down(p: float) -> float:
+    """DOWN_RECALIBRATION applied to a simulated chance of the flag coming down (0 stays 0)."""
+    if p <= 0:
+        return 0.0
+    q = np.clip(p, 1e-3, 1 - 1e-3)
+    a, b = DOWN_RECALIBRATION
+    return float(_sigmoid(a + b * np.log(q / (1 - q))))
+
+
 def outlook(river: str, flags: np.ndarray, flag0: int, t0: pd.Timestamp) -> dict:
-    """Chance the official flag has changed by the end of today / tomorrow, where to, and when."""
+    """Chance the official flag has changed by the end of today / tomorrow, where to, and when
+    (the chance of coming down recalibrated: recalibrate_down)."""
     names = order(river)
     S, H1 = flags.shape
     win = day_windows(t0, H1 - 1)
@@ -195,7 +212,7 @@ def outlook(river: str, flags: np.ndarray, flag0: int, t0: pd.Timestamp) -> dict
         seg = flags[:, 1:last + 1]
         res['windows'][name] = {
             'up': round(float(np.mean((seg > flag0).any(axis=1))), 3) if last >= 1 else 0.0,
-            'down': round(float(np.mean((seg < flag0).any(axis=1))), 3) if last >= 1 else 0.0}
+            'down': round(recalibrate_down(float(np.mean((seg < flag0).any(axis=1)))), 3) if last >= 1 else 0.0}
     for direction, sign in (('up', 1), ('down', -1)):
         nxt = flag0 + sign
         if not 0 <= nxt < len(names):
@@ -247,22 +264,6 @@ def sync_note(river: str, flag: str, level_hist: np.ndarray) -> dict:
             'band_above_flag': bool(b[-1] > r)}
 
 
-def black_indicator(iu: Optional[pd.Series]) -> Optional[dict]:
-    """Black-flag state from the Iffley upstream stage (hysteresis: up at BLACK_UP_M, down below BLACK_DOWN_M)."""
-    if iu is None or len(iu.dropna()) == 0:
-        return None
-    v = iu.dropna().sort_index()
-    state = False
-    for x in v.resample('1h').mean().dropna().to_numpy():
-        if not state and x >= BLACK_UP_M:
-            state = True
-        elif state and x < BLACK_DOWN_M:
-            state = False
-    return {'level_m': round(float(v.iloc[-1]), 3), 'at': v.index[-1].isoformat(), 'black': bool(state),
-            'up_m': BLACK_UP_M, 'down_m': BLACK_DOWN_M,
-            'near': bool(not state and v.iloc[-1] >= BLACK_UP_M - 0.08)}
-
-
 def official_flag_payload(location: str, live, models_dir: Optional[Path] = None, seed: int = 0,
                           now: Optional[pd.Timestamp] = None) -> dict:
     """Preview-page fields: {'official_flag': {...}, 'black': {...}, 'official_outlook': {...}}, each
@@ -275,14 +276,6 @@ def official_flag_payload(location: str, live, models_dir: Optional[Path] = None
         return {}
     now = pd.Timestamp.now(tz='UTC') if now is None else pd.Timestamp(now)
     out = {'official_flag': {**status, 'url': OURCS_URL}}
-    if location == 'isis':
-        try:
-            from .hybrid_live import iffley_upstream_level
-            b = black_indicator(iffley_upstream_level())
-            if b and (now - pd.Timestamp(b['at'])).total_seconds() / 3600 <= STALE_AFTER_H:
-                out['black'] = b
-        except Exception as exc:
-            print(f"  [official flag] black indicator skipped ({exc})")
     members = getattr(live, 'members', None)
     if members is None or len(members) == 0:
         return out
@@ -292,6 +285,14 @@ def official_flag_payload(location: str, live, models_dir: Optional[Path] = None
         out['official_flag']['forecast_stale'] = True
         print(f"  [official flag] forecast starts {t0} (gauges offline?); no sync note or outlook")
         return out
+    models_dir = Path(models_dir) if models_dir else Path(__file__).resolve().parents[3] / 'models'
+    if location == 'isis':
+        try:
+            b = black_payload(live, t0, now, models_dir)
+            if b:
+                out['black'] = b
+        except Exception as exc:
+            print(f"  [official flag] black forecast skipped ({type(exc).__name__}: {exc})")
     flag = status['flag']
     names = order(location)
     hist = getattr(live, 'level_hist', None)
@@ -299,7 +300,6 @@ def official_flag_payload(location: str, live, models_dir: Optional[Path] = None
         out['official_flag']['sync'] = sync_note(location, flag, hist)
     if flag not in names:            # grey (not monitored) or a flag this model does not know
         return out
-    models_dir = Path(models_dir) if models_dir else Path(__file__).resolve().parents[3] / 'models'
     pfile = models_dir / PARAMS_FILE
     paths = live.stepped_total if live.stepped_total is not None else live.total_samples
     if not pfile.exists() or paths is None or hist is None:
@@ -311,3 +311,33 @@ def official_flag_payload(location: str, live, models_dir: Optional[Path] = None
                      rng=np.random.default_rng(seed))
     out['official_outlook'] = outlook(location, flags, names.index(flag), t0)
     return out
+
+
+def black_payload(live, t0: pd.Timestamp, now: pd.Timestamp, models_dir: Path) -> Optional[dict]:
+    """Isis: the Black outlook from the Iffley level (black_flag.py), or None without a recent reading."""
+    from .black_flag import black_forecast
+    from .hybrid_live import _all_differentials, iffley_upstream_level
+    iu = iffley_upstream_level()
+    if iu is None or len(iu.dropna()) == 0:
+        return None
+    last = pd.Timestamp(iu.dropna().index.max())
+    last = last.tz_localize('UTC') if last.tz is None else last.tz_convert('UTC')
+    if (now - last).total_seconds() / 3600 > STALE_AFTER_H:
+        return None
+
+    def near(ser):
+        if ser is None or len(ser) == 0:
+            return np.nan
+        s = ser.loc[t0 - pd.Timedelta(hours=3):t0].dropna()
+        return float(s.iloc[-1]) if len(s) else np.nan
+    hist = getattr(live, 'level_hist', None)
+    I0 = float(hist[-1]) if hist is not None and np.isfinite(hist[-1]) else np.nan
+    G0 = near(_all_differentials().get('godstow'))
+    rain_hist = getattr(live, 'rain_hist', None)
+    member_rain = getattr(live, 'member_rain', None)
+    if rain_hist is None or member_rain is None:
+        return None
+    b = black_forecast(iu, t0, I0, G0, rain_hist, np.asarray(member_rain).T, models_dir)
+    if b:
+        b['at'] = last.isoformat()
+    return b

@@ -223,6 +223,7 @@ class LiveForecast:
     flag_outlook: Optional[dict] = None
     step_triggers: Optional[dict] = None
     level_hist: Optional[np.ndarray] = None       # hourly observed differential, last 49 h to t0
+    rain_hist: Optional[np.ndarray] = None        # hourly mean-station rain (mm), last 72 h to t0
 
 
 def forecast_ensemble(
@@ -329,7 +330,9 @@ def forecast_with_uncertainty(
     return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag, note=note,
                         previous_members=previous_df, stepped_members=stepped[0], stepped_total=stepped[1],
                         flag_outlook=stepped[2], step_triggers=stepped[3],
-                        level_hist=frame['differential'].loc[:t0].to_numpy()[-49:])
+                        level_hist=frame['differential'].loc[:t0].to_numpy()[-49:],
+                        rain_hist=frame[[g for g in gauges if g in frame.columns]].clip(lower=0).mean(axis=1)
+                        .fillna(0.0).loc[:t0].to_numpy()[-72:])
 
 
 def _all_differentials() -> Dict[str, pd.Series]:

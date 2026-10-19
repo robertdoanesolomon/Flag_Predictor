@@ -820,3 +820,96 @@ was 96 % unbridged, 85 % bridged and 92 % with no hole.
 
 The page's history line now breaks at missing hours rather than drawing a
 straight line across them.
+
+## Official flag coming down: recalibration (issue #4)
+
+The official-flag model was too cautious about flags coming down. Over the box
+backtest starts, the chance of coming down by the end of tomorrow came out as
+follows:
+
+| River | Forecast | Happened |
+|---|---|---|
+| Isis | 0.20–0.35 | 46 % |
+| Isis | 0.60–0.80 | 77 % |
+| Godstow | 0.20–0.35 | 70 % |
+
+Running the flag model along the observed river (no forecast error) gives the
+same pattern, so the hazard is the cause, not the forecast paths:
+
+| River | Forecast | Happened |
+|---|---|---|
+| Isis | 0.20–0.35 | 46 % |
+| Isis | 0.60–0.80 | 91 % |
+| Godstow | 0.35–0.60 | 91 % |
+
+Structural changes to the hourly "down" hazard barely moved the season-CV log
+loss. The changes tried were daylight hours below the line, a hinge 5 cm below
+the line, a morning term and river-specific run terms. Log loss went from
+0.0309 to 0.0301 at the Isis and from 0.0204 to 0.0195 at Godstow.
+
+So the chance of coming down is recalibrated instead. The recalibration is a
+Platt fit on the window probability, logit q = 1.114 + 1.171 logit p, one
+function for today and by tomorrow (`DOWN_RECALIBRATION` in `official_flag.py`).
+Cross-fitted by 3-month blocks, the Brier score of the flag coming down is:
+
+| | Before | After | 95 % interval of the change (weekly blocks) |
+|---|---|---|---|
+| Isis, today | 0.0371 | 0.0354 | [−0.0068, +0.0040] |
+| Isis, by tomorrow | 0.0652 | 0.0585 | [−0.020, +0.006] |
+| Godstow, today | 0.0217 | 0.0194 | [−0.0055, +0.0010] |
+| Godstow, by tomorrow | 0.0333 | 0.0242 | [−0.018, −0.001] |
+
+The same recalibration does not help the chance of flags going up, so that is
+unchanged.
+
+## Black flag forecast (issue #5)
+
+The target is the Iffley Lock upstream level (EA 1501TH) 1–48 h ahead, with the
+hysteresis rule run along it: Black at ≥ 0.42 m, back to Red below 0.22 m. The
+OURCs history has only 5 Black periods, so the level is modelled, not the flag.
+
+**What predicts Iffley** (hours with Iffley > 0.15 m, fitted on 2017–2022,
+tested on 2023 – Jan 2026). The persistence spread is 6 cm at 24 h. With the
+observed future differentials, a regression explains 34 % of the 24 h change.
+With the hybrid's forecast differentials it explains nothing (R² −0.03),
+because the observed changes are partly Iffley itself, which is in the Isis
+formula. Iffley is also fed by the Cherwell, which no differential sees. What
+does carry over is the following:
+- Iffley now, and its 6 h and 24 h change.
+- The Isis and Godstow differentials now.
+- The rain of the last 24 h and 72 h, and the rain over the lead.
+
+**Model** (`black_flag.py`): one linear model per lead on those inputs. There is
+a variant without the differentials for when a gauge is offline. Each rain
+member gives a mean path, plus a random walk with the model's spread at each
+lead (2.5 cm at 6 h, 5 cm at 24 h, 6 cm at 48 h).
+
+**Test** (2023 – Jan 2026, starts every 3 h, rain that fell). Brier against the
+test-period rate:
+
+| | 24 h | 48 h |
+|---|---|---|
+| Iffley reaches 0.42 m | 0.0025 vs 0.0046 (40 events) | 0.0068 vs 0.0092 (80) |
+| Official flag Red → Black, from Red | 0.0094 vs 0.0148 (21) | 0.0247 vs 0.0345 (50) |
+| Official flag Black → Red, from Black | 0.042 vs 0.060 (14) | 0.068 vs 0.140 (37) |
+
+Reliability, Red → Black within 24 h:
+
+| Forecast | Happened | Starts |
+|---|---|---|
+| 0.05–0.20 | 16 % | 31 |
+| 0.20–0.50 | 70 % | 10 |
+| > 0.50 | 94 % | 16 |
+
+**Past cases:**
+- **12 Feb 2024, 07:00:** Iffley at 0.44 m, so the card shows Black about 6.5 h
+  before OURCs raised it.
+- **13 Jan 2024, 07:00:** the flag was Black and Iffley 0.32 m and falling. The
+  card gave a 58 % chance of Red by the end of tomorrow; the flag came down at
+  13:37 the next day.
+- **25 Nov 2024 (Storm Bert): missed.** Iffley had been drawn down to 0.01 m (a
+  12 cm drop in a day) and then rose to 0.76 m within two days.
+
+**On the page:** a Black card appears only when Black is close. That means the
+flag is Black, Iffley is within 6 cm of 0.42 m, or there is at least a 10 %
+chance of Black by the end of tomorrow.

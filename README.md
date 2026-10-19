@@ -57,14 +57,18 @@ Additions:
    `hybrid_live.py`. Results in `EXPERIMENTS.md`. Shown on the preview page only.
 5. **Preview page** (`docs/preview/`, written with `--preview-dir docs/preview`;
    the same `index.html` switches its preview features on from its path): the
-   stepped forecast, the official OURCs flag (status API) with a note when it
-   and the differential band disagree, a two-line box (official flag and flag
-   band, today / by the end of tomorrow), and a Black-flag note from the Iffley
-   Lock upstream level. The official-flag model
-   (`src/flag_predictor/prediction/official_flag.py`, `fit_official_flag.py`,
-   `models/official_flag.json`) is fitted on the OURCs flag history
-   (`data/flags/`); refit with `python fit_official_flag.py --refresh`. No
-   OURCs officer's name is stored or shown.
+   stepped forecast and, above it, the official OURCs flag (status API) as a
+   large tile with cards for the official flag and the differential (today / by
+   the end of tomorrow), plus a Black-flag card for the Isis only when Black is
+   close. The official-flag model (`src/flag_predictor/prediction/official_flag.py`,
+   `fit_official_flag.py`, `models/official_flag.json`) is fitted on the OURCs
+   flag history (`data/flags/`; refit with `python fit_official_flag.py
+   --refresh`), with its chance of coming down recalibrated (`DOWN_RECALIBRATION`).
+   Black comes from a forecast of the Iffley Lock upstream level
+   (`src/flag_predictor/prediction/black_flag.py`, `fit_black_flag.py`,
+   `models/black_flag.json`). When a gauge comes back after an outage the hole
+   is bridged for the first 12 h (`fill_outage` in `hybrid_live.py`). No OURCs
+   officer's name is stored or shown.
 
 Starting the forecast *from* the simulated state (rather than giving it to the
 encoder) was also tried and was worse; see `EXPERIMENTS.md`.

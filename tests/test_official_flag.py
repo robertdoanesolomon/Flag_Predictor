@@ -79,7 +79,7 @@ class OfficialFlagTests(unittest.TestCase):
         fl[:5, 30:] = names.index('amber')
         o = OF.outlook('isis', fl, names.index('red'), self.t0)
         self.assertEqual(o['current_flag'], 'red')
-        self.assertAlmostEqual(o['windows']['tomorrow']['down'], 0.5)
+        self.assertAlmostEqual(o['windows']['tomorrow']['down'], round(OF.recalibrate_down(0.5), 3))
         self.assertEqual(o['down']['flag'], 'amber')
         self.assertIsNone(o['up'])
         sy = OF.sync_note('isis', 'red', np.r_[np.full(40, 0.60), np.full(9, 0.48)])
@@ -88,15 +88,6 @@ class OfficialFlagTests(unittest.TestCase):
         self.assertEqual(sy['hours_out_of_sync'], 9)
         self.assertFalse(sy['band_above_flag'])
 
-    def test_black_indicator_hysteresis(self):
-        idx = pd.date_range('2026-02-10', periods=6, freq='1h', tz='UTC')
-        up = OF.black_indicator(pd.Series([0.2, 0.3, 0.45, 0.35, 0.30, 0.25], idx))
-        self.assertTrue(up['black'])                  # went over 0.42, not yet below 0.22
-        down = OF.black_indicator(pd.Series([0.2, 0.3, 0.45, 0.35, 0.25, 0.20], idx))
-        self.assertFalse(down['black'])
-        near = OF.black_indicator(pd.Series([0.2, 0.3, 0.36], idx[:3]))
-        self.assertTrue(near['near'])
-
     def test_stale_forecast_gets_no_outlook_or_sync(self):
         """Gauges offline: the forecast starts days ago, so no outlook / sync note; an old
         Iffley reading gets no Black note. Fresh again: both come back."""
@@ -104,9 +95,10 @@ class OfficialFlagTests(unittest.TestCase):
         names = OF.order('isis')
         t0 = pd.Timestamp('2026-10-13 20:00', tz='UTC')
         live = SimpleNamespace(members=pd.DataFrame({'m': np.full(73, 0.3)}, index=pd.date_range(t0, periods=73, freq='1h')),
-                               level_hist=np.full(49, 0.3), stepped_total=np.full((50, 73), 0.3), total_samples=None)
+                               level_hist=np.full(49, 0.3), stepped_total=np.full((50, 73), 0.3), total_samples=None,
+                               rain_hist=np.zeros(72), member_rain=np.zeros((240, 5)))
         HL._cache['levels'] = {}
-        HL._cache['iffley_upstream'] = pd.Series([0.1, 0.12], pd.date_range(t0 - pd.Timedelta(hours=1), periods=2, freq='1h'))
+        HL._cache['iffley_upstream'] = pd.Series(0.1, pd.date_range(t0 - pd.Timedelta(hours=30), t0, freq='1h'))
         OF._STATUS['isis'] = {'river': 'isis', 'flag': 'green', 'label': 'Green', 'notices': [], 'set_at': '2026-10-10T09:48:00Z'}
         try:
             out = OF.official_flag_payload('isis', live, now=t0 + pd.Timedelta(days=5))
@@ -119,9 +111,22 @@ class OfficialFlagTests(unittest.TestCase):
             self.assertEqual(out['official_flag']['sync']['band'], names[names.index('dark_blue') - 1])
             self.assertIn('official_outlook', out)
             self.assertIn('black', out)
+            self.assertLess(out['black']['windows']['tomorrow'], 0.01)      # Iffley far below the line
         finally:
             OF._STATUS.pop('isis')
             HL._cache.pop('levels'); HL._cache.pop('iffley_upstream')
+
+    def test_down_recalibration(self):
+        self.assertEqual(OF.recalibrate_down(0.0), 0.0)
+        qs = [OF.recalibrate_down(p) for p in (0.01, 0.1, 0.25, 0.5, 0.8)]
+        self.assertEqual(qs, sorted(qs))
+        self.assertGreater(OF.recalibrate_down(0.25), 0.35)          # coming down was too cautious
+        names = OF.order('isis')
+        fl = np.full((100, 73), names.index('red'))
+        fl[:20, 40:] = names.index('amber')
+        o = OF.outlook('isis', fl, names.index('red'), self.t0)
+        self.assertGreater(o['windows']['tomorrow']['down'], 0.2)
+        self.assertLessEqual(o['windows']['today']['down'], o['windows']['tomorrow']['down'])
 
     def test_payload_without_status_or_flags(self):
         OF._STATUS['godstow'] = None

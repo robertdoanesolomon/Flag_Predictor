@@ -102,7 +102,10 @@ jobs:
               off = ploc.get('official_flag') or {}
               oo = ploc.get('official_outlook')
               w = (f"up {oo['windows']['today']['up']:.0%}, {oo['windows']['tomorrow']['up']:.0%} / down {oo['windows']['today']['down']:.0%}, {oo['windows']['tomorrow']['down']:.0%}") if oo else '-'
-              print(f"- {k}: official {off.get('label', '-')} (set {off.get('set_at', '-')}), sync {off.get('sync')}, official outlook {w}, jump triggers {ploc.get('step_triggers')}")
+              bk = ploc.get('black')
+              bw = (f", black: Iffley {bk['level_m']} m, {'Black now, back to Red' if bk['black_now'] else 'to Black'} "
+                    f"{bk['windows']['today']:.0%} today, {bk['windows']['tomorrow']:.0%} by tomorrow") if bk else ''
+              print(f"- {k}: official {off.get('label', '-')} (set {off.get('set_at', '-')}), sync {off.get('sync')}, official outlook {w}, jump triggers {ploc.get('step_triggers')}{bw}")
           notes = [f"- {k}: {loc['model_note']}" for k, loc in b['locations'].items() if loc.get('model_note')]
           if notes:
               print()

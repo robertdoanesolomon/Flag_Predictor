@@ -381,15 +381,6 @@
     .fc-chip { display: inline-block; width: 14px; height: 14px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15); }
     .fc-main { margin-top: 6px; font-size: clamp(0.95rem, 2vw, 1.02rem); font-weight: 700; color: var(--text); line-height: 1.35; }
     .fc-sub { margin-top: 3px; font-size: 0.88rem; color: var(--text-soft); line-height: 1.45; }
-    .flag-note {
-      margin: 0 0 12px 0;
-      padding: 10px 14px;
-      border-radius: var(--radius-md);
-      background: var(--surface-soft);
-      border: 1px solid var(--border-strong);
-      font-size: 0.92rem;
-      color: var(--text);
-    }
     @media (max-width: 640px) {
       .flag-head { grid-template-columns: minmax(0, 1fr); gap: 10px; }
       .flag-tile { min-height: 0; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; padding: 14px 16px; }
@@ -951,12 +942,15 @@
         within an hour or two of the band, in daylight. Coming down it lags: it usually waits until the river is a few
         centimetres below the line and has stayed there for a few daylight hours (at Godstow, Red often stays until
         the differential is near 0.6). Flag changes almost always happen between 8am and 8pm. When the two disagree,
-        a note appears above the chart.
+        the official-flag card says so.
         <br><br>
         Black (Isis) is not a band: in big floods the differential stops rising (around 0.95), so the page watches the
         river level at Iffley Lock instead. Since 2019 the official flag has gone Black once Iffley reached about
         0.42&nbsp;m and come back to Red once it fell below about 0.22&nbsp;m, which matches the flag in 98% of Red/Black
-        hours. A note appears when Iffley is near or above that level. The forecast does not predict Iffley's level yet.
+        hours. Iffley's level 1&ndash;48 hours ahead is forecast from its level and trend now, the Isis and Godstow
+        differentials now, and the rain that has fallen and is forecast (the differential forecasts do not help: Iffley
+        is also fed by the Cherwell). A Black card appears only when Black is close: the flag is Black, Iffley is within
+        a few centimetres of the line, or there is at least a 10% chance of Black by the end of tomorrow.
         </div>
         <div class="only-main">
         <h3>How do I read the chart?</h3>
@@ -1001,7 +995,7 @@
         certain. The first card is the official flag: a model of when the flag gets changed (how far past
         the line the river is, for how long, the time of day and weekends), fitted on the OURCs flag history (the Isis
         since November 2021; Godstow since September 2024, when its flag started being set from this differential),
-        is run along every outcome starting from the flag flying now. The second card is the differential: which band it is forecast to be in.
+        is run along every outcome starting from the flag flying now; its chance of the flag coming down is then adjusted, because on its own it was too cautious about that in the check years. The second card is the differential: which band it is forecast to be in.
         </div>
 
         <h3>How have earlier forecasts done?</h3>
@@ -1527,6 +1521,39 @@
         <div class="fc-head"><span class="fc-label">${label}</span>${chips}</div>
         <div class="fc-main">${c.main}</div>${c.sub ? `<div class="fc-sub">${c.sub}</div>` : ''}</div>`;
   }
+  /**
+   * Black flag card (Isis), from the Iffley Lock level forecast; null unless Black is close:
+   * Black now (by the Iffley rule or the official flag), a 10%+ chance by the end of tomorrow,
+   * or Iffley within 6 cm of the line.
+   */
+  function blackCard(b, off, loc) {
+    if (!b || !b.windows) return null;
+    const pT = b.windows.today || 0, pM = b.windows.tomorrow || 0;
+    const isBlack = b.black_now || (off && off.flag === 'black');
+    const near = !isBlack && b.level_m >= b.up_m - 0.06;
+    if (!isBlack && pM < 0.1 && !near) return null;
+    const ukDate = (d) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ_UK, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+    const startIso = asUtcIso(loc.forecast_start);
+    const whenIso = b.when && b.when.median_time;
+    const whenDay = whenIso && startIso ? (ukDate(new Date(whenIso)) === ukDate(new Date(startIso)) ? ' today' : ' tomorrow') : '';
+    const when = whenIso ? ` ${pM < 0.6 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.` : '';
+    const lead = (w) => (w === 'Possible' ? 'Possibly' : w === 'Small chance' ? 'Small chance:' : w);
+    const wT = outlookWord(pT), wM = outlookWord(pM);
+    let main;
+    if (isBlack) {
+      if (!wM) main = 'Likely to stay Black today and tomorrow';
+      else if (wT && wT === wM) main = `${lead(wT)} back to Red today (${outlookPct(pT)})`;
+      else main = `${lead(wM)} back to Red by tomorrow (${outlookPct(pM)})`;
+      return { main, sub: `Black usually comes down once Iffley Lock drops below about ${b.down_m.toFixed(2)} m.${wM ? ` Today: ${outlookPct(pT)}.` : ''}${when}`,
+               now: 'black', tomorrow: pM >= 0.5 ? ['red'] : pM >= 0.2 ? ['black', 'red'] : ['black'], strength: pM };
+    }
+    const now = off && FLAG_COLORS[off.flag] ? off.flag : 'red';
+    if (!wM) main = `Unlikely to go Black by tomorrow (${outlookPct(pM)})`;
+    else if (wT && wT === wM) main = `${lead(wT)} Black today (${outlookPct(pT)})`;
+    else main = `${lead(wM)} Black by tomorrow (${outlookPct(pM)})`;
+    return { main, sub: `The flag usually goes Black once Iffley Lock reaches about ${b.up_m.toFixed(2)} m.${wM ? ` Today: ${outlookPct(pT)}.` : ''}${when}`,
+             now, tomorrow: pM >= 0.5 ? ['black'] : pM >= 0.2 ? [now, 'black'] : [now], strength: pM };
+  }
   /** Preview page: the official flag as a big tile, with an official-flag card and a differential card beside it. */
   function renderFlagOutlookHtml(loc) {
     if (!PREVIEW) return '';
@@ -1557,6 +1584,11 @@
         cards.push(cardHtml('Official flag', offCard, outOfSync));
       }
       if (diffCard) cards.push(cardHtml(`Differential &middot; <span class="fc-value">${fmtDiff(loc.current.differential)} m</span>`, diffCard, false));
+      const blk = blackCard(loc.black, off, loc);
+      if (blk && offCard && off.flag === 'red' && offCard.strength === 0 && blk.strength >= 0.2) {
+        cards[0] = cardHtml('Official flag', { ...offCard, main: 'No change expected, other than to Black' }, outOfSync);
+      }
+      if (blk) cards.push(cardHtml(`Black flag &middot; <span class="fc-value">Iffley ${loc.black.level_m.toFixed(2)} m</span>`, blk, false));
     }
     let tile = '';
     if (off) {
@@ -1574,19 +1606,6 @@
     let html = '';
     if (tile || cards.length) {
       html += `<div class="flag-head${tile ? '' : ' no-tile'}" role="status">${tile}${cards.length ? `<div class="fc-cards">${cards.join('')}</div>` : ''}</div>`;
-    }
-    const bk = loc.black;
-    if (bk && (bk.black || bk.near || (off && off.flag === 'black'))) {
-      const lvl = `${bk.level_m.toFixed(2)} m`;
-      let msg;
-      if (bk.black) {
-        msg = `<strong>Black flag conditions:</strong> the river at Iffley Lock is at ${lvl}. The official flag usually goes Black once Iffley reaches about ${bk.up_m.toFixed(2)} m and stays Black until it drops below about ${bk.down_m.toFixed(2)} m (the differential cannot tell Red from Black in big floods).`;
-      } else if (off && off.flag === 'black') {
-        msg = `The river at Iffley Lock is at ${lvl}, below the ${bk.down_m.toFixed(2)} m at which the Black flag usually comes down to Red.`;
-      } else {
-        msg = `The river at Iffley Lock is at ${lvl}. The official flag usually goes Black once it reaches about ${bk.up_m.toFixed(2)} m.`;
-      }
-      html += `<div class="flag-note">${msg}</div>`;
     }
     return html;
   }
