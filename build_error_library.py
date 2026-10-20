@@ -192,8 +192,8 @@ def main() -> None:
     ap.add_argument('--locations', default='isis,godstow,wallingford')
     ap.add_argument('--k-grid', default=','.join(map(str, K_GRID)), help='neighbour counts to try')
     ap.add_argument('--no-save', action='store_true', help='report only')
-    ap.add_argument('--extra', action='store_true',
-                    help='models with the extra soil-moisture / upstream-level inputs (train_extra_models.py)')
+    ap.add_argument('--extra', default=None, choices=['all', 'soil', 'soil_rise'],
+                    help='models with extra soil-moisture / upstream-level inputs (train_extra_models.py --inputs)')
     args = ap.parse_args()
     k_grid = [int(k) for k in args.k_grid.split(',')]
     names = args.names.split(',')
@@ -208,7 +208,7 @@ def main() -> None:
             predict = predict_hybrid if args.family == 'hybrid' else predict_continuous
             if args.extra:
                 from train_extra_models import data_with_extra
-                preds = predict(names, loc, data_with_extra(loc), t_all)
+                preds = predict(names, loc, data_with_extra(loc, args.extra), t_all)
             else:
                 preds = predict(names, loc, data, t_all)
         obs = np.stack([data.diff[t:t + HORIZON + 1] for t in t_all])

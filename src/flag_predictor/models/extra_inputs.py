@@ -50,6 +50,13 @@ COSMOS_SITE = 'CHIMN'   # Chimney Meadows
 SOIL_DELAY_H = 36       # a day's value (stamped 00:00) is published the next day: use it from noon
 
 EXTRA_COLS = [f'up_{r}_{k}' for r in UPSTREAM for k in ('rise', 'd6', 'd24')] + ['soil_vwc', 'soil_vwc_d7']
+# Input sets to try: everything; measured soil moisture only; soil plus one compact upstream signal
+# per tributary (how far above its 14-day low, i.e. water on its way).
+INPUT_SETS = {
+    'all': EXTRA_COLS,
+    'soil': ['soil_vwc', 'soil_vwc_d7'],
+    'soil_rise': ['soil_vwc', 'soil_vwc_d7'] + [f'up_{r}_rise' for r in UPSTREAM],
+}
 
 
 def _utc(index: pd.DatetimeIndex) -> pd.DatetimeIndex:

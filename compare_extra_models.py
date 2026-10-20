@@ -46,6 +46,7 @@ def main() -> None:
     ap.add_argument('--new', default='hybrid_su')
     ap.add_argument('--seeds', type=int, default=5)
     ap.add_argument('--locations', default='isis,godstow,wallingford')
+    ap.add_argument('--inputs', default='all', choices=['all', 'soil', 'soil_rise'])
     ap.add_argument('--out', default=str(ROOT / 'figures' / 'eval' / 'extra_inputs_comparison.json'))
     args = ap.parse_args()
     torch.set_num_threads(2)
@@ -60,7 +61,7 @@ def main() -> None:
         t_all = np.concatenate([starts['val2023'], starts['test']])
         obs = np.stack([base_data.diff[t + 1:t + HORIZON + 1] for t in t_all])
         old = predict_hybrid(HYBRID_MODELS[:len(new_names)], loc, base_data, t_all)
-        new = predict_hybrid(new_names, loc, data_with_extra(loc), t_all)
+        new = predict_hybrid(new_names, loc, data_with_extra(loc, args.inputs), t_all)
         d0 = base_data.diff[t_all]
         rain3 = np.array([base_data.rain[t + 1:t + 73].sum() for t in t_all])
         trend = d0 - np.array([base_data.diff[t - 24] for t in t_all])

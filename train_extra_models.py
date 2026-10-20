@@ -22,16 +22,17 @@ warnings.filterwarnings('ignore')
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
-from flag_predictor.models.extra_inputs import EXTRA_COLS, history_extra  # noqa: E402
+from flag_predictor.models.extra_inputs import INPUT_SETS, history_extra  # noqa: E402
 from flag_predictor.models.physics_data import load_location_data  # noqa: E402
 from flag_predictor.models.physics_train import save_candidate, train_candidate  # noqa: E402
 
 
-def data_with_extra(location: str):
+def data_with_extra(location: str, inputs: str = 'all'):
     data = load_location_data(location, ROOT)
-    extra = history_extra(data.index, ROOT).to_numpy(dtype=np.float32)
+    cols = INPUT_SETS[inputs]
+    extra = history_extra(data.index, ROOT)[cols].to_numpy(dtype=np.float32)
     data.enc = np.concatenate([data.enc, extra], axis=1)
-    data.enc_cols = list(data.enc_cols) + EXTRA_COLS
+    data.enc_cols = list(data.enc_cols) + cols
     cover = np.isfinite(extra[data.train_t]).mean(0)
     print(f"  extra inputs at training starts: {cover.min():.0%}-{cover.max():.0%} present", flush=True)
     return data
@@ -43,6 +44,7 @@ def main() -> None:
     ap.add_argument('--seeds', default='0,1,2,3,4')
     ap.add_argument('--locations', default='all')
     ap.add_argument('--threads', type=int, default=2)
+    ap.add_argument('--inputs', default='all', choices=['all', 'soil', 'soil_rise'])
     args = ap.parse_args()
     torch.set_num_threads(args.threads)
     locations = ['isis', 'godstow', 'wallingford'] if args.locations == 'all' else args.locations.split(',')
@@ -54,7 +56,7 @@ def main() -> None:
                 continue
             t = time.time()
             print(f'\n=== {name} {loc} ===', flush=True)
-            data = data_with_extra(loc)
+            data = data_with_extra(loc, args.inputs)
             cfg = {'per_sample_params': True, 'smooth_rating': True, 'seed': seed}
             model, scaler, cfg_used, history = train_candidate('hybrid', data, cfg)
             save_candidate(model, scaler, cfg_used, history, 'hybrid', name, loc, data, ROOT / 'models')
