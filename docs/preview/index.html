@@ -1634,17 +1634,11 @@
       }
       let offCard = outlookCard(loc.official_outlook, 'flag', loc);
       // The flag changed after this forecast ran (live tile): its outlook started from the old flag,
-      // so say what happened instead, and whether the forecast had it coming.
+      // so say what happened instead.
       if (off && loc.official_flag && off !== loc.official_flag && off.flag !== loc.official_flag.flag) {
-        const oo = loc.official_outlook || {};
-        const dir = ['up', 'down'].find((d) => oo[d] && (oo[d].flag === off.flag || (oo[d].split && oo[d].split[off.flag] > 0)));
-        const pt = dir && oo.windows && oo.windows.tomorrow ? oo.windows.tomorrow[dir] : null;
-        const p = pt != null && pt >= 0.4 ? pt : null;   // "as forecast" only if it said at least "possibly"
-        const was = FLAG_LABELS[loc.official_flag.flag] || loc.official_flag.label;
         offCard = {
           main: `Changed to ${off.label}${off.set_at ? ` at ${fmtShortDateTime(off.set_at).split(',')[0]}` : ''}`,
-          sub: `${p != null ? `As previously forecast (${outlookPct(p)} by tomorrow). ` : `From ${was}. `}` +
-               'The chances from here update with the next forecast, within 15 minutes.',
+          sub: 'The chances from here update with the next forecast, within 15 minutes.',
           now: off.flag, tomorrow: [off.flag], strength: 0,
         };
       }
