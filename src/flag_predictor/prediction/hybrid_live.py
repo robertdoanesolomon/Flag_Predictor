@@ -308,8 +308,7 @@ def outage_nowcast(location: str, merged_df: pd.DataFrame, now: Optional[pd.Time
     out.index = out.index.tz_convert(tz) if tz is not None else out.index.tz_localize(None)
     hours = int((until - t_last) / pd.Timedelta(hours=1))
     # The EA time of that last reading, when the frame kept it (the hourly row can be later).
-    last_naive = merged_df['differential'].last_valid_index()
-    reading = (merged_df.attrs.get('reading_time') or {}).get(last_naive)
+    reading = (merged_df.attrs.get('reading_time') or {}).get(t_last.tz_convert('UTC').tz_localize(None))
     info = {'from': other, 'last_reading': t_last, 'reading_time': reading, 'until': until, 'hours': hours,
             'confident': hours <= NOWCAST_CONFIDENT_H, 'level': float(est.iloc[-1]),
             'sd': nowcast_error_sd(location, hours, float(est.iloc[-1]))}

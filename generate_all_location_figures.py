@@ -35,6 +35,8 @@ import pandas as pd
 # ---------------------------------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+# Static PNG charts (matplotlib). The pages draw their charts from forecast_data.json.
+MAKE_FIGURES = os.environ.get("FLAG_PREDICTOR_FIGURES") == "1"
 
 # Ensure `src` is on the path (mirrors the notebook setup, but from project root)
 SRC_DIR = PROJECT_ROOT / "src"
@@ -658,7 +660,7 @@ def render_location_outputs(
     total_samples: Optional[np.ndarray] = None,
     model_name: Optional[str] = None,
     model_note: Optional[str] = None,
-    make_figures: bool = True,
+    make_figures: Optional[bool] = None,
     flag_outlook: Optional[dict] = None,
     extra: Optional[dict] = None,
 ) -> dict:
@@ -666,7 +668,11 @@ def render_location_outputs(
 
     ``make_figures=False`` builds only the JSON payload (no PNGs), e.g. for the
     previous-model view, so the repository does not grow by another set of images per run.
+    The default (None) is MAKE_FIGURES: off, since no page shows the images and each run
+    committed ~3.4 MB of them (set FLAG_PREDICTOR_FIGURES=1 to make them locally).
     """
+    if make_figures is None:
+        make_figures = MAKE_FIGURES
     station_names_list = get_location_station_names(location)
 
     # ------------------------------------------------------------------

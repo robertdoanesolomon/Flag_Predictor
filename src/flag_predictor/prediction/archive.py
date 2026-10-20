@@ -227,7 +227,7 @@ def fill_gaps_from_git(docs_dir: Path, repo_root: Path, now: Optional[pd.Timesta
 
     Every CI run commits docs/forecast_data.json, so after an outage of the
     archive (or before this code was merged) the forecasts are still in git.
-    Needs a full clone (CI checks out with fetch-depth 0).
+    In a shallow clone (CI) it first fetches the history since the last archived slot.
     """
     import subprocess
     archive_dir = Path(docs_dir) / 'archive'
@@ -241,6 +241,10 @@ def fill_gaps_from_git(docs_dir: Path, repo_root: Path, now: Optional[pd.Timesta
     since = max(since, now - pd.Timedelta(days=max_days))
     if slot_id(since) >= slot_id(now):
         return []
+    # CI checks out only the latest commit: fetch just the history since the last archived slot.
+    if (Path(repo_root) / '.git' / 'shallow').exists():
+        subprocess.run(['git', 'fetch', '--quiet', f'--shallow-since={since.isoformat()}Z', 'origin', 'main'],
+                       cwd=repo_root, capture_output=True, text=True, timeout=300)
     log = subprocess.run(['git', 'log', '--format=%H %cI', f'--since={since.isoformat()}Z', '--reverse',
                           '--', 'docs/forecast_data.json'], cwd=repo_root, capture_output=True, text=True, check=True)
     first_in_slot = {}
