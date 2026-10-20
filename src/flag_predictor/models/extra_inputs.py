@@ -53,6 +53,7 @@ EXTRA_COLS = [f'up_{r}_{k}' for r in UPSTREAM for k in ('rise', 'd6', 'd24')] + 
 # Input sets to try: everything; measured soil moisture only; soil plus one compact upstream signal
 # per tributary (how far above its 14-day low, i.e. water on its way).
 INPUT_SETS = {
+    'none': [],
     'all': EXTRA_COLS,
     'soil': ['soil_vwc', 'soil_vwc_d7'],
     'soil_rise': ['soil_vwc', 'soil_vwc_d7'] + [f'up_{r}_rise' for r in UPSTREAM],

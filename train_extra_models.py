@@ -33,8 +33,9 @@ def data_with_extra(location: str, inputs: str = 'all'):
     extra = history_extra(data.index, ROOT)[cols].to_numpy(dtype=np.float32)
     data.enc = np.concatenate([data.enc, extra], axis=1)
     data.enc_cols = list(data.enc_cols) + cols
-    cover = np.isfinite(extra[data.train_t]).mean(0)
-    print(f"  extra inputs at training starts: {cover.min():.0%}-{cover.max():.0%} present", flush=True)
+    if cols:
+        cover = np.isfinite(extra[data.train_t]).mean(0)
+        print(f"  extra inputs at training starts: {cover.min():.0%}-{cover.max():.0%} present", flush=True)
     return data
 
 
@@ -44,7 +45,7 @@ def main() -> None:
     ap.add_argument('--seeds', default='0,1,2,3,4')
     ap.add_argument('--locations', default='all')
     ap.add_argument('--threads', type=int, default=2)
-    ap.add_argument('--inputs', default='all', choices=['all', 'soil', 'soil_rise'])
+    ap.add_argument('--inputs', default='all', choices=['none', 'all', 'soil', 'soil_rise'])
     args = ap.parse_args()
     torch.set_num_threads(args.threads)
     locations = ['isis', 'godstow', 'wallingford'] if args.locations == 'all' else args.locations.split(',')
