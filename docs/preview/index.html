@@ -1570,10 +1570,12 @@
   // tile changes within seconds of OURCs, not with the next forecast run.
   const LIVE_FLAGS = {};
   const LIVE_FLAGS_EVERY_MS = 10000;
+  // Same flag, set at the same moment? (the Worker and the forecast write the time differently)
+  const sameFlag = (a, b) => a.flag === b.flag && Date.parse(a.set_at || 0) === Date.parse(b.set_at || 0);
   function officialFlag(loc) {
     const off = loc.official_flag;
     const live = LIVE_FLAGS[loc.key];
-    if (!off || !live || (live.flag === off.flag && live.set_at === off.set_at)) return off;
+    if (!off || !live || sameFlag(live, off)) return off;
     // A change since the forecast ran: the sync note compared the river with the old flag.
     return { ...off, flag: live.flag, label: live.label, set_at: live.set_at, sync: undefined };
   }
@@ -1596,7 +1598,7 @@
           if (!st || !loc || !loc.official_flag || !FLAG_COLORS[st.flag]) continue;
           const prev = LIVE_FLAGS[key] || loc.official_flag;
           LIVE_FLAGS[key] = st;
-          if (prev.flag === st.flag && prev.set_at === st.set_at) continue;
+          if (sameFlag(prev, st)) continue;
           const head = document.querySelector(`#pane-${key} .flag-head`);
           if (head) head.outerHTML = renderFlagOutlookHtml(loc);
         }
