@@ -1183,6 +1183,7 @@ def generate_spaghetti_figure(
     live_title_suffix: str = "",
     beta_title_suffix: str = " (beta)",
     preview_dir: Path | None = None,
+    run_september: bool = True,
 ) -> tuple[dict | None, dict | None]:
     """
     Generate the spaghetti + rainfall figure for a single location and save it.
@@ -1210,109 +1211,112 @@ def generate_spaghetti_figure(
         location=location,
         project_root=project_root,
         verbose=True,
+        features=run_september,   # the September LSTM's features; the hybrid builds its own
     )
 
-    # ------------------------------------------------------------------
-    # STEP 2: Load model (use location-specific latest files)
-    # ------------------------------------------------------------------
-    models_dir = project_root / "models"
+    payload = None
+    if run_september:   # the previous (September LSTM) model, for the old page; off since 20 Oct 2026
+        # ------------------------------------------------------------------
+        # STEP 2: Load model (use location-specific latest files)
+        # ------------------------------------------------------------------
+        models_dir = project_root / "models"
 
-    # Use the September 2026 experiment models (hourly decoder + optional
-    # Farmoor flow stage-1). Fall back to June if September weights are missing.
-    model_path = models_dir / f"multihorizon_model_experiment_2026_09_{location}.pth"
-    scaler_path = models_dir / f"scaler_experiment_2026_09_{location}.pkl"
-    config_path = models_dir / f"config_experiment_2026_09_{location}.pkl"
-    if not model_path.exists():
-        model_path = models_dir / f"multihorizon_model_experiment_2026_06_{location}.pth"
-        scaler_path = models_dir / f"scaler_experiment_2026_06_{location}.pkl"
-        config_path = models_dir / f"config_experiment_2026_06_{location}.pkl"
+        # Use the September 2026 experiment models (hourly decoder + optional
+        # Farmoor flow stage-1). Fall back to June if September weights are missing.
+        model_path = models_dir / f"multihorizon_model_experiment_2026_09_{location}.pth"
+        scaler_path = models_dir / f"scaler_experiment_2026_09_{location}.pkl"
+        config_path = models_dir / f"config_experiment_2026_09_{location}.pkl"
+        if not model_path.exists():
+            model_path = models_dir / f"multihorizon_model_experiment_2026_06_{location}.pth"
+            scaler_path = models_dir / f"scaler_experiment_2026_06_{location}.pkl"
+            config_path = models_dir / f"config_experiment_2026_06_{location}.pkl"
 
-    try:
-        model, scaler, model_config = load_model(
-            model_path=str(model_path),
-            scaler_path=str(scaler_path),
-            config_path=str(config_path),
+        try:
+            model, scaler, model_config = load_model(
+                model_path=str(model_path),
+                scaler_path=str(scaler_path),
+                config_path=str(config_path),
+            )
+        except FileNotFoundError as exc:
+            # If the experiment artefacts for this location are not present in the
+            # repo (e.g. not committed to GitHub), skip this location instead of
+            # failing the whole workflow.
+            print(f"\n[WARNING] Skipping location '{location}' – {exc}")
+            return None, None
+
+        feature_columns = model_config["feature_columns"]
+        sequence_length = model_config["sequence_length"]
+        horizons = model_config["horizons"]
+
+        flow_model = flow_scaler = flow_config = None
+        farmoor_path = models_dir / "multihorizon_model_experiment_2026_09_farmoor.pth"
+        if model_config.get("uses_predicted_flow") and farmoor_path.exists():
+            flow_model, flow_scaler, flow_config = load_model(
+                model_path=str(farmoor_path),
+                scaler_path=str(models_dir / "scaler_experiment_2026_09_farmoor.pkl"),
+                config_path=str(models_dir / "config_experiment_2026_09_farmoor.pkl"),
+            )
+
+        print("\nModel configuration:")
+        print(f"  Sequence length: {sequence_length}")
+        print(f"  Hidden sizes: {model_config['hidden_sizes']}")
+        print(f"  Features: {len(feature_columns)}")
+        print(f"  Architecture: {model_config.get('architecture', 'multihorizon')}")
+
+        # ------------------------------------------------------------------
+        # STEP 3: Fetch ensemble rainfall forecast (location-specific)
+        # ------------------------------------------------------------------
+        print(f"\n{'=' * 70}")
+        print(f"STEP 3: Fetching location-specific rainfall forecast for {location.upper()}")
+        print(f"{'=' * 70}")
+
+        rainfall_forecast = get_rainfall_forecast_ensemble(
+            location=location,
+            n_members=n_members,
         )
-    except FileNotFoundError as exc:
-        # If the experiment artefacts for this location are not present in the
-        # repo (e.g. not committed to GitHub), skip this location instead of
-        # failing the whole workflow.
-        print(f"\n[WARNING] Skipping location '{location}' – {exc}")
-        return None, None
 
-    feature_columns = model_config["feature_columns"]
-    sequence_length = model_config["sequence_length"]
-    horizons = model_config["horizons"]
+        print(f"\n✓ Rainfall forecast: {rainfall_forecast.shape}")
+        print(f"  Time range: {rainfall_forecast.index[0]} to {rainfall_forecast.index[-1]}")
+        print(f"  Stations loaded: {len(get_location_station_names(location))}")
 
-    flow_model = flow_scaler = flow_config = None
-    farmoor_path = models_dir / "multihorizon_model_experiment_2026_09_farmoor.pth"
-    if model_config.get("uses_predicted_flow") and farmoor_path.exists():
-        flow_model, flow_scaler, flow_config = load_model(
-            model_path=str(farmoor_path),
-            scaler_path=str(models_dir / "scaler_experiment_2026_09_farmoor.pkl"),
-            config_path=str(models_dir / "config_experiment_2026_09_farmoor.pkl"),
+        # ------------------------------------------------------------------
+        # STEP 4: Ensemble prediction
+        # ------------------------------------------------------------------
+        print(f"\n{'=' * 70}")
+        print(f"STEP 4: Running ensemble prediction for {location.upper()}")
+        print(f"{'=' * 70}")
+
+        station_names_list = get_location_station_names(location)
+
+        ensemble_predictions = predict_ensemble(
+            model=model,
+            scaler=scaler,
+            historical_df=merged_df,
+            rainfall_ensemble_df=rainfall_forecast,
+            feature_columns=feature_columns,
+            sequence_length=sequence_length,
+            horizons=horizons,
+            station_names=station_names_list,
+            n_members=n_members,
+            predicts_delta=model_config.get("predicts_delta", False),
+            max_recession_m_per_day=model_config.get("max_recession_m_per_day"),
+            verbose=True,
+            model_config=model_config,
+            flow_model=flow_model,
+            flow_scaler=flow_scaler,
+            flow_config=flow_config,
         )
 
-    print("\nModel configuration:")
-    print(f"  Sequence length: {sequence_length}")
-    print(f"  Hidden sizes: {model_config['hidden_sizes']}")
-    print(f"  Features: {len(feature_columns)}")
-    print(f"  Architecture: {model_config.get('architecture', 'multihorizon')}")
-
-    # ------------------------------------------------------------------
-    # STEP 3: Fetch ensemble rainfall forecast (location-specific)
-    # ------------------------------------------------------------------
-    print(f"\n{'=' * 70}")
-    print(f"STEP 3: Fetching location-specific rainfall forecast for {location.upper()}")
-    print(f"{'=' * 70}")
-
-    rainfall_forecast = get_rainfall_forecast_ensemble(
-        location=location,
-        n_members=n_members,
-    )
-
-    print(f"\n✓ Rainfall forecast: {rainfall_forecast.shape}")
-    print(f"  Time range: {rainfall_forecast.index[0]} to {rainfall_forecast.index[-1]}")
-    print(f"  Stations loaded: {len(get_location_station_names(location))}")
-
-    # ------------------------------------------------------------------
-    # STEP 4: Ensemble prediction
-    # ------------------------------------------------------------------
-    print(f"\n{'=' * 70}")
-    print(f"STEP 4: Running ensemble prediction for {location.upper()}")
-    print(f"{'=' * 70}")
-
-    station_names_list = get_location_station_names(location)
-
-    ensemble_predictions = predict_ensemble(
-        model=model,
-        scaler=scaler,
-        historical_df=merged_df,
-        rainfall_ensemble_df=rainfall_forecast,
-        feature_columns=feature_columns,
-        sequence_length=sequence_length,
-        horizons=horizons,
-        station_names=station_names_list,
-        n_members=n_members,
-        predicts_delta=model_config.get("predicts_delta", False),
-        max_recession_m_per_day=model_config.get("max_recession_m_per_day"),
-        verbose=True,
-        model_config=model_config,
-        flow_model=flow_model,
-        flow_scaler=flow_scaler,
-        flow_config=flow_config,
-    )
-
-    payload = render_location_outputs(
-        location=location,
-        output_dir=output_dir,
-        merged_df=merged_df,
-        ensemble_predictions=ensemble_predictions,
-        rainfall_forecast=rainfall_forecast,
-        config=config,
-        flag_thresholds=flag_thresholds,
-        title_suffix=live_title_suffix,
-    )
+        payload = render_location_outputs(
+            location=location,
+            output_dir=output_dir,
+            merged_df=merged_df,
+            ensemble_predictions=ensemble_predictions,
+            rainfall_forecast=rainfall_forecast,
+            config=config,
+            flag_thresholds=flag_thresholds,
+            title_suffix=live_title_suffix,
+        )
 
     beta_payload = None
     if beta_dir is not None:
@@ -1532,11 +1536,15 @@ def main(argv: list[str] | None = None) -> None:
 
     hybrid_primary = args.primary == "hybrid"
     preview_dir = _resolve(args.preview_dir) if hybrid_primary else None
+    # The September LSTM (the old /old page) runs only when asked for with --old-dir (off since
+    # 20 Oct 2026: it took ~3 min a run); without --primary hybrid it is the main forecast.
+    run_september = (not hybrid_primary) or bool(args.old_dir)
     if hybrid_primary:
         # September renders into old_dir, the hybrid into the main output_dir.
         main_dir = output_dir
         old_dir = _resolve(args.old_dir) or (output_dir / "old")
-        old_dir.mkdir(parents=True, exist_ok=True)
+        if run_september:
+            old_dir.mkdir(parents=True, exist_ok=True)
         september_dir, beta_dir = old_dir, main_dir
         live_suffix, beta_suffix = " (old model)", ""
     else:
@@ -1558,6 +1566,7 @@ def main(argv: list[str] | None = None) -> None:
                 live_title_suffix=live_suffix,
                 beta_title_suffix=beta_suffix,
                 preview_dir=preview_dir,
+                run_september=run_september,
             )
         except Exception:
             failed_locations.append(location)
@@ -1584,7 +1593,8 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"  [primary] hybrid missing for '{loc}'; main page shows the September forecast")
                 main_payloads[loc] = all_payloads[loc]
         write_forecast_bundle(output_dir, main_payloads, failed_locations)
-        write_forecast_bundle(september_dir, dict(all_payloads), failed_locations)
+        if run_september:
+            write_forecast_bundle(september_dir, dict(all_payloads), failed_locations)
         if not args.no_archive:
             archive_forecasts(output_dir, main_payloads)
         if preview_dir is not None:
@@ -1604,7 +1614,7 @@ def main(argv: list[str] | None = None) -> None:
         )
         # Exit code 2 = partial failure: some locations updated, some did not.
         # The CI workflow publishes what succeeded and then marks the run failed.
-        sys.exit(2 if all_payloads else 1)
+        sys.exit(2 if (all_payloads or beta_payloads) else 1)
 
 
 if __name__ == "__main__":

@@ -51,7 +51,8 @@ def prepare_training_data(
     project_root: Optional[Path] = None,
     delta_targets: bool = True,
     include_api: bool = True,
-    verbose: bool = True
+    verbose: bool = True,
+    features: bool = True,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Prepare all training data for a location.
@@ -141,6 +142,9 @@ def prepare_training_data(
         print(f"\n✓ Merged data: {merged_df.shape}")
         print(f"  Date range: {merged_df.index.min()} to {merged_df.index.max()}")
     
+    if not features:   # the merged frame only (the physics hybrid builds its own inputs)
+        return merged_df, None, None
+
     # Create features and targets
     # Only rainfall columns go into future_rainfall_df (exclude flow, level, groundwater)
     rainfall_cols = [
