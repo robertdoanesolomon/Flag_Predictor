@@ -173,9 +173,16 @@ jobs:
               echo "Push succeeded."
               finish
             fi
-            echo "Push failed (attempt $i): updating from origin/main, regenerating, retrying..."
             sleep $((i * 5))
             git fetch origin main
+            # Usually main moved for a code or page change that does not touch the generated
+            # files: put this forecast on top of it and push, without regenerating (~6 min).
+            if git rebase origin/main; then
+              echo "Push failed (attempt $i): rebased the forecast onto the new main, retrying..."
+              continue
+            fi
+            git rebase --abort || true
+            echo "Push failed (attempt $i): the generated files conflict; regenerating on the new main..."
             git reset --hard origin/main
             generate_once
             if ! commit_docs_if_changed; then
