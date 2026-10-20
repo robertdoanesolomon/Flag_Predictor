@@ -946,9 +946,10 @@
         <details class="preview-banner only-preview" open>
           <summary><strong>Preview:</strong> what is new here. <a href="../">The main forecast is here.</a></summary>
           <ul>
-            <li id="trial-model-note" hidden><strong>Trial model</strong>: this page's forecast also uses measured soil
-            moisture (COSMOS-UK, Chimney Meadows) and eight upstream river gauges (Windrush, Evenlode, Coln, upper
-            Thames, Cherwell, Ray, Thame, Ock). The main page keeps the current model until this one has proved itself.</li>
+            <li id="trial-model-note" hidden><strong>Trial model</strong> (<span id="trial-model-where"></span>): the forecast
+            here also uses measured soil moisture (COSMOS-UK, Chimney Meadows) and how high eight upstream rivers are
+            (Windrush, Evenlode, Coln, upper Thames, Cherwell, Ray, Thame, Ock). The main page keeps the current model
+            until this one has proved itself.</li>
             <li><strong>Under the hood</strong>: below each chart, the model's water stores (soil, fast, medium and
             groundwater paths, the river) now and over the next 10 days.</li>
           </ul>
@@ -2832,8 +2833,15 @@
     if (ON_PREVIEW_PAGE) bundle.location_order.forEach(k => plotModelState(k, bundle.locations[k]));
     window.__forecastBundle = bundle;
     updateFooterTimes(bundle);
+    const TRIAL_MODELS = ['hybrid_sr', 'hybrid_su'];
+    const trialWhere = bundle.location_order.filter((k) => TRIAL_MODELS.includes((bundle.locations[k] || {}).model))
+      .map((k) => STRETCH_NAMES[k] || k);
     const trialNote = document.getElementById('trial-model-note');
-    if (trialNote) trialNote.hidden = !(ON_PREVIEW_PAGE && Object.values(bundle.locations).some((l) => l.model === 'hybrid_su'));
+    if (trialNote) {
+      trialNote.hidden = !(ON_PREVIEW_PAGE && trialWhere.length);
+      const w = document.getElementById('trial-model-where');
+      if (w) w.textContent = trialWhere.join(' and ');
+    }
     initHistory(bundle);
     if (keep && keep !== firstKey) setActiveTab(keep);
 

@@ -39,10 +39,20 @@ MODEL_TAG = 'hybrid_c1_ps'
 #                    'names': ['hybrid_simfeat'] + [f'hybrid_simfeat_s{i}' for i in range(1, 5)]}}
 SIMFEAT_MODELS: dict = {}
 # Trial models with extra encoder inputs, for the preview page only (generate_all_location_figures
-# --preview-model). hybrid_su: measured soil moisture and upstream EA levels (models/extra_inputs.py).
+# --preview-model; models/extra_inputs.py). Used for a location only where its copies exist.
+# hybrid_sr: measured soil moisture plus how far each upstream tributary is above its 14-day low
+# (backtest: better at Godstow, worse at the Isis, so the Isis has none; EXPERIMENTS.md).
+# hybrid_su: all 26 inputs (worse at the Isis, level at Godstow).
 VARIANTS: dict = {
-    'hybrid_su': {'names': ['hybrid_su'] + [f'hybrid_su_s{i}' for i in range(1, 5)], 'extra': 'soil_upstream'},
+    'hybrid_sr': {'names': ['hybrid_sr'] + [f'hybrid_sr_s{i}' for i in range(1, 5)]},
+    'hybrid_su': {'names': ['hybrid_su'] + [f'hybrid_su_s{i}' for i in range(1, 5)]},
 }
+
+
+def variant_available(variant: str, location: str, models_dir: Optional[Path] = None) -> bool:
+    models_dir = Path(models_dir) if models_dir else Path(__file__).resolve().parents[3] / 'models'
+    v = VARIANTS.get(variant)
+    return bool(v) and any((models_dir / f'redesign_{n}_{location}.pt').exists() for n in v['names'])
 
 
 def variant_extra(variant: str, index: pd.DatetimeIndex, project_root: Path) -> pd.DataFrame:
