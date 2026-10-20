@@ -475,6 +475,11 @@
     }
 
     /* ---------- STATS GRID ---------- */
+    details.under-hood { margin: 8px 0 22px; }
+    details.under-hood > summary { cursor: pointer; font-weight: 700; font-size: 1.02rem; padding: 6px 0; }
+    .under-hood-intro { font-size: 0.9rem; color: var(--text-soft); line-height: 1.5; margin: 6px 0 12px; }
+    .state-note { margin-top: 4px; font-size: 12px; line-height: 1.4; color: var(--text-soft); }
+    .state-plot { min-height: 300px; }
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1709,6 +1714,82 @@
   }
 
   /** Detect a dark theme and return Plotly template + grid colours. */
+  /* ---- Under the hood (preview page): the hybrid model's stores now and ahead ---- */
+  const STATE_PANELS = [
+    ['soil', 'Soil wetness', '%'],
+    ['quick', 'Fast runoff store', 'mm'],
+    ['medium', 'Medium store', 'mm'],
+    ['slow', 'Groundwater store', 'mm'],
+    ['channel', 'River channel', 'mm'],
+    ['flow', 'River flow', 'm³/s'],
+  ];
+  function stateNote(name, ms) {
+    const p = ms.params || {};
+    const h = (x) => x >= 48 ? `${Math.round(x / 24)} days` : `${Math.round(x)} h`;
+    switch (name) {
+      case 'soil': return 'How full the soil is. Wetter soil sends more of the rain to the river.';
+      case 'quick': return p.k_quick ? `Water on its way fast (surface, drains). Half gone in ~${h(p.k_quick * 0.69)}.` : '';
+      case 'medium': return p.k_medium ? `Water draining through the soil, over ~${h(3 * p.k_medium)}.` : '';
+      case 'slow': return p.k_slow ? `Groundwater feeding the river slowly. Half gone in ~${h(p.k_slow * 0.69)}.` : '';
+      case 'channel': return 'Water in the river itself, upstream of the gauges.';
+      case 'flow': return ms.farmoor_flow
+        ? `What the model thinks is flowing. The Farmoor gauge measured ${ms.farmoor_flow.value.toFixed(0)} m³/s at ${fmtShortDateTime(ms.farmoor_flow.time)}.`
+        : 'What the model thinks is flowing past.';
+    }
+    return '';
+  }
+  function renderModelStateHtml(key, loc) {
+    const ms = loc.model_state;
+    const fmt = (v, u) => u === '%' ? `${Math.round(v)}<small>%</small>` : `${v >= 100 ? v.toFixed(0) : v.toFixed(1)}<small>${u === 'm³/s' ? ' m³/s' : 'mm'}</small>`;
+    const tiles = STATE_PANELS.map(([n, label, u]) => `
+        <div class="stat">
+          <div class="label">${label}</div>
+          <div class="value">${fmt(ms.now[n], u)}</div>
+          <div class="state-note">${stateNote(n, ms)}</div>
+        </div>`).join('');
+    return `
+      <details class="under-hood" open>
+        <summary>Under the hood: what the model thinks the river is doing</summary>
+        <p class="under-hood-intro">The model treats the catchment as connected stores of water: rain wets the soil, the share that runs off
+          splits between a fast, a medium and a slow (groundwater) path, and all three feed the river. Its stores now, worked out from
+          the last few weeks of rain and river levels (mm of water over the whole catchment):</p>
+        <div class="stats-grid">${tiles}</div>
+        <p class="under-hood-intro">How they change over the next 10 days (line: average of the rain forecasts; shading: 10th to 90th percentile):</p>
+        <div id="state-plot-${key}" class="plot state-plot"></div>
+      </details>`;
+  }
+  function plotModelState(key, loc) {
+    const el = document.getElementById(`state-plot-${key}`);
+    if (!el || !loc.model_state || typeof Plotly === 'undefined') return;
+    const ms = loc.model_state, T = themeColors();
+    const compact = window.matchMedia('(max-width: 720px)').matches;
+    const cols = compact ? 1 : 2, rows = Math.ceil(STATE_PANELS.length / cols);
+    const traces = [], annotations = [];
+    STATE_PANELS.forEach(([n, label, u], i) => {
+      const ax = i === 0 ? '' : String(i + 1);
+      const s = ms.series[n];
+      traces.push({ x: ms.times, y: s.p90, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { width: 0 }, hoverinfo: 'skip', showlegend: false });
+      traces.push({ x: ms.times, y: s.p10, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { width: 0 }, fill: 'tonexty',
+                    fillcolor: T.bandOuter, hoverinfo: 'skip', showlegend: false });
+      traces.push({ x: ms.times, y: s.mean, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { color: T.meanLine, width: 2 },
+                    showlegend: false, hovertemplate: `<b>%{x|%a %d %b %H:%M}</b><br>%{y:.1f} ${u}<extra>${label}</extra>` });
+      annotations.push({ text: `<b>${label}</b> (${u})`, xref: `x${ax} domain`, yref: `y${ax} domain`, x: 0, y: 1.18,
+                         xanchor: 'left', showarrow: false, font: { size: 12, color: T.font } });
+    });
+    const layout = {
+      grid: { rows, columns: cols, pattern: 'independent', ygap: 0.42, xgap: 0.12 },
+      height: rows * 150 + 30, margin: { l: 44, r: 12, t: 26, b: 28 },
+      paper_bgcolor: T.paper, plot_bgcolor: T.plot, font: { family: 'Inter, sans-serif', size: 11, color: T.font },
+      annotations, hovermode: 'x unified',
+    };
+    STATE_PANELS.forEach((_, i) => {
+      const ax = i === 0 ? '' : String(i + 1);
+      layout[`xaxis${ax}`] = { gridcolor: T.grid, linecolor: T.axis, tickformat: '%d %b', nticks: 6 };
+      layout[`yaxis${ax}`] = { gridcolor: T.grid, linecolor: T.axis, rangemode: 'tozero', nticks: 4 };
+    });
+    Plotly.newPlot(el, traces, layout, { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false });
+  }
+
   function themeColors() {
     const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     return {
@@ -1865,6 +1946,8 @@
                 <div class="value">${fmtMm(loc.summary.next_7d_rain_mm ?? loc.summary.next_3d_rain_mm)}<small>mm</small>${loc.summary.next_7d_rain_p10_mm != null && loc.summary.next_7d_rain_p90_mm != null ? ` <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;" title="10th to 90th percentile of the rain forecasts">(${fmtMm(loc.summary.next_7d_rain_p10_mm)}–${fmtMm(loc.summary.next_7d_rain_p90_mm)})</small>` : ''}</div>
               </div>
             </div>
+
+            ${ON_PREVIEW_PAGE && loc.model_state ? renderModelStateHtml(key, loc) : ''}
 
             ${renderHistoryBlockHtml(key)}
           </div>
@@ -2724,6 +2807,8 @@
       if (prob && prob.data) Plotly.Plots.resize(prob);
       const hist = document.getElementById(`hist-plot-${key}`);
       if (hist && hist.data) Plotly.Plots.resize(hist);
+      const st = document.getElementById(`state-plot-${key}`);
+      if (st && st.data) Plotly.Plots.resize(st);
     });
   }
 
@@ -2749,6 +2834,7 @@
 
     // Plot every location.
     bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
+    if (ON_PREVIEW_PAGE) bundle.location_order.forEach(k => plotModelState(k, bundle.locations[k]));
     window.__forecastBundle = bundle;
     updateFooterTimes(bundle);
     initHistory(bundle);

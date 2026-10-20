@@ -52,7 +52,7 @@ def redesign_predictor(name: str, location: str, models_dir: Path = MODELS_DIR,
     enc_cols = meta['enc_cols']
 
     @torch.no_grad()
-    def predict(history: pd.DataFrame, future_rain: pd.DataFrame) -> np.ndarray:
+    def predict(history: pd.DataFrame, future_rain: pd.DataFrame, with_states: bool = False):
         hist, enc_all, rain_hist = _past_inputs(history)
         if extra_features is not None:
             enc_all = enc_all.join(extra_features.reindex(enc_all.index))
@@ -72,15 +72,21 @@ def redesign_predictor(name: str, location: str, models_dir: Path = MODELS_DIR,
             frame = pd.concat([hist, future.set_axis(fut_idx)])
             flow = batch_flow_forecast(frame, np.array([len(hist) - 1]), models_dir)
             extra['pred_flow_log'] = torch.from_numpy(np.log1p(flow))
-        out = model(
+        args = (
             torch.from_numpy(x)[None],
             torch.from_numpy(rain_fut)[None],
             torch.from_numpy(doy_phase(fut_idx))[None],
             torch.tensor([rain_hist[-24:].sum()]),
             torch.tensor([rain_hist[-168:].sum()]),
             torch.tensor([d0], dtype=torch.float32),
-            **extra,
         )
+        if with_states:
+            # (241,) differential, (240,) channel outflow mm/h, (241, 5) states: soil wetness
+            # (0-1) and the quick, medium, slow and channel stores (mm), t0 first.
+            d, q, st = model(*args, return_states=True, **extra)
+            return (np.concatenate([[d0], d[0].numpy().astype(float)]), q[0].numpy().astype(float),
+                    st[0].numpy().astype(float))
+        out = model(*args, **extra)
         return np.concatenate([[d0], out[0].numpy().astype(float)])
 
     return predict
@@ -98,4 +104,10 @@ def ensemble_predictor(names, location: str, models_dir: Path = MODELS_DIR, extr
     def predict(history: pd.DataFrame, future_rain: pd.DataFrame) -> np.ndarray:
         return np.mean([m(history, future_rain) for m in members], axis=0)
 
+    def predict_with_states(history: pd.DataFrame, future_rain: pd.DataFrame):
+        """(differential, outflow, states) as predict, each the mean over the copies."""
+        outs = [m(history, future_rain, with_states=True) for m in members]
+        return tuple(np.mean([o[i] for o in outs], axis=0) for i in range(3))
+
+    predict.with_states = predict_with_states
     return predict

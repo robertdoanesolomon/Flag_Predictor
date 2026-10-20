@@ -1164,6 +1164,8 @@ def preview_extras(location: str, live) -> dict:
     out: dict = {}
     if live.step_triggers:
         out["step_triggers"] = live.step_triggers
+    if getattr(live, "model_state", None):
+        out["model_state"] = live.model_state
     try:
         from flag_predictor.prediction.official_flag import official_flag_payload
         out.update(official_flag_payload(location, live))

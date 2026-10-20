@@ -287,7 +287,8 @@ class ReservoirHybrid(nn.Module):
         H = rain.shape[1]
         et = et_base + et_summer * torch.clamp(season, min=0)
         qs = []
-        states = []
+        # return_states: the state at t0 first (after the encoder), then after each hour.
+        states = [torch.stack([s, quick, sum(medium), slow, channel], 1)] if return_states else []
         for t in range(H):
             p = torch.clamp(rain[:, t], min=0)
             runoff = p * s.clamp(min=1e-6) ** beta

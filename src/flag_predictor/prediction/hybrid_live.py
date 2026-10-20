@@ -28,6 +28,7 @@ import pandas as pd
 from ..data.api import fetch_rainfall_data, get_rainfall_forecast_ensemble
 from ..data.loader import load_historical_rainfall
 from ..models.candidates import ensemble_predictor
+from ..models.physics_models import M3S_PER_MM_H
 
 HYBRID_MODELS = ['hybrid_c1_ps'] + [f'hybrid_c1_ps_s{i}' for i in range(1, 5)]
 MODEL_TAG = 'hybrid_c1_ps'
@@ -374,6 +375,7 @@ class LiveForecast:
     step_triggers: Optional[dict] = None
     level_hist: Optional[np.ndarray] = None       # hourly observed differential, last 49 h to t0
     rain_hist: Optional[np.ndarray] = None        # hourly mean-station rain (mm), last 72 h to t0
+    model_state: Optional[dict] = None            # the model's stores now and ahead (model_state_payload)
 
 
 def forecast_ensemble(
@@ -452,12 +454,18 @@ def forecast_with_uncertainty(
     members: Dict[str, np.ndarray] = {}
     previous: Dict[str, np.ndarray] = {}
     rain_means: Dict[str, np.ndarray] = {}
+    state_runs: list = []
     for i in range(n_members):
         cols = {f'{g}_member_{i}': g for g in gauges if f'{g}_member_{i}' in forecast.columns}
         if not cols:
             continue
         member_rain = forecast[list(cols)].rename(columns=cols).reindex(fut_idx).fillna(0.0)
-        members[f'member_{i}'] = predict(frame, member_rain)
+        if hasattr(predict, 'with_states'):
+            d_i, q_i, st_i = predict.with_states(frame, member_rain)
+            members[f'member_{i}'] = d_i
+            state_runs.append((q_i, st_i))
+        else:
+            members[f'member_{i}'] = predict(frame, member_rain)
         if predict_previous is not None:
             previous[f'member_{i}'] = predict_previous(frame, member_rain)
         rain_means[f'member_{i}'] = member_rain.clip(lower=0).mean(axis=1).to_numpy()
@@ -485,12 +493,62 @@ def forecast_with_uncertainty(
             stepped = step_forecast(location, frame, members_df, rain_df, total, models_dir)
         except Exception as exc:   # never lose the forecast over the step layer either
             print(f"  [step layer] failed ({type(exc).__name__}: {exc}); no stepped copy")
+    model_state = None
+    try:
+        if state_runs:
+            model_state = model_state_payload(location, names, models_dir, index, state_runs, frame)
+    except Exception as exc:   # extra, for the preview page; never lose the forecast over it
+        print(f"  [model state] skipped ({type(exc).__name__}: {exc})")
     return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag, note=note,
+                        model_state=model_state,
                         previous_members=previous_df, stepped_members=stepped[0], stepped_total=stepped[1],
                         flag_outlook=stepped[2], step_triggers=stepped[3],
                         level_hist=frame['differential'].loc[:t0].to_numpy()[-49:],
                         rain_hist=frame[[g for g in gauges if g in frame.columns]].clip(lower=0).mean(axis=1)
                         .fillna(0.0).loc[:t0].to_numpy()[-72:])
+
+
+STATE_NAMES = ('soil', 'quick', 'medium', 'slow', 'channel')
+STATE_EVERY_H = 3
+
+
+def model_state_payload(location: str, names: List[str], models_dir: Path, index: pd.DatetimeIndex,
+                        runs: list, frame: pd.DataFrame) -> dict:
+    """The hybrid's internal stores (mean of the trained copies), now and over the forecast.
+
+    runs: per rain member, (outflow mm/h (240,), states (241, 5)). Stores are mm of water over the
+    catchment; soil is the wetness fraction (0-1); flow is the channel's outflow in m³/s.
+    Series every STATE_EVERY_H hours: mean and 10th/90th percentiles over the rain members.
+    """
+    from ..models.physics_train import load_candidate
+    st = np.stack([r[1] for r in runs])                     # (M, 241, 5)
+    q = np.stack([r[0] for r in runs]) * M3S_PER_MM_H       # (M, 240) m³/s
+    flow = np.concatenate([q[:, :1], q], axis=1)            # t0 shown as the first hour's outflow
+    keep = np.arange(0, st.shape[1], STATE_EVERY_H)
+    series = {}
+    for j, name in enumerate(STATE_NAMES + ('flow',)):
+        v = flow if name == 'flow' else st[:, :, j]
+        if name == 'soil':
+            v = v * 100.0
+        v = v[:, keep]
+        series[name] = {'mean': np.round(v.mean(0), 2).tolist(),
+                        'p10': np.round(np.percentile(v, 10, axis=0), 2).tolist(),
+                        'p90': np.round(np.percentile(v, 90, axis=0), 2).tolist()}
+    now = {name: series[name]['mean'][0] for name in series}
+    params = {}
+    for n in names:
+        for k, v in load_candidate(n, location, models_dir)[0].describe().items():
+            params.setdefault(k, []).append(v)
+    params = {k: round(float(np.mean(v)), 4) for k, v in params.items()}
+    out = {'times': [t.tz_convert('UTC').tz_localize(None).isoformat() for t in index[keep]],
+           'now': now, 'series': series, 'params': params, 'every_h': STATE_EVERY_H}
+    f = frame['flow_m3s_Farmoor'].loc[:index[0]].dropna() if 'flow_m3s_Farmoor' in frame else pd.Series(dtype=float)
+    if len(f):
+        out['farmoor_flow'] = {'value': round(float(f.iloc[-1]), 1),
+                               'time': f.index[-1].tz_convert('UTC').tz_localize(None).isoformat()}
+    print(f"  [model state] soil {now['soil']:.0f}% wet; stores quick {now['quick']:.1f}, medium "
+          f"{now['medium']:.1f}, slow {now['slow']:.1f}, channel {now['channel']:.1f} mm; flow {now['flow']:.1f} m³/s")
+    return out
 
 
 def _all_differentials() -> Dict[str, pd.Series]:
