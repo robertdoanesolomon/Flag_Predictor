@@ -31,7 +31,9 @@ jobs:
         with:
           # Required so the workflow can push back to the repo
           token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+          # Latest commit only: the repo's history (a forecast commit every 15 min) is several GB,
+          # and a full clone took 3-10+ minutes. Nothing here needs the history.
+          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -123,7 +125,7 @@ jobs:
 
           # Always branch from remote main before generating — avoids stacking a second
           # figure commit onto one that landed while this job ran (PNG/JSON rebase conflicts).
-          git fetch origin main
+          git fetch --depth=1 origin main
           git checkout -B main origin/main
 
           # Exit codes from generate_all_location_figures.py:
@@ -174,15 +176,19 @@ jobs:
               finish
             fi
             sleep $((i * 5))
-            git fetch origin main
-            # Usually main moved for a code or page change that does not touch the generated
-            # files: put this forecast on top of it and push, without regenerating (~6 min).
-            if git rebase origin/main; then
-              echo "Push failed (attempt $i): rebased the forecast onto the new main, retrying..."
+            # Usually main moved for a code or page change: put this run's output files on top of
+            # the new main and push, without regenerating (~6 min). Only the files this run wrote
+            # are carried over, so the page and code changes on main are kept.
+            OUT=$(mktemp -d)
+            git diff --name-only --diff-filter=AMR HEAD~1 HEAD > "$OUT/files.txt"
+            tar -cf "$OUT/out.tar" -T "$OUT/files.txt"
+            git fetch --depth=1 origin main
+            git reset --hard origin/main
+            if tar -xf "$OUT/out.tar" && commit_docs_if_changed; then
+              echo "Push failed (attempt $i): put this forecast on top of the new main, retrying..."
               continue
             fi
-            git rebase --abort || true
-            echo "Push failed (attempt $i): the generated files conflict; regenerating on the new main..."
+            echo "Push failed (attempt $i): regenerating on the new main..."
             git reset --hard origin/main
             generate_once
             if ! commit_docs_if_changed; then
