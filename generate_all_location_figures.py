@@ -264,6 +264,13 @@ def build_location_payload(
             next24_rain = float(f[f.index <= t0 + pd.Timedelta(hours=24)].sum())
             next7d_rain = float(f[f.index <= t0 + pd.Timedelta(days=7)].sum())
 
+    # Rain today: the same number as today's grey bar in the chart (measured so far today).
+    today_rain = None
+    if len(historical_rainfall_daily) > 0:
+        today = (now if now is not None else pd.Timestamp.now(tz="UTC").tz_localize(None)).normalize()
+        last_day = pd.Timestamp(historical_rainfall_daily.index[-1]).normalize()
+        today_rain = float(historical_rainfall_daily.iloc[-1]) if last_day == today else 0.0
+
     # Forecast peak (ensemble mean) within the visible window — i.e. up to
     # the day after the last full rainfall forecast day. This matches the
     # frontend's x-axis cut-off so the peak shown in the stat tile is
@@ -342,6 +349,7 @@ def build_location_payload(
             "last_7d_rain_mm": round(last7d_rain, 2) if last7d_rain is not None else None,
             "next_24h_rain_mm": round(next24_rain, 2) if next24_rain is not None else None,
             "next_7d_rain_mm": round(next7d_rain, 2) if next7d_rain is not None else None,
+            "today_rain_mm": round(today_rain, 2) if today_rain is not None else None,
             "peak_10d_differential": round(peak_value, 4),
             "peak_10d_time": peak_time,
         },
