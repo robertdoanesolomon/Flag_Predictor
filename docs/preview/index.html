@@ -1629,8 +1629,9 @@
         const days = est.hours >= 48 ? `${Math.round(est.hours / 24)} days` : `${est.hours} hours`;
         cards.push(cardHtml('Gauges offline', {
           main: est.confident ? `Estimated from ${from}` : `Estimated from ${from}: low confidence`,
-          sub: `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). ` +
-               (est.confident ? 'More uncertainty than usual.' : `Rough after 5 days; no ${here} alerts.`) }, true));
+          sub: est.confident
+            ? `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). More uncertainty than usual.`
+            : `No ${here} reading since ${fmtShortDateTime(est.last_reading)}. Notifications stopped; data on this page is highly unreliable.` }, true));
       }
       let offCard = outlookCard(loc.official_outlook, 'flag', loc);
       // The flag changed after this forecast ran (live tile): its outlook started from the old flag,
