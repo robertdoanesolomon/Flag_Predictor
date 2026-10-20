@@ -1733,7 +1733,8 @@
       case 'slow': return p.k_slow ? `Groundwater feeding the river slowly. Half gone in ~${h(p.k_slow * 0.69)}.` : '';
       case 'channel': return 'Water in the river itself, upstream of the gauges.';
       case 'flow': return ms.farmoor_flow
-        ? `What the model thinks is flowing. The Farmoor gauge measured ${ms.farmoor_flow.value.toFixed(0)} m³/s at ${fmtShortDateTime(ms.farmoor_flow.time)}.`
+        ? `What the model thinks is flowing. The Farmoor gauge last measured ${ms.farmoor_flow.value < 10 ? ms.farmoor_flow.value.toFixed(1) : ms.farmoor_flow.value.toFixed(0)} m³/s, at ${fmtShortDateTime(ms.farmoor_flow.time)}` +
+          (parseUtc(ms.times[0]) - parseUtc(ms.farmoor_flow.time) > 24 * 3600 * 1000 ? ' (the EA publishes it a few days late).' : '.')
         : 'What the model thinks is flowing past.';
     }
     return '';

@@ -304,7 +304,9 @@ def outage_nowcast(location: str, merged_df: pd.DataFrame, now: Optional[pd.Time
             known = known.combine_first(flow)
         else:
             print("  [nowcast] no recent Farmoor flow; the encoder sees it as missing")
-        ext['flow_m3s_Farmoor'] = known.reindex(known.index.union(ext.index)).ffill(limit=6).reindex(ext.index)
+        # Carried forward as the data pipeline does for every stretch (merge_and_clean_data): the
+        # EA publishes the qualified Farmoor flow days late, so its last value usually stands in.
+        ext['flow_m3s_Farmoor'] = known.reindex(known.index.union(ext.index)).ffill().reindex(ext.index)
     out = pd.concat([merged, ext])
     out.attrs = dict(merged_df.attrs)
     tz = merged_df.index.tz
@@ -544,7 +546,11 @@ def model_state_payload(location: str, names: List[str], models_dir: Path, index
     params = {k: round(float(np.mean(v)), 4) for k, v in params.items()}
     out = {'times': [t.tz_convert('UTC').tz_localize(None).isoformat() for t in index[keep]],
            'now': now, 'series': series, 'params': params, 'every_h': STATE_EVERY_H}
-    f = frame['flow_m3s_Farmoor'].loc[:index[0]].dropna() if 'flow_m3s_Farmoor' in frame else pd.Series(dtype=float)
+    # The last real Farmoor measurement (the frame's flow is carried forward over the EA's delay).
+    f = _recent_flow()
+    f = f.dropna() if f is not None else pd.Series(dtype=float)
+    if not len(f) and 'flow_m3s_Farmoor' in frame:
+        f = frame['flow_m3s_Farmoor'].loc[:index[0]].dropna()
     if len(f):
         out['farmoor_flow'] = {'value': round(float(f.iloc[-1]), 1),
                                'time': f.index[-1].tz_convert('UTC').tz_localize(None).isoformat()}
