@@ -1051,6 +1051,7 @@
     addHead('meta', { name: 'apple-mobile-web-app-title', content: 'Flag Predictor' });
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch((e) => console.warn('service worker', e));
     window.addEventListener('DOMContentLoaded', setupAlerts);
+    window.addEventListener('DOMContentLoaded', startLiveFlags);
   }
   // The "what is new" summary starts folded on phones, where it would fill the first screen.
   if (ON_PREVIEW_PAGE && window.matchMedia && window.matchMedia('(max-width: 720px)').matches) {
@@ -1565,9 +1566,50 @@
              now, tomorrow: pM >= 0.5 ? ['black'] : pM >= 0.2 ? [now, 'black'] : [now], strength: pM };
   }
   /** Preview page: the official flag as a big tile, with an official-flag card and a differential card beside it. */
+  // The official flags now, polled every 10 s from the alerts Worker (GET /flags), so the big
+  // tile changes within seconds of OURCs, not with the next forecast run.
+  const LIVE_FLAGS = {};
+  const LIVE_FLAGS_EVERY_MS = 10000;
+  function officialFlag(loc) {
+    const off = loc.official_flag;
+    const live = LIVE_FLAGS[loc.key];
+    if (!off || !live || (live.flag === off.flag && live.set_at === off.set_at)) return off;
+    // A change since the forecast ran: the sync note compared the river with the old flag.
+    return { ...off, flag: live.flag, label: live.label, set_at: live.set_at, sync: undefined };
+  }
+  async function startLiveFlags() {
+    let worker = null;
+    try { const r = await fetch('push_config.json', { cache: 'no-store' }); if (r.ok) worker = (await r.json()).worker; } catch (e) {}
+    if (!worker) return;
+    let busy = false;
+    const poll = async () => {
+      const bundle = window.__forecastBundle;
+      if (busy || document.hidden || !bundle) return;
+      busy = true;
+      try {
+        const r = await fetch(`${worker}/flags`, { cache: 'no-store' });
+        if (!r.ok) return;
+        const now = await r.json();
+        for (const key of bundle.location_order) {
+          const loc = bundle.locations[key];
+          const st = now[key];
+          if (!st || !loc || !loc.official_flag || !FLAG_COLORS[st.flag]) continue;
+          const prev = LIVE_FLAGS[key] || loc.official_flag;
+          LIVE_FLAGS[key] = st;
+          if (prev.flag === st.flag && prev.set_at === st.set_at) continue;
+          const head = document.querySelector(`#pane-${key} .flag-head`);
+          if (head) head.outerHTML = renderFlagOutlookHtml(loc);
+        }
+      } catch (e) { /* offline or the Worker is busy: try again next time */ }
+      finally { busy = false; }
+    };
+    setInterval(poll, LIVE_FLAGS_EVERY_MS);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+    poll();
+  }
   function renderFlagOutlookHtml(loc) {
     if (!PREVIEW) return '';
-    const off = loc.official_flag;
+    const off = officialFlag(loc);
     // A stale forecast (gauges offline) starts in the past: its "today / tomorrow" would be wrong
     // and the differential would be compared with the flag flying now, so show neither.
     const stale = !!loc.stale || !!(off && off.forecast_stale);

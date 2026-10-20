@@ -8,6 +8,8 @@ import { sendPush } from './webpush.js';
  *   GET  /vapid        -> { publicKey }      (the VAPID public key, base64url)
  *   POST /subscribe    { subscription, rivers: ["isis", "godstow"] }
  *   POST /unsubscribe  { endpoint }
+ *   GET  /flags        -> { isis: {flag, label, set_at}, godstow: {...}, fetched_at }
+ *                         (the official flags now, for the page's flag tile; at most ~10 s old)
  *
  * Subscriptions live in the SUBS KV namespace as "sub:<sha-256 of the endpoint>". The forecast
  * alerts ("likely to change") are sent by the hourly forecast job (push/send_push.py); the
@@ -135,6 +137,30 @@ export async function checkFlags(env, fetchStatus = (r) => fetch(`https://ourcs.
   return changes;
 }
 
+// ---- the official flags now, for the page (GET /flags) ----
+// OURCs does not answer a browser on another site, so the page asks here. Each Worker
+// instance keeps the answer for a few seconds, so many viewers do not each hit OURCs.
+const FLAGS_FRESH_MS = 8000;
+let flagsCache = null;
+
+export async function currentFlags(fetchStatus = (r) => fetch(`https://ourcs.co.uk/api/flags/status/${r}/`, {
+  headers: { 'User-Agent': 'FlagPredictor (flagpredictor.com)' }, signal: AbortSignal.timeout(5000),
+}), now = Date.now()) {
+  if (flagsCache && now - flagsCache.at < FLAGS_FRESH_MS) return flagsCache.body;
+  const body = { fetched_at: new Date(now).toISOString() };
+  await Promise.all(RIVERS.map(async (river) => {
+    try {
+      const res = await fetchStatus(river);
+      if (!res.ok) return;
+      const j = await res.json();
+      const f = flagFromStatus(j);
+      if (f) body[river] = { flag: f.key, label: f.label, set_at: j.set_date || null };
+    } catch (e) { /* OURCs unreachable: leave this stretch out */ }
+  }));
+  if (RIVERS.some((r) => body[r])) flagsCache = { at: now, body };
+  return body;
+}
+
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(checkFlags(env));
@@ -144,6 +170,12 @@ export default {
     const origin = request.headers.get('Origin');
     const { pathname } = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
+
+    if (request.method === 'GET' && pathname === '/flags') {
+      const r = json(await currentFlags(), 200, origin);
+      r.headers.set('Cache-Control', 'no-store');
+      return r;
+    }
 
     if (request.method === 'GET' && pathname === '/vapid') {
       const publicKey = await env.SUBS.get('config:vapid_public');
