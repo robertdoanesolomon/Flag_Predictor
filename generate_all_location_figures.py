@@ -1089,6 +1089,44 @@ LIVE_MEMBER_RAIN: dict = {}
 PREVIEW_PAYLOADS: dict = {}
 
 
+def mark_estimated(payload: dict | None, nowcast: dict | None) -> None:
+    """Gauges offline, differential estimated from the neighbour (hybrid_live.outage_nowcast):
+    say so in the payload, and move the estimated hours out of the measured history line."""
+    if not payload or not nowcast:
+        return
+    last = pd.Timestamp(nowcast["last_reading"]).tz_convert("UTC").tz_localize(None)
+    hist = payload.get("historical") or {}
+    times, vals = hist.get("times") or [], hist.get("differential") or []
+    est_t, est_v = [], []
+    for i, t in enumerate(times):
+        if pd.Timestamp(t) > last and vals[i] is not None:
+            est_t.append(t)
+            est_v.append(vals[i])
+            vals[i] = None
+    if est_t:   # join the dashed line to the last reading
+        j = max((i for i, t in enumerate(times) if pd.Timestamp(t) <= last and vals[i] is not None), default=None)
+        if j is not None:
+            est_t.insert(0, times[j])
+            est_v.insert(0, vals[j])
+    payload["estimated"] = {
+        "from": nowcast["from"],
+        "last_reading": last.isoformat(),
+        "hours": nowcast["hours"],
+        "confident": bool(nowcast["confident"]),
+        "level": round(float(nowcast["level"]), 4),
+        "sd": round(float(nowcast["sd"]), 4),
+        "times": est_t,
+        "values": est_v,
+    }
+    reading = nowcast.get("reading_time")
+    reading = pd.Timestamp(reading) if reading is not None else last
+    reading = reading.tz_convert("UTC").tz_localize(None) if reading.tz is not None else reading
+    payload["estimated"]["last_reading"] = reading.isoformat()
+    payload["last_sensor_update"] = last.isoformat()
+    payload["latest_reading"] = reading.isoformat() + "Z"
+    payload["stale"] = False
+
+
 def preview_extras(location: str, live) -> dict:
     """Extra preview-page fields: the official OURCs flag and its forecast."""
     out: dict = {}
@@ -1246,16 +1284,25 @@ def generate_spaghetti_figure(
     if beta_dir is not None:
         # Physics-hybrid trial (beta page). Never allowed to affect the live output.
         try:
-            from flag_predictor.prediction.hybrid_live import forecast_with_uncertainty, rain_forecast
+            from flag_predictor.prediction.hybrid_live import (
+                forecast_with_uncertainty, outage_nowcast, rain_forecast,
+            )
 
             print(f"\n{'=' * 70}")
             print(f"BETA: physics hybrid for {location.upper()}")
             print(f"{'=' * 70}")
-            live = forecast_with_uncertainty(location, merged_df, project_root, n_members=n_members)
+            # Gauges offline: start from the differential estimated from the neighbouring stretch.
+            try:
+                hybrid_df, nowcast = outage_nowcast(location, merged_df)
+            except Exception as exc:
+                print(f"  [nowcast] failed ({type(exc).__name__}: {exc}); stale forecast")
+                hybrid_df, nowcast = merged_df, None
+            live = forecast_with_uncertainty(location, hybrid_df, project_root, n_members=n_members,
+                                             start_sd=nowcast["sd"] if nowcast else 0.0)
             beta_payload = render_location_outputs(
                 location=location,
                 output_dir=beta_dir,
-                merged_df=merged_df,
+                merged_df=hybrid_df,
                 ensemble_predictions=live.members,
                 rainfall_forecast=rain_forecast(n_members),
                 config=config,
@@ -1265,13 +1312,14 @@ def generate_spaghetti_figure(
                 model_name=live.model_name,
                 model_note=live.note,
             )
+            mark_estimated(beta_payload, nowcast)
             LIVE_MEMBER_RAIN[location] = live.member_rain
             if preview_dir is not None and live.stepped_members is not None:
                 try:
                     PREVIEW_PAYLOADS[location] = render_location_outputs(
                         location=location,
                         output_dir=preview_dir,
-                        merged_df=merged_df,
+                        merged_df=hybrid_df,
                         ensemble_predictions=live.stepped_members,
                         rainfall_forecast=rain_forecast(n_members),
                         config=config,
@@ -1284,6 +1332,7 @@ def generate_spaghetti_figure(
                         flag_outlook=live.flag_outlook,
                         extra=preview_extras(location, live),
                     )
+                    mark_estimated(PREVIEW_PAYLOADS[location], nowcast)
                 except Exception:
                     print(f"\n[WARNING] Preview payload failed for '{location}':")
                     traceback.print_exc()

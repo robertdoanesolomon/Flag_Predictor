@@ -1011,8 +1011,10 @@
         <h3>Data and updates</h3>
         River levels and rain from the Environment Agency; rain forecasts from ECMWF AIFS (50 members) via Open-Meteo.
         The model is a physics-based rainfall&ndash;runoff model whose starting state is set by a small neural network,
-        averaged over five trained copies. It runs hourly; if a gauge has been offline for more than four hours the
-        forecast is marked stale and no flag-change forecast is shown. Write-ups are on the
+        averaged over five trained copies. It runs hourly. If a stretch's gauges go offline, its differential is estimated from
+        the neighbouring stretch (the Isis from Godstow, and the other way round) until they are back, with a wider
+        likely range; after a week offline the estimate is marked low confidence. With both offline, the forecast is
+        marked stale. Write-ups are on the
         <a href="https://robertdoanesolomon.substack.com" target="_blank" rel="noopener">substack</a>; bug reports and
         ideas are welcome on
         <a href="https://github.com/robertdoanesolomon/Flag_Predictor" target="_blank" rel="noopener">GitHub</a>.
@@ -1067,6 +1069,11 @@
     black: '#111111',
     grey: '#9e9e9e'
   };
+  const STRETCH_NAMES = { isis: 'Isis', godstow: 'Godstow', wallingford: 'Wallingford' };
+  /** "0.52 m", or "about 0.52 m" while it is estimated from the neighbouring stretch. */
+  function diffText(loc) {
+    return `${loc.estimated ? 'about ' : ''}${fmtDiff(loc.current.differential)} m`;
+  }
   const FLAG_LABELS = {
     green: 'Green',
     light_blue: 'Light Blue',
@@ -1571,6 +1578,17 @@
       cards.push(cardHtml('Forecast', { main: 'No flag-change forecast',
         sub: `The river gauges for this stretch have not reported${last}. It comes back with the next update after they do.` }, false));
     } else {
+      const est = loc.estimated;
+      if (est) {
+        const here = STRETCH_NAMES[loc.key] || loc.display_name || '';
+        const from = STRETCH_NAMES[est.from] || est.from;
+        const days = est.hours >= 48 ? `${Math.round(est.hours / 24)} days` : `${est.hours} hours`;
+        cards.push(cardHtml('Gauges offline', {
+          main: est.confident ? `Estimated from ${from}` : `Estimated from ${from}: low confidence`,
+          sub: `The ${here} gauges have not reported since ${fmtShortDateTime(est.last_reading)} (${days}). ` +
+               `The differential is estimated from ${from}'s (typically within ${est.sd.toFixed(2)} m), so the chances below are wider than usual` +
+               (est.confident ? '.' : `; after a week offline they are rough, and no ${here} alerts are sent.`) }, !est.confident));
+      }
       const offCard = outlookCard(loc.official_outlook, 'flag', loc);
       const diffCard = outlookCard(loc.flag_outlook, 'diff', loc);
       const sy = off && off.sync;
@@ -1589,8 +1607,8 @@
       const gist = (c) => c && c.main.replace(/ (in|into) /g, ' ').replace(/\s*\(\d+%\)/, '');
       if (diffCard && offCard && !outOfSync && gist(diffCard) === gist(offCard)) {
         const band = FLAG_LABELS[loc.flag_outlook.current_flag] || loc.current.flag_label;
-        cards.push(`<div class="fc-card fc-compact"><div class="fc-head"><span class="fc-label">Differential &middot; <span class="fc-value">${fmtDiff(loc.current.differential)} m</span></span><span class="fc-compact-text">${chipHtml(loc.flag_outlook.current_flag)} ${band} band &middot; same outlook as the flag</span></div></div>`);
-      } else if (diffCard) cards.push(cardHtml(`Differential &middot; <span class="fc-value">${fmtDiff(loc.current.differential)} m</span>`, diffCard, false));
+        cards.push(`<div class="fc-card fc-compact"><div class="fc-head"><span class="fc-label">Differential &middot; <span class="fc-value">${diffText(loc)}</span></span><span class="fc-compact-text">${chipHtml(loc.flag_outlook.current_flag)} ${band} band &middot; same outlook as the flag</span></div></div>`);
+      } else if (diffCard) cards.push(cardHtml(`Differential &middot; <span class="fc-value">${diffText(loc)}</span>`, diffCard, false));
       const blk = blackCard(loc.black, off, loc);
       if (blk && offCard && off.flag === 'red' && offCard.strength === 0 && blk.strength >= 0.2) {
         cards[0] = cardHtml('Official flag', { ...offCard, main: 'No change expected, other than to Black' }, outOfSync);
@@ -1711,7 +1729,9 @@
       const isWallingford = key === 'wallingford';
       const stale = loc.stale
         ? `<span class="stale-warning">Stale forecast — sensor offline</span>`
-        : '';
+        : loc.estimated
+          ? `<span class="stale-warning">Gauges offline — estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}</span>`
+          : '';
 
 
       const probPlotHtml = isWallingford ? '' : `
@@ -1742,6 +1762,7 @@
             <div class="chart-block">
               <div class="chart-legend" data-plot="plot-${key}">
                 <button type="button" class="item" data-target="Historical Differential"><span class="swatch line" style="background:#0b1d18;"></span>Historical Differential</button>
+                ${loc.estimated ? `<button type="button" class="item" data-target="Estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}"><span class="swatch line" style="background:repeating-linear-gradient(90deg,#0b1d18 0 3px,transparent 3px 6px);"></span>Estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}</button>` : ''}
                 <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:${PREVIEW ? 'rgba(138,57,208,0.55)' : '#4682b4'};"></span>Ensemble Predictions (n=${loc.n_members})</button>
                 <button type="button" class="item" data-target="Ensemble Mean"><span class="swatch line" style="background:#8a39d0;"></span>Ensemble Mean</button>
                 ${loc.ensemble && loc.ensemble.total ? `<button type="button" class="item" data-target="Likely range"><span class="swatch square" style="background:rgba(118,46,186,0.45);"></span>Likely range (rain + model error)</button>` : ''}
@@ -1895,6 +1916,19 @@
       name: 'Historical Differential',
       hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>%{y:.2f} m<extra>Observed</extra>'
     });
+    // Gauges offline: the differential since the last reading, estimated from the neighbouring stretch.
+    const est = loc.estimated;
+    if (est && est.times && est.times.length) {
+      traces.push({
+        type: 'scatter',
+        mode: 'lines',
+        x: est.times,
+        y: est.values,
+        line: { color: T.historicalLine, width: 2, dash: 'dot' },
+        name: `Estimated from ${STRETCH_NAMES[est.from] || est.from}`,
+        hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>about %{y:.2f} m<extra>Estimated from ${STRETCH_NAMES[est.from] || est.from}</extra>`
+      });
+    }
 
     return traces;
   }

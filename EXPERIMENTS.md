@@ -913,3 +913,47 @@ Reliability, Red → Black within 24 h:
 **On the page:** a Black card appears only when Black is close. That means the
 flag is Black, Iffley is within 6 cm of 0.42 m, or there is at least a 10 %
 chance of Black by the end of tomorrow.
+
+## Gauges offline: estimate from the neighbouring stretch (Oct 2026)
+
+While a stretch's gauges are offline (last reading more than 4 h old) and its
+neighbour's are not, the live forecast no longer freezes at the last reading.
+`hybrid_live.outage_nowcast` extends the history hourly to the neighbour's last
+reading with d(t) = d_last + b × (n(t) − n(t_last)) (Isis from Godstow, b ≈ 0.67;
+Godstow from the Isis, b ≈ 0.96; b pulled towards the slope of the two weeks
+before, as in `fill_outage`), carries the gauge rain and Farmoor flow on, and
+runs the hybrid from there. Every outcome is shifted by a draw of the estimate's
+error, so the likely range and the flag chances carry it. The page marks the
+stretch "Gauges offline — estimated from …", draws the estimated part of the
+history dotted, and says "about" before the differential. After a week the
+estimate is marked low confidence and no "likely" alerts go out for that
+stretch; alerts before then say they are estimated. Both offline, or more than
+14 days: the stale forecast as before.
+
+`backtest_outage_nowcast.py` (2019–2026). Part 1, the estimate itself at
+≈1,300 random hours per stretch: mean error 0.019 / 0.030 / 0.046 / 0.062 m
+after 1 / 3 / 7 / 14 days down (Isis), against 0.029 / 0.069 / 0.120 / 0.170 m
+for the last reading held; Godstow similar. Errors are heavy-tailed and about
+1.4–1.6 × larger in the middle of the range. The sd model
+(`NOWCAST_ERROR`: a √days, × a mid factor) puts 78–88 % of outcomes inside
+±1.28 sd (target 80 %).
+
+Part 2, the hybrid forecast with rain that fell, ~35 starts per stretch in
+2023 and Nov 2024 – Jan 2026 (mean error, m, first 48 h / 10 days; right band
+in the first 48 h):
+
+| | days down | from the true level | from the estimate | stale forecast |
+|---|---|---|---|---|
+| Isis | 2 | 0.019 / 0.038, 91 % | 0.027 / 0.041, 89 % | 0.030 / 0.048, 87 % |
+| Isis | 5 | 0.020 / 0.040, 92 % | 0.039 / 0.047, 88 % | 0.036 / 0.070, 86 % |
+| Isis | 10 | 0.017 / 0.038, 92 % | 0.045 / 0.056, 85 % | 0.051 / 0.113, 81 % |
+| Godstow | 2 | 0.023 / 0.042, 99 % | 0.039 / 0.052, 98 % | 0.040 / 0.051, 98 % |
+| Godstow | 5 | 0.022 / 0.042, 99 % | 0.042 / 0.056, 99 % | 0.043 / 0.075, 95 % |
+| Godstow | 10 | 0.022 / 0.039, 99 % | 0.044 / 0.049, 97 % | 0.063 / 0.113, 93 % |
+
+"Stale forecast" is the forecast from the last reading, read off at the same
+hours, and is flattered here: it was run with the rain that fell, where the live
+one had forecast rain. The estimate costs about 0.01–0.03 m over the first two
+days against a working gauge; against the stale forecast it is about as good
+over the first two days and much better over ten, and it starts now, so the
+flag chances (which need a current start) come back.

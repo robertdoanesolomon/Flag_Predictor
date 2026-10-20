@@ -57,6 +57,8 @@ OUTAGE_BRIDGE_FOR_H = 12
 # the slope used is this, pulled towards the slope fitted on the two weeks before the outage
 # when the neighbour moved enough then to show it.
 OUTAGE_NEIGHBOUR = {'isis': ('godstow', 0.67), 'godstow': ('isis', 0.96), 'wallingford': ('isis', 1.18)}
+# A reading older than this = the gauge is offline (the page's "stale" label).
+STALE_H = 4
 
 # Gauges each location's hybrid was trained on (the column order of the
 # training frame; the encoder's rain features sum over exactly these).
@@ -167,6 +169,143 @@ def fill_outage(diff: pd.Series, neighbour: Optional[pd.Series] = None, slope: f
     return out
 
 
+def blend_slope(pre_d: pd.Series, pre_n: pd.Series, slope: float) -> float:
+    """The long-run neighbour slope, pulled towards the slope fitted on the weeks before an outage
+    when the neighbour moved enough then to show it (as fill_outage)."""
+    pre = pd.DataFrame({'d': pre_d, 'n': pre_n}).dropna()
+    if len(pre) < 48:
+        return slope
+    var = float(pre['n'].var())
+    fit = float(np.polyfit(pre['n'], pre['d'], 1)[0]) if var > 0 else slope
+    w = var / (var + 0.03 ** 2)
+    return float(np.clip(w * fit + (1 - w) * slope, 0.0, 2.5))
+
+
+def neighbour_nowcast(diff: pd.Series, neighbour: pd.Series, slope: float, until: pd.Timestamp,
+                      fit_hours: int = 14 * 24) -> Optional[pd.Series]:
+    """This stretch's differential after its last reading, estimated from the neighbour while the
+    gauge is offline: d(t) = d_last + b * (n(t) - n(t_last)), hourly to ``until``.
+
+    ``diff`` ends at (or holds NaN after) the last reading; ``neighbour`` must have data at the
+    last reading and through to ``until`` (short gaps are interpolated). None if it hasn't.
+    """
+    d = diff.dropna()
+    if len(d) == 0:
+        return None
+    t_last = d.index[-1]
+    if until <= t_last:
+        return None
+    grid = pd.date_range(t_last, until, freq='1h')
+    n = neighbour.reindex(neighbour.index.union(grid)).interpolate(method='time', limit=6,
+                                                                   limit_area='inside').reindex(grid)
+    if not np.isfinite(n.iloc[0]) or n.iloc[1:].isna().mean() > 0.2 or not np.isfinite(n.iloc[-1]):
+        return None
+    n = n.ffill()
+    pre = slice(t_last - pd.Timedelta(hours=fit_hours), t_last)
+    b = blend_slope(d.loc[pre], neighbour.reindex(d.loc[pre].index), slope)
+    est = float(d.iloc[-1]) + b * (n - float(n.iloc[0]))
+    return est.iloc[1:]
+
+
+# Error of neighbour_nowcast (Isis <-> Godstow, 2019-2026, backtest_outage_nowcast.py): its standard
+# deviation grows about as the square root of the time the gauge has been down, larger in the
+# middle of the range where the flags change. sd = a * sqrt(days) (x mid factor in the band given).
+NOWCAST_ERROR = {
+    'isis': {'a': 0.026, 'mid': (0.215, 0.535), 'mid_factor': 1.38},
+    'godstow': {'a': 0.022, 'mid': (0.30, 1.0), 'mid_factor': 1.61},
+}
+# Beyond this long the estimate is too loose to warn on: the page marks it low confidence and
+# no "likely" alerts are sent for that stretch.
+NOWCAST_CONFIDENT_H = 7 * 24
+
+
+def nowcast_error_sd(location: str, hours: float, level: float) -> float:
+    p = NOWCAST_ERROR.get(location)
+    if not p:
+        return 0.0
+    sd = p['a'] * np.sqrt(max(hours, 1.0) / 24.0)
+    lo, hi = p['mid']
+    return float(sd * (p['mid_factor'] if lo <= level < hi else 1.0))
+
+
+def _recent_flow() -> Optional[pd.Series]:
+    if 'flow' not in _cache:
+        try:
+            from ..data.api import fetch_flow_data
+            f = fetch_flow_data(verbose=False, min_days_back=30)
+            _cache['flow'] = _to_utc(f)['flow_m3s_Farmoor'].resample('1h').mean() if len(f) else None
+        except Exception as exc:
+            print(f"  [nowcast] no Farmoor flow ({exc})")
+            _cache['flow'] = None
+    return _cache['flow']
+
+
+def outage_nowcast(location: str, merged_df: pd.DataFrame, now: Optional[pd.Timestamp] = None):
+    """(history, info): while this stretch's gauges are offline (last reading more than
+    STALE_H old) and its neighbour's are not, the history extended hourly to the neighbour's
+    last reading with the differential estimated from it (neighbour_nowcast), so the forecast
+    starts now instead of at the last reading. info = {'from', 'last_reading', 'hours', ...};
+    (merged_df, None) when there is no outage or nothing to estimate from.
+    """
+    if location not in NOWCAST_ERROR or len(merged_df) == 0:
+        return merged_df, None
+    merged = _to_utc(merged_df)
+    now = (pd.Timestamp.now(tz='UTC') if now is None else pd.Timestamp(now)).floor('h')
+    now = now.tz_localize('UTC') if now.tz is None else now.tz_convert('UTC')
+    diff = merged['differential']
+    t_last = diff.last_valid_index()
+    if t_last is None or now - t_last <= pd.Timedelta(hours=STALE_H):
+        return merged_df, None
+    other, slope = OUTAGE_NEIGHBOUR[location]
+    nb = _all_differentials().get(other)
+    if nb is None or nb.dropna().empty:
+        print(f"  [nowcast] {location}: gauges offline, no {other} differential to estimate from")
+        return merged_df, None
+    nb = nb.resample('1h').mean()
+    until = nb.last_valid_index()
+    if until is None or now - until > pd.Timedelta(hours=STALE_H) or until <= t_last:
+        print(f"  [nowcast] {location}: gauges offline and {other}'s too; no estimate")
+        return merged_df, None
+    if until - t_last > pd.Timedelta(hours=OUTAGE_FILL_MAX_H):
+        print(f"  [nowcast] {location}: offline for more than {OUTAGE_FILL_MAX_H // 24} days; no estimate")
+        return merged_df, None
+    est = neighbour_nowcast(diff.loc[:t_last], nb, slope, until)
+    if est is None:
+        print(f"  [nowcast] {location}: {other} has no reading at the last {location} reading; no estimate")
+        return merged_df, None
+    ext = pd.DataFrame(index=est.index, columns=merged.columns, dtype=float)
+    ext['differential'] = est.to_numpy()
+    # The frame stopped at the last reading for every column: carry the gauge rain on too, so the
+    # page's rain history and totals keep going through the outage.
+    try:
+        api = _api_rain()
+        shared = [c for c in ext.columns if c in api.columns]
+        if shared:
+            ext[shared] = api.reindex(index=ext.index, columns=shared).to_numpy()
+    except Exception as exc:
+        print(f"  [nowcast] no gauge rain for the outage hours ({exc})")
+    if 'flow_m3s_Farmoor' in ext.columns:
+        flow = _recent_flow()
+        known = merged['flow_m3s_Farmoor']
+        if flow is not None:
+            known = known.combine_first(flow)
+        ext['flow_m3s_Farmoor'] = known.reindex(known.index.union(ext.index)).ffill(limit=6).reindex(ext.index)
+    out = pd.concat([merged, ext])
+    out.attrs = dict(merged_df.attrs)
+    tz = merged_df.index.tz
+    out.index = out.index.tz_convert(tz) if tz is not None else out.index.tz_localize(None)
+    hours = int((until - t_last) / pd.Timedelta(hours=1))
+    # The EA time of that last reading, when the frame kept it (the hourly row can be later).
+    last_naive = merged_df['differential'].last_valid_index()
+    reading = (merged_df.attrs.get('reading_time') or {}).get(last_naive)
+    info = {'from': other, 'last_reading': t_last, 'reading_time': reading, 'until': until, 'hours': hours,
+            'confident': hours <= NOWCAST_CONFIDENT_H, 'level': float(est.iloc[-1]),
+            'sd': nowcast_error_sd(location, hours, float(est.iloc[-1]))}
+    print(f"  [nowcast] {location}: gauges offline {hours} h; differential now estimated from {other} "
+          f"as {info['level']:.3f} m (sd {info['sd']:.3f} m)")
+    return out, info
+
+
 def _hours_since_outage(diff: pd.Series) -> Optional[int]:
     """Hours of readings since the last run of more than a day of missing hours, or None."""
     na = diff.isna().to_numpy()
@@ -270,6 +409,7 @@ def forecast_with_uncertainty(
     n_members: int = 50,
     models_dir: Optional[Path] = None,
     with_previous: bool = True,
+    start_sd: float = 0.0,
 ) -> LiveForecast:
     """Hybrid-ensemble forecast plus the model-error outcome cloud.
 
@@ -321,6 +461,13 @@ def forecast_with_uncertainty(
     except Exception as exc:   # the spread is extra; never lose the forecast over it
         print(f"  [model error] failed ({exc}); showing rain spread only")
         total = None
+    if start_sd > 0:
+        # Starting level estimated (gauges offline, outage_nowcast): every outcome is shifted by a
+        # draw of that estimate's error, so the likely range and flag chances carry it.
+        base = total if total is not None else members_df.to_numpy().T
+        rng = np.random.default_rng(1)
+        total = base + rng.normal(0.0, start_sd, size=(base.shape[0], 1))
+        print(f"  [nowcast] outcomes widened by the starting estimate's error (sd {start_sd:.3f} m)")
     stepped = (None, None, None, None)
     if STEP_LAYER:
         try:

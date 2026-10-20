@@ -12,7 +12,8 @@ Per stretch (Isis, Godstow), from the preview bundle (docs/preview/forecast_data
 
 Each "likely" alert is sent once per flag; it can be sent again only after its chance has
 dropped below RESET (so a forecast hovering around the threshold does not alert every hour), or
-once the flag has changed. Nothing is sent from a stale forecast (gauges offline) or an old bundle.
+once the flag has changed. Nothing is sent from a stale forecast (gauges offline), one estimated from the
+neighbouring stretch for more than a week, or an old bundle; one estimated for less says so.
 The state between runs is a small JSON object (kept in Cloudflare KV by send_push.py).
 """
 
@@ -106,9 +107,13 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
         up_top = prev.get('up_top')          # highest flag an "up" alert has said is likely
         if prev.get('flag') and prev['flag'] != flag:
             sent, up_top = set(), None       # the change itself is alerted by the Worker; start afresh
-        if loc.get('stale') or off.get('forecast_stale'):
+        est = loc.get('estimated')
+        # Gauges offline: nothing from a stale forecast, nor from one estimated from the
+        # neighbouring stretch for more than a week (too loose to warn on).
+        if loc.get('stale') or off.get('forecast_stale') or (est and not est.get('confident')):
             new_state[river] = {'flag': flag, 'sent': sorted(sent), 'up_top': up_top}
             continue
+        n_before = len(msgs)
 
         oo = loc.get('official_outlook') or {}
         win = oo.get('windows') or {}
@@ -178,5 +183,8 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                              f"{bk.get('level_m', 0):.2f} m.{_if_so(when, p_tom)}")
                 msgs.append(_msg(river, text, 'red' if is_black else 'black', 'down' if is_black else 'up'))
                 sent.add(key)
+        if est:
+            for m in msgs[n_before:]:
+                m['body'] += f" (Estimated from {NAMES.get(est.get('from'), est.get('from'))}: {NAMES[river]} gauges offline.)"
         new_state[river] = {'flag': flag, 'sent': sorted(sent), 'up_top': up_top}
     return msgs, new_state
