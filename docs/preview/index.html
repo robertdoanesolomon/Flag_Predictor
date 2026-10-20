@@ -1759,8 +1759,8 @@
                 <div class="value" style="font-size:16px;">${fmtDiff(peakInfo.value)}m <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;">on ${peakInfo.time ? fmtShortDate(peakInfo.time) : '—'}</small></div>
               </div>
               ${loc.summary.today_rain_mm != null ? `<div class="stat">
-                <div class="label">Rain today</div>
-                <div class="value">${fmtMm(loc.summary.today_rain_mm)}<small>mm</small> <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;">so far</small></div>
+                <div class="label">Rain so far today</div>
+                <div class="value">${fmtMm(loc.summary.today_rain_mm)}<small>mm</small></div>
               </div>` : ''}
               <div class="stat">
                 <div class="label">Rain last 7 d</div>
