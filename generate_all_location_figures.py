@@ -169,6 +169,7 @@ def build_location_payload(
     extra: Optional[dict] = None,
     historical_rainfall_hourly: Optional[pd.Series] = None,
     forecast_rain_hourly: Optional[pd.Series] = None,
+    forecast_rain_members_hourly: Optional[pd.DataFrame] = None,
     now: Optional[pd.Timestamp] = None,
 ) -> dict:
     """Assemble a JSON-serialisable dict with everything the frontend needs.
@@ -247,6 +248,7 @@ def build_location_payload(
 
     next24_rain = None
     next7d_rain = None
+    next7d_p10 = next7d_p90 = None
     if len(forecast_rain_mean) > 0:
         next24_rain = float(forecast_rain_mean.iloc[0]) if len(forecast_rain_mean) >= 1 else None
         next7d_rain = float(forecast_rain_mean.iloc[:7].sum()) if len(forecast_rain_mean) >= 1 else None
@@ -265,6 +267,10 @@ def build_location_payload(
         if len(f) > 0:
             next24_rain = float(f[f.index <= t0 + pd.Timedelta(hours=24)].sum())
             next7d_rain = float(f[f.index <= t0 + pd.Timedelta(days=7)].sum())
+            if forecast_rain_members_hourly is not None and forecast_rain_members_hourly.shape[1] > 1:
+                fm = forecast_rain_members_hourly
+                tot = fm[(fm.index > t0) & (fm.index <= t0 + pd.Timedelta(days=7))].sum()
+                next7d_p10, next7d_p90 = float(tot.quantile(0.10)), float(tot.quantile(0.90))
 
     # Rain today: the same number as today's grey bar in the chart (measured so far today).
     today_rain = None
@@ -351,6 +357,8 @@ def build_location_payload(
             "last_7d_rain_mm": round(last7d_rain, 2) if last7d_rain is not None else None,
             "next_24h_rain_mm": round(next24_rain, 2) if next24_rain is not None else None,
             "next_7d_rain_mm": round(next7d_rain, 2) if next7d_rain is not None else None,
+            "next_7d_rain_p10_mm": round(next7d_p10, 2) if next7d_p10 is not None else None,
+            "next_7d_rain_p90_mm": round(next7d_p90, 2) if next7d_p90 is not None else None,
             "today_rain_mm": round(today_rain, 2) if today_rain is not None else None,
             "peak_10d_differential": round(peak_value, 4),
             "peak_10d_time": peak_time,
@@ -1088,6 +1096,7 @@ def render_location_outputs(
         historical_rainfall_daily=historical_rainfall_daily,
         historical_rainfall_hourly=historical_rainfall_hourly,
         forecast_rain_hourly=forecast_rain_hourly,
+        forecast_rain_members_hourly=member_totals,
         forecast_rain_mean=forecast_rain_mean,
         forecast_rain_p10=forecast_rain_p10,
         forecast_rain_p90=forecast_rain_p90,

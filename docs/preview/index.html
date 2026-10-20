@@ -1855,7 +1855,7 @@
               </div>
               <div class="stat">
                 <div class="label">Rain next 7 d</div>
-                <div class="value">${fmtMm(loc.summary.next_7d_rain_mm ?? loc.summary.next_3d_rain_mm)}<small>mm</small></div>
+                <div class="value">${fmtMm(loc.summary.next_7d_rain_mm ?? loc.summary.next_3d_rain_mm)}<small>mm</small>${loc.summary.next_7d_rain_p10_mm != null && loc.summary.next_7d_rain_p90_mm != null && loc.summary.next_7d_rain_mm != null ? ` <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;" title="10th to 90th percentile of the rain forecasts: ${fmtMm(loc.summary.next_7d_rain_p10_mm)}–${fmtMm(loc.summary.next_7d_rain_p90_mm)} mm">+${fmtMm(Math.max(0, loc.summary.next_7d_rain_p90_mm - loc.summary.next_7d_rain_mm))} / −${fmtMm(Math.max(0, loc.summary.next_7d_rain_mm - loc.summary.next_7d_rain_p10_mm))}</small>` : ''}</div>
               </div>
             </div>
 
