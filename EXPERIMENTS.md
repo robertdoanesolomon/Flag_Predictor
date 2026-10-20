@@ -1036,6 +1036,15 @@ five copies against five:
 | deployed | 0.0449 | 0.0432 | 0.0732 | 0.0695 | 0.0190 | 92.4 % |
 | hybrid_sr | **0.0443** | **0.0413** | **0.0677** | **0.0663** | 0.0193 | **92.9 %** |
 
-Its error library (k = 200): calibrated CRPS 0.0335 against 0.0349 for the deployed model, 80 %
-of observations inside the 10–90 % band. Shown on the preview page only
-(`--preview-model hybrid_sr`; a stretch without hybrid_sr copies keeps the deployed model).
+Wallingford, five copies against five (no flags there):
+
+| Wallingford, 5 v 5 | all | test window | heavy rain ahead | rising fast | 1-24 h | 73-240 h |
+|---|---|---|---|---|---|---|
+| deployed | 0.0614 | 0.0585 | 0.1356 | 0.0961 | 0.0235 | 0.0714 |
+| hybrid_sr | **0.0581** | **0.0533** | **0.1230** | **0.0908** | 0.0241 | **0.0670** |
+
+Error libraries (k = 200), calibrated CRPS: Godstow 0.0335 (deployed 0.0349), Wallingford 0.0453
+(deployed 0.0479), 80 % of observations inside the 10–90 % band at both. The gain is beyond the
+first day and largest with heavy rain ahead; the first 24 h are a fraction of a mm worse.
+Shown on the preview page only (`--preview-model hybrid_sr`) for Godstow and Wallingford; the
+Isis (no hybrid_sr copies) keeps the deployed model there too.
