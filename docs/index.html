@@ -1586,7 +1586,7 @@
         cards.push(cardHtml('Gauges offline', {
           main: est.confident ? `Estimated from ${from}` : `Estimated from ${from}: low confidence`,
           sub: `The ${here} gauges have not reported since ${fmtShortDateTime(est.last_reading)} (${days}). ` +
-               `The differential is estimated from ${from}'s (typically within ${est.sd.toFixed(2)} m), so the chances below are wider than usual` +
+               `The differential is estimated from the ${from} gauges (usually within ${est.sd.toFixed(2)} m), so the chances below are wider than usual` +
                (est.confident ? '.' : `; after a week offline they are rough, and no ${here} alerts are sent.`) }, !est.confident));
       }
       const offCard = outlookCard(loc.official_outlook, 'flag', loc);
