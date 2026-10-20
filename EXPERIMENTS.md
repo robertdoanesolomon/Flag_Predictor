@@ -999,3 +999,52 @@ river ends up higher than forecast, and the other way round: a 0.04–0.08 m
 spread, about the size of the typical error in these cases. A measured soil
 moisture input (to the encoder, or to set the soil store's starting value)
 looks worth trying; the samples are small (≈ 95 starts, a dozen or so events).
+
+## Extra inputs: measured soil moisture and upstream levels (branch soil-upstream, Oct 2026)
+
+`models/extra_inputs.py`, `train_extra_models.py`, `compare_extra_models.py`. The deployed
+set-up (hybrid_c1_ps) with extra encoder inputs, joined after the usual features:
+
+* COSMOS-UK soil moisture at Chimney Meadows (`soil_vwc`, `soil_vwc_d7`), each day's value
+  used only from noon the next day (when it is published);
+* eight EA level gauges upstream (Windrush at Worsham, Evenlode at Shipton, Coln at Fairford,
+  Thames at Cricklade, Cherwell at Heyford Bridge, Ray at Islip, Thame at Wheatley, Ock at
+  Abingdon), hydrology API, hourly 2018 – Oct 2026 (`data/upstream/`): level above its 14-day
+  minimum (`rise`), and the 6 h and 24 h changes.
+
+Input sets: `all` (26), `soil` (2), `soil_rise` (soil + the 8 rises, 10). Starts every 6 h in
+2023 and Nov 2024 – Jan 2026 (not fitted), rain that fell; mean absolute error (m), one
+trained copy each against the deployed seed-0 copy:
+
+| | Isis all | Godstow all | Godstow test | Godstow heavy rain ahead | Wallingford all | Wallingford test |
+|---|---|---|---|---|---|---|
+| deployed (seed 0) | 0.0370 | 0.0484 | 0.0472 | 0.0812 | 0.0681 | 0.0659 |
+| retrained, no extras (control) | 0.0379 | 0.0477 | 0.0460 | 0.0774 | | |
+| `all` (hybrid_su) | 0.0400 | 0.0479 | 0.0448 | 0.0826 | | |
+| `soil` (hybrid_s) | 0.0408 | 0.0484 | 0.0464 | 0.0730 | | |
+| `soil_rise` (hybrid_sr) | 0.0400 | **0.0461** | **0.0440** | **0.0707** | **0.0662** | **0.0601** |
+
+The five deployed copies span 0.0370–0.0390 (Isis), 0.0458–0.0488 (Godstow) and
+0.0655–0.0681 (Wallingford), so single-copy differences of a few mm are noise. At the Isis
+every extra-input version is worse than every deployed copy, while the control is not: the
+extras do not help there (the Isis is set by the Iffley weir and the Cherwell, which they add
+little to) and the Isis keeps the deployed model. At Godstow `soil_rise` is the best version;
+five copies against five:
+
+| Godstow, 5 v 5 | all | test window | heavy rain ahead | mid-range and rising | 1-24 h | right band (test) |
+|---|---|---|---|---|---|---|
+| deployed | 0.0449 | 0.0432 | 0.0732 | 0.0695 | 0.0190 | 92.4 % |
+| hybrid_sr | **0.0443** | **0.0413** | **0.0677** | **0.0663** | 0.0193 | **92.9 %** |
+
+Wallingford, five copies against five (no flags there):
+
+| Wallingford, 5 v 5 | all | test window | heavy rain ahead | rising fast | 1-24 h | 73-240 h |
+|---|---|---|---|---|---|---|
+| deployed | 0.0614 | 0.0585 | 0.1356 | 0.0961 | 0.0235 | 0.0714 |
+| hybrid_sr | **0.0581** | **0.0533** | **0.1230** | **0.0908** | 0.0241 | **0.0670** |
+
+Error libraries (k = 200), calibrated CRPS: Godstow 0.0335 (deployed 0.0349), Wallingford 0.0453
+(deployed 0.0479), 80 % of observations inside the 10–90 % band at both. The gain is beyond the
+first day and largest with heavy rain ahead; the first 24 h are a fraction of a mm worse.
+Shown on the preview page only (`--preview-model hybrid_sr`) for Godstow and Wallingford; the
+Isis (no hybrid_sr copies) keeps the deployed model there too.

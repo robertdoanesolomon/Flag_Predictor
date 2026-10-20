@@ -1119,6 +1119,10 @@ def render_location_outputs(
 LIVE_MEMBER_RAIN: dict = {}
 # Preview page payloads (stepped forecast, flag-band outlook, official flag), per location.
 PREVIEW_PAYLOADS: dict = {}
+# --preview-model: a trial model (hybrid_live.VARIANTS) shown on the preview page only; the main
+# page keeps PREVIEW_PAYLOADS from the deployed model.
+PREVIEW_MODEL: str | None = None
+PREVIEW_ONLY_PAYLOADS: dict = {}
 
 
 def mark_estimated(payload: dict | None, nowcast: dict | None) -> None:
@@ -1374,6 +1378,36 @@ def generate_spaghetti_figure(
                 except Exception:
                     print(f"\n[WARNING] Preview payload failed for '{location}':")
                     traceback.print_exc()
+            from flag_predictor.prediction.hybrid_live import variant_available
+            if preview_dir is not None and PREVIEW_MODEL and variant_available(PREVIEW_MODEL, location):
+                try:
+                    print(f"\n[preview model] {PREVIEW_MODEL} for {location.upper()}")
+                    trial = forecast_with_uncertainty(location, hybrid_df, project_root, n_members=n_members,
+                                                      start_sd=nowcast["sd"] if nowcast else 0.0,
+                                                      variant=PREVIEW_MODEL)
+                    if trial.stepped_members is None:
+                        raise RuntimeError("no stepped forecast")
+                    PREVIEW_ONLY_PAYLOADS[location] = render_location_outputs(
+                        location=location,
+                        output_dir=preview_dir,
+                        merged_df=hybrid_df,
+                        ensemble_predictions=trial.stepped_members,
+                        rainfall_forecast=rain_forecast(n_members),
+                        config=config,
+                        flag_thresholds=flag_thresholds,
+                        title_suffix=" (preview)",
+                        total_samples=trial.stepped_total,
+                        model_name=trial.model_name,
+                        model_note=trial.note,
+                        make_figures=False,
+                        flag_outlook=trial.flag_outlook,
+                        extra=preview_extras(location, trial),
+                    )
+                    mark_estimated(PREVIEW_ONLY_PAYLOADS[location], nowcast)
+                except Exception:
+                    print(f"\n[WARNING] Preview model {PREVIEW_MODEL} failed for '{location}'; "
+                          "the preview shows the deployed model there:")
+                    traceback.print_exc()
         except Exception:
             print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
             traceback.print_exc()
@@ -1423,6 +1457,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Do not add this run to docs/archive (forecast history for the website).",
     )
     parser.add_argument(
+        "--preview-model",
+        default=None,
+        help="A trial model (hybrid_live.VARIANTS, e.g. hybrid_su) for the preview page only.",
+    )
+    parser.add_argument(
         "--preview-dir",
         default=None,
         help=(
@@ -1470,8 +1509,9 @@ def write_preview(output_dir: Path, preview_dir: Path, locations: list) -> None:
     """Preview page: same page as the main one (it switches its preview features on from its
     path), its own forecast_data.json. Never affects the main page."""
     try:
-        failed = [loc for loc in locations if loc not in PREVIEW_PAYLOADS]
-        write_forecast_bundle(preview_dir, dict(PREVIEW_PAYLOADS), failed)
+        payloads = {**PREVIEW_PAYLOADS, **PREVIEW_ONLY_PAYLOADS}
+        failed = [loc for loc in locations if loc not in payloads]
+        write_forecast_bundle(preview_dir, payloads, failed)
         page = output_dir / "index.html"
         if page.exists():
             shutil.copyfile(page, preview_dir / "index.html")
@@ -1535,6 +1575,8 @@ def main(argv: list[str] | None = None) -> None:
         return path
 
     hybrid_primary = args.primary == "hybrid"
+    global PREVIEW_MODEL
+    PREVIEW_MODEL = args.preview_model or os.environ.get("FLAG_PREDICTOR_PREVIEW_MODEL") or None
     preview_dir = _resolve(args.preview_dir) if hybrid_primary else None
     # The September LSTM (the old /old page) runs only when asked for with --old-dir (off since
     # 20 Oct 2026: it took ~3 min a run); without --primary hybrid it is the main forecast.

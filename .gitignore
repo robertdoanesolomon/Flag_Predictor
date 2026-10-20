@@ -73,6 +73,14 @@ models/redesign_*
 !models/redesign_hybrid_c1_ps_s[0-9]_*
 !models/redesign_hybrid_simfeat_isis.*
 !models/redesign_hybrid_simfeat_s[0-9]_isis.*
+!models/redesign_hybrid_su_isis.*
+!models/redesign_hybrid_su_godstow.*
+!models/redesign_hybrid_su_wallingford.*
+!models/redesign_hybrid_su_s[0-9]_*
+!models/redesign_hybrid_sr_godstow.*
+!models/redesign_hybrid_sr_wallingford.*
+!models/redesign_hybrid_sr_s[0-9]_godstow.*
+!models/redesign_hybrid_sr_s[0-9]_wallingford.*
 data/stage1_flow_*.npz
 figures/eval/*
 !figures/eval/summary_*.csv
