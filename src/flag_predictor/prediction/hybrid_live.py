@@ -38,6 +38,19 @@ MODEL_TAG = 'hybrid_c1_ps'
 # Example: {'isis': {'tag': 'hybrid_simfeat', 'core': 'cs_cos',
 #                    'names': ['hybrid_simfeat'] + [f'hybrid_simfeat_s{i}' for i in range(1, 5)]}}
 SIMFEAT_MODELS: dict = {}
+# Trial models with extra encoder inputs, for the preview page only (generate_all_location_figures
+# --preview-model). hybrid_su: measured soil moisture and upstream EA levels (models/extra_inputs.py).
+VARIANTS: dict = {
+    'hybrid_su': {'names': ['hybrid_su'] + [f'hybrid_su_s{i}' for i in range(1, 5)], 'extra': 'soil_upstream'},
+}
+
+
+def variant_extra(variant: str, index: pd.DatetimeIndex, project_root: Path) -> pd.DataFrame:
+    key = f'extra_{variant}_{index[0]}_{index[-1]}'
+    if key not in _cache:
+        from ..models.extra_inputs import live_extra
+        _cache[key] = live_extra(index, project_root)
+    return _cache[key]
 # Model-error library (build_error_library.py); missing file = rain spread only.
 ERROR_LIBRARY = 'error_library_{tag}_{location}.npz'
 HORIZON = 240
@@ -427,6 +440,7 @@ def forecast_with_uncertainty(
     models_dir: Optional[Path] = None,
     with_previous: bool = True,
     start_sd: float = 0.0,
+    variant: Optional[str] = None,
 ) -> LiveForecast:
     """Hybrid-ensemble forecast plus the model-error outcome cloud.
 
@@ -444,6 +458,16 @@ def forecast_with_uncertainty(
     extra = None
     note = None
     simfeat = SIMFEAT_MODELS.get(location)
+    if variant:
+        # A trial model with extra encoder inputs (VARIANTS); errors propagate, so a failed trial
+        # never quietly shows the deployed model under the trial's name.
+        v = VARIANTS[variant]
+        names = [n for n in v['names'] if (models_dir / f'redesign_{n}_{location}.pt').exists()]
+        if not names:
+            raise FileNotFoundError(f'no {variant} models for {location}')
+        extra = variant_extra(variant, frame.index, project_root)
+        tag, simfeat, with_previous = variant, None, False
+        print(f"  [{variant}] {len(names)} trained copies with {extra.shape[1]} extra inputs")
     if simfeat:
         try:
             from .continuous_live import simulation_features
@@ -501,6 +525,13 @@ def forecast_with_uncertainty(
     try:
         if state_runs:
             model_state = model_state_payload(location, names, models_dir, index, state_runs, frame)
+            if variant and extra is not None and 'soil_vwc' in extra:
+                sv = extra['soil_vwc'].dropna()
+                if len(sv):
+                    model_state['measured_soil'] = {'value': round(float(sv.iloc[-1]), 1), 'site': 'Chimney Meadows',
+                                                    'source': 'COSMOS-UK'}
+            if variant:
+                model_state['variant'] = variant
     except Exception as exc:   # extra, for the preview page; never lose the forecast over it
         print(f"  [model state] skipped ({type(exc).__name__}: {exc})")
     return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=tag, note=note,
