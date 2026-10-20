@@ -567,6 +567,7 @@
       margin: 16px 0 4px 0;
       color: var(--text);
     }
+    .footer-times { margin-top: 6px; }
     .footer {
       margin-top: 32px;
       text-align: center;
@@ -1025,6 +1026,7 @@
       Built by Rob Doane-Solomon — data from the Environment Agency &amp; Open-Meteo · model: physics hybrid, 5 trained copies × 50 rain members ·
       <span class="only-main-inline"><a href="old/">previous LSTM model</a> · <a href="preview/">preview of new features</a>.</span>
       <span class="only-preview-inline"><span class="only-preview-page"><a href="../">main forecast</a> · </span><a href="/old/">previous LSTM model</a> · official flags from <a href="https://ourcs.co.uk/information/flags/" target="_blank" rel="noopener">OURCs</a>.</span>
+      <div class="footer-times" id="footer-times"></div>
     </div>
   </div>
 
@@ -1579,6 +1581,17 @@
     // A change since the forecast ran: the sync note compared the river with the old flag.
     return { ...off, flag: live.flag, label: live.label, set_at: live.set_at, sync: undefined };
   }
+  /** The last line of the page: when this forecast was published and each official flag was set. */
+  function updateFooterTimes(bundle) {
+    const el = document.getElementById('footer-times');
+    if (!el || !bundle) return;
+    const parts = [`Forecast published ${fmtShortDateTime(bundle.generated_at)}`];
+    for (const key of bundle.location_order) {
+      const off = bundle.locations[key] && officialFlag(bundle.locations[key]);
+      if (off && off.set_at) parts.push(`${STRETCH_NAMES[key] || key} flag set ${fmtShortDateTime(off.set_at)}`);
+    }
+    el.textContent = parts.join(' · ');
+  }
   async function startLiveFlags() {
     let worker = null;
     try { const r = await fetch('push_config.json', { cache: 'no-store' }); if (r.ok) worker = (await r.json()).worker; } catch (e) {}
@@ -1601,6 +1614,7 @@
           if (sameFlag(prev, st)) continue;
           const head = document.querySelector(`#pane-${key} .flag-head`);
           if (head) head.outerHTML = renderFlagOutlookHtml(loc);
+          updateFooterTimes(bundle);
         }
       } catch (e) { /* offline or the Worker is busy: try again next time */ }
       finally { busy = false; }
@@ -2729,6 +2743,7 @@
     // Plot every location.
     bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
     window.__forecastBundle = bundle;
+    updateFooterTimes(bundle);
     initHistory(bundle);
     if (keep && keep !== firstKey) setActiveTab(keep);
 
