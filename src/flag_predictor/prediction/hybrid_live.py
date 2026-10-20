@@ -214,9 +214,9 @@ NOWCAST_ERROR = {
     'isis': {'a': 0.026, 'mid': (0.215, 0.535), 'mid_factor': 1.38},
     'godstow': {'a': 0.022, 'mid': (0.30, 1.0), 'mid_factor': 1.61},
 }
-# Beyond this long the estimate is too loose to warn on: the page marks it low confidence and
+# Beyond this long (5 days) the estimate is too loose to warn on: the page marks it low confidence and
 # no "likely" alerts are sent for that stretch.
-NOWCAST_CONFIDENT_H = 7 * 24
+NOWCAST_CONFIDENT_H = 5 * 24
 
 
 def nowcast_error_sd(location: str, hours: float, level: float) -> float:
@@ -226,6 +226,18 @@ def nowcast_error_sd(location: str, hours: float, level: float) -> float:
     sd = p['a'] * np.sqrt(max(hours, 1.0) / 24.0)
     lo, hi = p['mid']
     return float(sd * (p['mid_factor'] if lo <= level < hi else 1.0))
+
+
+def recent_gauge_rain(stations: List[str]) -> Optional[pd.Series]:
+    """Hourly mean rain (mm) over these gauges from the EA API, UTC-naive index, or None.
+    For the page's rain history while a stretch's river gauges are offline."""
+    api = _api_rain()
+    cols = [c for c in stations if c in api.columns]
+    if not cols:
+        return None
+    out = api[cols].clip(lower=0).mean(axis=1)
+    out.index = out.index.tz_convert('UTC').tz_localize(None)
+    return out
 
 
 def _recent_flow() -> Optional[pd.Series]:

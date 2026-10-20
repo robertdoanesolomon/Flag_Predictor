@@ -925,10 +925,11 @@ before, as in `fill_outage`), carries the gauge rain and Farmoor flow on, and
 runs the hybrid from there. Every outcome is shifted by a draw of the estimate's
 error, so the likely range and the flag chances carry it. The page marks the
 stretch "Gauges offline — estimated from …", draws the estimated part of the
-history dotted, and says "about" before the differential. After a week the
+history dotted, and says "about" before the differential. After five days the
 estimate is marked low confidence and no "likely" alerts go out for that
 stretch; alerts before then say they are estimated. Both offline, or more than
-14 days: the stale forecast as before.
+14 days: the stale forecast as before. The rain history on the page carries on
+to now from the EA rain gauges either way.
 
 `backtest_outage_nowcast.py` (2019–2026). Part 1, the estimate itself at
 ≈1,300 random hours per stretch: mean error 0.019 / 0.030 / 0.046 / 0.062 m

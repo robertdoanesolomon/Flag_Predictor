@@ -763,6 +763,23 @@ def render_location_outputs(
         and not col.startswith("groundwater_mAOD_")
     ]
     historical_rainfall_hourly = last_8_days[rainfall_cols].mean(axis=1)  # Average across stations
+    # The frame stops at the last river reading. While the river gauges are offline the rain
+    # gauges usually are not: carry the rain history on to now from the EA API.
+    try:
+        hr = historical_rainfall_hourly.copy()
+        hr.index = _ensure_timezone_naive(hr.index)
+        last_rain = hr.dropna().index.max()
+        now_naive = pd.Timestamp.utcnow().tz_localize(None)
+        if last_rain is not None and now_naive - last_rain > pd.Timedelta(hours=3):
+            from flag_predictor.prediction.hybrid_live import recent_gauge_rain
+            more = recent_gauge_rain(rainfall_cols)
+            if more is not None:
+                more = more[(more.index > last_rain) & (more.index <= now_naive)]
+                if len(more):
+                    historical_rainfall_hourly = pd.concat([hr, more])
+                    print(f"  Rain history carried on {len(more)} h past the last river reading (EA rain gauges)")
+    except Exception as exc:
+        print(f"  [rain] could not extend the rain history ({type(exc).__name__}: {exc})")
     historical_rainfall_daily = historical_rainfall_hourly.resample("1D").sum()  # Daily totals
 
     # 2. Forecast rainfall - calculate ensemble statistics
