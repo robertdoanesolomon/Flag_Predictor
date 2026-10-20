@@ -39,10 +39,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          # CPU-only torch: the default Linux wheel brings ~2 GB of CUDA libraries nothing here uses.
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
           pip install -r requirements.txt
 
       # Large EA rainfall dumps live in data/rainfall_training_data/ (gitignored to keep repo small).
