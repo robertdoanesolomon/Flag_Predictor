@@ -1632,7 +1632,22 @@
           sub: `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). ` +
                (est.confident ? 'More uncertainty than usual.' : `Rough after 5 days; no ${here} alerts.`) }, true));
       }
-      const offCard = outlookCard(loc.official_outlook, 'flag', loc);
+      let offCard = outlookCard(loc.official_outlook, 'flag', loc);
+      // The flag changed after this forecast ran (live tile): its outlook started from the old flag,
+      // so say what happened instead, and whether the forecast had it coming.
+      if (off && loc.official_flag && off !== loc.official_flag && off.flag !== loc.official_flag.flag) {
+        const oo = loc.official_outlook || {};
+        const dir = ['up', 'down'].find((d) => oo[d] && (oo[d].flag === off.flag || (oo[d].split && oo[d].split[off.flag] > 0)));
+        const pt = dir && oo.windows && oo.windows.tomorrow ? oo.windows.tomorrow[dir] : null;
+        const p = pt != null && pt >= 0.4 ? pt : null;   // "as forecast" only if it said at least "possibly"
+        const was = FLAG_LABELS[loc.official_flag.flag] || loc.official_flag.label;
+        offCard = {
+          main: `Changed to ${off.label}${off.set_at ? ` at ${fmtShortDateTime(off.set_at).split(',')[0]}` : ''}`,
+          sub: `${p != null ? `As forecast (${outlookPct(p)} by tomorrow). ` : `From ${was}. `}` +
+               'The chances from here update with the next forecast, within 15 minutes.',
+          now: off.flag, tomorrow: [off.flag], strength: 0,
+        };
+      }
       const diffCard = outlookCard(loc.flag_outlook, 'diff', loc);
       const sy = off && off.sync;
       const outOfSync = !!(sy && sy.in_sync === false && off.flag !== 'grey');
