@@ -1643,7 +1643,7 @@
         const was = FLAG_LABELS[loc.official_flag.flag] || loc.official_flag.label;
         offCard = {
           main: `Changed to ${off.label}${off.set_at ? ` at ${fmtShortDateTime(off.set_at).split(',')[0]}` : ''}`,
-          sub: `${p != null ? `As forecast (${outlookPct(p)} by tomorrow). ` : `From ${was}. `}` +
+          sub: `${p != null ? `As previously forecast (${outlookPct(p)} by tomorrow). ` : `From ${was}. `}` +
                'The chances from here update with the next forecast, within 15 minutes.',
           now: off.flag, tomorrow: [off.flag], strength: 0,
         };
