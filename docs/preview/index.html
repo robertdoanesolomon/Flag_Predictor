@@ -1585,9 +1585,8 @@
         const days = est.hours >= 48 ? `${Math.round(est.hours / 24)} days` : `${est.hours} hours`;
         cards.push(cardHtml('Gauges offline', {
           main: est.confident ? `Estimated from ${from}` : `Estimated from ${from}: low confidence`,
-          sub: `The ${here} gauges have not reported since ${fmtShortDateTime(est.last_reading)} (${days}). ` +
-               `The differential is estimated from the ${from} gauges (usually within ${est.sd.toFixed(2)} m), so the chances below are wider than usual` +
-               (est.confident ? '.' : `; after a week offline they are rough, and no ${here} alerts are sent.`) }, true));
+          sub: `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). ` +
+               (est.confident ? 'Chances are wider than usual.' : `Rough after a week; no ${here} alerts.`) }, true));
       }
       const offCard = outlookCard(loc.official_outlook, 'flag', loc);
       const diffCard = outlookCard(loc.flag_outlook, 'diff', loc);
