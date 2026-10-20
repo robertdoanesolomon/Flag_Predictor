@@ -1586,7 +1586,7 @@
         cards.push(cardHtml('Gauges offline', {
           main: est.confident ? `Estimated from ${from}` : `Estimated from ${from}: low confidence`,
           sub: `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). ` +
-               (est.confident ? 'Chances are wider than usual.' : `Rough after a week; no ${here} alerts.`) }, true));
+               (est.confident ? 'More uncertainty than usual.' : `Rough after a week; no ${here} alerts.`) }, true));
       }
       const offCard = outlookCard(loc.official_outlook, 'flag', loc);
       const diffCard = outlookCard(loc.flag_outlook, 'diff', loc);
