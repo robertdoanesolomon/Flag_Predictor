@@ -1124,6 +1124,13 @@
   }
   // Payload timestamps are UTC but carry no offset; JS would read them as local time
   // (an hour early during BST). Treat any offset-less date-time string as UTC.
+  /** The forecasts work in whole hours (the 15:00 hour holds the latest reading in it, e.g.
+      15:30): show the time of that reading when it falls in that hour, else the hour. */
+  function readingAt(loc, hourIso) {
+    const r = loc && loc.latest_reading ? parseUtc(loc.latest_reading) : null;
+    const h = parseUtc(hourIso);
+    return r && r >= h && r - h < 3600 * 1000 ? loc.latest_reading : hourIso;
+  }
   function parseUtc(iso) {
     if (typeof iso === 'string' && iso.includes('T') && !/(Z|[+-]\d\d:?\d\d)$/i.test(iso)) {
       return new Date(iso + 'Z');
@@ -2597,7 +2604,7 @@
     const flagNow = flagOf(data.observed, loc.thresholds, key);
     const flagHits = rows.filter(r => flagOf(r.mean, loc.thresholds, key) === flagNow).length;
     block.querySelector('.history-label').innerHTML =
-      `What each forecast from the last 10 days said the differential would be at <strong>${fmtShortDateTime(data.target)}</strong>, the latest reading`;
+      `What each forecast from the last 10 days said the differential would be at the latest reading, <strong>${fmtShortDateTime(readingAt(loc, data.target))}</strong>`;
     const e1 = errs(0, 48), e2 = errs(48, 120), e3 = errs(120, 260);
     block.querySelector('.history-score').innerHTML =
       (e1 !== null ? `<span>issued 0–2 days before: off by <strong>${e1} m</strong></span>` : '') +
