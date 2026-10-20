@@ -245,7 +245,7 @@ def _recent_flow() -> Optional[pd.Series]:
     if 'flow' not in _cache:
         try:
             from ..data.api import fetch_flow_data
-            f = fetch_flow_data(verbose=False, min_days_back=30)
+            f = fetch_flow_data(verbose=False)   # same request as the data pipeline (90 days)
             _cache['flow'] = _to_utc(f)['flow_m3s_Farmoor'].resample('1h').mean() if len(f) else None
         except Exception as exc:
             print(f"  [nowcast] no Farmoor flow ({exc})")
@@ -302,6 +302,8 @@ def outage_nowcast(location: str, merged_df: pd.DataFrame, now: Optional[pd.Time
         known = merged['flow_m3s_Farmoor']
         if flow is not None:
             known = known.combine_first(flow)
+        else:
+            print("  [nowcast] no recent Farmoor flow; the encoder sees it as missing")
         ext['flow_m3s_Farmoor'] = known.reindex(known.index.union(ext.index)).ffill(limit=6).reindex(ext.index)
     out = pd.concat([merged, ext])
     out.attrs = dict(merged_df.attrs)
