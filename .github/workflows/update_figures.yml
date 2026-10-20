@@ -19,6 +19,9 @@ concurrency:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    # A normal run takes ~6-12 min. A hung upstream API (EA, Open-Meteo) must not hold the
+    # queue for hours: give up and let the next 15-minute run try.
+    timeout-minutes: 25
     permissions:
       contents: write  # Required to push commits back to the repo
 
