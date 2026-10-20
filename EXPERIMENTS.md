@@ -958,3 +958,44 @@ one had forecast rain. The estimate costs about 0.01–0.03 m over the first two
 days against a working gauge; against the stale forecast it is about as good
 over the first two days and much better over ten, and it starts now, so the
 flag chances (which need a current start) come back.
+
+## Model soil wetness vs measured soil moisture (COSMOS-UK, Oct 2026)
+
+COSMOS-UK (UKCEH) cosmic-ray soil moisture, daily, from its public API
+(`cosmos-api.ceh.ac.uk`, collection `1D`, parameter `cosmos_vwc`). In the
+catchment: Chimney Meadows (CHIMN, Thames floodplain near Bampton, live to
+yesterday); Wytham Woods (WYTH1) closed in 2016. `data/cosmos/CHIMN_1D_data.csv`
+holds 2018 – Oct 2026.
+
+The hybrid's soil store at the start of each forecast (`s`, the fraction full,
+mean of the five copies), every day at 12:00 UTC 2019 – Jan 2026, against the
+measured volumetric water content:
+
+| | r | r of anomalies from the seasonal cycle |
+|---|---|---|
+| Godstow model soil | 0.79 (test window 0.86) | 0.47 |
+| Isis model soil | 0.82 (test window 0.87) | 0.48 |
+| rain-memory index, half-life 20 d | 0.70 | 0.76 |
+| rain-memory index, half-life 40 d | 0.78 | 0.78 |
+
+The model's soil store follows the measured seasonal cycle closely (it gets
+wet and dry in the right months, and was not tuned to do so), but saturates at
+80–90 % once the measured soil passes ~42 %, and follows the wet and dry spells
+within a season less well than a simple 40-day rain-memory index.
+
+Does the mismatch matter? Error-library forecasts (rain that fell) started at
+12:00 on the same days, mismatch = measured minus the soil the model implies
+(linear fit), 72 h error = observed − forecast:
+
+| | starts | corr(mismatch, 72 h error) | mean 72 h error: model wetter / agree / measured wetter |
+|---|---|---|---|
+| Godstow, all | 636 | +0.08 | −0.005 / −0.011 / +0.001 m |
+| Godstow, 15 mm+ rain ahead | 96 | +0.25 | −0.012 / −0.003 / +0.025 m |
+| Isis, all | 604 | +0.05 | −0.005 / −0.014 / +0.003 m |
+| Isis, 15 mm+ rain ahead | 94 | +0.30 | −0.038 / −0.010 / +0.046 m |
+
+With heavy rain ahead, when the ground is wetter than the model thinks the
+river ends up higher than forecast, and the other way round: a 0.04–0.08 m
+spread, about the size of the typical error in these cases. A measured soil
+moisture input (to the encoder, or to set the soil store's starting value)
+looks worth trying; the samples are small (≈ 95 starts, a dozen or so events).
