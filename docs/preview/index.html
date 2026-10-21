@@ -1917,8 +1917,7 @@
             <div class="chart-block">
               <div class="chart-legend" data-plot="plot-${key}">
                 <button type="button" class="item" data-target="Historical Differential"><span class="swatch line" style="background:#0b1d18;"></span>Historical Differential</button>
-                ${loc.estimated ? `<button type="button" class="item" data-target="Estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}"><span class="swatch line" style="background:repeating-linear-gradient(90deg,#0b1d18 0 3px,transparent 3px 6px);"></span>Estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}</button>` : ''}
-                ${!loc.estimated && loc.gauge_stand_in && loc.gauge_stand_in.times && loc.gauge_stand_in.times.length ? `<button type="button" class="item" data-target="${STAND_IN_LABEL(loc.gauge_stand_in)}"><span class="swatch line" style="background:repeating-linear-gradient(90deg,#0b1d18 0 3px,transparent 3px 6px);"></span>${STAND_IN_LABEL(loc.gauge_stand_in)}</button>` : ''}
+                ${loc.estimated || (loc.gauge_stand_in && loc.gauge_stand_in.times && loc.gauge_stand_in.times.length) ? `<button type="button" class="item" data-target="${EST_LABEL}"><span class="swatch line" style="background:repeating-linear-gradient(90deg,#0b1d18 0 3px,transparent 3px 6px);"></span>${EST_LABEL}</button>` : ''}
                 <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:${PREVIEW ? 'rgba(138,57,208,0.55)' : '#4682b4'};"></span>Ensemble Predictions (n=${loc.n_members})</button>
                 <button type="button" class="item" data-target="Ensemble Mean"><span class="swatch line" style="background:#8a39d0;"></span>Ensemble Mean</button>
                 ${loc.ensemble && loc.ensemble.total ? `<button type="button" class="item" data-target="Likely range"><span class="swatch square" style="background:rgba(118,46,186,0.45);"></span>Likely range (rain + model error)</button>` : ''}
@@ -2083,8 +2082,8 @@
         x: est.times,
         y: est.values,
         line: { color: T.historicalLine, width: 2, dash: 'dot' },
-        name: `Estimated from ${STRETCH_NAMES[est.from] || est.from}`,
-        hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>about %{y:.2f} m<extra>Estimated from ${STRETCH_NAMES[est.from] || est.from}</extra>`
+        name: EST_LABEL,
+        hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>about %{y:.2f} m<extra>${EST_LABEL}</extra>`
       });
     }
 
@@ -2097,15 +2096,15 @@
         x: si.times,
         y: si.values,
         line: { color: T.historicalLine, width: 2, dash: 'dot' },
-        name: STAND_IN_LABEL(si),
-        hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>%{y:.2f} m<extra>${si.gauge} from ${si.stand_in}</extra>`
+        name: EST_LABEL,
+        hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>%{y:.2f} m<extra>${EST_LABEL}</extra>`
       });
     }
 
     return traces;
   }
 
-  function STAND_IN_LABEL(si) { return `${si.gauge} gauge from ${si.stand_in.replace(/ \(.*\)$/, '')}`; }
+  const EST_LABEL = 'Estimated differential (gauge offline)';
 
   function addHalfDay(iso) {
     // Source ISO strings (no trailing Z) get parsed as LOCAL time by JS.
