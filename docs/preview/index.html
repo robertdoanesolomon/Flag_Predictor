@@ -974,7 +974,7 @@
         <h2 id="alerts-title">Flag alerts on your phone</h2>
         <span class="alerts-status" id="alerts-status"></span>
       </div>
-      <p class="alerts-help" id="alerts-help">A notification within a minute of the official flag changing, and when a change is 60% or more likely today or by tomorrow.</p>
+      <p class="alerts-help" id="alerts-help">A notification within a minute of the official flag changing, and when a change is likely today or by tomorrow (60% or more for going up, 80% for coming down).</p>
       <div class="alerts-controls" id="alerts-controls">
         <label class="alerts-river"><input type="checkbox" value="isis" checked> Isis</label>
         <label class="alerts-river"><input type="checkbox" value="godstow" checked> Godstow</label>
@@ -1652,7 +1652,9 @@
           main: est.confident ? `Estimated from ${from}` : `Estimated from ${from}: low confidence`,
           sub: est.confident
             ? `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). More uncertainty than usual.`
-            : `No ${here} reading since ${fmtShortDateTime(est.last_reading)}. Notifications stopped; data on this page is highly unreliable.` }, true));
+            : est.hours <= 240
+              ? `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). Less reliable than usual; notifications still sent, marked as estimated.`
+              : `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). Notifications stopped; treat this as a rough guide.` }, true));
       }
       let offCard = outlookCard(loc.official_outlook, 'flag', loc);
       // The flag changed after this forecast ran (live tile): its outlook started from the old flag,

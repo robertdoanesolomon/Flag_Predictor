@@ -4,7 +4,7 @@ Which flag alerts to send after a forecast run (pure logic, no network).
 Per stretch (Isis, Godstow), from the preview bundle (docs/preview/forecast_data.json):
 
 * (the official flag has changed: sent within a minute by the Cloudflare Worker, push/worker)
-* the official flag is likely to change: chance >= LIKELY today, or by the end of tomorrow
+* the official flag is likely to change: chance >= LIKELY (up) / LIKELY_DOWN (down) today, or by the end of tomorrow
                                                                -> "Flag likely down to Amber by tomorrow (70%) ..."
 * escalation: after an "up" alert, a higher flag becomes >= LIKELY (going up can skip a flag)
                                                                -> "Isis Flag now likely up to Red by tomorrow (70%)"
@@ -13,7 +13,8 @@ Per stretch (Isis, Godstow), from the preview bundle (docs/preview/forecast_data
 Each "likely" alert is sent once per flag; it can be sent again only after its chance has
 dropped below RESET (so a forecast hovering around the threshold does not alert every hour), or
 once the flag has changed. Nothing is sent from a stale forecast (gauges offline), one estimated from the
-neighbouring stretch for more than 5 days, or an old bundle; one estimated for less says so.
+neighbouring stretch for more than 10 days, or an old bundle; one estimated for less needs a 70%+ chance
+and says so.
 The state between runs is a small JSON object (kept in Cloudflare KV by send_push.py).
 """
 
@@ -25,7 +26,17 @@ from zoneinfo import ZoneInfo
 
 RIVERS = ('isis', 'godstow')
 NAMES = {'isis': 'Isis', 'godstow': 'Godstow'}
-LIKELY = 0.6
+LIKELY = 0.6          # "up" (and Black) alerts
+# "Down" alerts need a higher chance: the model expects a flag to come down a day or so before it
+# does. Replayed on 2025 at 60% (rain that fell, alert_replay_outage.py): up alerts were right 30 of
+# 33 times, down alerts 28 of 49; at 80% Godstow's down alerts were right 13 of 13 with one change
+# fewer warned.
+LIKELY_DOWN = 0.8
+# Forecast started from the neighbouring stretch's estimate (gauges offline): alerts carry on for
+# up to ESTIMATED_MAX_H, marked as estimated, but need at least this chance (2025 Isis replay at 70%:
+# right 75-80% of the time after 2-10 days offline, against 55-64% at 60%).
+LIKELY_ESTIMATED = 0.7
+ESTIMATED_MAX_H = 10 * 24
 RESET = 0.3
 SEVERITY = ['green', 'light_blue', 'blue', 'dark_blue', 'amber', 'red', 'black']
 CLEAR = 0.75     # name the destination only when this share of the outcomes that change agree on it
@@ -109,18 +120,20 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
             sent, up_top = set(), None       # the change itself is alerted by the Worker; start afresh
         est = loc.get('estimated')
         # Gauges offline: nothing from a stale forecast, nor from one estimated from the
-        # neighbouring stretch for more than 5 days (too loose to warn on).
-        if loc.get('stale') or off.get('forecast_stale') or (est and not est.get('confident')):
+        # neighbouring stretch for more than ESTIMATED_MAX_H (too loose to warn on).
+        if loc.get('stale') or off.get('forecast_stale') or (est and (est.get('hours') or 0) > ESTIMATED_MAX_H):
             new_state[river] = {'flag': flag, 'sent': sorted(sent), 'up_top': up_top}
             continue
         n_before = len(msgs)
 
+        floor = LIKELY_ESTIMATED if est else 0.0
         oo = loc.get('official_outlook') or {}
         win = oo.get('windows') or {}
         for d in ('up', 'down'):
             info = oo.get(d)
             if not info:
                 continue
+            likely = max(LIKELY_DOWN if d == 'down' else LIKELY, floor)
             p_today = (win.get('today') or {}).get(d, 0.0) or 0.0
             p_tom = (win.get('tomorrow') or {}).get(d, 0.0) or 0.0
             target = info.get('flag')
@@ -137,7 +150,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
             # chance of getting at least as far as each flag (going up can skip a flag)
             reach = {k: sum(v for k2, v in split.items() if SEVERITY.index(k2) >= SEVERITY.index(k))
                      for k in split if k in SEVERITY}
-            likely_top = max((k for k, v in reach.items() if v >= LIKELY), key=SEVERITY.index, default=None)
+            likely_top = max((k for k, v in reach.items() if v >= likely), key=SEVERITY.index, default=None)
             if clear:
                 where, emoji = f' to {_label(target)}', target
                 detail = ''
@@ -145,14 +158,14 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 where, emoji = '', None
                 parts = sorted(split.items(), key=lambda kv: -kv[1])
                 detail = ': ' + ', '.join(f'{EMOJI.get(k, "")} {_label(k)} {_pct(v)}'.strip() for k, v in parts if v >= 0.05)
-            if p_today >= LIKELY and k_today not in sent:
+            if p_today >= likely and k_today not in sent:
                 verb = f'{_word(p_today)} {d}' if clear else f'{_word(p_today)} to go {d}'
                 when_today = '' if when.endswith('tomorrow.') else when          # a today alert only gives a time today
                 msgs.append(_msg(river, f'{NAMES[river]} Flag {verb}{where} today ({_pct(p_today)}){detail}.{_if_so(when_today, p_today)}', emoji, d))
                 sent |= {k_today, k_tom}
                 if d == 'up':
                     up_top = likely_top or target
-            elif p_tom >= LIKELY and k_tom not in sent:
+            elif p_tom >= likely and k_tom not in sent:
                 verb = f'{_word(p_tom)} {d}' if clear else f'{_word(p_tom)} to go {d}'
                 msgs.append(_msg(river, f'{NAMES[river]} Flag {verb}{where} by the end of tomorrow ({_pct(p_tom)}){detail}.{_if_so(when, p_tom)}',
                                  emoji, d))
@@ -176,7 +189,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
             sent.discard(other)
             if p_tom < RESET:
                 sent.discard(key)
-            elif p_tom >= LIKELY and key not in sent:
+            elif p_tom >= max(LIKELY, floor) and key not in sent:
                 when = _when((bk.get('when') or {}).get('median_time'), now)
                 text = (f'{NAMES[river]} Flag {_word(p_tom)} back to Red from Black by the end of tomorrow ({_pct(p_tom)}).{_if_so(when, p_tom)}' if is_black
                         else f'{NAMES[river]} Flag {_word(p_tom)} to go Black by the end of tomorrow ({_pct(p_tom)}): Iffley Lock is at '

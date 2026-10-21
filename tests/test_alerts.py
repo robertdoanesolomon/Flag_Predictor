@@ -26,33 +26,53 @@ def bundle(flag='red', down_today=0.0, down_tom=0.0, stale=False, black=None, ag
 
 class AlertTests(unittest.TestCase):
     def test_likely_change_once_then_today(self):
-        msgs, st = decide(bundle(down_tom=0.7), {'isis': {'flag': 'red', 'sent': []}}, NOW)
+        msgs, st = decide(bundle(down_tom=0.8), {'isis': {'flag': 'red', 'sent': []}}, NOW)
         self.assertEqual(len(msgs), 1)
-        self.assertIn('likely down to Amber by the end of tomorrow (70%)', msgs[0]['body'])
+        self.assertIn('likely down to Amber by the end of tomorrow (80%)', msgs[0]['body'])
         self.assertIn('Probably mid-morning tomorrow', msgs[0]['body'])
-        msgs, st = decide(bundle(down_tom=0.75), st, NOW)            # same forecast an hour later: quiet
+        msgs, st = decide(bundle(down_tom=0.85), st, NOW)            # same forecast an hour later: quiet
         self.assertEqual(msgs, [])
-        msgs, st = decide(bundle(down_today=0.65, down_tom=0.8), st, NOW)   # now today too: one more
+        msgs, st = decide(bundle(down_today=0.8, down_tom=0.9), st, NOW)   # now today too: one more
         self.assertEqual(len(msgs), 1)
-        self.assertIn('possibly down to Amber today (65%)', msgs[0]['body'])
-        msgs, st = decide(bundle(down_today=0.7, down_tom=0.8), st, NOW)
+        self.assertIn('likely down to Amber today (80%)', msgs[0]['body'])
+        msgs, st = decide(bundle(down_today=0.85, down_tom=0.9), st, NOW)
         self.assertEqual(msgs, [])
 
+    def test_down_needs_80_percent(self):
+        self.assertEqual(decide(bundle(down_tom=0.75), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
+
     def test_reset_after_the_chance_drops(self):
-        _, st = decide(bundle(down_tom=0.7), {'isis': {'flag': 'red', 'sent': []}}, NOW)
+        _, st = decide(bundle(down_tom=0.8), {'isis': {'flag': 'red', 'sent': []}}, NOW)
         _, st = decide(bundle(down_tom=0.5), st, NOW)                # hovering: no reset
-        self.assertEqual(decide(bundle(down_tom=0.7), st, NOW)[0], [])
+        self.assertEqual(decide(bundle(down_tom=0.8), st, NOW)[0], [])
         _, st = decide(bundle(down_tom=0.1), st, NOW)                # dropped well below
-        self.assertEqual(len(decide(bundle(down_tom=0.7), st, NOW)[0]), 1)
+        self.assertEqual(len(decide(bundle(down_tom=0.8), st, NOW)[0]), 1)
 
     def test_flag_change_and_first_run(self):
         msgs, st = decide(bundle(flag='red'), {}, NOW)               # first run: just remember
         self.assertEqual(msgs, [])
-        _, st = decide(bundle(flag='red', down_tom=0.7), st, NOW)
+        _, st = decide(bundle(flag='red', down_tom=0.8), st, NOW)
         self.assertTrue(st['isis']['sent'])
         msgs, st = decide(bundle(flag='amber'), st, NOW)       # the change itself: sent by the Worker
         self.assertEqual(msgs, [])
         self.assertEqual(st['isis'], {'flag': 'amber', 'sent': [], 'up_top': None})
+
+    def test_estimated_start(self):
+        def est_bundle(hours, up):
+            b = bundle(flag='green')
+            loc = b['locations']['isis']
+            oo = loc['official_outlook']
+            oo['down'] = None
+            oo['windows']['tomorrow']['up'] = up
+            oo['up'] = {'flag': 'light_blue', 'when': None, 'split': {'light_blue': up}}
+            loc['estimated'] = {'from': 'godstow', 'hours': hours, 'confident': hours <= 120}
+            return b
+        fresh = {'isis': {'flag': 'green', 'sent': []}}
+        self.assertEqual(decide(est_bundle(48, 0.65), fresh, NOW)[0], [])          # 65%: below the 70% bar
+        msgs, _ = decide(est_bundle(200, 0.75), fresh, NOW)                        # 8 days: still sent
+        self.assertEqual(len(msgs), 1)
+        self.assertIn('Estimated from Godstow', msgs[0]['body'])
+        self.assertEqual(decide(est_bundle(260, 0.95), fresh, NOW)[0], [])         # over 10 days: none
 
     def test_stale_or_old_bundle_sends_nothing_new(self):
         self.assertEqual(decide(bundle(down_tom=0.9, stale=True), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
