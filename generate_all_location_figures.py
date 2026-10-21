@@ -1115,7 +1115,8 @@ def render_location_outputs(
     # One of the stretch's gauges offline and another standing in for it (Isis: King's Mill from the
     # Botanic Gardens gauge, data/api.py): a note on the page, not an estimate.
     if merged_df.attrs.get("gauge_stand_in"):
-        payload["gauge_stand_in"] = merged_df.attrs["gauge_stand_in"]
+        payload["gauge_stand_in"] = dict(merged_df.attrs["gauge_stand_in"])
+        split_stand_in_line(payload)
     return payload
 
 
@@ -1127,6 +1128,29 @@ PREVIEW_PAYLOADS: dict = {}
 # page keeps PREVIEW_PAYLOADS from the deployed model.
 PREVIEW_MODEL: str | None = None
 PREVIEW_ONLY_PAYLOADS: dict = {}
+
+
+def split_stand_in_line(payload: dict) -> None:
+    """Hours built partly from a stand-in gauge (gauge_stand_in['since'] on): drawn dotted on the
+    page, like an estimate, so they are moved out of the measured history line."""
+    info = payload.get("gauge_stand_in") or {}
+    if not info.get("since"):
+        return
+    since = pd.Timestamp(info["since"]).tz_convert("UTC").tz_localize(None)
+    hist = payload.get("historical") or {}
+    times, vals = hist.get("times") or [], hist.get("differential") or []
+    out_t, out_v = [], []
+    for i, t in enumerate(times):
+        if pd.Timestamp(t) > since and vals[i] is not None:
+            out_t.append(t)
+            out_v.append(vals[i])
+            vals[i] = None
+    if out_t:   # join the dotted line to the last fully measured point
+        j = max((i for i, t in enumerate(times) if pd.Timestamp(t) <= since and vals[i] is not None), default=None)
+        if j is not None:
+            out_t.insert(0, times[j])
+            out_v.insert(0, vals[j])
+    info["times"], info["values"] = out_t, out_v
 
 
 def mark_estimated(payload: dict | None, nowcast: dict | None) -> None:
