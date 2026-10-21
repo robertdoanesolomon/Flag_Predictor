@@ -316,6 +316,31 @@ def fetch_rainfall_data(location: Optional[str] = None, verbose: bool = True) ->
     return combined
 
 
+LIVE_FLOW_URL = ('https://environment.data.gov.uk/flood-monitoring/id/measures/'
+                 '1100TH-flow--Mean-15_min-m3_s/readings.json')
+
+
+def _fetch_live_farmoor_flow(verbose: bool = True, days: int = 28) -> pd.DataFrame:
+    """Farmoor flow from the EA flood-monitoring API (raw, near real time), last ``days`` days."""
+    try:
+        since = (pd.Timestamp.utcnow() - pd.Timedelta(days=days)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        r = requests.get(LIVE_FLOW_URL, params={'since': since, '_sorted': '', '_limit': 10000}, timeout=60)
+        r.raise_for_status()
+        items = r.json().get('items', [])
+        s = pd.Series({pd.Timestamp(i['dateTime']): i.get('value') for i in items if 'dateTime' in i}, dtype=object)
+        s = pd.to_numeric(s, errors='coerce').dropna().sort_index()
+        if s.empty:
+            return pd.DataFrame()
+        s.index = s.index.tz_convert('UTC') if s.index.tz is not None else s.index.tz_localize('UTC')
+        if verbose:
+            print(f"  ✓ Farmoor flow (live feed): {len(s)} readings to {s.index.max()}")
+        return s.to_frame('flow_m3s_Farmoor')
+    except Exception as e:
+        if verbose:
+            print(f"  ✗ Farmoor flow (live feed): {e}")
+        return pd.DataFrame()
+
+
 def fetch_flow_data(verbose: bool = True, min_days_back: int = 90) -> pd.DataFrame:
     """
     Fetch recent Farmoor flow data from Hydrology API.
@@ -343,6 +368,14 @@ def fetch_flow_data(verbose: bool = True, min_days_back: int = 90) -> pd.DataFra
         response = requests.get(url, timeout=60)
         response.raise_for_status()
         df = _process_flow_api_response(response.json(), column_name='flow_m3s_Farmoor')
+        # The qualified (checked) series is published days late; the flood-monitoring feed has the
+        # same gauge's raw 15-min flow within the hour (identical where both exist). Fill the
+        # recent hours from it.
+        live = _fetch_live_farmoor_flow(verbose=verbose)
+        if not live.empty:
+            if not df.empty and df.index.tz is None:   # the qualified series comes back naive (UTC)
+                live.index = live.index.tz_localize(None)
+            df = df.combine_first(live) if not df.empty else live
         if not df.empty and verbose:
             print(f"  ✓ Farmoor flow: {len(df)} records")
             print(f"  Date range: {df.index.min()} to {df.index.max()}")
