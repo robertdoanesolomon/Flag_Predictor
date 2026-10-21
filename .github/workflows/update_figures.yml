@@ -120,6 +120,8 @@ jobs:
           fi
 
       - name: Generate figures into docs/
+        env:
+          PYTHONUNBUFFERED: "1"   # log lines carry their real times, so slow steps show up
         run: |
           set -euo pipefail
 
