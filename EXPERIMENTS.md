@@ -1048,3 +1048,22 @@ Error libraries (k = 200), calibrated CRPS: Godstow 0.0335 (deployed 0.0349), Wa
 first day and largest with heavy rain ahead; the first 24 h are a fraction of a mm worse.
 Shown on the preview page only (`--preview-model hybrid_sr`) for Godstow and Wallingford; the
 Isis (no hybrid_sr copies) keeps the deployed model there too.
+
+## King's Mill offline: the Botanic Gardens gauge stands in (Oct 2026)
+
+The Isis differential is 0.71 (Osney tail - Iffley head - 2.14) + 0.29 (King's Mill tail - Iffley head - 0.73).
+King's Mill downstream (1491TH) stopped on 13 Oct 2026; Osney and Iffley kept reporting.
+
+* The Cherwell at the Botanic Gardens (1490TH, a few hundred metres below King's Mill on the same reach)
+  tracked King's Mill tail to 2 mm sd over Sep-Oct 2026 (K = C - 3.944, slope 1.01). Low water only:
+  the EA publishes no history for either downstream gauge, so this cannot be checked in a flood.
+* Osney-only does not work. With the King's Mill term rebuilt from the Botanic Gardens gauge over 2025,
+  0.29 x that term averages -0.031 m in Green, +0.005 Light Blue, +0.019 Dark Blue, +0.039 Amber,
+  +0.084 m in Red (sd 0.031). Holding it at its last value is off by 0.049 m on average above Green
+  after 5 days (90th percentile 0.10 m, max 0.14 m); the low-water fit (Osney term - 0.031) reads
+  0.115 m low in Red. No better than the Godstow estimate.
+* Live (data/api.py `_kings_mill_stand_in`): while King's Mill is offline and Osney, Iffley and the
+  Botanic Gardens are not, King's Mill = Botanic Gardens + the median offset of the last 48 h both
+  reported, as long as the Cherwell is within 0.30 m of its level at the last King's Mill reading
+  (beyond that the drop between the two gauges could have changed; the Isis is then estimated from
+  Godstow as before). The page shows a one-line note; forecasts and alerts are otherwise normal.

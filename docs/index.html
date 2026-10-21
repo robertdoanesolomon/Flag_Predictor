@@ -473,6 +473,7 @@
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
+    .stand-in-note { font-size: 0.8rem; color: var(--text-muted); }
 
     /* ---------- STATS GRID ---------- */
     details.under-hood { margin: 8px 0 22px; }
@@ -1881,7 +1882,9 @@
         ? `<span class="stale-warning">Stale forecast — sensor offline</span>`
         : loc.estimated
           ? `<span class="stale-warning">Gauges offline — estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}</span>`
-          : '';
+          : loc.gauge_stand_in
+            ? `<span class="stand-in-note">${loc.gauge_stand_in.gauge} gauge offline${loc.gauge_stand_in.since ? ` since ${fmtShortDateTime(loc.gauge_stand_in.since)}` : ''}; using the ${loc.gauge_stand_in.stand_in} gauge instead</span>`
+            : '';
 
 
       const probPlotHtml = isWallingford ? '' : `

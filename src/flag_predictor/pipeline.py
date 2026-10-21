@@ -137,6 +137,8 @@ def prepare_training_data(
     # Carry the raw EA reading time behind each recent hourly differential point.
     if api_diff_df is not None and "reading_time" in api_diff_df.attrs:
         merged_df.attrs["reading_time"] = api_diff_df.attrs["reading_time"]
+    if api_diff_df is not None and "gauge_stand_in" in api_diff_df.attrs:
+        merged_df.attrs["gauge_stand_in"] = api_diff_df.attrs["gauge_stand_in"]
 
     if verbose:
         print(f"\n✓ Merged data: {merged_df.shape}")

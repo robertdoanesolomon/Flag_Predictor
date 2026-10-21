@@ -1112,6 +1112,10 @@ def render_location_outputs(
         flag_outlook=flag_outlook,
         extra=extra,
     )
+    # One of the stretch's gauges offline and another standing in for it (Isis: King's Mill from the
+    # Botanic Gardens gauge, data/api.py): a note on the page, not an estimate.
+    if merged_df.attrs.get("gauge_stand_in"):
+        payload["gauge_stand_in"] = merged_df.attrs["gauge_stand_in"]
     return payload
 
 

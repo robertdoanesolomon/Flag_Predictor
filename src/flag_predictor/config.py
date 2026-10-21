@@ -94,6 +94,9 @@ API_URLS = {
     'iffley_upstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/1501TH-level-stage-i-15_min-mASD/readings.json',
     'benson_downstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/2001TH-level-downstage-i-15_min-mASD/readings.json',
     'cleeve_upstream': 'https://environment.data.gov.uk/flood-monitoring/id/measures/2002TH-level-stage-i-15_min-mASD/readings.json',
+    # Cherwell at the Botanic Gardens, a few hundred metres below King's Mill on the same reach: stands in
+    # for King's Mill downstream when that gauge is offline (calculate_isis_differential).
+    'cherwell_botanic': 'https://environment.data.gov.uk/flood-monitoring/id/measures/1490TH-level-stage-i-15_min-mASD/readings.json',
 }
 
 # Farmoor flow (upstream) - Hydrology API, same structure as rainfall (items with dateTime, value)

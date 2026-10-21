@@ -6,6 +6,7 @@ Functions for fetching real-time data from:
 - Open-Meteo API (rainfall forecasts)
 """
 
+import numpy as np
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
@@ -462,11 +463,19 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
     """
     gauges = {
         name: _require_level_series(river_levels, name)
-        for name in ("osney_downstream", "iffley_upstream", "kings_mill_downstream")
+        for name in ("osney_downstream", "iffley_upstream")
     }
+    km = river_levels.get("kings_mill_downstream")
+    gauges["kings_mill_downstream"] = km["level"] if km is not None and not km.empty and "level" in km.columns \
+        else pd.Series(dtype=float, index=pd.DatetimeIndex([], tz="UTC"))
     o = _level_series_hourly_last(gauges["osney_downstream"])
     i = _level_series_hourly_last(gauges["iffley_upstream"])
     k = _level_series_hourly_last(gauges["kings_mill_downstream"])
+    k, stand_in = _kings_mill_stand_in(k, o, i, river_levels.get("cherwell_botanic"))
+    reading_gauges = dict(gauges)
+    if stand_in is not None:
+        reading_gauges["kings_mill_downstream"] = pd.concat(
+            [_utc_series(gauges["kings_mill_downstream"]).dropna(), stand_in.pop("_raw")])
     merged = pd.concat({"o": o, "i": i, "k": k}, axis=1).sort_index()
     # Allow small gaps—EA stations often miss occasional hours; avoids a frozen tail/hourly NaNs.
     merged = merged.ffill(limit=6).dropna(how="any")
@@ -476,7 +485,58 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
         0.71 * (merged["o"] - merged["i"] - 2.14)
         + 0.29 * (merged["k"] - merged["i"] - 0.73)
     )
-    return _attach_reading_times(pd.DataFrame({"differential": differential}), gauges)
+    out = _attach_reading_times(pd.DataFrame({"differential": differential}), reading_gauges)
+    if stand_in is not None:
+        out.attrs["gauge_stand_in"] = stand_in
+    return out
+
+
+# King's Mill downstream (1491TH) tracks the Cherwell at the Botanic Gardens (1490TH, same reach, a few
+# hundred metres down) to about 2 mm at low water: K = C - 3.944 (Sep-Oct 2026). While King's Mill is
+# offline its level is taken from the Botanic Gardens gauge, the offset re-anchored on the last 48 h both
+# reported. The drop between the two grows with Cherwell flow and is not published for high water, so
+# the stand-in is used only while the Cherwell is within KM_STAND_IN_MAX_RISE of its level at the last
+# King's Mill reading; beyond that the Isis is treated as offline (estimated from Godstow).
+KM_BOTANIC_OFFSET = -3.944
+KM_STAND_IN_AFTER_H = 4
+KM_STAND_IN_MAX_RISE = 0.30
+
+
+def _kings_mill_stand_in(k: pd.Series, o: pd.Series, i: pd.Series, botanic):
+    """(King's Mill hourly level, extended from the Botanic Gardens gauge if it is offline; info or None)."""
+    if botanic is None or botanic.empty or "level" not in botanic.columns:
+        return k, None
+    c_raw = _utc_series(botanic["level"]).dropna()
+    c = _level_series_hourly_last(c_raw)
+    others_end = min(o.last_valid_index() or pd.Timestamp.min.tz_localize("UTC"),
+                     i.last_valid_index() or pd.Timestamp.min.tz_localize("UTC"))
+    k_end = k.last_valid_index()
+    if k_end is not None and others_end - k_end <= pd.Timedelta(hours=KM_STAND_IN_AFTER_H):
+        return k, None                                   # King's Mill is reporting
+    if c.last_valid_index() is None or others_end - c.last_valid_index() > pd.Timedelta(hours=KM_STAND_IN_AFTER_H):
+        return k, None                                   # Botanic Gardens offline too
+    if k_end is not None:
+        both = (k - c).loc[k_end - pd.Timedelta(hours=48):k_end].dropna()
+        offset = float(both.median()) if len(both) >= 6 else KM_BOTANIC_OFFSET
+        c_then = c.loc[:k_end].dropna()
+        c_then = float(c_then.iloc[-1]) if len(c_then) else float("nan")
+    else:
+        offset, c_then = KM_BOTANIC_OFFSET, float("nan")
+    rise = float(c.dropna().iloc[-1] - c_then) if np.isfinite(c_then) else float("nan")
+    if not np.isfinite(rise) or abs(rise) > KM_STAND_IN_MAX_RISE:
+        print(f"  [isis] King's Mill offline since {k_end}; Cherwell moved {rise:+.2f} m since, "
+              "too far to stand in from the Botanic Gardens gauge")
+        return k, None
+    after = c.loc[c.index > k_end] if k_end is not None else c
+    filled = k.combine_first(after + offset)
+    print(f"  [isis] King's Mill offline since {k_end}: its level from the Botanic Gardens gauge "
+          f"(offset {offset:+.3f} m, Cherwell {rise:+.2f} m since)")
+    raw = c_raw.loc[c_raw.index > k_end] if k_end is not None else c_raw
+    return filled, {"gauge": "King's Mill", "stand_in": "Botanic Gardens (Cherwell)",
+                    "since": (pd.Timestamp(k_end).tz_convert("UTC").tz_localize(None).isoformat() + "Z")
+                    if k_end is not None else None,
+                    "offset_m": round(offset, 4), "cherwell_change_m": round(rise, 3),
+                    "_raw": raw}
 
 
 def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
