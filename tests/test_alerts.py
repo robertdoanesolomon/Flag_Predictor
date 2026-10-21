@@ -38,8 +38,9 @@ class AlertTests(unittest.TestCase):
         msgs, st = decide(bundle(down_today=0.85, down_tom=0.9), st, NOW)
         self.assertEqual(msgs, [])
 
-    def test_down_needs_80_percent(self):
-        self.assertEqual(decide(bundle(down_tom=0.75), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
+    def test_down_needs_70_percent_at_the_isis(self):
+        self.assertEqual(decide(bundle(down_tom=0.65), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
+        self.assertEqual(len(decide(bundle(down_tom=0.72), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0]), 1)
 
     def test_reset_after_the_chance_drops(self):
         _, st = decide(bundle(down_tom=0.8), {'isis': {'flag': 'red', 'sent': []}}, NOW)

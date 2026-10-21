@@ -4,7 +4,7 @@ Which flag alerts to send after a forecast run (pure logic, no network).
 Per stretch (Isis, Godstow), from the preview bundle (docs/preview/forecast_data.json):
 
 * (the official flag has changed: sent within a minute by the Cloudflare Worker, push/worker)
-* the official flag is likely to change: chance >= LIKELY (up) / LIKELY_DOWN (down) today, or by the end of tomorrow
+* the official flag is likely to change: chance >= LIKELY (up) / LIKELY_DOWN[river] (down) today, or by the end of tomorrow
                                                                -> "Flag likely down to Amber by tomorrow (70%) ..."
 * escalation: after an "up" alert, a higher flag becomes >= LIKELY (going up can skip a flag)
                                                                -> "Isis Flag now likely up to Red by tomorrow (70%)"
@@ -28,10 +28,12 @@ RIVERS = ('isis', 'godstow')
 NAMES = {'isis': 'Isis', 'godstow': 'Godstow'}
 LIKELY = 0.6          # "up" (and Black) alerts
 # "Down" alerts need a higher chance: the model expects a flag to come down a day or so before it
-# does. Replayed on 2025 at 60% (rain that fell, alert_replay_outage.py): up alerts were right 30 of
-# 33 times, down alerts 28 of 49; at 80% Godstow's down alerts were right 13 of 13 with one change
-# fewer warned.
-LIKELY_DOWN = 0.8
+# does. Alert replay (rain that fell, alert_replay_outage.py) over the current flag rules (Isis from
+# Nov 2021, 134 changes; Godstow from Sep 2024, 36 changes):
+#   Isis down at 60/70/80%: right 81/45, 72/29, 54/11 times; changes down warned 63, 64, 56 of 75
+#   Godstow down at 60/70/80%: right 19/17, 18/10, 17/2; warned 16, 15, 15 of 19
+# so 70% at the Isis (80% loses 8 warnings there) and 80% at Godstow.
+LIKELY_DOWN = {'isis': 0.7, 'godstow': 0.8}
 # Forecast started from the neighbouring stretch's estimate (gauges offline): alerts carry on for
 # up to ESTIMATED_MAX_H, marked as estimated, but need at least this chance (2025 Isis replay at 70%:
 # right 75-80% of the time after 2-10 days offline, against 55-64% at 60%).
@@ -133,7 +135,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
             info = oo.get(d)
             if not info:
                 continue
-            likely = max(LIKELY_DOWN if d == 'down' else LIKELY, floor)
+            likely = max(LIKELY_DOWN.get(river, 0.8) if d == 'down' else LIKELY, floor)
             p_today = (win.get('today') or {}).get(d, 0.0) or 0.0
             p_tom = (win.get('tomorrow') or {}).get(d, 0.0) or 0.0
             target = info.get('flag')
