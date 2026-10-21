@@ -2933,13 +2933,27 @@
     }
   }
 
+  // A home-screen app is often resumed rather than reloaded: when it comes back after 15+ min,
+  // reload if a newer forecast has been published since this one.
+  let LOADED_AT = Date.now(), LOADED_GEN = null;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || Date.now() - LOADED_AT < 15 * 60 * 1000) return;
+    fetch('forecast_data.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(b => {
+        if (b && b.generated_at && b.generated_at !== LOADED_GEN) location.reload();
+        else LOADED_AT = Date.now();
+      })
+      .catch(() => {});
+  });
+
   // Load the forecast JSON written by generate_all_location_figures.py.
   fetch('forecast_data.json', { cache: 'no-store' })
     .then(r => {
       if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
       return r.json();
     })
-    .then(safeRenderAll)
+    .then((bundle) => { LOADED_AT = Date.now(); LOADED_GEN = bundle && bundle.generated_at; safeRenderAll(bundle); })
     .catch(err => {
       console.error('forecast load failed', err);
       renderError(
