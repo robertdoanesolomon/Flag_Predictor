@@ -33,7 +33,7 @@ _EA_LOOKBACK_DAYS = 28
 # When the backend 503s on a query, progressively smaller windows often still
 # succeed; a couple of days of fresh readings beats failing the whole publish.
 _EA_FALLBACK_LOOKBACK_DAYS = (7, 2)
-_EA_HTTP_TIMEOUT = (10, 60)
+_EA_HTTP_TIMEOUT = (10, 30)
 
 
 def _requests_session_with_retries() -> requests.Session:
@@ -43,11 +43,13 @@ def _requests_session_with_retries() -> requests.Session:
     GitHub Actions runners can intermittently time out when calling external APIs.
     This makes Open-Meteo / EA calls much more reliable without changing call sites.
     """
+    # Kept short: a run fetches ~40 EA series, and when the EA answers 503s (as on 21 Oct 2026)
+    # five retries with long backoff each pushed runs past their 25-minute limit.
     retry = Retry(
-        total=5,
-        connect=5,
-        read=5,
-        backoff_factor=1.0,
+        total=3,
+        connect=3,
+        read=2,
+        backoff_factor=0.5,
         status_forcelist=(429, 500, 502, 503, 504),
         allowed_methods=("GET",),
         raise_on_status=False,
@@ -82,6 +84,24 @@ def _ea_readings_params(lookback_days: int = _EA_LOOKBACK_DAYS) -> dict:
     }
 
 
+_EA_CACHE: Dict[str, dict] = {}
+_EA_CACHE_LOCK = __import__('threading').Lock()
+
+
+def _fetch_many(urls_names, verbose: bool = True):
+    """{name: EA readings JSON or the exception}, fetched 8 at a time (each thread its own session)."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    def one(pair):
+        url, name = pair
+        try:
+            return name, _fetch_ea_readings_json(url, session=_requests_session_with_retries())
+        except Exception as exc:
+            return name, exc
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        return dict(pool.map(one, list(urls_names)))
+
+
 def _fetch_ea_readings_json(url: str, session: Optional[requests.Session] = None) -> dict:
     """
     GET an EA readings endpoint with retries and sane limits.
@@ -90,8 +110,11 @@ def _fetch_ea_readings_json(url: str, session: Optional[requests.Session] = None
     window still fails (EA backends intermittently 503 heavy queries), fall
     back to smaller lookback windows before giving up.
     """
-    sess = session or _requests_session_with_retries()
     normalized = _normalize_readings_url(url)
+    with _EA_CACHE_LOCK:
+        if normalized in _EA_CACHE:      # one run asks for the same series for several stretches
+            return _EA_CACHE[normalized]
+    sess = session or _requests_session_with_retries()
     last_error: Optional[Exception] = None
     for lookback_days in (_EA_LOOKBACK_DAYS, *_EA_FALLBACK_LOOKBACK_DAYS):
         try:
@@ -102,7 +125,10 @@ def _fetch_ea_readings_json(url: str, session: Optional[requests.Session] = None
                 headers={"User-Agent": "Flag_Predictor/1.0 (+GitHubActions)"},
             )
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            with _EA_CACHE_LOCK:
+                _EA_CACHE[normalized] = data
+            return data
         except Exception as exc:
             last_error = exc
             print(f"    EA readings fetch failed ({lookback_days}d window): {exc}")
@@ -228,11 +254,14 @@ def fetch_river_level_data(verbose: bool = True) -> Dict[str, pd.DataFrame]:
     if verbose:
         print("Fetching river level data...")
     
-    session = _requests_session_with_retries()
+    fetched = _fetch_many([(url, name) for name, url in API_URLS.items()])
     results = {}
     for name, url in API_URLS.items():
         try:
-            df = _process_level_api_response(_fetch_ea_readings_json(url, session=session))
+            got = fetched[name]
+            if isinstance(got, Exception):
+                raise got
+            df = _process_level_api_response(got)
             results[name] = df
             if verbose:
                 if df.empty:
@@ -290,11 +319,14 @@ def fetch_rainfall_data(location: Optional[str] = None, verbose: bool = True) ->
             if verbose:
                 print(f"  Including {len(WALLINGFORD_RAINFALL_STATION_NAMES)} Wallingford-specific stations")
     
-    session = _requests_session_with_retries()
+    fetched = _fetch_many(list(zip(api_urls, station_names)))
     rainfall_dfs = {}
     for url, name in zip(api_urls, station_names):
         try:
-            df = _process_rainfall_api_response(_fetch_ea_readings_json(url, session=session))
+            got = fetched[name]
+            if isinstance(got, Exception):
+                raise got
+            df = _process_rainfall_api_response(got)
             if not df.empty:
                 df.rename(columns={'rainfall': name}, inplace=True)
                 rainfall_dfs[name] = df

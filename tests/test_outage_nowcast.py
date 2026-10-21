@@ -81,9 +81,11 @@ def test_alerts_note_or_skip_an_estimated_forecast():
     loc = {'official_flag': {'flag': 'green'},
            'official_outlook': {'windows': {'today': {'up': 0.1}, 'tomorrow': {'up': 0.8}},
                                 'up': {'flag': 'light_blue', 'split': {'light_blue': 0.8}}},
-           'estimated': {'from': 'godstow', 'confident': True}}
+           'estimated': {'from': 'godstow', 'confident': True, 'hours': 48}}
     bundle = {'generated_at': '2026-10-20T11:30:00Z', 'locations': {'isis': loc}}
     msgs, _ = decide(bundle, {}, now)
     assert len(msgs) == 1 and 'Estimated from Godstow' in msgs[0]['body']
-    loc['estimated']['confident'] = False
+    loc['estimated'].update(confident=False, hours=200)        # 8 days: still sent (70%+)
+    assert len(decide(bundle, {}, now)[0]) == 1
+    loc['estimated']['hours'] = 260                             # over 10 days: none
     assert decide(bundle, {}, now)[0] == []
