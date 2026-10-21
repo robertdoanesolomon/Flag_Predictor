@@ -49,7 +49,7 @@ from flag_predictor.prediction.hybrid_live import (  # noqa: E402
 from flag_predictor.prediction.model_error import ErrorLibrary, start_features, total_uncertainty  # noqa: E402
 
 LOC = 'isis'
-LIKELY, RESET = 0.6, 0.3
+RESET = 0.3
 H = 72
 
 
@@ -70,10 +70,17 @@ def main() -> None:
     ap.add_argument('--every', type=int, default=3)
     ap.add_argument('--days', default='2,5,10')
     ap.add_argument('--samples', type=int, default=40, help='model-error draws per copy')
-    ap.add_argument('--out', default=str(ROOT / 'figures' / 'eval' / 'alert_replay_outage.json'))
+    ap.add_argument('--out', default=None)
+    ap.add_argument('--river', default='isis', choices=['isis', 'godstow'])
+    ap.add_argument('--likely', default='0.6,0.7', help='alert thresholds to score')
+    ap.add_argument('--cache', default=None, help='pickle of the forecasts: reuse if present')
     args = ap.parse_args()
+    global LOC
+    LOC = args.river
     torch.set_num_threads(2)
-    downs = [0] + [int(x) for x in args.days.split(',')]
+    downs = [0] + [int(x) for x in args.days.split(',') if x]
+    out_path = Path(args.out or ROOT / 'figures' / 'eval' / f'alert_replay_outage_{LOC}.json')
+    cache = Path(args.cache or ROOT / 'figures' / 'eval' / f'alert_replay_outage_{LOC}.pkl')
 
     F = load_merged(LOC, ROOT)
     F.index = F.index.tz_localize('UTC') if F.index.tz is None else F.index.tz_convert('UTC')
@@ -94,9 +101,14 @@ def main() -> None:
               and flag_at(hist_flags, t)[0] in names]
     print(f'{len(starts)} starts with a modelled flag flying, {len(downs)} start conditions', flush=True)
 
-    # per condition: list of (t0, flag0, outlook)
-    runs = {D: [] for D in downs}
+    import pickle
+    runs = pickle.loads(cache.read_bytes()) if cache.exists() else {}
+    todo = [D for D in downs if D not in runs]
+    for D in todo:
+        runs[D] = []
     rng = np.random.default_rng(0)
+    if not todo:
+        starts = []
     t_clock = time.time()
     for i, t0 in enumerate(starts):
         fut = pd.date_range(t0 + pd.Timedelta(hours=1), periods=240, freq='1h')
@@ -106,7 +118,7 @@ def main() -> None:
         hist = F.loc[t0 - pd.Timedelta(days=30):t0].copy()
         flag0, set_at = flag_at(hist_flags, t0)
         since = max((t0 - set_at).total_seconds() / 3600, 0.0)
-        for D in downs:
+        for D in todo:
             h = hist
             sd = 0.0
             if D:
@@ -139,6 +151,8 @@ def main() -> None:
         if i % 100 == 0:
             print(f'  {i}/{len(starts)} {t0:%d %b %H:%M}  {(time.time() - t_clock) / 60:.1f} min', flush=True)
 
+    cache.write_bytes(pickle.dumps(runs))
+
     # flag changes between modelled flags
     ch = []
     for k in range(1, len(hist_flags)):
@@ -154,41 +168,48 @@ def main() -> None:
         return None
 
     report = {}
-    for D in downs:
-        alerts = []
-        sent, cur_flag = set(), None
-        for t0, flag0, oo in runs[D]:
-            if flag0 != cur_flag:
-                sent, cur_flag = set(), flag0
-            win = oo['windows']
-            wins = of.day_windows(t0, H)
-            for dr in ('up', 'down'):
-                if not oo.get(dr):
-                    continue
-                p_today, p_tom = win['today'][dr], win['tomorrow'][dr]
-                if p_tom < RESET:
-                    sent -= {f'{dr}:today', f'{dr}:tomorrow'}
-                    continue
-                for key, p, last in ((f'{dr}:today', p_today, wins['today']), (f'{dr}:tomorrow', p_tom, wins['tomorrow'])):
-                    if p >= LIKELY and key not in sent and not (key.endswith('tomorrow') and f'{dr}:today' in sent):
-                        sent.add(key)
-                        until = t0 + pd.Timedelta(hours=last)
-                        alerts.append({'t': t0, 'dir': dr, 'p': p, 'right': first_change_after(t0, dr, until) is not None})
-                        break
-        warned = 0
-        for c in ch:
-            if any(a['dir'] == c['dir'] and c['t'] - pd.Timedelta(hours=48) <= a['t'] < c['t'] for a in alerts):
-                warned += 1
-        hits = sum(a['right'] for a in alerts)
-        report[D] = {'alerts': len(alerts), 'came_true': hits, 'changes': len(ch), 'warned': warned,
-                     'starts': len(runs[D])}
-        print(f'down {D:2d} d: {len(alerts):3d} alerts, {hits / max(len(alerts), 1):.0%} came true; '
-              f'{warned}/{len(ch)} changes warned within 48 h ({warned / max(len(ch), 1):.0%})  '
-              f'[{len(runs[D])} starts]', flush=True)
-    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.out).write_text(json.dumps(report, indent=1))
-    print(f'written {args.out}')
-
+    for likely in [float(x) for x in args.likely.split(',')]:
+        print(f'\n{LOC}, alert at {likely:.0%}+ ({len(ch)} flag changes in 2025)')
+        print(' offline | alerts | correct | false alarms | changes warned | changes missed | '
+              'up: correct/false | down: correct/false')
+        for D in downs:
+            alerts = []
+            sent, cur_flag = set(), None
+            for t0, flag0, oo in runs[D]:
+                if flag0 != cur_flag:
+                    sent, cur_flag = set(), flag0
+                win = oo['windows']
+                wins = of.day_windows(t0, H)
+                for dr in ('up', 'down'):
+                    if not oo.get(dr):
+                        continue
+                    p_today, p_tom = win['today'][dr], win['tomorrow'][dr]
+                    if p_tom < RESET:
+                        sent -= {f'{dr}:today', f'{dr}:tomorrow'}
+                        continue
+                    for key, p, last in ((f'{dr}:today', p_today, wins['today']),
+                                         (f'{dr}:tomorrow', p_tom, wins['tomorrow'])):
+                        if p >= likely and key not in sent and not (key.endswith('tomorrow') and f'{dr}:today' in sent):
+                            sent.add(key)
+                            until = t0 + pd.Timedelta(hours=last)
+                            alerts.append({'t': t0, 'dir': dr, 'p': p,
+                                           'right': first_change_after(t0, dr, until) is not None})
+                            break
+            warned = sum(any(a['dir'] == c['dir'] and c['t'] - pd.Timedelta(hours=48) <= a['t'] < c['t']
+                             for a in alerts) for c in ch)
+            hits = sum(a['right'] for a in alerts)
+            by = {dr: (sum(a['right'] for a in alerts if a['dir'] == dr),
+                       sum(not a['right'] for a in alerts if a['dir'] == dr)) for dr in ('up', 'down')}
+            report[f'{likely:.2f}/{D}d'] = {'alerts': len(alerts), 'correct': hits, 'false_alarms': len(alerts) - hits,
+                                            'changes': len(ch), 'warned': warned, 'missed': len(ch) - warned,
+                                            'by_direction': by, 'starts': len(runs[D])}
+            print(f' {D:4d} d  | {len(alerts):6d} | {hits:3d} ({hits / max(len(alerts), 1):.0%}) | '
+                  f'{len(alerts) - hits:3d} ({(len(alerts) - hits) / max(len(alerts), 1):.0%})    | '
+                  f'{warned:3d} ({warned / max(len(ch), 1):.0%})      | {len(ch) - warned:3d}            | '
+                  f'{by["up"][0]}/{by["up"][1]}               | {by["down"][0]}/{by["down"][1]}', flush=True)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(report, indent=1))
+    print(f'written {out_path}')
 
 if __name__ == '__main__':
     main()
