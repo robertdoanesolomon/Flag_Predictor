@@ -1,0 +1,30 @@
+{
+ "0": {
+  "alerts": 42,
+  "came_true": 29,
+  "changes": 33,
+  "warned": 29,
+  "starts": 1600
+ },
+ "2": {
+  "alerts": 50,
+  "came_true": 32,
+  "changes": 33,
+  "warned": 28,
+  "starts": 1555
+ },
+ "5": {
+  "alerts": 44,
+  "came_true": 24,
+  "changes": 33,
+  "warned": 28,
+  "starts": 1583
+ },
+ "10": {
+  "alerts": 50,
+  "came_true": 30,
+  "changes": 33,
+  "warned": 25,
+  "starts": 1584
+ }
+}
