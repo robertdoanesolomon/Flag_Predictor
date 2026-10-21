@@ -150,25 +150,53 @@ COSMOS_DAILY = ('https://cosmos-api.ceh.ac.uk/collections/1D/locations/{site}'
                 '?datetime={start}/{end}&parameter-name=cosmos_vwc&f=CSV')
 
 
-def fetch_live_levels(days: int = 28) -> pd.DataFrame:
-    """Recent 15-min levels from the EA hydrology API (the training series), hourly means."""
+FLOOD_MONITORING_LEVEL = ('https://environment.data.gov.uk/flood-monitoring/id/measures/'
+                          '{ref}-level-stage-i-15_min-mASD/readings.json')
+LIVE_HOLD_H = 3   # hold the last reading this long at the end (readings arrive up to ~1 h late)
+
+
+def _fetch_flood_monitoring_level(ref: str, since: str):
+    import requests
+    r = requests.get(FLOOD_MONITORING_LEVEL.format(ref=ref), params={'since': since, '_limit': 10000}, timeout=30)
+    r.raise_for_status()
+    items = r.json().get('items', [])
+    vals = {pd.Timestamp(x['dateTime']): x['value'] for x in items if isinstance(x.get('value'), (int, float))}
+    return pd.Series(vals, dtype=float).sort_index()
+
+
+def _fetch_hydrology_level(ref: str, since: str):
     import io
     import requests
-    since = (pd.Timestamp.now(tz='UTC') - pd.Timedelta(days=days)).strftime('%Y-%m-%d')
-    cols = {}
-    for ref, guid in HYDROLOGY_LEVEL.items():
-        try:
-            r = requests.get(HYDROLOGY_READINGS.format(guid=guid), params={'mineq-date': since, '_limit': 20000},
-                             timeout=90)
-            r.raise_for_status()
-            df = pd.read_csv(io.StringIO(r.text))
-            if df.empty:
-                continue
-            s = pd.Series(pd.to_numeric(df['value'], errors='coerce').to_numpy(),
-                          index=pd.to_datetime(df['dateTime'], utc=True)).sort_index()
-            cols[ref] = s.resample('1h').mean()
-        except Exception as exc:
-            print(f"  [extra inputs] no live level for {ref} ({type(exc).__name__}: {exc})")
+    r = requests.get(HYDROLOGY_READINGS.format(guid=HYDROLOGY_LEVEL[ref]),
+                     params={'mineq-date': since[:10], '_limit': 20000}, timeout=30)
+    r.raise_for_status()
+    df = pd.read_csv(io.StringIO(r.text)) if r.text.strip() else pd.DataFrame()
+    if df.empty:
+        return pd.Series(dtype=float)
+    return pd.Series(pd.to_numeric(df['value'], errors='coerce').to_numpy(),
+                     index=pd.to_datetime(df['dateTime'], utc=True)).sort_index()
+
+
+def fetch_live_levels(days: int = 28) -> pd.DataFrame:
+    """Recent 15-min levels, hourly means: the EA flood-monitoring API (current to the last 15 min; same
+    stage datum as the hydrology series the models were trained on), else the hydrology API (an hour
+    or two behind). Stations fetched in parallel."""
+    from concurrent.futures import ThreadPoolExecutor
+    since = (pd.Timestamp.now(tz='UTC') - pd.Timedelta(days=days)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    def one(ref):
+        for fetch in (_fetch_flood_monitoring_level, _fetch_hydrology_level):
+            try:
+                s = fetch(ref, since)
+                if len(s.dropna()):
+                    return ref, s
+            except Exception as exc:
+                print(f"  [extra inputs] {ref}: {fetch.__name__} failed ({type(exc).__name__}: {exc})")
+        return ref, None
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        got = dict(pool.map(one, list(UPSTREAM)))
+    cols = {ref: s.resample('1h').mean() for ref, s in got.items() if s is not None}
     return pd.DataFrame(cols)
 
 
@@ -199,6 +227,9 @@ def live_extra(index: pd.DatetimeIndex, project_root: Path) -> pd.DataFrame:
     hist = load_upstream_history(project_root)
     if len(hist):
         levels = levels.combine_first(hist) if len(levels) else hist
+    if len(levels):
+        idx = _utc(index)
+        levels = levels.reindex(levels.index.union(idx)).ffill(limit=LIVE_HOLD_H)
     soil = fetch_live_soil()
     soil_hist = load_soil_history(project_root)
     if soil_hist is not None:
