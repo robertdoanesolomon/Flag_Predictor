@@ -75,6 +75,8 @@ def main() -> None:
     ap.add_argument('--start', default='2025-01-01')
     ap.add_argument('--end', default='2026-01-01')
     ap.add_argument('--pairs', default='', help='up/down threshold pairs to score as well, e.g. 0.6/0.8,0.6/0.7')
+    ap.add_argument('--by-year', action='store_true')
+    ap.add_argument('--score-from', default=None, help='also score only alerts/changes from this date')
     ap.add_argument('--river', default='isis', choices=['isis', 'godstow'])
     ap.add_argument('--likely', default='0.6,0.7', help='alert thresholds to score')
     ap.add_argument('--cache', default=None, help='pickle of the forecasts: reuse if present')
@@ -220,6 +222,13 @@ def main() -> None:
     combos += [tuple(float(v) for v in pr.split('/')) for pr in args.pairs.split(',') if pr]
     report = {}
     subsets = {'all': lambda t: True, 'held out': held_out, 'training years': lambda t: not held_out(t)}
+    if args.score_from:
+        sf = pd.Timestamp(args.score_from, tz='UTC')
+        subsets[f'from {args.score_from}'] = lambda t: t >= sf
+        subsets[f'held out, from {args.score_from}'] = lambda t: t >= sf and held_out(t)
+    if args.by_year:
+        for y in range(pd.Timestamp(args.start).year, pd.Timestamp(args.end).year + 1):
+            subsets[str(y)] = (lambda yy: (lambda t: t.year == yy))(y)
     print(f'\n{LOC} {args.start} to {args.end}: {len(ch)} flag changes; '
           'columns: alerts | correct | false alarms | changes warned within 48 h | by direction correct/false')
     for D in downs:

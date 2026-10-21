@@ -1,0 +1,302 @@
+{
+ "offline 0d, up 60% / down 60%, all": {
+  "alerts": 197,
+  "correct": 79,
+  "changes": 86,
+  "warned": 59,
+  "by_direction": {
+   "up": [
+    41,
+    33,
+    25,
+    41
+   ],
+   "down": [
+    38,
+    85,
+    34,
+    45
+   ]
+  }
+ },
+ "offline 0d, up 60% / down 60%, held out": {
+  "alerts": 93,
+  "correct": 54,
+  "changes": 46,
+  "warned": 39,
+  "by_direction": {
+   "up": [
+    30,
+    6,
+    17,
+    21
+   ],
+   "down": [
+    24,
+    33,
+    22,
+    25
+   ]
+  }
+ },
+ "offline 0d, up 60% / down 60%, training years": {
+  "alerts": 104,
+  "correct": 25,
+  "changes": 40,
+  "warned": 20,
+  "by_direction": {
+   "up": [
+    11,
+    27,
+    8,
+    20
+   ],
+   "down": [
+    14,
+    52,
+    12,
+    20
+   ]
+  }
+ },
+ "offline 0d, up 70% / down 70%, all": {
+  "alerts": 162,
+  "correct": 67,
+  "changes": 86,
+  "warned": 58,
+  "by_direction": {
+   "up": [
+    36,
+    26,
+    25,
+    41
+   ],
+   "down": [
+    31,
+    69,
+    33,
+    45
+   ]
+  }
+ },
+ "offline 0d, up 70% / down 70%, held out": {
+  "alerts": 72,
+  "correct": 48,
+  "changes": 46,
+  "warned": 38,
+  "by_direction": {
+   "up": [
+    25,
+    4,
+    17,
+    21
+   ],
+   "down": [
+    23,
+    20,
+    21,
+    25
+   ]
+  }
+ },
+ "offline 0d, up 70% / down 70%, training years": {
+  "alerts": 90,
+  "correct": 19,
+  "changes": 40,
+  "warned": 20,
+  "by_direction": {
+   "up": [
+    11,
+    22,
+    8,
+    20
+   ],
+   "down": [
+    8,
+    49,
+    12,
+    20
+   ]
+  }
+ },
+ "offline 0d, up 80% / down 80%, all": {
+  "alerts": 130,
+  "correct": 65,
+  "changes": 86,
+  "warned": 55,
+  "by_direction": {
+   "up": [
+    33,
+    22,
+    24,
+    41
+   ],
+   "down": [
+    32,
+    43,
+    31,
+    45
+   ]
+  }
+ },
+ "offline 0d, up 80% / down 80%, held out": {
+  "alerts": 58,
+  "correct": 45,
+  "changes": 46,
+  "warned": 35,
+  "by_direction": {
+   "up": [
+    22,
+    4,
+    15,
+    21
+   ],
+   "down": [
+    23,
+    9,
+    20,
+    25
+   ]
+  }
+ },
+ "offline 0d, up 80% / down 80%, training years": {
+  "alerts": 72,
+  "correct": 20,
+  "changes": 40,
+  "warned": 20,
+  "by_direction": {
+   "up": [
+    11,
+    18,
+    9,
+    20
+   ],
+   "down": [
+    9,
+    34,
+    11,
+    20
+   ]
+  }
+ },
+ "offline 0d, up 60% / down 70%, all": {
+  "alerts": 174,
+  "correct": 72,
+  "changes": 86,
+  "warned": 58,
+  "by_direction": {
+   "up": [
+    41,
+    33,
+    25,
+    41
+   ],
+   "down": [
+    31,
+    69,
+    33,
+    45
+   ]
+  }
+ },
+ "offline 0d, up 60% / down 70%, held out": {
+  "alerts": 79,
+  "correct": 53,
+  "changes": 46,
+  "warned": 38,
+  "by_direction": {
+   "up": [
+    30,
+    6,
+    17,
+    21
+   ],
+   "down": [
+    23,
+    20,
+    21,
+    25
+   ]
+  }
+ },
+ "offline 0d, up 60% / down 70%, training years": {
+  "alerts": 95,
+  "correct": 19,
+  "changes": 40,
+  "warned": 20,
+  "by_direction": {
+   "up": [
+    11,
+    27,
+    8,
+    20
+   ],
+   "down": [
+    8,
+    49,
+    12,
+    20
+   ]
+  }
+ },
+ "offline 0d, up 60% / down 80%, all": {
+  "alerts": 149,
+  "correct": 73,
+  "changes": 86,
+  "warned": 56,
+  "by_direction": {
+   "up": [
+    41,
+    33,
+    25,
+    41
+   ],
+   "down": [
+    32,
+    43,
+    31,
+    45
+   ]
+  }
+ },
+ "offline 0d, up 60% / down 80%, held out": {
+  "alerts": 68,
+  "correct": 53,
+  "changes": 46,
+  "warned": 37,
+  "by_direction": {
+   "up": [
+    30,
+    6,
+    17,
+    21
+   ],
+   "down": [
+    23,
+    9,
+    20,
+    25
+   ]
+  }
+ },
+ "offline 0d, up 60% / down 80%, training years": {
+  "alerts": 81,
+  "correct": 20,
+  "changes": 40,
+  "warned": 19,
+  "by_direction": {
+   "up": [
+    11,
+    27,
+    8,
+    20
+   ],
+   "down": [
+    9,
+    34,
+    11,
+    20
+   ]
+  }
+ }
+}
