@@ -290,6 +290,17 @@ def outage_nowcast(location: str, merged_df: pd.DataFrame, now: Optional[pd.Time
     now = now.tz_localize('UTC') if now.tz is None else now.tz_convert('UTC')
     diff = merged['differential']
     t_last = diff.last_valid_index()
+    # The differential frame carries a gauge's last reading forward up to 6 h (data/api.py), so its
+    # last row can be hours after the last real reading. Go by the reading times when they are kept:
+    # the last hour whose own reading falls inside it.
+    rt = merged_df.attrs.get('reading_time') or {}
+    if t_last is not None and rt:
+        real = [pd.Timestamp(h).tz_localize('UTC') for h, r in rt.items() if pd.Timestamp(r) >= pd.Timestamp(h)]
+        real = [h for h in real if h <= t_last]
+        if real and max(real) < t_last:
+            t_last = max(real)
+            merged = merged.loc[:t_last]
+            diff = merged['differential']
     if t_last is None or now - t_last <= pd.Timedelta(hours=STALE_H):
         return merged_df, None
     other, slope = OUTAGE_NEIGHBOUR[location]

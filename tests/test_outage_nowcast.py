@@ -89,3 +89,16 @@ def test_alerts_note_or_skip_an_estimated_forecast():
     assert len(decide(bundle, {}, now)[0]) == 1
     loc['estimated']['hours'] = 260                             # over 10 days: none
     assert decide(bundle, {}, now)[0] == []
+
+
+def test_nowcast_goes_by_reading_times_not_the_carried_forward_tail():
+    # the frame's last row is 2 h old, but its gauge stopped 8 h ago and was carried forward
+    merged, god, isis, now = _frames(down_h=2)
+    _prime_cache(god, god.index)
+    end = merged['differential'].last_valid_index()
+    stop = end - pd.Timedelta(hours=6)
+    hours = pd.date_range(end - pd.Timedelta(hours=47), end, freq='1h')
+    merged.attrs['reading_time'] = {h.tz_localize(None) if h.tz else h: (min(h, stop) + pd.Timedelta(minutes=45)).tz_localize(None)
+                                    if (min(h, stop)).tz else min(h, stop) + pd.Timedelta(minutes=45) for h in hours}
+    out, info = hl.outage_nowcast('isis', merged, now=now)
+    assert info is not None and info['hours'] == 8
