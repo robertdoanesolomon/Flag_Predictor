@@ -2073,31 +2073,22 @@
       name: 'Historical Differential',
       hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>%{y:.2f} m<extra>Observed</extra>'
     });
-    // Gauges offline: the differential since the last reading, estimated from the neighbouring stretch.
-    const est = loc.estimated;
-    if (est && est.times && est.times.length) {
+    // Any gauge offline (estimated from the neighbouring stretch, or a stand-in gauge): one dotted
+    // line, joined to the last measured point, however the hours were estimated.
+    const dots = new Map();
+    [loc.gauge_stand_in, loc.estimated].forEach(part => {
+      if (part && part.times) part.times.forEach((tt, k) => { if (part.values[k] !== null && part.values[k] !== undefined) dots.set(tt, part.values[k]); });
+    });
+    if (dots.size) {
+      const xs = [...dots.keys()].sort();
       traces.push({
         type: 'scatter',
         mode: 'lines',
-        x: est.times,
-        y: est.values,
+        x: xs,
+        y: xs.map(k => dots.get(k)),
         line: { color: T.historicalLine, width: 2, dash: 'dot' },
         name: EST_LABEL,
         hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>about %{y:.2f} m<extra>${EST_LABEL}</extra>`
-      });
-    }
-
-    // One gauge offline and another standing in for it (Isis: King's Mill from the Botanic Gardens).
-    const si = loc.gauge_stand_in;
-    if (!est && si && si.times && si.times.length) {
-      traces.push({
-        type: 'scatter',
-        mode: 'lines',
-        x: si.times,
-        y: si.values,
-        line: { color: T.historicalLine, width: 2, dash: 'dot' },
-        name: EST_LABEL,
-        hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>%{y:.2f} m<extra>${EST_LABEL}</extra>`
       });
     }
 

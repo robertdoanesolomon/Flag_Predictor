@@ -237,6 +237,9 @@ def neighbour_nowcast(diff: pd.Series, neighbour: pd.Series, slope: float, until
 NOWCAST_ERROR = {
     'isis': {'a': 0.026, 'mid': (0.215, 0.535), 'mid_factor': 1.38},
     'godstow': {'a': 0.022, 'mid': (0.30, 1.0), 'mid_factor': 1.61},
+    # Wallingford from the Isis (slope 1.18), 2019-2026, 1500 starts: mean error 0.035 m after 1 day,
+    # 0.073 m after 5, 0.112 m after 14 (holding the last reading: 0.052 / 0.176 / 0.304 m). No flags here.
+    'wallingford': {'a': 0.061, 'mid': (0.0, 0.0), 'mid_factor': 1.0},
 }
 # Beyond this long (5 days) the estimate is too loose to warn on: the page marks it low confidence and
 # no "likely" alerts are sent for that stretch.
