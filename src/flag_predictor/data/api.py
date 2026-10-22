@@ -508,6 +508,10 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
     if stand_in is not None:
         reading_gauges["kings_mill_downstream"] = pd.concat(
             [_utc_series(gauges["kings_mill_downstream"]).dropna(), stand_in.pop("_raw")])
+        # the time of the last King's Mill reading itself (k is hourly: its hour, not the reading)
+        km_raw = _utc_series(gauges["kings_mill_downstream"]).dropna()
+        if len(km_raw):
+            stand_in["since"] = km_raw.index[-1].tz_convert("UTC").tz_localize(None).isoformat() + "Z"
     merged = pd.concat({"o": o, "i": i, "k": k}, axis=1).sort_index()
     # Allow small gaps—EA stations often miss occasional hours; avoids a frozen tail/hourly NaNs.
     merged = merged.ffill(limit=6).dropna(how="any")
