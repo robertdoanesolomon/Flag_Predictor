@@ -1,7 +1,7 @@
 """
 Which flag alerts to send after a forecast run (pure logic, no network).
 
-Per stretch (Isis, Godstow), from the preview bundle (docs/preview/forecast_data.json):
+Per stretch (Isis, Godstow), from the main page's bundle (docs/forecast_data.json):
 
 * (the official flag has changed: sent within a minute by the Cloudflare Worker, push/worker)
 * the official flag is likely to change: chance >= LIKELY (up) / LIKELY_DOWN[river] (down) today, or by the end of tomorrow

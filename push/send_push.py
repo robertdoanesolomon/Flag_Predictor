@@ -6,7 +6,7 @@ Send flag alerts after a forecast run (called from .github/workflows/update_figu
     python push/send_push.py --dry-run       # print what would be sent, change nothing
     python push/send_push.py --test [isis|godstow]   # send a test notification to everyone (or one stretch)
 
-Reads docs/preview/forecast_data.json; sign-ups, the VAPID private key and the alert state come
+Reads docs/forecast_data.json (the main page's forecast: alerts never come from a trial model); sign-ups, the VAPID private key and the alert state come
 from the Cloudflare KV namespace (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID). Without those it
 does nothing. Dead subscriptions (the push service answers 404 / 410) are removed.
 """
@@ -23,7 +23,7 @@ from alerts import NAMES, RIVERS, SITE_URL, decide  # noqa: E402
 from cloudflare import Cloudflare  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-BUNDLE = ROOT / 'docs' / 'preview' / 'forecast_data.json'
+BUNDLE = ROOT / 'docs' / 'forecast_data.json'
 STATE_KEY = 'state:alerts'
 TTL_S = 6 * 3600          # a phone that is off gets the alert when it comes back, up to 6 h later
 
