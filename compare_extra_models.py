@@ -46,7 +46,7 @@ def main() -> None:
     ap.add_argument('--new', default='hybrid_su')
     ap.add_argument('--seeds', type=int, default=5)
     ap.add_argument('--locations', default='isis,godstow,wallingford')
-    ap.add_argument('--inputs', default='all', choices=['none', 'all', 'soil', 'soil_rise'])
+    ap.add_argument('--inputs', default='all', choices=['none', 'all', 'soil', 'soil_rise', 'soil_rise_han'])
     ap.add_argument('--out', default=str(ROOT / 'figures' / 'eval' / 'extra_inputs_comparison.json'))
     args = ap.parse_args()
     torch.set_num_threads(2)

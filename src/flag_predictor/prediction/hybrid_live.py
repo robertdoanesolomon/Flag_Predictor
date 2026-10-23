@@ -46,6 +46,7 @@ SIMFEAT_MODELS: dict = {}
 VARIANTS: dict = {
     'hybrid_sr': {'names': ['hybrid_sr'] + [f'hybrid_sr_s{i}' for i in range(1, 5)]},
     'hybrid_su': {'names': ['hybrid_su'] + [f'hybrid_su_s{i}' for i in range(1, 5)]},
+    'hybrid_srh': {'names': ['hybrid_srh'] + [f'hybrid_srh_s{i}' for i in range(1, 5)]},
 }
 
 

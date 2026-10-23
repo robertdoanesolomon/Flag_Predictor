@@ -192,7 +192,7 @@ def main() -> None:
     ap.add_argument('--locations', default='isis,godstow,wallingford')
     ap.add_argument('--k-grid', default=','.join(map(str, K_GRID)), help='neighbour counts to try')
     ap.add_argument('--no-save', action='store_true', help='report only')
-    ap.add_argument('--extra', default=None, choices=['none', 'all', 'soil', 'soil_rise'],
+    ap.add_argument('--extra', default=None, choices=['none', 'all', 'soil', 'soil_rise', 'soil_rise_han'],
                     help='models with extra soil-moisture / upstream-level inputs (train_extra_models.py --inputs)')
     args = ap.parse_args()
     k_grid = [int(k) for k in args.k_grid.split(',')]

@@ -36,7 +36,7 @@ def test_level_rise_and_changes():
 def test_frame_has_the_trained_columns():
     idx = pd.date_range('2025-01-01', periods=48, freq='h', tz='UTC')
     f = ei.extra_feature_frame(idx, pd.DataFrame(index=idx), None)
-    assert list(f.columns) == ei.EXTRA_COLS and len(f) == 48
+    assert list(f.columns) == ei.ALL_COLS and len(f) == 48
 
 
 def test_cosmos_csv_parsing():

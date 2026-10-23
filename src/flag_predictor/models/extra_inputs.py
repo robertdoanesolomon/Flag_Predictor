@@ -37,6 +37,7 @@ UPSTREAM: Dict[str, str] = {
     '1489TH': 'Ray at Islip',
     '1980TH': 'Thame at Wheatley',
     '1790TH': 'Ock at Abingdon',
+    '0569TH': 'Thames at Hannington Bridge',   # added Oct 2026 (input set soil_rise_han)
 }
 # EA hydrology API measure (15-min level, qualified; it keeps up within the hour) per station.
 HYDROLOGY_LEVEL = {
@@ -44,19 +45,25 @@ HYDROLOGY_LEVEL = {
     '0680TH': 'acf6c077-f35a-4af5-9191-f8aec1831c80', '0190TH': 'bf85754c-4e6e-481b-9f58-a4fe2bf249cd',
     '1453TH': 'e60c6eae-7b77-4d67-986d-66065bae341c', '1489TH': '34e23121-3c10-454d-80dc-45d824b9e2cf',
     '1980TH': 'b86817d4-c71b-4bd4-ab64-4982bf812b12', '1790TH': 'c257f8de-5cf1-4c1f-9b46-deea2006d745',
+    '0569TH': '62a5f097-03e7-4dca-91cc-cb3cf6f1c1c7',
 }
 HYDROLOGY_READINGS = 'https://environment.data.gov.uk/hydrology/id/measures/{guid}-level-i-900-m-qualified/readings.csv'
 COSMOS_SITE = 'CHIMN'   # Chimney Meadows
 SOIL_DELAY_H = 36       # a day's value (stamped 00:00) is published the next day: use it from noon
 
-EXTRA_COLS = [f'up_{r}_{k}' for r in UPSTREAM for k in ('rise', 'd6', 'd24')] + ['soil_vwc', 'soil_vwc_d7']
+_FIRST_SET = [r for r in UPSTREAM if r != '0569TH']    # the gauges hybrid_su / hybrid_sr were trained with
+EXTRA_COLS = [f'up_{r}_{k}' for r in _FIRST_SET for k in ('rise', 'd6', 'd24')] + ['soil_vwc', 'soil_vwc_d7']
+ALL_COLS = EXTRA_COLS + [f'up_0569TH_{k}' for k in ('rise', 'd6', 'd24')]
 # Input sets to try: everything; measured soil moisture only; soil plus one compact upstream signal
 # per tributary (how far above its 14-day low, i.e. water on its way).
 INPUT_SETS = {
     'none': [],
     'all': EXTRA_COLS,
     'soil': ['soil_vwc', 'soil_vwc_d7'],
-    'soil_rise': ['soil_vwc', 'soil_vwc_d7'] + [f'up_{r}_rise' for r in UPSTREAM],
+    'soil_rise': ['soil_vwc', 'soil_vwc_d7'] + [f'up_{r}_rise' for r in _FIRST_SET],
+    # plus the upper Thames at Hannington Bridge: how far above its 14-day low, and its 24 h change
+    'soil_rise_han': ['soil_vwc', 'soil_vwc_d7'] + [f'up_{r}_rise' for r in _FIRST_SET]
+                     + ['up_0569TH_rise', 'up_0569TH_d24'],
 }
 
 
@@ -102,7 +109,7 @@ def soil_features(vwc_daily: Optional[pd.Series], index: pd.DatetimeIndex) -> pd
 def extra_feature_frame(index: pd.DatetimeIndex, levels: pd.DataFrame,
                         vwc_daily: Optional[pd.Series]) -> pd.DataFrame:
     out = pd.concat([level_features(levels, index), soil_features(vwc_daily, index)], axis=1)
-    return out[EXTRA_COLS].astype(np.float32)
+    return out[ALL_COLS].astype(np.float32)
 
 
 # ---- history (training) ----
@@ -236,5 +243,5 @@ def live_extra(index: pd.DatetimeIndex, project_root: Path) -> pd.DataFrame:
         soil = soil.combine_first(soil_hist) if soil is not None else soil_hist
     out = extra_feature_frame(index, levels, soil)
     last = out.iloc[-1]
-    print(f"  [extra inputs] {int(last.notna().sum())}/{len(EXTRA_COLS)} inputs at t0; soil {last['soil_vwc']:.1f}%")
+    print(f"  [extra inputs] {int(last.notna().sum())}/{len(ALL_COLS)} inputs at t0; soil {last['soil_vwc']:.1f}%")
     return out
