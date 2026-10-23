@@ -8,6 +8,8 @@ Per stretch (Isis, Godstow), from the main page's bundle (docs/forecast_data.jso
                                                                -> "Flag likely down to Amber by tomorrow (70%) ..."
 * escalation: after an "up" alert, a higher flag becomes >= LIKELY (going up can skip a flag)
                                                                -> "Isis Flag now likely up to Red by tomorrow (70%)"
+* recall: after a "likely" alert, the chance of that change by the end of its window falls below RECALL
+                                                               -> "Isis Flag: Amber no longer expected by the end of tomorrow (now under 5%)."
 * Isis only: Black likely by the end of tomorrow (>= LIKELY), or, when Black, likely back to Red.
 
 Each "likely" alert is sent once per flag; it can be sent again only after its chance has
@@ -39,6 +41,10 @@ LIKELY_DOWN = {'isis': 0.7, 'godstow': 0.8}
 # right 75-80% of the time after 2-10 days offline, against 55-64% at 60%).
 LIKELY_ESTIMATED = 0.7
 ESTIMATED_MAX_H = 10 * 24
+# Recall: once per alert, if a later forecast puts the chance of that change by the end of the alert's
+# window below this. Replayed (Isis Nov 2021 -, Godstow Sep 2024 -): at 10% the change then happened
+# after 0 of 34 Isis recalls and 1 of 6 Godstow ones; at 30% after a third to a half of them.
+RECALL = 0.1
 RESET = 0.3
 SEVERITY = ['green', 'light_blue', 'blue', 'dark_blue', 'amber', 'red', 'black']
 CLEAR = 0.75     # name the destination only when this share of the outcomes that change agree on it
@@ -70,6 +76,17 @@ def _pct(p: float) -> str:
     if p >= 0.95:
         return 'over 95%'
     return f'{int(round(p * 20)) * 5}%'
+
+
+def _pct_low(p: float) -> str:
+    return 'under 5%' if p < 0.05 else f'{int(round(p * 20)) * 5}%'
+
+
+def _end_of_day(now: datetime, days_ahead: int) -> str:
+    """End of today (0) or tomorrow (1), UK time, as a UTC ISO string."""
+    from datetime import timedelta
+    d = now.astimezone(UK).date() + timedelta(days=days_ahead + 1)
+    return datetime(d.year, d.month, d.day, tzinfo=UK).astimezone(timezone.utc).isoformat()
 
 
 def _ts(iso: str) -> datetime:
@@ -118,21 +135,40 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
         prev = (state or {}).get(river) or {}
         sent = set(prev.get('sent', []))
         up_top = prev.get('up_top')          # highest flag an "up" alert has said is likely
+        open_alerts = list(prev.get('open', []))   # sent alerts that can still be recalled
         if prev.get('flag') and prev['flag'] != flag:
-            sent, up_top = set(), None       # the change itself is alerted by the Worker; start afresh
+            sent, up_top, open_alerts = set(), None, []   # the change itself is alerted by the Worker; start afresh
         est = loc.get('estimated')
         if est and (est.get('hours') or 0) < 4:
             est = None                       # a gauge a few hours late: treated as normal
         # Gauges offline: nothing from a stale forecast, nor from one estimated from the
         # neighbouring stretch for more than ESTIMATED_MAX_H (too loose to warn on).
         if loc.get('stale') or off.get('forecast_stale') or (est and (est.get('hours') or 0) > ESTIMATED_MAX_H):
-            new_state[river] = {'flag': flag, 'sent': sorted(sent), 'up_top': up_top}
+            new_state[river] = {'flag': flag, 'sent': sorted(sent), 'up_top': up_top, 'open': open_alerts}
             continue
         n_before = len(msgs)
 
         floor = LIKELY_ESTIMATED if est else 0.0
         oo = loc.get('official_outlook') or {}
         win = oo.get('windows') or {}
+        # Recalls: an alert whose change now looks unlikely by the end of its window.
+        today_uk = now.astimezone(UK).date()
+        keep = []
+        for a in open_alerts:
+            until = _ts(a['until'])
+            if now >= until:
+                continue                                      # its window is over
+            d = a['dir']
+            which = 'today' if until.astimezone(UK).date() <= today_uk else 'tomorrow'
+            p_now = ((win.get(which) or {}).get(d, 0.0) or 0.0) if oo.get(d) else 0.0
+            if p_now < RECALL:
+                tgt = a.get('target')
+                what = f'{_label(tgt)} no longer expected' if tgt else f'no longer likely to go {d}'
+                when = 'today' if which == 'today' else 'by the end of tomorrow'
+                msgs.append(_msg(river, f'{NAMES[river]} Flag: {what} {when} (now {_pct_low(p_now)}).', tgt, d))
+                continue
+            keep.append(a)
+        open_alerts = keep
         for d in ('up', 'down'):
             info = oo.get(d)
             if not info:
@@ -167,6 +203,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 when_today = '' if when.endswith('tomorrow.') else when          # a today alert only gives a time today
                 msgs.append(_msg(river, f'{NAMES[river]} Flag {verb}{where} today ({_pct(p_today)}){detail}.{_if_so(when_today, p_today)}', emoji, d))
                 sent |= {k_today, k_tom}
+                open_alerts.append({'dir': d, 'until': _end_of_day(now, 0), 'target': target if clear else None})
                 if d == 'up':
                     up_top = likely_top or target
             elif p_tom >= likely and k_tom not in sent:
@@ -174,6 +211,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 msgs.append(_msg(river, f'{NAMES[river]} Flag {verb}{where} by the end of tomorrow ({_pct(p_tom)}){detail}.{_if_so(when, p_tom)}',
                                  emoji, d))
                 sent.add(k_tom)
+                open_alerts.append({'dir': d, 'until': _end_of_day(now, 1), 'target': target if clear else None})
                 if d == 'up':
                     up_top = likely_top or target
             elif (d == 'up' and up_top in SEVERITY and likely_top
@@ -203,5 +241,5 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
         if est:
             for m in msgs[n_before:]:
                 m['body'] += f" (Estimated from {NAMES.get(est.get('from'), est.get('from'))}: {NAMES[river]} gauges offline.)"
-        new_state[river] = {'flag': flag, 'sent': sorted(sent), 'up_top': up_top}
+        new_state[river] = {'flag': flag, 'sent': sorted(sent), 'up_top': up_top, 'open': open_alerts}
     return msgs, new_state

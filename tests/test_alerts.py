@@ -56,7 +56,7 @@ class AlertTests(unittest.TestCase):
         self.assertTrue(st['isis']['sent'])
         msgs, st = decide(bundle(flag='amber'), st, NOW)       # the change itself: sent by the Worker
         self.assertEqual(msgs, [])
-        self.assertEqual(st['isis'], {'flag': 'amber', 'sent': [], 'up_top': None})
+        self.assertEqual(st['isis'], {'flag': 'amber', 'sent': [], 'up_top': None, 'open': []})
 
     def test_estimated_start(self):
         def est_bundle(hours, up):
@@ -74,6 +74,25 @@ class AlertTests(unittest.TestCase):
         self.assertEqual(len(msgs), 1)
         self.assertIn('Estimated from Godstow', msgs[0]['body'])
         self.assertEqual(decide(est_bundle(260, 0.95), fresh, NOW)[0], [])         # over 10 days: none
+
+    def test_recall_once_when_the_chance_collapses(self):
+        msgs, st = decide(bundle(down_tom=0.8), {'isis': {'flag': 'red', 'sent': []}}, NOW)
+        self.assertEqual(len(msgs), 1)
+        msgs, st = decide(bundle(down_tom=0.2), st, NOW)             # dropped, but not below 10%
+        self.assertEqual(msgs, [])
+        msgs, st = decide(bundle(down_tom=0.03), st, NOW)            # collapsed: one recall
+        self.assertEqual(len(msgs), 1)
+        self.assertIn('Amber no longer expected by the end of tomorrow (now under 5%)', msgs[0]['body'])
+        self.assertEqual(decide(bundle(down_tom=0.02), st, NOW)[0], [])   # only once
+
+    def test_no_recall_after_the_window_or_a_flag_change(self):
+        _, st = decide(bundle(down_tom=0.8), {'isis': {'flag': 'red', 'sent': []}}, NOW)
+        later = NOW + timedelta(days=3)
+        b = bundle(down_tom=0.0)
+        b['generated_at'] = later.isoformat()
+        self.assertEqual(decide(b, st, later)[0], [])                 # window over
+        _, st = decide(bundle(down_tom=0.8), {'isis': {'flag': 'red', 'sent': []}}, NOW)
+        self.assertEqual(decide(bundle(flag='amber', down_tom=0.0), st, NOW)[0], [])   # it happened
 
     def test_stale_or_old_bundle_sends_nothing_new(self):
         self.assertEqual(decide(bundle(down_tom=0.9, stale=True), {'isis': {'flag': 'red', 'sent': []}}, NOW)[0], [])
