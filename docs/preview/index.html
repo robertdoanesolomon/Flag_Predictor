@@ -943,7 +943,7 @@
       <div class="hero-text">
         <h1>Flag&nbsp;Predictor</h1>
         <p>A 10-day forecast of the river height differential and OURCs flags on the Isis, Godstow and
-        Wallingford stretches of the Thames, updated hourly. Experimental.</p>
+        Wallingford stretches of the Thames, updated every 15 minutes. Experimental.</p>
         <details class="preview-banner only-preview" open>
           <summary><strong>Preview:</strong> what is new here. <a href="../">The main forecast is here.</a></summary>
           <ul>
@@ -1012,7 +1012,7 @@
         <h3>Data and updates</h3>
         River levels and rain from the Environment Agency; rain forecasts from ECMWF AIFS (50 members) via Open-Meteo.
         The model is a physics-based rainfall&ndash;runoff model whose starting state is set by a small neural network,
-        averaged over five trained copies. It runs hourly. If a stretch's gauges go offline, its differential is estimated from
+        averaged over five trained copies. It runs every 15 minutes, from the newest gauge readings. If a stretch's gauges go offline, its differential is estimated from
         the neighbouring stretch (the Isis from Godstow, and the other way round) until they are back, with a wider
         likely range; after five days offline the estimate is marked low confidence. With both offline, the forecast is
         marked stale. Write-ups are on the
