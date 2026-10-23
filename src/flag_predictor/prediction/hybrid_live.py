@@ -46,13 +46,17 @@ SIMFEAT_MODELS: dict = {}
 VARIANTS: dict = {
     'hybrid_sr': {'names': ['hybrid_sr'] + [f'hybrid_sr_s{i}' for i in range(1, 5)]},
     'hybrid_su': {'names': ['hybrid_su'] + [f'hybrid_su_s{i}' for i in range(1, 5)]},
-    'hybrid_srh': {'names': ['hybrid_srh'] + [f'hybrid_srh_s{i}' for i in range(1, 5)]},
+    # + Hannington Bridge. Not the Isis by default: no better there than the deployed model (Oct 2026).
+    'hybrid_srh': {'names': ['hybrid_srh'] + [f'hybrid_srh_s{i}' for i in range(1, 5)],
+                   'locations': ['godstow', 'wallingford']},
 }
 
 
 def variant_available(variant: str, location: str, models_dir: Optional[Path] = None) -> bool:
     models_dir = Path(models_dir) if models_dir else Path(__file__).resolve().parents[3] / 'models'
     v = VARIANTS.get(variant)
+    if v and v.get('locations') and location not in v['locations']:
+        return False
     return bool(v) and any((models_dir / f'redesign_{n}_{location}.pt').exists() for n in v['names'])
 
 

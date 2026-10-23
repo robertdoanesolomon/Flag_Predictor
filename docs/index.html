@@ -948,8 +948,8 @@
           <summary><strong>Preview:</strong> what is new here. <a href="../">The main forecast is here.</a></summary>
           <ul>
             <li id="trial-model-note" hidden><strong>Trial model</strong> (<span id="trial-model-where"></span>): the forecast
-            here also uses measured soil moisture (COSMOS-UK, Chimney Meadows) and how high eight upstream rivers are
-            (Windrush, Evenlode, Coln, upper Thames, Cherwell, Ray, Thame, Ock). The main page keeps the current model
+            here also uses measured soil moisture (COSMOS-UK, Chimney Meadows) and how high nine upstream gauges are
+            (Windrush, Evenlode, Coln, the Thames at Cricklade and Hannington Bridge, Cherwell, Ray, Thame, Ock). The main page keeps the current model
             until this one has proved itself.</li>
             <li><strong>Under the hood</strong>: below each chart, the model's water stores (soil, fast, medium and
             groundwater paths, the river) now and over the next 10 days.</li>
@@ -2845,7 +2845,7 @@
     if (ON_PREVIEW_PAGE) bundle.location_order.forEach(k => plotModelState(k, bundle.locations[k]));
     window.__forecastBundle = bundle;
     updateFooterTimes(bundle);
-    const TRIAL_MODELS = ['hybrid_sr', 'hybrid_su'];
+    const TRIAL_MODELS = ['hybrid_sr', 'hybrid_su', 'hybrid_srh'];
     const trialWhere = bundle.location_order.filter((k) => TRIAL_MODELS.includes((bundle.locations[k] || {}).model))
       .map((k) => STRETCH_NAMES[k] || k);
     const trialNote = document.getElementById('trial-model-note');
