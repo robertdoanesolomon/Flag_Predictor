@@ -1644,7 +1644,7 @@
         sub: `The river gauges for this stretch have not reported${last}. It comes back with the next update after they do.` }, false));
     } else {
       const est = loc.estimated;
-      if (est) {
+      if (est && est.hours >= 4) {   // a short gap is just drawn dotted
         const here = STRETCH_NAMES[loc.key] || loc.display_name || '';
         const from = STRETCH_NAMES[est.from] || est.from;
         const days = est.hours >= 48 ? `${Math.round(est.hours / 24)} days` : `${est.hours} hours`;
@@ -1882,7 +1882,7 @@
       const isWallingford = key === 'wallingford';
       const stale = loc.stale
         ? `<span class="stale-warning">Stale forecast — sensor offline</span>`
-        : loc.estimated
+        : loc.estimated && loc.estimated.hours >= 4
           ? `<span class="stale-warning">Gauges offline — estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}</span>`
           : loc.gauge_stand_in
             ? `<span class="stand-in-note">${loc.gauge_stand_in.gauge} gauge offline${loc.gauge_stand_in.since ? ` since ${fmtShortDateTime(loc.gauge_stand_in.since)}` : ''}; using the ${loc.gauge_stand_in.stand_in} gauge instead</span>`

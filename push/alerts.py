@@ -121,6 +121,8 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
         if prev.get('flag') and prev['flag'] != flag:
             sent, up_top = set(), None       # the change itself is alerted by the Worker; start afresh
         est = loc.get('estimated')
+        if est and (est.get('hours') or 0) < 4:
+            est = None                       # a gauge a few hours late: treated as normal
         # Gauges offline: nothing from a stale forecast, nor from one estimated from the
         # neighbouring stretch for more than ESTIMATED_MAX_H (too loose to warn on).
         if loc.get('stale') or off.get('forecast_stale') or (est and (est.get('hours') or 0) > ESTIMATED_MAX_H):

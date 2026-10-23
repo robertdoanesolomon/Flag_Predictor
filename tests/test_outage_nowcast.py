@@ -49,7 +49,7 @@ def test_outage_nowcast_extends_history_to_now():
 
 
 def test_no_nowcast_when_fresh_or_neighbour_also_down():
-    merged, god, isis, now = _frames(down_h=2)
+    merged, god, isis, now = _frames(down_h=1)
     _prime_cache(god, god.index)
     assert hl.outage_nowcast('isis', merged, now=now)[1] is None
     merged, god, isis, now = _frames(down_h=72)

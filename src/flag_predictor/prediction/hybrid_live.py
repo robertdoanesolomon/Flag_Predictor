@@ -84,6 +84,9 @@ OUTAGE_BRIDGE_FOR_H = 12
 OUTAGE_NEIGHBOUR = {'isis': ('godstow', 0.67), 'godstow': ('isis', 0.96), 'wallingford': ('isis', 1.18)}
 # A reading older than this = the gauge is offline (the page's "stale" label).
 STALE_H = 4
+# Readings more than this old: the hours since are estimated from the neighbouring stretch (a short
+# gap is drawn dotted on the page but not flagged as an outage until STALE_H).
+NOWCAST_AFTER_H = 1
 
 # Gauges each location's hybrid was trained on (the column order of the
 # training frame; the encoder's rain features sum over exactly these).
@@ -305,7 +308,7 @@ def outage_nowcast(location: str, merged_df: pd.DataFrame, now: Optional[pd.Time
             t_last = max(real)
             merged = merged.loc[:t_last]
             diff = merged['differential']
-    if t_last is None or now - t_last <= pd.Timedelta(hours=STALE_H):
+    if t_last is None or now - t_last <= pd.Timedelta(hours=NOWCAST_AFTER_H):
         return merged_df, None
     other, slope = OUTAGE_NEIGHBOUR[location]
     nb = _all_differentials().get(other)

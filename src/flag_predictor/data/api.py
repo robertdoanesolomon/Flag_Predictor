@@ -34,6 +34,11 @@ _EA_LOOKBACK_DAYS = 28
 # succeed; a couple of days of fresh readings beats failing the whole publish.
 _EA_FALLBACK_LOOKBACK_DAYS = (7, 2)
 _EA_HTTP_TIMEOUT = (10, 30)
+# A gauge's last reading is carried forward this long when building a differential. Kept to one
+# missed hour: carrying one gauge forward while the other moves makes a false trend (Osney
+# downstream arriving hours late on 23 Oct 2026 pulled the Isis down 3 cm as Iffley rose). Longer
+# gaps are estimated (hybrid_live.outage_nowcast) and drawn dotted.
+GAUGE_HOLD_H = 1
 
 
 def _requests_session_with_retries() -> requests.Session:
@@ -460,7 +465,7 @@ def _attach_reading_times(out: pd.DataFrame, gauges: Dict[str, pd.Series], n_hou
         s = _utc_series(level).dropna()
         stamps = pd.Series(s.index, index=s.index)
         times[name] = stamps.resample("1h").last()
-    as_of = pd.concat(times, axis=1).sort_index().ffill(limit=6).min(axis=1)
+    as_of = pd.concat(times, axis=1).sort_index().ffill(limit=GAUGE_HOLD_H).min(axis=1)
     as_of = as_of.reindex(out.index).dropna().iloc[-n_hours:]
     out.attrs["reading_time"] = {
         idx.tz_localize(None): pd.Timestamp(t).tz_convert("UTC").tz_localize(None)
@@ -514,7 +519,7 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
             stand_in["since"] = km_raw.index[-1].tz_convert("UTC").tz_localize(None).isoformat() + "Z"
     merged = pd.concat({"o": o, "i": i, "k": k}, axis=1).sort_index()
     # Allow small gaps—EA stations often miss occasional hours; avoids a frozen tail/hourly NaNs.
-    merged = merged.ffill(limit=6).dropna(how="any")
+    merged = merged.ffill(limit=GAUGE_HOLD_H).dropna(how="any")
     if merged.empty:
         raise RuntimeError("ISIS differential is empty after aligning EA level series.")
     differential = (
@@ -594,7 +599,7 @@ def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.
     }
     g = _level_series_hourly_last(gauges["godstow_downstream"])
     u = _level_series_hourly_last(gauges["osney_upstream"])
-    merged = pd.concat({"godstow": g, "osney_us": u}, axis=1).sort_index().ffill(limit=6).dropna(
+    merged = pd.concat({"godstow": g, "osney_us": u}, axis=1).sort_index().ffill(limit=GAUGE_HOLD_H).dropna(
         how="any"
     )
     if merged.empty:
@@ -622,7 +627,7 @@ def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) ->
     }
     b = _level_series_hourly_last(gauges["benson_downstream"])
     c = _level_series_hourly_last(gauges["cleeve_upstream"])
-    merged = pd.concat({"benson": b, "cleeve": c}, axis=1).sort_index().ffill(limit=6).dropna(how="any")
+    merged = pd.concat({"benson": b, "cleeve": c}, axis=1).sort_index().ffill(limit=GAUGE_HOLD_H).dropna(how="any")
     if merged.empty:
         raise RuntimeError("Wallingford differential is empty after aligning EA level series.")
     differential = merged["benson"] - merged["cleeve"] - 2.13
