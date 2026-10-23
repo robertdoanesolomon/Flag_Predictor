@@ -245,8 +245,8 @@ NOWCAST_ERROR = {
     # 0.073 m after 5, 0.112 m after 14 (holding the last reading: 0.052 / 0.176 / 0.304 m). No flags here.
     'wallingford': {'a': 0.061, 'mid': (0.0, 0.0), 'mid_factor': 1.0},
 }
-# Beyond this long (5 days) the estimate is too loose to warn on: the page marks it low confidence and
-# no "likely" alerts are sent for that stretch.
+# Beyond this long (5 days) the page marks the estimate low confidence. Alerts from an estimate need
+# a 70% chance and stop after 10 days (push/alerts.py).
 NOWCAST_CONFIDENT_H = 5 * 24
 
 
