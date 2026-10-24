@@ -1,0 +1,68 @@
+name: Download seasonal forecasts
+
+# C3S seasonal forecasts (ECMWF SEAS5) for the termly outlook: download_seasonal.py.
+# Needs the repository secret CDSAPI_KEY (the Copernicus Climate Data Store personal access token).
+#   - the whole archive (hindcasts 1993-2016 + forecasts since 2017): run from the Actions tab, or
+#     change data/seasonal/request.txt; files already downloaded are skipped, so reruns fill gaps
+#   - each month's new forecast: the schedule below (ECMWF publishes on the 5th)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['data/seasonal/request.txt']
+  schedule:
+    - cron: "41 7 6 * *"
+
+concurrency:
+  group: seasonal-download
+  cancel-in-progress: false
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    permissions:
+      contents: write
+    env:
+      CDSAPI_URL: https://cds.climate.copernicus.eu/api
+      CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: pip install "cdsapi>=0.7.4"
+
+      - name: Download
+        continue-on-error: true
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            python download_seasonal.py --latest
+          else
+            python download_seasonal.py
+          fi
+
+      # Only data/seasonal/ is committed, which nothing else writes: put it on top of the latest main.
+      - name: Commit
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          OUT=$(mktemp -d)
+          tar -cf "$OUT/seasonal.tar" data/seasonal
+          for i in 1 2 3 4 5; do
+            git fetch --depth=1 origin main
+            git reset --hard origin/main
+            tar -xf "$OUT/seasonal.tar"
+            git add data/seasonal
+            if git diff --cached --quiet; then echo "Nothing new"; exit 0; fi
+            git commit -m "Seasonal forecasts: download [skip ci]"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((i * 10))
+          done
+          exit 1
