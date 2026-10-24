@@ -1067,3 +1067,28 @@ King's Mill downstream (1491TH) stopped on 13 Oct 2026; Osney and Iffley kept re
   reported, as long as the Cherwell is within 0.30 m of its level at the last King's Mill reading
   (beyond that the drop between the two gauges could have changed; the Isis is then estimated from
   Godstow as before). The page shows a one-line note; forecasts and alerts are otherwise normal.
+
+## Rain heavier than forecast, lock-keeper steps, first rises, outage estimates (24 Oct 2026)
+
+* Rain surprise (test_rain_surprise.py; held-out starts with 10 mm+ in the next day, that day's
+  forecast rain halved): extra error 24-72 h ahead from the start Isis +0.023, Godstow +0.042,
+  Wallingford +0.024 m; 6 h in (that rain now measured) +0.011 / +0.027 / +0.012; 12 h in
+  +0.003 / +0.014 / -0.006. The model absorbs measured rain within a run or two.
+* Lock-keeper steps (test_jumps.py; 3 cm+ in an hour, held 2 h; Isis 149, Godstow 302, Wallingford
+  223 on the held-out years): the forecast does not give the step back. 6 h later the river had moved
+  on by 0.049 / 0.027 / 0.070 m in the step's direction, the forecast 0.041 / 0.026 / 0.059 m. Errors
+  after a step are 2-3x the usual (steps come when the river is moving) but well below persistence.
+  Official flag after the differential crosses a line upwards: flag changed a median 3.5 h (Isis) /
+  2.2 h (Godstow) later; the first forecast after the crossing put the change by tomorrow at a median
+  78% / 97% (60%+ in 86% / 92%).
+* First rise of each winter (test_first_rise.py, rain that fell): Godstow's first crossing of Amber
+  forecast 1-2 days ahead within about +-10 h and the peak within ~0.15 m every year. The Isis's
+  first, small rises (peak 0.25-0.45 m) were under-forecast or missed (2021, 2022; 2025 held out:
+  0.31 m forecast a day ahead for 0.43 m); big ones caught. Wallingford's first rises under-forecast
+  (2025: 0.39 m a day ahead for 0.88 m). The trial model with measured soil moisture (hybrid_srh) did
+  better on these: Isis 2025 0.47 m, Wallingford 2025 0.70 m, Isis 2020 0.84 m for 0.82.
+* Outage estimates: holding the last value beats the neighbour estimate for the first hours, the
+  estimate after ~8 h. The estimate now fades in over 12 h (NOWCAST_RAMP_H): as good as or better than
+  either at every gap length (Isis 1 h 0.0051, 4 h 0.0079, 24 h 0.0186 m mean error). Live check:
+  21 Godstow-based estimates of the Isis on 22-23 Oct (Osney downstream late) against the readings that
+  arrived later: mean error 0.002-0.011 m, worst 0.019 m.

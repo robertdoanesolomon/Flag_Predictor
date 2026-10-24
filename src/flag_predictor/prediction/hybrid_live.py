@@ -213,6 +213,9 @@ def blend_slope(pre_d: pd.Series, pre_n: pd.Series, slope: float) -> float:
     return float(np.clip(w * fit + (1 - w) * slope, 0.0, 2.5))
 
 
+NOWCAST_RAMP_H = 12
+
+
 def neighbour_nowcast(diff: pd.Series, neighbour: pd.Series, slope: float, until: pd.Timestamp,
                       fit_hours: int = 14 * 24) -> Optional[pd.Series]:
     """This stretch's differential after its last reading, estimated from the neighbour while the
@@ -235,7 +238,13 @@ def neighbour_nowcast(diff: pd.Series, neighbour: pd.Series, slope: float, until
     n = n.ffill()
     pre = slice(t_last - pd.Timedelta(hours=fit_hours), t_last)
     b = blend_slope(d.loc[pre], neighbour.reindex(d.loc[pre].index), slope)
-    est = float(d.iloc[-1]) + b * (n - float(n.iloc[0]))
+    # The neighbour's movement is faded in over the first NOWCAST_RAMP_H hours: over a few hours the
+    # stretch usually changes less than its neighbour's wobble suggests (gate moves, gauge noise), so
+    # holding the last reading is better at first and the estimate better after. 2019-2026 backtest:
+    # the faded estimate is as good as or better than either at every gap length (EXPERIMENTS.md).
+    hours = np.arange(len(n), dtype=float)
+    w = np.minimum(hours / NOWCAST_RAMP_H, 1.0)
+    est = float(d.iloc[-1]) + w * b * (n - float(n.iloc[0]))
     return est.iloc[1:]
 
 
