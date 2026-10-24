@@ -1,0 +1,186 @@
+{
+ "isis": {
+  "days": 420,
+  "by_lead": {
+   "1": {
+    "no_change": 0.888,
+    "statistical": 0.883,
+    "ours_dry": 0.876,
+    "ours_rain": 0.881,
+    "flagmodel_dry": 0.914,
+    "flagmodel_rain": 0.914,
+    "n": 420
+   },
+   "2": {
+    "no_change": 0.807,
+    "statistical": 0.831,
+    "ours_dry": 0.838,
+    "ours_rain": 0.857,
+    "flagmodel_dry": 0.855,
+    "flagmodel_rain": 0.867,
+    "n": 414
+   },
+   "3": {
+    "no_change": 0.758,
+    "statistical": 0.756,
+    "ours_dry": 0.787,
+    "ours_rain": 0.851,
+    "flagmodel_dry": 0.819,
+    "flagmodel_rain": 0.856,
+    "n": 409
+   },
+   "4": {
+    "no_change": 0.71,
+    "statistical": 0.718,
+    "ours_dry": 0.765,
+    "ours_rain": 0.866,
+    "flagmodel_dry": 0.78,
+    "flagmodel_rain": 0.819,
+    "n": 404
+   },
+   "5": {
+    "no_change": 0.664,
+    "statistical": 0.689,
+    "ours_dry": 0.729,
+    "ours_rain": 0.857,
+    "flagmodel_dry": 0.767,
+    "flagmodel_rain": 0.817,
+    "n": 399
+   }
+  },
+  "changed": {
+   "1": {
+    "statistical": 0.085,
+    "ours_dry": 0.553,
+    "ours_rain": 0.617,
+    "flagmodel_dry": 0.234,
+    "flagmodel_rain": 0.234,
+    "n": 47
+   },
+   "2": {
+    "statistical": 0.188,
+    "ours_dry": 0.537,
+    "ours_rain": 0.65,
+    "flagmodel_dry": 0.287,
+    "flagmodel_rain": 0.375,
+    "n": 80
+   },
+   "3": {
+    "statistical": 0.192,
+    "ours_dry": 0.475,
+    "ours_rain": 0.657,
+    "flagmodel_dry": 0.364,
+    "flagmodel_rain": 0.525,
+    "n": 99
+   },
+   "4": {
+    "statistical": 0.188,
+    "ours_dry": 0.436,
+    "ours_rain": 0.684,
+    "flagmodel_dry": 0.342,
+    "flagmodel_rain": 0.487,
+    "n": 117
+   },
+   "5": {
+    "statistical": 0.231,
+    "ours_dry": 0.403,
+    "ours_rain": 0.649,
+    "flagmodel_dry": 0.403,
+    "flagmodel_rain": 0.515,
+    "n": 134
+   }
+  }
+ },
+ "godstow": {
+  "days": 436,
+  "by_lead": {
+   "1": {
+    "no_change": 0.929,
+    "statistical": 0.929,
+    "ours_dry": 0.888,
+    "ours_rain": 0.906,
+    "flagmodel_dry": 0.929,
+    "flagmodel_rain": 0.929,
+    "n": 436
+   },
+   "2": {
+    "no_change": 0.87,
+    "statistical": 0.872,
+    "ours_dry": 0.849,
+    "ours_rain": 0.886,
+    "flagmodel_dry": 0.879,
+    "flagmodel_rain": 0.891,
+    "n": 430
+   },
+   "3": {
+    "no_change": 0.842,
+    "statistical": 0.835,
+    "ours_dry": 0.821,
+    "ours_rain": 0.866,
+    "flagmodel_dry": 0.835,
+    "flagmodel_rain": 0.88,
+    "n": 425
+   },
+   "4": {
+    "no_change": 0.81,
+    "statistical": 0.81,
+    "ours_dry": 0.788,
+    "ours_rain": 0.864,
+    "flagmodel_dry": 0.814,
+    "flagmodel_rain": 0.86,
+    "n": 420
+   },
+   "5": {
+    "no_change": 0.771,
+    "statistical": 0.785,
+    "ours_dry": 0.758,
+    "ours_rain": 0.867,
+    "flagmodel_dry": 0.775,
+    "flagmodel_rain": 0.855,
+    "n": 414
+   }
+  },
+  "changed": {
+   "1": {
+    "statistical": 0.0,
+    "ours_dry": 0.806,
+    "ours_rain": 0.871,
+    "flagmodel_dry": 0.29,
+    "flagmodel_rain": 0.355,
+    "n": 31
+   },
+   "2": {
+    "statistical": 0.054,
+    "ours_dry": 0.625,
+    "ours_rain": 0.821,
+    "flagmodel_dry": 0.536,
+    "flagmodel_rain": 0.607,
+    "n": 56
+   },
+   "3": {
+    "statistical": 0.03,
+    "ours_dry": 0.537,
+    "ours_rain": 0.761,
+    "flagmodel_dry": 0.493,
+    "flagmodel_rain": 0.701,
+    "n": 67
+   },
+   "4": {
+    "statistical": 0.025,
+    "ours_dry": 0.475,
+    "ours_rain": 0.775,
+    "flagmodel_dry": 0.487,
+    "flagmodel_rain": 0.662,
+    "n": 80
+   },
+   "5": {
+    "statistical": 0.084,
+    "ours_dry": 0.453,
+    "ours_rain": 0.768,
+    "flagmodel_dry": 0.411,
+    "flagmodel_rain": 0.695,
+    "n": 95
+   }
+  }
+ }
+}
