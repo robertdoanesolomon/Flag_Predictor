@@ -2449,7 +2449,7 @@
       </div>`;
   }
 
-  function isoNaive(ms) { return new Date(ms).toISOString().slice(0, 19); }
+  function isoNaive(ms) { return ukWall(new Date(ms)); }   // a chart x value (UK clock time)
 
   function loadHistory() {
     if (HISTORY.loading) return HISTORY.loading;
@@ -2677,7 +2677,8 @@
     block.querySelector('.history-score').innerHTML = n
       ? `<span><strong>${n}</strong> h observed since</span>` +
         `<span>typical error <strong>${(absErr / n).toFixed(2)} m</strong></span>` +
-        (flagN ? `<span>right ${BAND_WORD} <strong>${Math.round(100 * flagRight / flagN)}%</strong> of hours</span>` : '')
+        (flagN ? `<span>right ${BAND_WORD} <strong>${Math.round(100 * flagRight / flagN)}%</strong> of hours</span>` : '') +
+        (hasTotal ? `<span>within the likely range <strong>${Math.round(100 * inBand / n)}%</strong> of hours</span>` : '')
       : '<span>No readings since this forecast yet.</span>';
     block.querySelector('.history-note').innerHTML = PREVIEW
       ? 'Shaded: its likely range. Black: what the river did.'
@@ -2744,7 +2745,12 @@
       (e1 !== null ? `<span>issued 0–2 days before: off by <strong>${e1} m</strong></span>` : '') +
       (e2 !== null ? `<span>2–5 days before: <strong>${e2} m</strong></span>` : '') +
       (e3 !== null ? `<span>5–10 days before: <strong>${e3} m</strong></span>` : '') +
-      (flagNow !== null ? `<span>right ${BAND_WORD} in <strong>${flagHits} of ${rows.length}</strong></span>` : '');
+      (flagNow !== null ? `<span>right ${BAND_WORD} in <strong>${flagHits} of ${rows.length}</strong></span>` : '') +
+      (() => {
+        const withRange = rows.filter(r => r.total_p10 !== undefined && r.total_p90 !== undefined);
+        const inside = withRange.filter(r => data.observed >= r.total_p10 && data.observed <= r.total_p90).length;
+        return withRange.length ? `<span>within the likely range in <strong>${inside} of ${withRange.length}</strong></span>` : '';
+      })();
     block.querySelector('.history-note').innerHTML = PREVIEW
       ? 'Dots: what each forecast said. Bars: its likely range. Dashed: what the river read.'
       : `Each dot is one archived forecast (saved every 6 hours); the bar is its ${useTotal ? 'likely range' : 'rain-forecast spread'}` +
