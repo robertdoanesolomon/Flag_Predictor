@@ -1092,3 +1092,55 @@ King's Mill downstream (1491TH) stopped on 13 Oct 2026; Osney and Iffley kept re
   either at every gap length (Isis 1 h 0.0051, 4 h 0.0079, 24 h 0.0186 m mean error). Live check:
   21 Godstow-based estimates of the Isis on 22-23 Oct (Osney downstream late) against the readings that
   arrived later: mean error 0.002-0.011 m, worst 0.019 m.
+
+## Termly outlook: days at each flag and Torpids from the catchment state (24 Oct 2026)
+
+`src/flag_predictor/termly.py`, `verify_termly.py`, `generate_termly.py`; page flagpredictor.com/termly.
+
+**Flags from Farmoor flow.** On the 2-day mean of Farmoor daily flow, the Isis changes flag at 22 / 34.5 /
+39.5 m3/s (Green | Blue | Amber | Red; Light and Dark Blue merged, Black counted as Red) and Godstow at
+28 / 41.5 m3/s. Fitted on the OURCs noon flags 2019-2026: the right flag on 88% (Isis) / 89% (Godstow) of
+days. Per term (0th-8th week), rebuilt and real days per flag mostly agree within ~5 days. The worst
+cases are Godstow before Sep 2024 (flag not then set from the differential) and Trinity 2024.
+
+**Torpids.** Every Torpids since 1993 with a Wed-Sat mean above 44 m3/s at Farmoor was cancelled: 2000,
+2002, 2007, 2014, 2020, 2024 and 2026. Every one below raced; the highest was 1995 at 42.9. The exception
+is 1994: day 1 raced, then a flood. By the dates rule it was at 28 m3/s, but the flood peaked a week
+earlier, so its dates may be off. 7 of the 32 years (2021 not held) gives 22%.
+
+**Method.** One member per past year (33): that year's flow from today's date on, conditioned on
+today's state. Everything is in normal scores, i.e. the rank of each day's flow among all years within
+15 days of that date. The 7-day and 90-day mean scores are regressed per lead day, and each year's
+residual path is added back. The result is blended with plain climatology (the same years unconditioned)
+by lead: w = 0.9 during a term, 0.8 up to 3 months, 0.5 for 3-4 months, 0.2 beyond (BLEND). The weights
+were fitted leave-one-year-out on the pooled hindcasts, where the best weight fell from about 0.9 to 0.
+- Log-anomaly regression instead of normal scores: same overall, but worse after dry autumns. A dry
+  start reduced the spread and left no route back to a wet winter, so 2-3 month red-day skill in the
+  driest third was -5% (normal scores: +1%).
+- Predictor sets tried: 7d alone, 7d+90d, 7d+30d+90d, 1d+30d+180d, pooled or not, ridge, and 12 nearest
+  analogs. All within a few percent of each other; the analogs were worst.
+
+**Skill (leave-one-year-out, 1993/94-2025/26; CRPS of days at each flag against an average year; Isis):**
+
+| issued | Michaelmas red | Hilary red | Hilary green | Torpids (Brier) |
+|---|---|---|---|---|
+| during the term (rest of it) | 28% | 26% | 34% | 58% (last week) |
+| up to 1 month before | 8% | 18% | 29% | 14% |
+| 1-2 months before | 2% | 10% | 19% | 7% |
+| 2-3 months before | | 7% | 14% | 8% |
+| 3-4 months / 4+ months | | 0% / 0% | 5% / 2% | 2% / 1% |
+
+From the day before 0th week the Isis outlook is 19-20% better than an average year for red days in
+Michaelmas and Hilary. Typical error is 5.7 days in Michaelmas (average year 6.4) and 11.2 in Hilary
+(14.6). The 8-in-10 ranges held 79-97% of outcomes. Torpids a week before (Wednesday of 6th week): 32%
+skill. The main failure is Hilary 2026: after a very dry autumn the outlook said 0 red days (p90 16),
+and there were 53. The wettest Jan-Feb on record is not predictable from the catchment state. That is
+why the page shows the 7 past years most like now next to each term.
+
+**Operational.** A daily workflow (termly_update.yml) updates Farmoor's daily record, writes
+docs/termly/termly.json, and reruns the verification on Sundays and on code changes.
+
+**Next (stage 2).** C3S/ECMWF SEAS5 seasonal hindcasts (download_seasonal.py,
+seasonal_download.yml, needs the CDSAPI_KEY secret): test whether the forecast rainfall for the coming
+months adds skill on top, for example by weighting the members by how well each year's rainfall matches
+the forecast.
