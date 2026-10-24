@@ -275,7 +275,8 @@ def build_location_payload(
     # Rain today: the same number as today's grey bar in the chart (measured so far today).
     today_rain = None
     if len(historical_rainfall_daily) > 0:
-        today = (now if now is not None else pd.Timestamp.now(tz="UTC").tz_localize(None)).normalize()
+        now_utc_ = (now if now is not None else pd.Timestamp.now(tz="UTC").tz_localize(None))
+        today = now_utc_.tz_localize("UTC").tz_convert("Europe/London").normalize().tz_localize(None)
         last_day = pd.Timestamp(historical_rainfall_daily.index[-1]).normalize()
         today_rain = float(historical_rainfall_daily.iloc[-1]) if last_day == today else 0.0
 
@@ -794,7 +795,7 @@ def render_location_outputs(
                     print(f"  Rain history carried on {len(more)} h past the last river reading (EA rain gauges)")
     except Exception as exc:
         print(f"  [rain] could not extend the rain history ({type(exc).__name__}: {exc})")
-    historical_rainfall_daily = historical_rainfall_hourly.resample("1D").sum()  # Daily totals
+    historical_rainfall_daily = uk_daily(historical_rainfall_hourly)  # Daily totals (UK calendar days)
 
     # 2. Forecast rainfall - calculate ensemble statistics
     rainfall_forecast_naive = rainfall_forecast.copy()
@@ -811,7 +812,7 @@ def render_location_outputs(
             )
 
     # Resample to daily for cleaner visualization
-    member_totals_daily = member_totals.resample("1D").sum()
+    member_totals_daily = uk_daily(member_totals)
 
     # Calculate rainfall ensemble statistics
     forecast_rain_mean = member_totals_daily.mean(axis=1)
@@ -1117,6 +1118,7 @@ def render_location_outputs(
     if merged_df.attrs.get("gauge_stand_in"):
         payload["gauge_stand_in"] = dict(merged_df.attrs["gauge_stand_in"])
         split_stand_in_line(payload)
+    add_15min_history(payload, merged_df.attrs.get("diff_15min"), config)
     return payload
 
 
@@ -1128,6 +1130,40 @@ PREVIEW_PAYLOADS: dict = {}
 # page keeps PREVIEW_PAYLOADS from the deployed model.
 PREVIEW_MODEL: str | None = None
 PREVIEW_ONLY_PAYLOADS: dict = {}
+
+
+def uk_daily(x):
+    """Hourly totals (naive UTC index) summed over UK calendar days (index: the day, naive)."""
+    y = x.copy()
+    idx = pd.DatetimeIndex(y.index)
+    y.index = (idx.tz_localize("UTC") if idx.tz is None else idx.tz_convert("UTC")).tz_convert("Europe/London")
+    y = y.resample("1D").sum()
+    y.index = y.index.tz_localize(None)
+    return y
+
+
+def add_15min_history(payload: dict, d15: dict | None, config) -> None:
+    """The measured differential at every 15-minute reading, for the chart (the forecasts work in
+    hours). Same bounds as the hourly series; a single reading that jumps 10 cm+ and straight back
+    (a gauge glitch, not a lock-keeper change, which stays) is dropped."""
+    if not d15 or not d15.get("times"):
+        return
+    s = pd.Series(d15["values"], index=pd.to_datetime(d15["times"]), dtype=float)
+    hist = (payload.get("historical") or {}).get("times") or []
+    if hist:
+        s = s[s.index >= pd.Timestamp(hist[0])]
+    lo = getattr(config, "min_differential", None)
+    hi = getattr(config, "max_differential", None)
+    s = s[(s > (lo if lo is not None else -0.1)) & (s <= (hi if hi is not None else 1.5))]
+    ch, nxt = s.diff(), s.diff().shift(-1)
+    s = s[~((ch.abs() > 0.1) & (nxt.abs() > 0.1) & (np.sign(ch) != np.sign(nxt)))]
+    if s.empty:
+        return
+    payload["historical_15min"] = {
+        "times": [t.isoformat() for t in s.index],
+        "differential": [round(float(v), 4) for v in s.to_numpy()],
+        "stand_in_from": d15.get("stand_in_from"),
+    }
 
 
 def split_stand_in_line(payload: dict) -> None:

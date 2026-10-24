@@ -139,6 +139,8 @@ def prepare_training_data(
         merged_df.attrs["reading_time"] = api_diff_df.attrs["reading_time"]
     if api_diff_df is not None and "gauge_stand_in" in api_diff_df.attrs:
         merged_df.attrs["gauge_stand_in"] = api_diff_df.attrs["gauge_stand_in"]
+    if api_diff_df is not None and "diff_15min" in api_diff_df.attrs:
+        merged_df.attrs["diff_15min"] = api_diff_df.attrs["diff_15min"]
 
     if verbose:
         print(f"\n✓ Merged data: {merged_df.shape}")

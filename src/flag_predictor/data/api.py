@@ -474,6 +474,26 @@ def _attach_reading_times(out: pd.DataFrame, gauges: Dict[str, pd.Series], n_hou
     return out
 
 
+FIFTEEN_MIN_DAYS = 8
+
+
+def _attach_15min(out: pd.DataFrame, raw: Dict[str, pd.Series], formula, stand_in_from: Optional[str] = None) -> None:
+    """The differential at every 15-minute reading over the last FIFTEEN_MIN_DAYS (for the page's chart:
+    the models work hourly). A gauge may miss one reading; ``stand_in_from``: the time from which a
+    stand-in gauge is part of it (drawn dotted)."""
+    cols = {k: _utc_series(v).dropna().resample("15min").last() for k, v in raw.items()}
+    m = pd.concat(cols, axis=1).sort_index()
+    if m.empty:
+        return
+    m = m.loc[m.index >= m.index.max() - pd.Timedelta(days=FIFTEEN_MIN_DAYS)].ffill(limit=1).dropna(how="any")
+    d = formula(m).astype(float)
+    out.attrs["diff_15min"] = {
+        "times": [t.tz_convert("UTC").tz_localize(None).isoformat() for t in d.index],
+        "values": [round(float(v), 4) for v in d.to_numpy()],
+        "stand_in_from": stand_in_from,
+    }
+
+
 def _level_series_hourly_last(level: pd.Series) -> pd.Series:
     """Resample irregular EA readings to hourly using the last value in each hour (UTC).
 
@@ -527,8 +547,16 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
         + 0.29 * (merged["k"] - merged["i"] - 0.73)
     )
     out = _attach_reading_times(pd.DataFrame({"differential": differential}), reading_gauges)
+    k_raw = _utc_series(gauges["kings_mill_downstream"]).dropna()
+    stand_in_from = None
     if stand_in is not None:
         out.attrs["gauge_stand_in"] = stand_in
+        c_raw = _utc_series(river_levels["cherwell_botanic"]["level"]).dropna()
+        after = c_raw.loc[c_raw.index > k_raw.index[-1]] if len(k_raw) else c_raw
+        k_raw = pd.concat([k_raw, after + stand_in["offset_m"]]).sort_index()
+        stand_in_from = stand_in.get("since")
+    _attach_15min(out, {"o": gauges["osney_downstream"], "i": gauges["iffley_upstream"], "k": k_raw},
+                  lambda m: 0.71 * (m["o"] - m["i"] - 2.14) + 0.29 * (m["k"] - m["i"] - 0.73), stand_in_from)
     return out
 
 
@@ -606,7 +634,10 @@ def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.
         raise RuntimeError("Godstow differential is empty after aligning EA level series.")
     differential = merged["godstow"] - merged["osney_us"] - 1.63
 
-    return _attach_reading_times(pd.DataFrame({'differential': differential}), gauges)
+    out = _attach_reading_times(pd.DataFrame({'differential': differential}), gauges)
+    _attach_15min(out, {"g": gauges["godstow_downstream"], "u": gauges["osney_upstream"]},
+                  lambda m: m["g"] - m["u"] - 1.63)
+    return out
 
 def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
     """
@@ -632,7 +663,10 @@ def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) ->
         raise RuntimeError("Wallingford differential is empty after aligning EA level series.")
     differential = merged["benson"] - merged["cleeve"] - 2.13
 
-    return _attach_reading_times(pd.DataFrame({'differential': differential}), gauges)
+    out = _attach_reading_times(pd.DataFrame({'differential': differential}), gauges)
+    _attach_15min(out, {"b": gauges["benson_downstream"], "c": gauges["cleeve_upstream"]},
+                  lambda m: m["b"] - m["c"] - 2.13)
+    return out
 
 def get_rainfall_forecast(
     locations: Optional[Dict] = None,

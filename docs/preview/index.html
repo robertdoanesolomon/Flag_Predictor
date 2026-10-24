@@ -1137,6 +1137,32 @@
     }
     return new Date(iso);
   }
+  /* The charts run on UK clock time. Plotly has no time zones, so every x value is given as the UK
+     wall-clock time ('YYYY-MM-DDTHH:MM:SS'); the payload's times are UTC. */
+  const UK_PARTS = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit',
+    day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+  function ukWall(x) {
+    const d = x instanceof Date ? x : parseUtc(x);
+    const p = {};
+    UK_PARTS.formatToParts(d).forEach((o) => { p[o.type] = o.value; });
+    return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}`;
+  }
+  /** The forecast runs in whole hours from the hour that holds the latest reading (13:00 for a 13:15
+      reading); its first point is that reading. Start it at the reading's own time. */
+  function forecastOffsetMs(loc) {
+    if (!loc || loc.estimated || !loc.latest_reading || !loc.forecast_start) return 0;
+    const d = parseUtc(loc.latest_reading) - parseUtc(loc.forecast_start);
+    return d >= 0 && d < 3600 * 1000 ? d : 0;
+  }
+  function fcTimes(loc, times) {
+    const off = forecastOffsetMs(loc);
+    return (times || []).map((t) => ukWall(new Date(parseUtc(t).getTime() + off)));
+  }
+  /** 'YYYY-MM-DD' plus n days (calendar arithmetic, no time zone). */
+  function addDays(ymd, n) {
+    const [y, m, d] = ymd.slice(0, 10).split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+  }
   function relativeTime(iso) {
     const t = parseUtc(iso);
     const diffMs = Date.now() - t.getTime();
@@ -1761,16 +1787,17 @@
     const el = document.getElementById(`state-plot-${key}`);
     if (!el || !loc.model_state || typeof Plotly === 'undefined') return;
     const ms = loc.model_state, T = themeColors();
+    const msTimes = fcTimes(loc, ms.times);
     const compact = window.matchMedia('(max-width: 720px)').matches;
     const cols = compact ? 1 : 2, rows = Math.ceil(STATE_PANELS.length / cols);
     const traces = [], annotations = [];
     STATE_PANELS.forEach(([n, label, u], i) => {
       const ax = i === 0 ? '' : String(i + 1);
       const s = ms.series[n];
-      traces.push({ x: ms.times, y: s.p90, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { width: 0 }, hoverinfo: 'skip', showlegend: false });
-      traces.push({ x: ms.times, y: s.p10, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { width: 0 }, fill: 'tonexty',
+      traces.push({ x: msTimes, y: s.p90, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { width: 0 }, hoverinfo: 'skip', showlegend: false });
+      traces.push({ x: msTimes, y: s.p10, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { width: 0 }, fill: 'tonexty',
                     fillcolor: T.bandOuter, hoverinfo: 'skip', showlegend: false });
-      traces.push({ x: ms.times, y: s.mean, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { color: T.meanLine, width: 2 },
+      traces.push({ x: msTimes, y: s.mean, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { color: T.meanLine, width: 2 },
                     showlegend: false, hovertemplate: `<b>%{x|%a %d %b %H:%M}</b><br>%{y:.1f} ${u}<extra>${label}</extra>` });
       annotations.push({ text: `<b>${label}</b> (${u})`, xref: `x${ax} domain`, yref: `y${ax} domain`, x: 0, y: 1.18,
                          xanchor: 'left', showarrow: false, font: { size: 12, color: T.font } });
@@ -1961,16 +1988,48 @@
 
   function buildMainTraces(loc, T) {
     const traces = [];
-    const tHist = loc.historical.times;
-    const yHist = loc.historical.differential;
-    const tEns = loc.ensemble.times;
+    // Measured differential: every 15-minute reading when the payload has them, else hourly.
+    const h15 = loc.historical_15min;
+    const dots = new Map();                     // estimated points (gauge offline), by UTC ms
+    let tHist = [], yHist = [];
+    if (h15 && h15.times && h15.times.length) {
+      const standInFrom = h15.stand_in_from ? parseUtc(h15.stand_in_from).getTime() : Infinity;
+      let lastSolid = null;
+      h15.times.forEach((iso, k) => {
+        const ms = parseUtc(iso).getTime(), v = h15.differential[k];
+        if (ms < standInFrom) { tHist.push(ukWall(iso)); yHist.push(v); lastSolid = [ms, v]; }
+        else { if (!dots.size && lastSolid) dots.set(lastSolid[0], lastSolid[1]); dots.set(ms, v); }
+      });
+      const lastMs = parseUtc(h15.times[h15.times.length - 1]).getTime();
+      const lastV = h15.differential[h15.differential.length - 1];
+      let after = false;
+      [loc.gauge_stand_in, loc.estimated].forEach((part) => {
+        if (part && part.times) part.times.forEach((iso, k) => {
+          const ms = parseUtc(iso).getTime(), v = part.values[k];
+          if (ms > lastMs && v !== null && v !== undefined) { dots.set(ms, v); after = true; }
+        });
+      });
+      if (after && !dots.has(lastMs)) dots.set(lastMs, lastV);
+    } else {
+      tHist = loc.historical.times.map(ukWall);
+      yHist = loc.historical.differential;
+      [loc.gauge_stand_in, loc.estimated].forEach((part) => {
+        if (part && part.times) part.times.forEach((iso, k) => {
+          if (part.values[k] !== null && part.values[k] !== undefined) dots.set(parseUtc(iso).getTime(), part.values[k]);
+        });
+      });
+    }
+    const firstDot = dots.size ? Math.min(...dots.keys()) : null;
+    loc.__tHistStart = [tHist[0], firstDot !== null ? ukWall(new Date(firstDot)) : undefined]
+      .filter(Boolean).sort()[0];
+    const tEns = fcTimes(loc, loc.ensemble.times);
     const ensMean = loc.ensemble.mean;
 
     // Historical rainfall bars (right axis).
     if (loc.rainfall_historical.dates.length) {
       traces.push({
         type: 'bar',
-        x: loc.rainfall_historical.dates.map(addHalfDay),
+        x: loc.rainfall_historical.dates.map(ukNoon),
         y: loc.rainfall_historical.values,
         name: 'Historical Rainfall',
         marker: { color: T.rainHist, line: { width: 0 } },
@@ -1983,7 +2042,7 @@
 
     // Forecast rainfall bars with error whiskers.
     if (loc.rainfall_forecast.dates.length) {
-      const dates = loc.rainfall_forecast.dates.map(addHalfDay);
+      const dates = loc.rainfall_forecast.dates.map(ukNoon);
       const mean = loc.rainfall_forecast.mean;
       const p10 = loc.rainfall_forecast.p10;
       const p90 = loc.rainfall_forecast.p90;
@@ -2075,17 +2134,13 @@
     });
     // Any gauge offline (estimated from the neighbouring stretch, or a stand-in gauge): one dotted
     // line, joined to the last measured point, however the hours were estimated.
-    const dots = new Map();
-    [loc.gauge_stand_in, loc.estimated].forEach(part => {
-      if (part && part.times) part.times.forEach((tt, k) => { if (part.values[k] !== null && part.values[k] !== undefined) dots.set(tt, part.values[k]); });
-    });
     if (dots.size) {
-      const xs = [...dots.keys()].sort();
+      const ms = [...dots.keys()].sort((a, b) => a - b);
       traces.push({
         type: 'scatter',
         mode: 'lines',
-        x: xs,
-        y: xs.map(k => dots.get(k)),
+        x: ms.map((m) => ukWall(new Date(m))),
+        y: ms.map((m) => dots.get(m)),
         line: { color: T.historicalLine, width: 2, dash: 'dot' },
         name: EST_LABEL,
         hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>about %{y:.2f} m<extra>${EST_LABEL}</extra>`
@@ -2096,6 +2151,9 @@
   }
 
   const EST_LABEL = 'Estimated differential (gauge offline)';
+
+  /** A rain bar's position: midday (UK clock) of its UK calendar day. */
+  function ukNoon(iso) { return `${iso.slice(0, 10)}T12:00:00`; }
 
   function addHalfDay(iso) {
     // Source ISO strings (no trailing Z) get parsed as LOCAL time by JS.
@@ -2134,7 +2192,7 @@
   function buildMainLayout(loc, key, T) {
     // Use actual wall-clock time for the "Now" marker (not the forecast
     // start, which can lag the current minute by up to an hour).
-    const forecastStart = new Date().toISOString();
+    const forecastStart = ukWall(new Date());
     const shapes = buildFlagBandShapes(loc, key);
     // Vertical "Now" line.
     shapes.push({
@@ -2154,50 +2212,35 @@
     const flagMax = key === 'godstow' ? 1.2 : (key === 'isis' ? 0.8 : 3.0);
     const yMax = Math.max(dataMax + 0.15, flagMax);
 
-    // X range = first historical time to the midnight AFTER the last full
-    // rainfall forecast day. Date strings without timezone (e.g.
-    // "2026-05-21T00:00:00") are parsed as local time by JS, so we
-    // explicitly reconstruct the cut-off in UTC using the year/month/day
-    // components of the source string. Otherwise BST shifts the chart by
-    // a whole day and the last bar/label gets dropped off the right edge.
-    const xStart = loc.historical.times[0] || loc.ensemble.times[0];
+    // X range (UK clock) = the first measured point to the midnight after the last rain-forecast day.
+    const xStart = loc.__tHistStart || fcTimes(loc, loc.ensemble.times)[0];
     const lastForecastDate = loc.rainfall_forecast.dates.length
       ? loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1]
-      : loc.ensemble.times[loc.ensemble.times.length - 1];
-    const lastParts = lastForecastDate.slice(0, 10).split('-').map(Number); // [Y, M, D]
-    const xEnd = new Date(Date.UTC(lastParts[0], lastParts[1] - 1, lastParts[2] + 1, 0, 0, 0, 0));
+      : ukWall(loc.ensemble.times[loc.ensemble.times.length - 1]);
+    const xEndIso = `${addDays(lastForecastDate, 1)}T00:00:00`;
 
-    // Explicit tick vals avoid Plotly dropping the last tick. X positions stay at UTC
-    // midday (bar alignment); label text uses the UK calendar (Europe/London).
-    const xStartDate = new Date(xStart);
-    const tickStart = new Date(Date.UTC(
-      xStartDate.getUTCFullYear(),
-      xStartDate.getUTCMonth(),
-      xStartDate.getUTCDate(), 12, 0, 0, 0
-    ));
-    if (tickStart < xStartDate) {
-      tickStart.setUTCDate(tickStart.getUTCDate() + 1);
-    }
+    // Ticks at midday (UK clock) of each day, as the rain bars.
     const compact = isCompactChartLayout();
     const tickVals = [];
     const tickTexts = [];
-    for (let t = tickStart.getTime(); t < xEnd.getTime(); t += ONE_DAY_MS) {
-      const d = new Date(t);
-      const dayDisplay = d.toLocaleDateString('en-GB', { day: 'numeric', timeZone: TZ_UK });
-      tickVals.push(d.toISOString());
+    let day = xStart.slice(0, 10);
+    if (`${day}T12:00:00` < xStart) day = addDays(day, 1);
+    for (; `${day}T12:00:00` < xEndIso; day = addDays(day, 1)) {
+      const d = new Date(`${day}T12:00:00Z`);          // a calendar day: label it without a time zone
+      const dayDisplay = d.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' });
+      tickVals.push(`${day}T12:00:00`);
       if (compact) {
-        // Narrow viewports: day-of-month in UK timezone.
         tickTexts.push(dayDisplay);
       } else {
-        const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: TZ_UK });
-        const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: TZ_UK });
+        const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
+        const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
         tickTexts.push(`<b>${weekday} ${dayDisplay}</b><br>${month}`);
       }
     }
 
     const xAxisShared = {
       type: 'date',
-      range: [xStart, xEnd.toISOString()],
+      range: [xStart, xEndIso],
       tickmode: 'array',
       tickvals: tickVals,
       ticktext: tickTexts,
@@ -2213,7 +2256,7 @@
     // Stash on the loc payload so the prob plot can use the same settings.
     loc.__xAxisShared = xAxisShared;
     loc.__xStart = xStart;
-    loc.__xEnd = xEnd.toISOString();
+    loc.__xEnd = xEndIso;
 
     return {
       paper_bgcolor: T.paper,
@@ -2276,7 +2319,7 @@
     const order = key === 'godstow'
       ? ['green', 'amber', 'red']
       : ['green', 'light_blue', 'dark_blue', 'amber', 'red'];
-    const x = loc.flag_probability.times;
+    const x = fcTimes(loc, loc.flag_probability.times);
     const traces = order.map(k => ({
       type: 'scatter',
       mode: 'lines',
@@ -2307,7 +2350,7 @@
       dragmode: false,
       shapes: [{
         type: 'line',
-        x0: new Date().toISOString(), x1: new Date().toISOString(),
+        x0: ukWall(new Date()), x1: ukWall(new Date()),
         yref: 'paper', y0: 0, y1: 1,
         line: { color: T.nowLine, width: 2, dash: 'dash' }
       }],
@@ -2945,19 +2988,26 @@
     }
   }
 
-  // A home-screen app is often resumed rather than reloaded: when it comes back after 15+ min,
-  // reload if a newer forecast has been published since this one.
-  let LOADED_AT = Date.now(), LOADED_GEN = null;
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden || Date.now() - LOADED_AT < 15 * 60 * 1000) return;
+  // A new forecast is published every 15 minutes. While the page is open (and when a home-screen app
+  // is resumed), check every 2 minutes and redraw in place when there is a newer one, keeping the tab
+  // and scroll position.
+  let LOADED_GEN = null;
+  const CHECK_EVERY_MS = 2 * 60 * 1000;
+  function checkForNewForecast() {
+    if (document.hidden) return;
     fetch('forecast_data.json', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(b => {
-        if (b && b.generated_at && b.generated_at !== LOADED_GEN) location.reload();
-        else LOADED_AT = Date.now();
+        if (!b || !b.generated_at || b.generated_at === LOADED_GEN) return;
+        const y = window.scrollY;
+        LOADED_GEN = b.generated_at;
+        safeRenderAll(b);
+        window.scrollTo(0, y);
       })
       .catch(() => {});
-  });
+  }
+  setInterval(checkForNewForecast, CHECK_EVERY_MS);
+  document.addEventListener('visibilitychange', checkForNewForecast);
 
   // Load the forecast JSON written by generate_all_location_figures.py.
   fetch('forecast_data.json', { cache: 'no-store' })
@@ -2965,7 +3015,7 @@
       if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
       return r.json();
     })
-    .then((bundle) => { LOADED_AT = Date.now(); LOADED_GEN = bundle && bundle.generated_at; safeRenderAll(bundle); })
+    .then((bundle) => { LOADED_GEN = bundle && bundle.generated_at; safeRenderAll(bundle); })
     .catch(err => {
       console.error('forecast load failed', err);
       renderError(
