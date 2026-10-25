@@ -405,7 +405,7 @@ ERA5_FILE = Path('data') / 'termly' / 'era5_monthly_rain.csv'
 
 def seasonal_rain(root: Path, timeout: int = 60) -> list[dict]:
     """ECMWF SEAS5 (latest monthly run, 51 members, via Open-Meteo): rain over the catchment above
-    Farmoor for each whole month ahead, against ERA5 rainfall for that month in 1993-2025. Not yet
+    Farmoor for each whole month ahead, against ERA5 rainfall for that month since 1993. Not yet
     corrected for the model's own bias (needs the SEAS5 hindcasts)."""
     import requests
     lat = ','.join(str(p[0]) for p in RAIN_POINTS)
@@ -422,7 +422,7 @@ def seasonal_rain(root: Path, timeout: int = 60) -> list[dict]:
     ok = np.isfinite(rain).all(axis=0)
     rain, days = rain[:, ok], days[ok]
     clim = pd.read_csv(Path(root) / ERA5_FILE, index_col=0, parse_dates=True).iloc[:, 0]
-    clim = clim[(clim.index.year >= FIRST_YEAR) & (clim.index.year <= 2025)]
+    clim = clim[clim.index.year >= FIRST_YEAR]          # every complete month to date
     out = []
     for per in pd.PeriodIndex(days, freq='M').unique():
         sel = pd.PeriodIndex(days, freq='M') == per

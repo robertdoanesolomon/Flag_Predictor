@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-25 08:28 UTC",
+ "generated": "2026-10-25 08:33 UTC",
  "issued": "2026-10-24",
  "members": 33,
  "member_years": [
@@ -2166,7 +2166,7 @@
    "p90": 117,
    "normal": 61,
    "pct_normal": 108,
-   "wet": 0.49,
+   "wet": 0.47,
    "dry": 0.37
   },
   {
@@ -2175,7 +2175,7 @@
    "p10": 32,
    "p90": 97,
    "normal": 50,
-   "pct_normal": 110,
+   "pct_normal": 109,
    "wet": 0.47,
    "dry": 0.2
   },
@@ -2185,9 +2185,9 @@
    "p10": 41,
    "p90": 87,
    "normal": 45,
-   "pct_normal": 131,
+   "pct_normal": 132,
    "wet": 0.51,
-   "dry": 0.08
+   "dry": 0.04
   },
   {
    "month": "2027-04",
@@ -2195,8 +2195,8 @@
    "p10": 28,
    "p90": 103,
    "normal": 52,
-   "pct_normal": 117,
-   "wet": 0.41,
+   "pct_normal": 118,
+   "wet": 0.43,
    "dry": 0.12
   }
  ]
