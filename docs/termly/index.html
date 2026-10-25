@@ -161,7 +161,7 @@
     const t = D.torpids;
     const avg = V ? V.torpids_climatology : t && t.chance_clim;
     if (!t) { document.getElementById('torpids').textContent = 'Too far ahead.'; return; }
-    let h = `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): <b>${pct(t.chance)}</b> chance of being cancelled or cut short (usual: ${pct(avg)}).`;
+    let h = `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): <b>${pct(1 - t.chance)}</b> chance it goes ahead in full (usual: ${pct(1 - avg)}).`;
     if (t.days_away <= 12) h += ` Torpids is now inside the <a href="../">10-day forecast</a>: use that for the flags on each day.`;
     else if (t.days_away <= 45) h += ` From ${d8(new Date(Date.parse(t.first_day) - 10 * 864e5).toISOString().slice(0, 10))} it will be inside the <a href="../">10-day forecast</a>.`;
     document.getElementById('torpids').innerHTML = h;
