@@ -1144,3 +1144,10 @@ docs/termly/termly.json, and reruns the verification on Sundays and on code chan
 seasonal_download.yml, needs the CDSAPI_KEY secret): test whether the forecast rainfall for the coming
 months adds skill on top, for example by weighting the members by how well each year's rainfall matches
 the forecast.
+
+**25 Oct update.** Vacations added (Christmas and Easter vac), with the differential's flag band as the flag when
+OURCs flies none; lines refitted on every day since 2017 (Isis Blue 22 -> 23 m3/s; 91% / 92% agreement).
+Skill for the Christmas vac from the day before it starts: 28% (red days, Isis); Easter vac ~4%. The page
+now also shows ECMWF SEAS5 monthly rainfall (Open-Meteo, catchment average) against ERA5 1993-2025, not
+yet bias-corrected or used in the outlook; the current run is 8-31% above the ERA5 normal in every month,
+which looks partly like model bias, to be checked against the SEAS5 hindcasts (CDS secret CDS_API_KEY).

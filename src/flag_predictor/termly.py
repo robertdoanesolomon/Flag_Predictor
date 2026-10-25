@@ -4,11 +4,11 @@ cancellation-level river, from how wet the catchment already is.
 
 Everything runs on Farmoor's daily mean flow (EA gauge 1100TH, record from June 1992):
 
-  flags      the OURCs flag follows Farmoor flow closely. On the 2-day mean flow, the Isis lines are
-             22 / 34.5 / 39.5 m3/s (Green | Blue | Amber | Red, Light and Dark Blue merged, Black
-             counted as Red) and Godstow's 28 / 41.5 m3/s (Green | Amber | Red). Fitted on the OURCs
-             daily flags 2019-2026 (noon flag), where they give the right flag on 88-89% of days; they
-             rebuild the flag for every day since 1992.
+  flags      the flag follows Farmoor flow closely. On the 2-day mean flow, the Isis lines are
+             23 / 34.5 / 39.5 m3/s (Green | Blue | Amber | Red; Light and Dark Blue merged, Black
+             counted as Red) and Godstow's 28 / 41.5 m3/s (Green | Amber | Red). Fitted on every day
+             since 2017: the OURCs noon flag in term, the differential's flag band when no flag flies
+             (vacations, Grey). Right on 91% (Isis) / 92% (Godstow) of days.
   Torpids    since 1993 Torpids went ahead in every year whose Torpids week (Wed-Sat) averaged under
              44 m3/s at Farmoor (highest 42.9 in 1995) and was cancelled in every year above it (2000,
              2002, 2007, 2014, 2020, 2024, 2026). The one exception is 1994 (28 m3/s by these dates;
@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 
 FLOW_FILE = Path('data') / 'termly' / 'farmoor_daily.csv'
-LINES = {'isis': (22.0, 34.5, 39.5), 'godstow': (28.0, 41.5)}
+LINES = {'isis': (23.0, 34.5, 39.5), 'godstow': (28.0, 41.5)}
 NAMES = {'isis': ('green', 'blue', 'amber', 'red'), 'godstow': ('green', 'amber', 'red')}
 TORPIDS_FLOW = 44.0
 PREDICTORS = (7, 90)          # mean normal score of flow over the last 7 and 90 days
@@ -42,6 +42,10 @@ FIRST_YEAR = 1993             # first academic year (Sep - Aug) with a full reco
 HORIZON = 300                 # days ahead
 MIN_FLOW = 0.3                # m3/s: floor before taking logs (summer lows read near zero)
 TERMS = ('Michaelmas', 'Hilary', 'Trinity')
+PERIODS = ('Michaelmas', 'Christmas vac', 'Hilary', 'Easter vac', 'Trinity')
+# The differential's flag bands (m), standing in for the flag when OURCs flies none (vacations, Grey).
+BANDS = {'isis': ((0.215, 0.33, 0.44, 0.535), ('green', 'blue', 'blue', 'amber', 'red')),
+         'godstow': ((0.45, 0.75), ('green', 'amber', 'red'))}
 # How much to trust today's catchment state against an average year, by how many days ahead the
 # period starts: the forecast is a mix of the conditioned members (weight w) and the plain
 # climatology members (1 - w). Chosen on the leave-one-year-out hindcasts (verify_termly.py), where
@@ -87,7 +91,7 @@ def update_flow(root: Path, verbose: bool = True) -> pd.Series:
     return load_flow(root)
 
 
-def daily_flags(root: Path, loc: str) -> pd.Series:
+def ourcs_flags(root: Path, loc: str) -> pd.Series:
     """The OURCs flag at 12:00 UTC each day (merged scale; Grey and missing days left out)."""
     merge = {'green': 'green', 'light_blue': 'blue', 'dark_blue': 'blue', 'blue': 'blue', 'amber': 'amber',
              'red': 'red', 'black': 'red'}
@@ -107,6 +111,30 @@ def daily_flags(root: Path, loc: str) -> pd.Series:
         if len(k) and flags[k[-1]] in merge:
             out[d] = merge[flags[k[-1]]]
     return pd.Series(out, dtype=object)
+
+
+def differential_noon(root: Path, loc: str) -> pd.Series:
+    """The differential (m) around noon each day: the stored record plus the recent readings."""
+    s = pd.read_csv(Path(root) / 'data' / 'termly' / f'differential_noon_{loc}.csv', index_col=0,
+                    parse_dates=True).iloc[:, 0]
+    recent = Path(root) / 'data' / 'flags' / f'differential_after_csv_{loc}.csv.gz'
+    if recent.exists():
+        a = pd.read_csv(recent, parse_dates=['timestamp']).set_index('timestamp')['differential']
+        a.index = pd.to_datetime(a.index, utc=True).tz_convert(None)
+        a = a[(a.index.hour >= 11) & (a.index.hour <= 13)]
+        s = pd.concat([s, a.groupby(a.index.normalize()).median()])
+        s = s[~s.index.duplicated(keep='last')]
+    return s.sort_index()
+
+
+def daily_flags(root: Path, loc: str) -> pd.Series:
+    """The flag each day: the OURCs flag when one is flying, otherwise (vacations, Grey) the
+    differential's flag band at noon."""
+    f = ourcs_flags(root, loc)
+    d = differential_noon(root, loc).dropna()
+    lines, names = BANDS[loc]
+    band = pd.Series(np.array(names)[np.searchsorted(lines, d.to_numpy(), side='right')], d.index)
+    return f.combine_first(band).sort_index()
 
 
 # ---------------------------------------------------------------- flags from flow
@@ -144,7 +172,11 @@ def term_start(term: str, acad: int) -> pd.Timestamp:
 
 
 def term_window(term: str, acad: int) -> tuple[pd.Timestamp, pd.Timestamp]:
-    """Sunday of 0th week to Saturday of 8th week (63 days)."""
+    """A term: Sunday of 0th week to Saturday of 8th week (63 days). A vacation: the days between."""
+    if term == 'Christmas vac':
+        return term_window('Michaelmas', acad)[1] + pd.Timedelta(days=1), term_window('Hilary', acad)[0] - pd.Timedelta(days=1)
+    if term == 'Easter vac':
+        return term_window('Hilary', acad)[1] + pd.Timedelta(days=1), term_window('Trinity', acad)[0] - pd.Timedelta(days=1)
     s = term_start(term, acad)
     return s - pd.Timedelta(days=7), s + pd.Timedelta(days=55)
 
@@ -333,3 +365,44 @@ def race_flow(flow: np.ndarray, days: pd.DatetimeIndex, race: pd.DatetimeIndex) 
 def crps(ens: np.ndarray, obs: float) -> float:
     ens = np.asarray(ens, float)
     return float(np.mean(np.abs(ens - obs)) - 0.5 * np.mean(np.abs(ens[:, None] - ens[None, :])))
+
+
+# ---------------------------------------------------------------- seasonal rainfall forecast
+
+RAIN_POINTS = ((51.95, -1.95), (51.70, -1.90), (51.65, -1.60), (51.85, -1.50))   # across the catchment
+ERA5_FILE = Path('data') / 'termly' / 'era5_monthly_rain.csv'
+
+
+def seasonal_rain(root: Path, timeout: int = 60) -> list[dict]:
+    """ECMWF SEAS5 (latest monthly run, 51 members, via Open-Meteo): rain over the catchment above
+    Farmoor for each whole month ahead, against ERA5 rainfall for that month in 1993-2025. Not yet
+    corrected for the model's own bias (needs the SEAS5 hindcasts)."""
+    import requests
+    lat = ','.join(str(p[0]) for p in RAIN_POINTS)
+    lon = ','.join(str(p[1]) for p in RAIN_POINTS)
+    r = requests.get('https://seasonal-api.open-meteo.com/v1/seasonal', timeout=timeout,
+                     params={'latitude': lat, 'longitude': lon, 'daily': 'precipitation_sum',
+                             'models': 'ecmwf_seas5', 'forecast_days': 215})
+    r.raise_for_status()
+    js = r.json()
+    js = js if isinstance(js, list) else [js]
+    keys = [k for k in js[0]['daily'] if k.startswith('precipitation_sum')]
+    days = pd.to_datetime(js[0]['daily']['time'])
+    rain = np.nanmean([[np.array(j['daily'][k], dtype=float) for k in keys] for j in js], axis=0)  # members x days
+    ok = np.isfinite(rain).all(axis=0)
+    rain, days = rain[:, ok], days[ok]
+    clim = pd.read_csv(Path(root) / ERA5_FILE, index_col=0, parse_dates=True).iloc[:, 0]
+    clim = clim[(clim.index.year >= FIRST_YEAR) & (clim.index.year <= 2025)]
+    out = []
+    for per in pd.PeriodIndex(days, freq='M').unique():
+        sel = pd.PeriodIndex(days, freq='M') == per
+        if sel.sum() < per.days_in_month:
+            continue
+        tot = rain[:, sel].sum(axis=1)
+        c = clim[clim.index.month == per.month]
+        lo, hi = c.quantile(1 / 3), c.quantile(2 / 3)
+        out.append({'month': str(per), 'median': round(float(np.median(tot))), 'p10': round(float(np.percentile(tot, 10))),
+                    'p90': round(float(np.percentile(tot, 90))), 'normal': round(float(c.median())),
+                    'pct_normal': round(float(100 * np.median(tot) / c.median())),
+                    'wet': round(float((tot > hi).mean()), 2), 'dry': round(float((tot < lo).mean()), 2)})
+    return out

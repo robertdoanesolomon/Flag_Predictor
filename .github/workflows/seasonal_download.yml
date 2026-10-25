@@ -1,7 +1,7 @@
 name: Download seasonal forecasts
 
 # C3S seasonal forecasts (ECMWF SEAS5) for the termly outlook: download_seasonal.py.
-# Needs the repository secret CDSAPI_KEY (the Copernicus Climate Data Store personal access token).
+# Needs the repository secret CDS_API_KEY (the Copernicus Climate Data Store personal access token).
 #   - the whole archive (hindcasts 1993-2016 + forecasts since 2017): run from the Actions tab, or
 #     change data/seasonal/request.txt; files already downloaded are skipped, so reruns fill gaps
 #   - each month's new forecast: the schedule below (ECMWF publishes on the 5th)
@@ -25,7 +25,7 @@ jobs:
       contents: write
     env:
       CDSAPI_URL: https://cds.climate.copernicus.eu/api
-      CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
+      CDSAPI_KEY: ${{ secrets.CDS_API_KEY || secrets.CDSAPI_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:

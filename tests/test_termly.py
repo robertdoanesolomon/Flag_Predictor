@@ -37,6 +37,8 @@ def test_flag_ranks_two_day_mean():
 def test_blend_and_weighted_quantile():
     assert T.blend_weight(-3) == T.blend_weight(0) == 0.9
     assert T.blend_weight(400) == 0.2
+    w0, w1 = T.term_window('Christmas vac', 2026)
+    assert (w0, w1) == (pd.Timestamp('2026-12-06'), pd.Timestamp('2027-01-09'))
     x, w = np.arange(11.0), np.full(11, 1 / 11)
     assert T.wquantile(x, w, 50) == pytest.approx(5.0)
     assert T.wcrps(x, w, 5.0) == pytest.approx(T.crps(x, 5.0))

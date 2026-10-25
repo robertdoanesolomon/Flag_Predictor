@@ -1,1388 +1,2058 @@
 {
- "generated": "2026-10-24 21:04 UTC",
- "years": "1993/94 - 2025/26",
- "n_years": 33,
- "lines": {
-  "isis": [
-   22.0,
-   34.5,
-   39.5
-  ],
-  "godstow": [
-   28.0,
-   41.5
-  ]
- },
- "torpids_flow": 44.0,
+ "generated": "2026-10-25 07:28 UTC",
+ "years": "1993/94-2025/26",
  "skill": [
   {
    "loc": "godstow",
-   "term": "Michaelmas",
+   "period": "Christmas vac",
    "flag": "amber",
-   "lead": "during the term",
-   "n": 137,
-   "years": 33,
-   "skill": 0.128,
-   "mae": 2.0,
-   "mae_clim": 2.7,
-   "in_range": 0.87,
-   "mean_obs": 2.5
-  },
-  {
-   "loc": "godstow",
-   "term": "Michaelmas",
-   "flag": "amber",
-   "lead": "up to 1 month before",
-   "n": 71,
-   "years": 33,
-   "skill": 0.108,
+   "lead": "1-2 months",
+   "skill": 0.012,
    "mae": 3.7,
-   "mae_clim": 4.6,
-   "in_range": 0.87,
-   "mean_obs": 4.6
+   "mae_clim": 3.7,
+   "in_range": 0.95,
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Michaelmas",
+   "period": "Christmas vac",
    "flag": "amber",
-   "lead": "1-2 months before",
-   "n": 23,
-   "years": 23,
-   "skill": 0.063,
-   "mae": 4.6,
-   "mae_clim": 5.5,
-   "in_range": 0.83,
-   "mean_obs": 5.6
+   "lead": "2-3 months",
+   "skill": 0.027,
+   "mae": 3.7,
+   "mae_clim": 3.7,
+   "in_range": 0.97,
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Michaelmas",
-   "flag": "green",
-   "lead": "during the term",
-   "n": 137,
-   "years": 33,
-   "skill": 0.27,
-   "mae": 4.7,
-   "mae_clim": 6.6,
-   "in_range": 0.86,
-   "mean_obs": 21.9
-  },
-  {
-   "loc": "godstow",
-   "term": "Michaelmas",
-   "flag": "green",
-   "lead": "up to 1 month before",
-   "n": 71,
-   "years": 33,
-   "skill": 0.093,
-   "mae": 9.7,
-   "mae_clim": 10.1,
-   "in_range": 0.9,
-   "mean_obs": 53.0
-  },
-  {
-   "loc": "godstow",
-   "term": "Michaelmas",
-   "flag": "green",
-   "lead": "1-2 months before",
-   "n": 23,
-   "years": 23,
-   "skill": 0.029,
-   "mae": 11.4,
-   "mae_clim": 11.0,
-   "in_range": 0.87,
-   "mean_obs": 52.0
-  },
-  {
-   "loc": "godstow",
-   "term": "Michaelmas",
-   "flag": "red",
-   "lead": "during the term",
-   "n": 137,
-   "years": 33,
-   "skill": 0.284,
-   "mae": 3.3,
-   "mae_clim": 4.0,
-   "in_range": 0.93,
-   "mean_obs": 4.0
-  },
-  {
-   "loc": "godstow",
-   "term": "Michaelmas",
-   "flag": "red",
-   "lead": "up to 1 month before",
-   "n": 71,
-   "years": 33,
-   "skill": 0.088,
-   "mae": 5.4,
-   "mae_clim": 5.5,
-   "in_range": 0.9,
-   "mean_obs": 5.5
-  },
-  {
-   "loc": "godstow",
-   "term": "Michaelmas",
-   "flag": "red",
-   "lead": "1-2 months before",
-   "n": 23,
-   "years": 23,
-   "skill": 0.03,
-   "mae": 5.4,
-   "mae_clim": 5.4,
-   "in_range": 0.91,
-   "mean_obs": 5.4
-  },
-  {
-   "loc": "godstow",
-   "term": "Hilary",
+   "period": "Christmas vac",
    "flag": "amber",
-   "lead": "during the term",
-   "n": 132,
-   "years": 33,
-   "skill": 0.138,
-   "mae": 2.9,
-   "mae_clim": 3.5,
+   "lead": "3-4 months",
+   "skill": 0.027,
+   "mae": 3.6,
+   "mae_clim": 3.7,
+   "in_range": 0.94,
+   "n": 33
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "amber",
+   "lead": "during",
+   "skill": 0.089,
+   "mae": 2.1,
+   "mae_clim": 2.5,
    "in_range": 0.88,
-   "mean_obs": 5.9
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Christmas vac",
    "flag": "amber",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
+   "lead": "up to 1 month",
+   "skill": 0.072,
+   "mae": 3.4,
+   "mae_clim": 3.7,
+   "in_range": 0.95,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "1-2 months",
+   "skill": 0.19,
+   "mae": 8.5,
+   "mae_clim": 10.2,
+   "in_range": 0.97,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "2-3 months",
+   "skill": 0.054,
+   "mae": 10.3,
+   "mae_clim": 10.2,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "3-4 months",
+   "skill": 0.027,
+   "mae": 10.3,
+   "mae_clim": 10.2,
+   "in_range": 0.88,
+   "n": 33
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "during",
+   "skill": 0.362,
+   "mae": 3.1,
+   "mae_clim": 5.2,
+   "in_range": 0.92,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "up to 1 month",
+   "skill": 0.293,
+   "mae": 7.3,
+   "mae_clim": 10.2,
+   "in_range": 0.92,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "red",
+   "lead": "1-2 months",
+   "skill": 0.158,
+   "mae": 6.9,
+   "mae_clim": 8.2,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "red",
+   "lead": "2-3 months",
+   "skill": 0.025,
+   "mae": 8.6,
+   "mae_clim": 8.2,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "red",
+   "lead": "3-4 months",
+   "skill": 0.021,
+   "mae": 8.5,
+   "mae_clim": 8.2,
+   "in_range": 0.91,
+   "n": 33
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "red",
+   "lead": "during",
+   "skill": 0.203,
+   "mae": 3.6,
+   "mae_clim": 4.9,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Christmas vac",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": 0.263,
+   "mae": 6.2,
+   "mae_clim": 8.2,
+   "in_range": 0.92,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "1-2 months",
+   "skill": 0.13,
+   "mae": 2.5,
+   "mae_clim": 2.8,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "2-3 months",
+   "skill": 0.112,
+   "mae": 2.5,
+   "mae_clim": 2.8,
+   "in_range": 0.92,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "3-4 months",
+   "skill": 0.038,
+   "mae": 2.7,
+   "mae_clim": 2.8,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "4+ months",
+   "skill": 0.007,
+   "mae": 2.8,
+   "mae_clim": 2.8,
+   "in_range": 0.89,
+   "n": 165
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "during",
+   "skill": 0.158,
+   "mae": 1.3,
+   "mae_clim": 1.4,
+   "in_range": 0.94,
+   "n": 83
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "up to 1 month",
+   "skill": 0.148,
+   "mae": 2.5,
+   "mae_clim": 2.8,
+   "in_range": 0.93,
+   "n": 70
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "1-2 months",
    "skill": 0.122,
-   "mae": 5.4,
-   "mae_clim": 5.7,
-   "in_range": 0.83,
-   "mean_obs": 13.0
+   "mae": 5.8,
+   "mae_clim": 6.6,
+   "in_range": 0.92,
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "2-3 months",
+   "skill": 0.098,
+   "mae": 5.9,
+   "mae_clim": 6.6,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "3-4 months",
+   "skill": 0.047,
+   "mae": 6.3,
+   "mae_clim": 6.5,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "4+ months",
+   "skill": 0.003,
+   "mae": 6.5,
+   "mae_clim": 6.5,
+   "in_range": 0.88,
+   "n": 165
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "during",
+   "skill": 0.208,
+   "mae": 3.1,
+   "mae_clim": 3.3,
+   "in_range": 0.92,
+   "n": 83
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "up to 1 month",
+   "skill": 0.077,
+   "mae": 6.1,
+   "mae_clim": 6.3,
+   "in_range": 0.89,
+   "n": 70
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "1-2 months",
+   "skill": 0.079,
+   "mae": 3.7,
+   "mae_clim": 3.8,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "2-3 months",
+   "skill": 0.074,
+   "mae": 3.6,
+   "mae_clim": 3.8,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "3-4 months",
+   "skill": 0.039,
+   "mae": 3.8,
+   "mae_clim": 3.8,
+   "in_range": 0.85,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "4+ months",
+   "skill": 0.002,
+   "mae": 3.8,
+   "mae_clim": 3.8,
+   "in_range": 0.88,
+   "n": 165
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "during",
+   "skill": 0.131,
+   "mae": 2.1,
+   "mae_clim": 2.2,
+   "in_range": 0.87,
+   "n": 83
+  },
+  {
+   "loc": "godstow",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": 0.038,
+   "mae": 3.6,
+   "mae_clim": 3.5,
+   "in_range": 0.89,
+   "n": 70
+  },
+  {
+   "loc": "godstow",
+   "period": "Hilary",
    "flag": "amber",
-   "lead": "1-2 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": 0.075,
    "mae": 5.3,
    "mae_clim": 5.7,
    "in_range": 0.82,
-   "mean_obs": 13.0
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "amber",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": 0.092,
    "mae": 5.3,
    "mae_clim": 5.7,
    "in_range": 0.85,
-   "mean_obs": 13.0
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "amber",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": 0.019,
    "mae": 5.7,
    "mae_clim": 5.7,
    "in_range": 0.82,
-   "mean_obs": 13.0
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "amber",
-   "lead": "4+ months before",
-   "n": 33,
-   "years": 33,
+   "lead": "4+ months",
    "skill": 0.012,
    "mae": 5.6,
    "mae_clim": 5.7,
    "in_range": 0.82,
-   "mean_obs": 13.0
+   "n": 33
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
-   "flag": "green",
-   "lead": "during the term",
-   "n": 132,
-   "years": 33,
-   "skill": 0.326,
-   "mae": 6.4,
-   "mae_clim": 10.1,
-   "in_range": 0.9,
-   "mean_obs": 18.7
+   "period": "Hilary",
+   "flag": "amber",
+   "lead": "during",
+   "skill": 0.138,
+   "mae": 2.9,
+   "mae_clim": 3.5,
+   "in_range": 0.88,
+   "n": 132
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
-   "flag": "green",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.269,
-   "mae": 12.5,
-   "mae_clim": 17.9,
-   "in_range": 0.82,
-   "mean_obs": 31.8
+   "period": "Hilary",
+   "flag": "amber",
+   "lead": "up to 1 month",
+   "skill": 0.122,
+   "mae": 5.4,
+   "mae_clim": 5.7,
+   "in_range": 0.83,
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "green",
-   "lead": "1-2 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": 0.169,
    "mae": 14.7,
    "mae_clim": 17.9,
    "in_range": 0.83,
-   "mean_obs": 31.8
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "green",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": 0.125,
    "mae": 15.2,
    "mae_clim": 17.9,
    "in_range": 0.8,
-   "mean_obs": 31.8
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "green",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": 0.034,
    "mae": 17.1,
    "mae_clim": 17.9,
    "in_range": 0.83,
-   "mean_obs": 31.8
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "green",
-   "lead": "4+ months before",
-   "n": 33,
-   "years": 33,
+   "lead": "4+ months",
    "skill": 0.011,
    "mae": 17.9,
    "mae_clim": 17.9,
    "in_range": 0.82,
-   "mean_obs": 31.8
+   "n": 33
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
-   "flag": "red",
-   "lead": "during the term",
-   "n": 132,
-   "years": 33,
-   "skill": 0.249,
-   "mae": 5.2,
-   "mae_clim": 7.1,
-   "in_range": 0.89,
-   "mean_obs": 8.1
+   "period": "Hilary",
+   "flag": "green",
+   "lead": "during",
+   "skill": 0.326,
+   "mae": 6.4,
+   "mae_clim": 10.1,
+   "in_range": 0.9,
+   "n": 132
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
-   "flag": "red",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.167,
-   "mae": 11.2,
-   "mae_clim": 15.1,
-   "in_range": 0.85,
-   "mean_obs": 18.2
+   "period": "Hilary",
+   "flag": "green",
+   "lead": "up to 1 month",
+   "skill": 0.269,
+   "mae": 12.5,
+   "mae_clim": 17.9,
+   "in_range": 0.82,
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "red",
-   "lead": "1-2 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": 0.089,
    "mae": 12.4,
    "mae_clim": 14.9,
    "in_range": 0.85,
-   "mean_obs": 18.2
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "red",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": 0.061,
    "mae": 13.0,
    "mae_clim": 14.9,
    "in_range": 0.83,
-   "mean_obs": 18.2
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "red",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": 0.002,
    "mae": 14.2,
    "mae_clim": 14.9,
    "in_range": 0.86,
-   "mean_obs": 18.2
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "red",
-   "lead": "4+ months before",
-   "n": 33,
-   "years": 33,
+   "lead": "4+ months",
    "skill": 0.001,
    "mae": 14.6,
    "mae_clim": 14.9,
    "in_range": 0.88,
-   "mean_obs": 18.2
+   "n": 33
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
-   "flag": "amber",
-   "lead": "during the term",
-   "n": 136,
-   "years": 33,
-   "skill": 0.157,
-   "mae": 0.4,
-   "mae_clim": 0.5,
-   "in_range": 0.96,
-   "mean_obs": 0.5
-  },
-  {
-   "loc": "godstow",
-   "term": "Trinity",
-   "flag": "amber",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.177,
-   "mae": 1.8,
-   "mae_clim": 2.1,
+   "period": "Hilary",
+   "flag": "red",
+   "lead": "during",
+   "skill": 0.249,
+   "mae": 5.2,
+   "mae_clim": 7.1,
    "in_range": 0.89,
-   "mean_obs": 2.1
+   "n": 132
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Hilary",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": 0.167,
+   "mae": 11.2,
+   "mae_clim": 15.1,
+   "in_range": 0.85,
+   "n": 66
+  },
+  {
+   "loc": "godstow",
+   "period": "Michaelmas",
    "flag": "amber",
-   "lead": "1-2 months before",
-   "n": 73,
-   "years": 33,
+   "lead": "1-2 months",
+   "skill": 0.063,
+   "mae": 4.6,
+   "mae_clim": 5.5,
+   "in_range": 0.83,
+   "n": 23
+  },
+  {
+   "loc": "godstow",
+   "period": "Michaelmas",
+   "flag": "amber",
+   "lead": "during",
+   "skill": 0.128,
+   "mae": 2.0,
+   "mae_clim": 2.7,
+   "in_range": 0.87,
+   "n": 137
+  },
+  {
+   "loc": "godstow",
+   "period": "Michaelmas",
+   "flag": "amber",
+   "lead": "up to 1 month",
+   "skill": 0.108,
+   "mae": 3.7,
+   "mae_clim": 4.6,
+   "in_range": 0.87,
+   "n": 71
+  },
+  {
+   "loc": "godstow",
+   "period": "Michaelmas",
+   "flag": "green",
+   "lead": "1-2 months",
+   "skill": 0.029,
+   "mae": 11.4,
+   "mae_clim": 11.0,
+   "in_range": 0.87,
+   "n": 23
+  },
+  {
+   "loc": "godstow",
+   "period": "Michaelmas",
+   "flag": "green",
+   "lead": "during",
+   "skill": 0.27,
+   "mae": 4.7,
+   "mae_clim": 6.6,
+   "in_range": 0.86,
+   "n": 137
+  },
+  {
+   "loc": "godstow",
+   "period": "Michaelmas",
+   "flag": "green",
+   "lead": "up to 1 month",
+   "skill": 0.093,
+   "mae": 9.7,
+   "mae_clim": 10.1,
+   "in_range": 0.9,
+   "n": 71
+  },
+  {
+   "loc": "godstow",
+   "period": "Michaelmas",
+   "flag": "red",
+   "lead": "1-2 months",
+   "skill": 0.03,
+   "mae": 5.4,
+   "mae_clim": 5.4,
+   "in_range": 0.91,
+   "n": 23
+  },
+  {
+   "loc": "godstow",
+   "period": "Michaelmas",
+   "flag": "red",
+   "lead": "during",
+   "skill": 0.284,
+   "mae": 3.3,
+   "mae_clim": 4.0,
+   "in_range": 0.93,
+   "n": 137
+  },
+  {
+   "loc": "godstow",
+   "period": "Michaelmas",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": 0.088,
+   "mae": 5.4,
+   "mae_clim": 5.5,
+   "in_range": 0.9,
+   "n": 71
+  },
+  {
+   "loc": "godstow",
+   "period": "Trinity",
+   "flag": "amber",
+   "lead": "1-2 months",
    "skill": 0.004,
    "mae": 2.1,
    "mae_clim": 2.1,
    "in_range": 0.85,
-   "mean_obs": 2.1
+   "n": 73
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "amber",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": -0.044,
    "mae": 2.2,
    "mae_clim": 2.1,
    "in_range": 0.86,
-   "mean_obs": 2.1
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "amber",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": 0.007,
    "mae": 2.1,
    "mae_clim": 2.1,
    "in_range": 0.85,
-   "mean_obs": 2.1
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "amber",
-   "lead": "4+ months before",
-   "n": 249,
-   "years": 33,
+   "lead": "4+ months",
    "skill": -0.006,
    "mae": 2.0,
    "mae_clim": 2.0,
    "in_range": 0.86,
-   "mean_obs": 2.0
+   "n": 249
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
-   "flag": "green",
-   "lead": "during the term",
-   "n": 136,
-   "years": 33,
-   "skill": 0.05,
-   "mae": 0.7,
-   "mae_clim": 0.7,
+   "period": "Trinity",
+   "flag": "amber",
+   "lead": "during",
+   "skill": 0.157,
+   "mae": 0.4,
+   "mae_clim": 0.5,
    "in_range": 0.96,
-   "mean_obs": 28.3
+   "n": 136
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
-   "flag": "green",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.144,
-   "mae": 2.6,
-   "mae_clim": 3.0,
-   "in_range": 0.94,
-   "mean_obs": 60.0
+   "period": "Trinity",
+   "flag": "amber",
+   "lead": "up to 1 month",
+   "skill": 0.177,
+   "mae": 1.8,
+   "mae_clim": 2.1,
+   "in_range": 0.89,
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "green",
-   "lead": "1-2 months before",
-   "n": 73,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": -0.009,
    "mae": 2.9,
    "mae_clim": 2.9,
    "in_range": 0.9,
-   "mean_obs": 60.1
+   "n": 73
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "green",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": -0.051,
    "mae": 3.1,
    "mae_clim": 3.0,
    "in_range": 0.91,
-   "mean_obs": 60.0
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "green",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": 0.003,
    "mae": 3.0,
    "mae_clim": 3.0,
    "in_range": 0.91,
-   "mean_obs": 60.0
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "green",
-   "lead": "4+ months before",
-   "n": 249,
-   "years": 33,
+   "lead": "4+ months",
    "skill": -0.008,
    "mae": 2.9,
    "mae_clim": 2.9,
    "in_range": 0.89,
-   "mean_obs": 60.1
+   "n": 249
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
-   "flag": "red",
-   "lead": "during the term",
-   "n": 136,
-   "years": 33,
-   "skill": -0.156,
-   "mae": 0.3,
-   "mae_clim": 0.2,
+   "period": "Trinity",
+   "flag": "green",
+   "lead": "during",
+   "skill": 0.05,
+   "mae": 0.7,
+   "mae_clim": 0.7,
    "in_range": 0.96,
-   "mean_obs": 0.2
+   "n": 136
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
-   "flag": "red",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": -0.047,
-   "mae": 0.9,
-   "mae_clim": 0.9,
-   "in_range": 0.89,
-   "mean_obs": 0.9
+   "period": "Trinity",
+   "flag": "green",
+   "lead": "up to 1 month",
+   "skill": 0.144,
+   "mae": 2.6,
+   "mae_clim": 3.0,
+   "in_range": 0.94,
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "red",
-   "lead": "1-2 months before",
-   "n": 73,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": -0.054,
    "mae": 0.8,
    "mae_clim": 0.8,
    "in_range": 0.9,
-   "mean_obs": 0.8
+   "n": 73
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "red",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": -0.09,
    "mae": 0.9,
    "mae_clim": 0.9,
    "in_range": 0.89,
-   "mean_obs": 0.9
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "red",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": -0.021,
    "mae": 0.9,
    "mae_clim": 0.9,
    "in_range": 0.89,
-   "mean_obs": 0.9
+   "n": 66
   },
   {
    "loc": "godstow",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "red",
-   "lead": "4+ months before",
-   "n": 249,
-   "years": 33,
+   "lead": "4+ months",
    "skill": -0.007,
    "mae": 0.9,
    "mae_clim": 0.9,
    "in_range": 0.88,
-   "mean_obs": 0.9
+   "n": 249
+  },
+  {
+   "loc": "godstow",
+   "period": "Trinity",
+   "flag": "red",
+   "lead": "during",
+   "skill": -0.156,
+   "mae": 0.3,
+   "mae_clim": 0.2,
+   "in_range": 0.96,
+   "n": 136
+  },
+  {
+   "loc": "godstow",
+   "period": "Trinity",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": -0.047,
+   "mae": 0.9,
+   "mae_clim": 0.9,
+   "in_range": 0.89,
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Michaelmas",
+   "period": "Christmas vac",
    "flag": "amber",
-   "lead": "during the term",
-   "n": 137,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": 0.059,
+   "mae": 1.8,
+   "mae_clim": 2.0,
+   "in_range": 0.92,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "amber",
+   "lead": "2-3 months",
+   "skill": 0.03,
+   "mae": 1.9,
+   "mae_clim": 2.0,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "amber",
+   "lead": "3-4 months",
+   "skill": 0.016,
+   "mae": 2.0,
+   "mae_clim": 2.0,
+   "in_range": 0.88,
+   "n": 33
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "amber",
+   "lead": "during",
+   "skill": 0.056,
    "mae": 0.9,
    "mae_clim": 1.0,
    "in_range": 0.88,
-   "mean_obs": 1.0
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Michaelmas",
+   "period": "Christmas vac",
    "flag": "amber",
-   "lead": "up to 1 month before",
-   "n": 71,
-   "years": 33,
-   "skill": 0.052,
-   "mae": 1.5,
-   "mae_clim": 1.7,
-   "in_range": 0.87,
-   "mean_obs": 1.7
-  },
-  {
-   "loc": "isis",
-   "term": "Michaelmas",
-   "flag": "amber",
-   "lead": "1-2 months before",
-   "n": 23,
-   "years": 23,
-   "skill": 0.063,
+   "lead": "up to 1 month",
+   "skill": 0.102,
    "mae": 1.7,
-   "mae_clim": 1.9,
+   "mae_clim": 2.0,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "blue",
+   "lead": "1-2 months",
+   "skill": -0.012,
+   "mae": 4.2,
+   "mae_clim": 4.0,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "blue",
+   "lead": "2-3 months",
+   "skill": -0.018,
+   "mae": 4.3,
+   "mae_clim": 4.0,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "blue",
+   "lead": "3-4 months",
+   "skill": 0.009,
+   "mae": 4.1,
+   "mae_clim": 4.0,
    "in_range": 0.91,
-   "mean_obs": 1.9
+   "n": 33
   },
   {
    "loc": "isis",
-   "term": "Michaelmas",
+   "period": "Christmas vac",
    "flag": "blue",
-   "lead": "during the term",
-   "n": 137,
-   "years": 33,
-   "skill": 0.093,
-   "mae": 2.9,
-   "mae_clim": 3.3,
-   "in_range": 0.88,
-   "mean_obs": 3.5
-  },
-  {
-   "loc": "isis",
-   "term": "Michaelmas",
-   "flag": "blue",
-   "lead": "up to 1 month before",
-   "n": 71,
-   "years": 33,
-   "skill": 0.083,
-   "mae": 5.0,
-   "mae_clim": 5.9,
-   "in_range": 0.85,
-   "mean_obs": 6.3
-  },
-  {
-   "loc": "isis",
-   "term": "Michaelmas",
-   "flag": "blue",
-   "lead": "1-2 months before",
-   "n": 23,
-   "years": 23,
-   "skill": 0.049,
-   "mae": 6.5,
-   "mae_clim": 7.0,
-   "in_range": 0.78,
-   "mean_obs": 8.1
-  },
-  {
-   "loc": "isis",
-   "term": "Michaelmas",
-   "flag": "green",
-   "lead": "during the term",
-   "n": 137,
-   "years": 33,
-   "skill": 0.307,
-   "mae": 5.4,
-   "mae_clim": 8.2,
-   "in_range": 0.88,
-   "mean_obs": 19.7
-  },
-  {
-   "loc": "isis",
-   "term": "Michaelmas",
-   "flag": "green",
-   "lead": "up to 1 month before",
-   "n": 71,
-   "years": 33,
-   "skill": 0.103,
-   "mae": 12.2,
-   "mae_clim": 13.4,
-   "in_range": 0.85,
-   "mean_obs": 49.0
-  },
-  {
-   "loc": "isis",
-   "term": "Michaelmas",
-   "flag": "green",
-   "lead": "1-2 months before",
-   "n": 23,
-   "years": 23,
-   "skill": 0.033,
-   "mae": 14.5,
-   "mae_clim": 14.7,
+   "lead": "during",
+   "skill": 0.05,
+   "mae": 2.6,
+   "mae_clim": 2.8,
    "in_range": 0.83,
-   "mean_obs": 46.8
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Michaelmas",
+   "period": "Christmas vac",
+   "flag": "blue",
+   "lead": "up to 1 month",
+   "skill": 0.035,
+   "mae": 4.0,
+   "mae_clim": 4.0,
+   "in_range": 0.86,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "1-2 months",
+   "skill": 0.19,
+   "mae": 8.4,
+   "mae_clim": 10.3,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "2-3 months",
+   "skill": 0.068,
+   "mae": 10.1,
+   "mae_clim": 10.3,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "3-4 months",
+   "skill": 0.036,
+   "mae": 10.4,
+   "mae_clim": 10.3,
+   "in_range": 0.94,
+   "n": 33
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "during",
+   "skill": 0.431,
+   "mae": 2.5,
+   "mae_clim": 4.9,
+   "in_range": 0.94,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "green",
+   "lead": "up to 1 month",
+   "skill": 0.293,
+   "mae": 7.4,
+   "mae_clim": 10.3,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
    "flag": "red",
-   "lead": "during the term",
-   "n": 137,
-   "years": 33,
-   "skill": 0.278,
+   "lead": "1-2 months",
+   "skill": 0.16,
+   "mae": 7.5,
+   "mae_clim": 8.5,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "red",
+   "lead": "2-3 months",
+   "skill": 0.034,
+   "mae": 8.9,
+   "mae_clim": 8.5,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "red",
+   "lead": "3-4 months",
+   "skill": 0.027,
+   "mae": 8.7,
+   "mae_clim": 8.5,
+   "in_range": 0.91,
+   "n": 33
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "red",
+   "lead": "during",
+   "skill": 0.226,
+   "mae": 3.6,
+   "mae_clim": 4.9,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Christmas vac",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": 0.269,
+   "mae": 6.4,
+   "mae_clim": 8.5,
+   "in_range": 0.94,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "1-2 months",
+   "skill": 0.139,
+   "mae": 1.0,
+   "mae_clim": 1.1,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "2-3 months",
+   "skill": 0.126,
+   "mae": 0.9,
+   "mae_clim": 1.1,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "3-4 months",
+   "skill": 0.046,
+   "mae": 1.1,
+   "mae_clim": 1.1,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "4+ months",
+   "skill": 0.012,
+   "mae": 1.1,
+   "mae_clim": 1.1,
+   "in_range": 0.89,
+   "n": 165
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "during",
+   "skill": 0.141,
+   "mae": 0.5,
+   "mae_clim": 0.5,
+   "in_range": 0.94,
+   "n": 83
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "amber",
+   "lead": "up to 1 month",
+   "skill": 0.121,
+   "mae": 1.0,
+   "mae_clim": 1.0,
+   "in_range": 0.9,
+   "n": 70
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "blue",
+   "lead": "1-2 months",
+   "skill": 0.07,
+   "mae": 3.2,
+   "mae_clim": 4.1,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "blue",
+   "lead": "2-3 months",
+   "skill": 0.088,
+   "mae": 3.4,
+   "mae_clim": 4.2,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "blue",
+   "lead": "3-4 months",
+   "skill": 0.01,
+   "mae": 4.0,
+   "mae_clim": 4.2,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "blue",
+   "lead": "4+ months",
+   "skill": 0.002,
+   "mae": 4.3,
+   "mae_clim": 4.2,
+   "in_range": 0.88,
+   "n": 165
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "blue",
+   "lead": "during",
+   "skill": 0.073,
+   "mae": 1.7,
+   "mae_clim": 1.7,
+   "in_range": 0.9,
+   "n": 83
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "blue",
+   "lead": "up to 1 month",
+   "skill": 0.146,
+   "mae": 3.0,
+   "mae_clim": 4.0,
+   "in_range": 0.91,
+   "n": 70
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "1-2 months",
+   "skill": 0.127,
+   "mae": 7.0,
+   "mae_clim": 9.5,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "2-3 months",
+   "skill": 0.111,
+   "mae": 7.0,
+   "mae_clim": 9.5,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "3-4 months",
+   "skill": 0.041,
+   "mae": 8.3,
+   "mae_clim": 9.4,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "4+ months",
+   "skill": 0.001,
+   "mae": 9.3,
+   "mae_clim": 9.4,
+   "in_range": 0.9,
+   "n": 165
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "during",
+   "skill": 0.229,
    "mae": 3.5,
    "mae_clim": 4.2,
-   "in_range": 0.93,
-   "mean_obs": 4.3
+   "in_range": 0.92,
+   "n": 83
   },
   {
    "loc": "isis",
-   "term": "Michaelmas",
-   "flag": "red",
-   "lead": "up to 1 month before",
-   "n": 71,
-   "years": 33,
-   "skill": 0.082,
-   "mae": 5.9,
-   "mae_clim": 6.0,
-   "in_range": 0.9,
-   "mean_obs": 6.0
-  },
-  {
-   "loc": "isis",
-   "term": "Michaelmas",
-   "flag": "red",
-   "lead": "1-2 months before",
-   "n": 23,
-   "years": 23,
-   "skill": 0.023,
-   "mae": 6.2,
-   "mae_clim": 6.1,
-   "in_range": 0.91,
-   "mean_obs": 6.1
-  },
-  {
-   "loc": "isis",
-   "term": "Hilary",
-   "flag": "amber",
-   "lead": "during the term",
-   "n": 132,
-   "years": 33,
-   "skill": 0.154,
-   "mae": 1.0,
-   "mae_clim": 1.2,
-   "in_range": 0.93,
-   "mean_obs": 1.7
-  },
-  {
-   "loc": "isis",
-   "term": "Hilary",
-   "flag": "amber",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.119,
-   "mae": 1.9,
-   "mae_clim": 2.2,
+   "period": "Easter vac",
+   "flag": "green",
+   "lead": "up to 1 month",
+   "skill": 0.112,
+   "mae": 7.4,
+   "mae_clim": 9.2,
    "in_range": 0.89,
-   "mean_obs": 4.0
+   "n": 70
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "1-2 months",
+   "skill": 0.085,
+   "mae": 4.1,
+   "mae_clim": 4.1,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "2-3 months",
+   "skill": 0.078,
+   "mae": 4.0,
+   "mae_clim": 4.1,
+   "in_range": 0.89,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "3-4 months",
+   "skill": 0.044,
+   "mae": 4.1,
+   "mae_clim": 4.1,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "4+ months",
+   "skill": 0.002,
+   "mae": 4.1,
+   "mae_clim": 4.1,
+   "in_range": 0.88,
+   "n": 165
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "during",
+   "skill": 0.134,
+   "mae": 2.2,
+   "mae_clim": 2.3,
+   "in_range": 0.86,
+   "n": 83
+  },
+  {
+   "loc": "isis",
+   "period": "Easter vac",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": 0.045,
+   "mae": 4.0,
+   "mae_clim": 3.9,
+   "in_range": 0.89,
+   "n": 70
+  },
+  {
+   "loc": "isis",
+   "period": "Hilary",
    "flag": "amber",
-   "lead": "1-2 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": 0.036,
    "mae": 2.2,
    "mae_clim": 2.3,
    "in_range": 0.83,
-   "mean_obs": 4.0
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "amber",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": 0.046,
    "mae": 2.2,
    "mae_clim": 2.3,
    "in_range": 0.83,
-   "mean_obs": 4.0
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "amber",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": 0.013,
    "mae": 2.2,
    "mae_clim": 2.3,
    "in_range": 0.88,
-   "mean_obs": 4.0
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "amber",
-   "lead": "4+ months before",
-   "n": 33,
-   "years": 33,
+   "lead": "4+ months",
    "skill": 0.016,
    "mae": 2.2,
    "mae_clim": 2.3,
    "in_range": 0.85,
-   "mean_obs": 4.0
+   "n": 33
   },
   {
    "loc": "isis",
-   "term": "Hilary",
-   "flag": "blue",
-   "lead": "during the term",
-   "n": 132,
-   "years": 33,
-   "skill": 0.037,
-   "mae": 4.9,
-   "mae_clim": 5.1,
-   "in_range": 0.78,
-   "mean_obs": 8.7
+   "period": "Hilary",
+   "flag": "amber",
+   "lead": "during",
+   "skill": 0.154,
+   "mae": 1.0,
+   "mae_clim": 1.2,
+   "in_range": 0.93,
+   "n": 132
   },
   {
    "loc": "isis",
-   "term": "Hilary",
-   "flag": "blue",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.019,
-   "mae": 7.7,
-   "mae_clim": 8.0,
-   "in_range": 0.77,
-   "mean_obs": 16.1
+   "period": "Hilary",
+   "flag": "amber",
+   "lead": "up to 1 month",
+   "skill": 0.119,
+   "mae": 1.9,
+   "mae_clim": 2.2,
+   "in_range": 0.89,
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "blue",
-   "lead": "1-2 months before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.005,
-   "mae": 7.8,
-   "mae_clim": 8.0,
-   "in_range": 0.74,
-   "mean_obs": 16.1
+   "lead": "1-2 months",
+   "skill": 0.006,
+   "mae": 7.1,
+   "mae_clim": 7.1,
+   "in_range": 0.71,
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "blue",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.03,
-   "mae": 7.7,
-   "mae_clim": 8.0,
-   "in_range": 0.79,
-   "mean_obs": 16.1
+   "lead": "2-3 months",
+   "skill": 0.041,
+   "mae": 6.9,
+   "mae_clim": 7.1,
+   "in_range": 0.76,
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "blue",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.007,
-   "mae": 7.9,
-   "mae_clim": 8.0,
+   "lead": "3-4 months",
+   "skill": 0.014,
+   "mae": 7.1,
+   "mae_clim": 7.1,
+   "in_range": 0.82,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Hilary",
+   "flag": "blue",
+   "lead": "4+ months",
+   "skill": 0.009,
+   "mae": 7.0,
+   "mae_clim": 7.1,
+   "in_range": 0.85,
+   "n": 33
+  },
+  {
+   "loc": "isis",
+   "period": "Hilary",
+   "flag": "blue",
+   "lead": "during",
+   "skill": 0.041,
+   "mae": 4.5,
+   "mae_clim": 4.5,
    "in_range": 0.8,
-   "mean_obs": 16.1
+   "n": 132
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "blue",
-   "lead": "4+ months before",
-   "n": 33,
-   "years": 33,
-   "skill": 0.007,
-   "mae": 7.8,
-   "mae_clim": 8.0,
-   "in_range": 0.85,
-   "mean_obs": 16.1
+   "lead": "up to 1 month",
+   "skill": 0.026,
+   "mae": 6.9,
+   "mae_clim": 7.2,
+   "in_range": 0.76,
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "green",
-   "lead": "during the term",
-   "n": 132,
-   "years": 33,
-   "skill": 0.335,
-   "mae": 6.5,
-   "mae_clim": 11.0,
-   "in_range": 0.91,
-   "mean_obs": 13.6
-  },
-  {
-   "loc": "isis",
-   "term": "Hilary",
-   "flag": "green",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.292,
-   "mae": 12.6,
-   "mae_clim": 17.8,
-   "in_range": 0.85,
-   "mean_obs": 23.3
-  },
-  {
-   "loc": "isis",
-   "term": "Hilary",
-   "flag": "green",
-   "lead": "1-2 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": 0.186,
    "mae": 14.9,
-   "mae_clim": 17.7,
-   "in_range": 0.86,
-   "mean_obs": 23.3
+   "mae_clim": 19.0,
+   "in_range": 0.83,
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "green",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.135,
-   "mae": 15.3,
-   "mae_clim": 17.7,
+   "lead": "2-3 months",
+   "skill": 0.14,
+   "mae": 15.6,
+   "mae_clim": 19.0,
+   "in_range": 0.83,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Hilary",
+   "flag": "green",
+   "lead": "3-4 months",
+   "skill": 0.051,
+   "mae": 16.8,
+   "mae_clim": 19.0,
+   "in_range": 0.83,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Hilary",
+   "flag": "green",
+   "lead": "4+ months",
+   "skill": 0.017,
+   "mae": 17.4,
+   "mae_clim": 19.0,
    "in_range": 0.82,
-   "mean_obs": 23.3
+   "n": 33
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "green",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.054,
-   "mae": 16.7,
-   "mae_clim": 17.7,
-   "in_range": 0.85,
-   "mean_obs": 23.3
+   "lead": "during",
+   "skill": 0.334,
+   "mae": 6.7,
+   "mae_clim": 11.3,
+   "in_range": 0.91,
+   "n": 132
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "green",
-   "lead": "4+ months before",
-   "n": 33,
-   "years": 33,
-   "skill": 0.016,
-   "mae": 17.8,
-   "mae_clim": 17.7,
-   "in_range": 0.82,
-   "mean_obs": 23.3
-  },
-  {
-   "loc": "isis",
-   "term": "Hilary",
-   "flag": "red",
-   "lead": "during the term",
-   "n": 132,
-   "years": 33,
-   "skill": 0.259,
-   "mae": 5.4,
-   "mae_clim": 7.4,
-   "in_range": 0.89,
-   "mean_obs": 8.7
-  },
-  {
-   "loc": "isis",
-   "term": "Hilary",
-   "flag": "red",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.176,
-   "mae": 11.6,
-   "mae_clim": 14.8,
+   "lead": "up to 1 month",
+   "skill": 0.295,
+   "mae": 12.5,
+   "mae_clim": 19.5,
    "in_range": 0.85,
-   "mean_obs": 19.6
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "red",
-   "lead": "1-2 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": 0.097,
    "mae": 12.8,
    "mae_clim": 14.7,
    "in_range": 0.85,
-   "mean_obs": 19.6
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "red",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": 0.067,
    "mae": 13.4,
    "mae_clim": 14.7,
    "in_range": 0.8,
-   "mean_obs": 19.6
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "red",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": 0.003,
    "mae": 14.9,
    "mae_clim": 14.7,
    "in_range": 0.86,
-   "mean_obs": 19.6
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Hilary",
+   "period": "Hilary",
    "flag": "red",
-   "lead": "4+ months before",
-   "n": 33,
-   "years": 33,
+   "lead": "4+ months",
    "skill": 0.003,
    "mae": 14.8,
    "mae_clim": 14.7,
    "in_range": 0.88,
-   "mean_obs": 19.6
+   "n": 33
   },
   {
    "loc": "isis",
-   "term": "Trinity",
-   "flag": "amber",
-   "lead": "during the term",
-   "n": 136,
-   "years": 33,
-   "skill": -0.07,
-   "mae": 0.1,
-   "mae_clim": 0.1,
-   "in_range": 0.96,
-   "mean_obs": 0.1
+   "period": "Hilary",
+   "flag": "red",
+   "lead": "during",
+   "skill": 0.259,
+   "mae": 5.4,
+   "mae_clim": 7.4,
+   "in_range": 0.89,
+   "n": 132
   },
   {
    "loc": "isis",
-   "term": "Trinity",
+   "period": "Hilary",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": 0.176,
+   "mae": 11.6,
+   "mae_clim": 14.8,
+   "in_range": 0.85,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
    "flag": "amber",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.035,
-   "mae": 0.4,
-   "mae_clim": 0.4,
+   "lead": "1-2 months",
+   "skill": 0.063,
+   "mae": 1.7,
+   "mae_clim": 1.9,
    "in_range": 0.91,
-   "mean_obs": 0.4
+   "n": 23
   },
   {
    "loc": "isis",
-   "term": "Trinity",
+   "period": "Michaelmas",
    "flag": "amber",
-   "lead": "1-2 months before",
-   "n": 73,
-   "years": 33,
+   "lead": "during",
+   "skill": 0.059,
+   "mae": 0.9,
+   "mae_clim": 1.0,
+   "in_range": 0.88,
+   "n": 137
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "amber",
+   "lead": "up to 1 month",
+   "skill": 0.052,
+   "mae": 1.5,
+   "mae_clim": 1.7,
+   "in_range": 0.87,
+   "n": 71
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "blue",
+   "lead": "1-2 months",
+   "skill": 0.044,
+   "mae": 5.9,
+   "mae_clim": 6.3,
+   "in_range": 0.78,
+   "n": 23
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "blue",
+   "lead": "during",
+   "skill": 0.089,
+   "mae": 2.6,
+   "mae_clim": 2.9,
+   "in_range": 0.87,
+   "n": 137
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "blue",
+   "lead": "up to 1 month",
+   "skill": 0.067,
+   "mae": 4.6,
+   "mae_clim": 5.2,
+   "in_range": 0.86,
+   "n": 71
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "green",
+   "lead": "1-2 months",
+   "skill": 0.038,
+   "mae": 14.2,
+   "mae_clim": 14.3,
+   "in_range": 0.87,
+   "n": 23
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "green",
+   "lead": "during",
+   "skill": 0.297,
+   "mae": 5.4,
+   "mae_clim": 7.9,
+   "in_range": 0.88,
+   "n": 137
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "green",
+   "lead": "up to 1 month",
+   "skill": 0.097,
+   "mae": 11.9,
+   "mae_clim": 13.0,
+   "in_range": 0.89,
+   "n": 71
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "red",
+   "lead": "1-2 months",
+   "skill": 0.023,
+   "mae": 6.2,
+   "mae_clim": 6.1,
+   "in_range": 0.91,
+   "n": 23
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "red",
+   "lead": "during",
+   "skill": 0.278,
+   "mae": 3.5,
+   "mae_clim": 4.2,
+   "in_range": 0.93,
+   "n": 137
+  },
+  {
+   "loc": "isis",
+   "period": "Michaelmas",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": 0.082,
+   "mae": 5.9,
+   "mae_clim": 6.0,
+   "in_range": 0.9,
+   "n": 71
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "amber",
+   "lead": "1-2 months",
    "skill": -0.017,
    "mae": 0.4,
    "mae_clim": 0.4,
    "in_range": 0.92,
-   "mean_obs": 0.4
+   "n": 73
   },
   {
    "loc": "isis",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "amber",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": -0.056,
    "mae": 0.4,
    "mae_clim": 0.4,
    "in_range": 0.91,
-   "mean_obs": 0.4
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "amber",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": 0.0,
    "mae": 0.4,
    "mae_clim": 0.4,
    "in_range": 0.91,
-   "mean_obs": 0.4
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "amber",
-   "lead": "4+ months before",
-   "n": 249,
-   "years": 33,
+   "lead": "4+ months",
    "skill": -0.005,
    "mae": 0.4,
    "mae_clim": 0.4,
    "in_range": 0.88,
-   "mean_obs": 0.4
+   "n": 249
   },
   {
    "loc": "isis",
-   "term": "Trinity",
-   "flag": "blue",
-   "lead": "during the term",
-   "n": 136,
-   "years": 33,
-   "skill": 0.196,
-   "mae": 1.0,
-   "mae_clim": 1.2,
-   "in_range": 0.93,
-   "mean_obs": 1.2
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "blue",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.142,
-   "mae": 3.5,
-   "mae_clim": 4.0,
-   "in_range": 0.83,
-   "mean_obs": 4.0
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "blue",
-   "lead": "1-2 months before",
-   "n": 73,
-   "years": 33,
-   "skill": 0.038,
-   "mae": 3.8,
-   "mae_clim": 3.9,
-   "in_range": 0.84,
-   "mean_obs": 3.9
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "blue",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.005,
-   "mae": 4.2,
-   "mae_clim": 4.0,
-   "in_range": 0.85,
-   "mean_obs": 4.0
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "blue",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.022,
-   "mae": 4.0,
-   "mae_clim": 4.0,
-   "in_range": 0.86,
-   "mean_obs": 4.0
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "blue",
-   "lead": "4+ months before",
-   "n": 249,
-   "years": 33,
-   "skill": -0.007,
-   "mae": 3.9,
-   "mae_clim": 3.9,
-   "in_range": 0.9,
-   "mean_obs": 3.9
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "green",
-   "lead": "during the term",
-   "n": 136,
-   "years": 33,
-   "skill": 0.134,
-   "mae": 1.4,
-   "mae_clim": 1.6,
-   "in_range": 0.93,
-   "mean_obs": 27.4
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "green",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.162,
-   "mae": 4.8,
-   "mae_clim": 5.5,
-   "in_range": 0.91,
-   "mean_obs": 57.5
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "green",
-   "lead": "1-2 months before",
-   "n": 73,
-   "years": 33,
-   "skill": 0.016,
-   "mae": 5.2,
-   "mae_clim": 5.3,
-   "in_range": 0.88,
-   "mean_obs": 57.7
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "green",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
-   "skill": -0.015,
-   "mae": 5.8,
-   "mae_clim": 5.5,
-   "in_range": 0.86,
-   "mean_obs": 57.5
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "green",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
-   "skill": 0.016,
-   "mae": 5.5,
-   "mae_clim": 5.5,
-   "in_range": 0.86,
-   "mean_obs": 57.5
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "green",
-   "lead": "4+ months before",
-   "n": 249,
-   "years": 33,
-   "skill": -0.008,
-   "mae": 5.4,
-   "mae_clim": 5.4,
-   "in_range": 0.88,
-   "mean_obs": 57.6
-  },
-  {
-   "loc": "isis",
-   "term": "Trinity",
-   "flag": "red",
-   "lead": "during the term",
-   "n": 136,
-   "years": 33,
-   "skill": -0.055,
-   "mae": 0.3,
-   "mae_clim": 0.3,
+   "period": "Trinity",
+   "flag": "amber",
+   "lead": "during",
+   "skill": -0.07,
+   "mae": 0.1,
+   "mae_clim": 0.1,
    "in_range": 0.96,
-   "mean_obs": 0.3
+   "n": 136
   },
   {
    "loc": "isis",
-   "term": "Trinity",
-   "flag": "red",
-   "lead": "up to 1 month before",
-   "n": 66,
-   "years": 33,
-   "skill": -0.013,
-   "mae": 1.2,
+   "period": "Trinity",
+   "flag": "amber",
+   "lead": "up to 1 month",
+   "skill": 0.035,
+   "mae": 0.4,
+   "mae_clim": 0.4,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "blue",
+   "lead": "1-2 months",
+   "skill": 0.037,
+   "mae": 3.5,
+   "mae_clim": 3.5,
+   "in_range": 0.84,
+   "n": 73
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "blue",
+   "lead": "2-3 months",
+   "skill": -0.004,
+   "mae": 3.8,
+   "mae_clim": 3.6,
+   "in_range": 0.85,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "blue",
+   "lead": "3-4 months",
+   "skill": 0.02,
+   "mae": 3.6,
+   "mae_clim": 3.6,
+   "in_range": 0.86,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "blue",
+   "lead": "4+ months",
+   "skill": -0.006,
+   "mae": 3.5,
+   "mae_clim": 3.5,
+   "in_range": 0.91,
+   "n": 249
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "blue",
+   "lead": "during",
+   "skill": 0.18,
+   "mae": 0.9,
    "mae_clim": 1.1,
-   "in_range": 0.89,
-   "mean_obs": 1.1
+   "in_range": 0.91,
+   "n": 136
   },
   {
    "loc": "isis",
-   "term": "Trinity",
+   "period": "Trinity",
+   "flag": "blue",
+   "lead": "up to 1 month",
+   "skill": 0.127,
+   "mae": 3.3,
+   "mae_clim": 3.6,
+   "in_range": 0.83,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "green",
+   "lead": "1-2 months",
+   "skill": 0.018,
+   "mae": 4.8,
+   "mae_clim": 4.9,
+   "in_range": 0.88,
+   "n": 73
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "green",
+   "lead": "2-3 months",
+   "skill": -0.018,
+   "mae": 5.4,
+   "mae_clim": 5.1,
+   "in_range": 0.91,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "green",
+   "lead": "3-4 months",
+   "skill": 0.015,
+   "mae": 5.1,
+   "mae_clim": 5.1,
+   "in_range": 0.88,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "green",
+   "lead": "4+ months",
+   "skill": -0.007,
+   "mae": 5.0,
+   "mae_clim": 5.0,
+   "in_range": 0.91,
+   "n": 249
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "green",
+   "lead": "during",
+   "skill": 0.124,
+   "mae": 1.3,
+   "mae_clim": 1.5,
+   "in_range": 0.93,
+   "n": 136
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "green",
+   "lead": "up to 1 month",
+   "skill": 0.156,
+   "mae": 4.5,
+   "mae_clim": 5.1,
+   "in_range": 0.92,
+   "n": 66
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
    "flag": "red",
-   "lead": "1-2 months before",
-   "n": 73,
-   "years": 33,
+   "lead": "1-2 months",
    "skill": -0.046,
    "mae": 1.0,
    "mae_clim": 1.0,
    "in_range": 0.9,
-   "mean_obs": 1.0
+   "n": 73
   },
   {
    "loc": "isis",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "red",
-   "lead": "2-3 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "2-3 months",
    "skill": -0.08,
    "mae": 1.1,
    "mae_clim": 1.1,
    "in_range": 0.88,
-   "mean_obs": 1.1
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "red",
-   "lead": "3-4 months before",
-   "n": 66,
-   "years": 33,
+   "lead": "3-4 months",
    "skill": -0.015,
    "mae": 1.1,
    "mae_clim": 1.1,
    "in_range": 0.89,
-   "mean_obs": 1.1
+   "n": 66
   },
   {
    "loc": "isis",
-   "term": "Trinity",
+   "period": "Trinity",
    "flag": "red",
-   "lead": "4+ months before",
-   "n": 249,
-   "years": 33,
+   "lead": "4+ months",
    "skill": -0.006,
    "mae": 1.1,
    "mae_clim": 1.1,
    "in_range": 0.88,
-   "mean_obs": 1.1
+   "n": 249
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "red",
+   "lead": "during",
+   "skill": -0.055,
+   "mae": 0.3,
+   "mae_clim": 0.3,
+   "in_range": 0.96,
+   "n": 136
+  },
+  {
+   "loc": "isis",
+   "period": "Trinity",
+   "flag": "red",
+   "lead": "up to 1 month",
+   "skill": -0.013,
+   "mae": 1.2,
+   "mae_clim": 1.1,
+   "in_range": 0.89,
+   "n": 66
   }
  ],
- "term_start_skill": {
+ "at_start": {
   "godstow": {
+   "Christmas vac": {
+    "amber": {
+     "skill": 0.115,
+     "mae": 3.3,
+     "mae_clim": 3.6,
+     "in_range": 0.94,
+     "n": 33
+    },
+    "green": {
+     "skill": 0.346,
+     "mae": 6.5,
+     "mae_clim": 10.0,
+     "in_range": 0.91,
+     "n": 33
+    },
+    "red": {
+     "skill": 0.263,
+     "mae": 6.0,
+     "mae_clim": 8.1,
+     "in_range": 0.88,
+     "n": 33
+    }
+   },
+   "Easter vac": {
+    "amber": {
+     "skill": 0.17,
+     "mae": 2.4,
+     "mae_clim": 2.8,
+     "in_range": 0.94,
+     "n": 33
+    },
+    "green": {
+     "skill": 0.083,
+     "mae": 6.4,
+     "mae_clim": 6.4,
+     "in_range": 0.88,
+     "n": 33
+    },
+    "red": {
+     "skill": 0.026,
+     "mae": 3.7,
+     "mae_clim": 3.7,
+     "in_range": 0.85,
+     "n": 33
+    }
+   },
    "Hilary": {
     "amber": {
      "skill": 0.098,
@@ -1454,6 +2124,66 @@
    }
   },
   "isis": {
+   "Christmas vac": {
+    "amber": {
+     "skill": 0.141,
+     "mae": 1.6,
+     "mae_clim": 2.0,
+     "in_range": 0.88,
+     "n": 33
+    },
+    "blue": {
+     "skill": -0.012,
+     "mae": 4.1,
+     "mae_clim": 4.1,
+     "in_range": 0.88,
+     "n": 33
+    },
+    "green": {
+     "skill": 0.375,
+     "mae": 6.3,
+     "mae_clim": 10.0,
+     "in_range": 0.91,
+     "n": 33
+    },
+    "red": {
+     "skill": 0.282,
+     "mae": 6.0,
+     "mae_clim": 8.5,
+     "in_range": 0.88,
+     "n": 33
+    }
+   },
+   "Easter vac": {
+    "amber": {
+     "skill": 0.184,
+     "mae": 0.9,
+     "mae_clim": 1.0,
+     "in_range": 0.91,
+     "n": 33
+    },
+    "blue": {
+     "skill": 0.138,
+     "mae": 3.1,
+     "mae_clim": 3.8,
+     "in_range": 0.88,
+     "n": 33
+    },
+    "green": {
+     "skill": 0.12,
+     "mae": 7.7,
+     "mae_clim": 9.1,
+     "in_range": 0.91,
+     "n": 33
+    },
+    "red": {
+     "skill": 0.037,
+     "mae": 4.1,
+     "mae_clim": 4.1,
+     "in_range": 0.85,
+     "n": 33
+    }
+   },
    "Hilary": {
     "amber": {
      "skill": 0.1,
@@ -1463,17 +2193,17 @@
      "n": 33
     },
     "blue": {
-     "skill": -0.004,
-     "mae": 7.9,
-     "mae_clim": 7.8,
+     "skill": -0.005,
+     "mae": 7.1,
+     "mae_clim": 7.2,
      "in_range": 0.73,
      "n": 33
     },
     "green": {
-     "skill": 0.297,
-     "mae": 12.9,
-     "mae_clim": 17.8,
-     "in_range": 0.85,
+     "skill": 0.301,
+     "mae": 13.0,
+     "mae_clim": 20.0,
+     "in_range": 0.82,
      "n": 33
     },
     "red": {
@@ -1493,16 +2223,16 @@
      "n": 33
     },
     "blue": {
-     "skill": 0.104,
-     "mae": 4.9,
-     "mae_clim": 6.1,
-     "in_range": 0.88,
+     "skill": 0.081,
+     "mae": 4.4,
+     "mae_clim": 5.4,
+     "in_range": 0.85,
      "n": 33
     },
     "green": {
-     "skill": 0.199,
-     "mae": 11.3,
-     "mae_clim": 14.0,
+     "skill": 0.193,
+     "mae": 10.8,
+     "mae_clim": 13.6,
      "in_range": 0.85,
      "n": 33
     },
@@ -1523,16 +2253,16 @@
      "n": 33
     },
     "blue": {
-     "skill": 0.286,
-     "mae": 2.7,
-     "mae_clim": 3.8,
+     "skill": 0.267,
+     "mae": 2.6,
+     "mae_clim": 3.5,
      "in_range": 0.82,
      "n": 33
     },
     "green": {
-     "skill": 0.34,
-     "mae": 3.4,
-     "mae_clim": 5.3,
+     "skill": 0.338,
+     "mae": 3.2,
+     "mae_clim": 5.0,
      "in_range": 0.97,
      "n": 33
     },
@@ -1546,7635 +2276,211 @@
    }
   }
  },
- "term_starts": [
-  {
-   "year": 1994,
-   "acad": 1993,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 11,
-     "med": 16.0,
-     "p10": 0.0,
-     "p90": 42.0,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 31,
-     "med": 13.0,
-     "p10": 3.0,
-     "p90": 20.8,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 21,
-     "med": 28.0,
-     "p10": 11.2,
-     "p90": 51.8,
-     "clim_med": 13.0
-    }
-   }
-  },
-  {
-   "year": 1994,
-   "acad": 1993,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 1,
-     "med": 6.0,
-     "p10": 0.0,
-     "p90": 32.6,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 27,
-     "med": 14.0,
-     "p10": 2.0,
-     "p90": 24.4,
-     "clim_med": 16.0
-    },
-    "amber": {
-     "obs": 9,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 8.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 26,
-     "med": 29.6,
-     "p10": 12.2,
-     "p90": 51.8,
-     "clim_med": 16.0
-    }
-   }
-  },
-  {
-   "year": 1993,
-   "acad": 1993,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 60,
-     "med": 59.0,
-     "p10": 28.5,
-     "p90": 63.0,
-     "clim_med": 61.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 14.0,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 21.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1993,
-   "acad": 1993,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 57,
-     "med": 52.0,
-     "p10": 16.5,
-     "p90": 63.0,
-     "clim_med": 56.5
-    },
-    "blue": {
-     "obs": 4,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 16.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 2,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 22.2,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1994,
-   "acad": 1993,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 61.0,
-     "p10": 45.6,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 10.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 8.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1994,
-   "acad": 1993,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 61,
-     "med": 59.0,
-     "p10": 36.4,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 2,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 13.4,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 8.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1995,
-   "acad": 1994,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 7,
-     "med": 37.0,
-     "p10": 14.6,
-     "p90": 56.9,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 13,
-     "med": 12.0,
-     "p10": 5.1,
-     "p90": 26.6,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 43,
-     "med": 10.6,
-     "p10": 0.0,
-     "p90": 26.0,
-     "clim_med": 14.0
-    }
-   }
-  },
-  {
-   "year": 1995,
-   "acad": 1994,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 2,
-     "med": 27.0,
-     "p10": 6.0,
-     "p90": 50.8,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 11,
-     "med": 18.0,
-     "p10": 8.2,
-     "p90": 29.0,
-     "clim_med": 18.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 8.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 47,
-     "med": 11.0,
-     "p10": 0.0,
-     "p90": 28.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 1994,
-   "acad": 1994,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 62.2,
-     "p10": 36.0,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.2,
-     "p10": 0.0,
-     "p90": 12.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 15.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1994,
-   "acad": 1994,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 59.2,
-     "p10": 29.0,
-     "p90": 63.0,
-     "clim_med": 56.5
-    },
-    "blue": {
-     "obs": 0,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 14.8,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 15.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1995,
-   "acad": 1994,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1995,
-   "acad": 1994,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 57.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.6,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1996,
-   "acad": 1995,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 46,
-     "med": 43.6,
-     "p10": 13.0,
-     "p90": 61.4,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 13,
-     "med": 10.0,
-     "p10": 1.4,
-     "p90": 21.2,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 4,
-     "med": 5.4,
-     "p10": 0.0,
-     "p90": 27.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 1996,
-   "acad": 1995,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 35,
-     "med": 34.0,
-     "p10": 6.4,
-     "p90": 55.4,
-     "clim_med": 19.0
-    },
-    "blue": {
-     "obs": 19,
-     "med": 15.0,
-     "p10": 6.0,
-     "p90": 31.0,
-     "clim_med": 18.0
-    },
-    "amber": {
-     "obs": 4,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 5,
-     "med": 6.8,
-     "p10": 0.0,
-     "p90": 29.0,
-     "clim_med": 18.0
-    }
-   }
-  },
-  {
-   "year": 1995,
-   "acad": 1995,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 52.8,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1995,
-   "acad": 1995,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 46.8,
-     "p90": 63.0,
-     "clim_med": 57.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 10.0,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1996,
-   "acad": 1995,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 54.8,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 6.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1996,
-   "acad": 1995,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 62,
-     "med": 63.0,
-     "p10": 46.0,
-     "p90": 63.0,
-     "clim_med": 62.0
-    },
-    "blue": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 11.0,
-     "clim_med": 1.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1997,
-   "acad": 1996,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 59,
-     "med": 61.7,
-     "p10": 34.0,
-     "p90": 63.0,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 2,
-     "med": 1.2,
-     "p10": 0.0,
-     "p90": 14.0,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 2,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 13.0,
-     "clim_med": 13.0
-    }
-   }
-  },
-  {
-   "year": 1997,
-   "acad": 1996,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 54,
-     "med": 57.7,
-     "p10": 22.0,
-     "p90": 63.0,
-     "clim_med": 22.0
-    },
-    "blue": {
-     "obs": 6,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 22.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 2,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 14.0,
-     "clim_med": 14.0
-    }
-   }
-  },
-  {
-   "year": 1996,
-   "acad": 1996,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 49.0,
-     "p90": 63.0,
-     "clim_med": 59.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 9.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.2,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1996,
-   "acad": 1996,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 39.6,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 12.0,
-     "clim_med": 4.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1997,
-   "acad": 1996,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 62.4,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1997,
-   "acad": 1996,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1998,
-   "acad": 1997,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 40,
-     "med": 22.1,
-     "p10": 6.0,
-     "p90": 44.0,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 13,
-     "med": 13.0,
-     "p10": 5.0,
-     "p90": 23.0,
-     "clim_med": 11.0
-    },
-    "red": {
-     "obs": 10,
-     "med": 20.8,
-     "p10": 8.6,
-     "p90": 45.0,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 1998,
-   "acad": 1997,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 33,
-     "med": 11.0,
-     "p10": 0.0,
-     "p90": 36.6,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 14,
-     "med": 16.1,
-     "p10": 4.4,
-     "p90": 27.4,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 5,
-     "med": 4.0,
-     "p10": 2.0,
-     "p90": 8.0,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 11,
-     "med": 24.0,
-     "p10": 9.4,
-     "p90": 47.2,
-     "clim_med": 16.0
-    }
-   }
-  },
-  {
-   "year": 1997,
-   "acad": 1997,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 49.0,
-     "p90": 63.0,
-     "clim_med": 59.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 11.0,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1997,
-   "acad": 1997,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 58,
-     "med": 63.0,
-     "p10": 40.4,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 5,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 12.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 7.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1998,
-   "acad": 1997,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 55,
-     "med": 59.0,
-     "p10": 38.5,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 5,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 14.5,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 3,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 11.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1998,
-   "acad": 1997,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 47,
-     "med": 52.0,
-     "p10": 31.8,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 11,
-     "med": 8.0,
-     "p10": 0.0,
-     "p90": 19.4,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 4,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 12.9,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1999,
-   "acad": 1998,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 29,
-     "med": 22.1,
-     "p10": 3.8,
-     "p90": 46.2,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 9,
-     "med": 16.0,
-     "p10": 7.0,
-     "p90": 27.8,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 25,
-     "med": 20.8,
-     "p10": 4.0,
-     "p90": 46.2,
-     "clim_med": 12.0
-    }
-   }
-  },
-  {
-   "year": 1999,
-   "acad": 1998,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 18,
-     "med": 8.0,
-     "p10": 0.0,
-     "p90": 36.4,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 16,
-     "med": 17.8,
-     "p10": 7.0,
-     "p90": 32.2,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 4,
-     "med": 5.0,
-     "p10": 2.0,
-     "p90": 8.0,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 25,
-     "med": 22.8,
-     "p10": 5.0,
-     "p90": 51.2,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 1998,
-   "acad": 1998,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 39,
-     "med": 57.0,
-     "p10": 26.0,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 10,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 14.5,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 14,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 23.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1998,
-   "acad": 1998,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 29,
-     "med": 52.2,
-     "p10": 16.5,
-     "p90": 63.0,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 16,
-     "med": 3.8,
-     "p10": 0.0,
-     "p90": 17.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 3,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 15,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 26.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1999,
-   "acad": 1998,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 62,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1999,
-   "acad": 1998,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 57,
-     "med": 63.0,
-     "p10": 56.2,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 6,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2000,
-   "acad": 1999,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 46,
-     "med": 26.9,
-     "p10": 7.0,
-     "p90": 48.0,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 13,
-     "med": 16.0,
-     "p10": 8.0,
-     "p90": 26.0,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 4,
-     "med": 17.4,
-     "p10": 3.4,
-     "p90": 43.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2000,
-   "acad": 1999,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 33,
-     "med": 11.8,
-     "p10": 0.0,
-     "p90": 37.0,
-     "clim_med": 19.0
-    },
-    "blue": {
-     "obs": 24,
-     "med": 18.0,
-     "p10": 9.6,
-     "p90": 34.2,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 2,
-     "med": 5.0,
-     "p10": 2.0,
-     "p90": 9.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 4,
-     "med": 19.4,
-     "p10": 5.0,
-     "p90": 46.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 1999,
-   "acad": 1999,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 49.0,
-     "p10": 15.0,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 6.0,
-     "p10": 0.0,
-     "p90": 17.4,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 2.8,
-     "p10": 0.0,
-     "p90": 33.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 1999,
-   "acad": 1999,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 42.8,
-     "p10": 10.0,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 7.0,
-     "p10": 0.0,
-     "p90": 21.0,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 1.8,
-     "p10": 0.0,
-     "p90": 6.8,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 4.2,
-     "p10": 0.0,
-     "p90": 35.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2000,
-   "acad": 1999,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 45,
-     "med": 50.0,
-     "p10": 28.0,
-     "p90": 62.0,
-     "clim_med": 62.0
-    },
-    "amber": {
-     "obs": 8,
-     "med": 7.0,
-     "p10": 1.0,
-     "p90": 13.6,
-     "clim_med": 1.0
-    },
-    "red": {
-     "obs": 10,
-     "med": 5.0,
-     "p10": 0.0,
-     "p90": 21.3,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2000,
-   "acad": 1999,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 40,
-     "med": 44.0,
-     "p10": 17.9,
-     "p90": 62.0,
-     "clim_med": 62.0
-    },
-    "blue": {
-     "obs": 9,
-     "med": 9.1,
-     "p10": 1.0,
-     "p90": 18.3,
-     "clim_med": 1.0
-    },
-    "amber": {
-     "obs": 2,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 4.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 12,
-     "med": 6.0,
-     "p10": 0.0,
-     "p90": 23.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2001,
-   "acad": 2000,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 14,
-     "med": 6.8,
-     "p10": 0.0,
-     "p90": 38.4,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 24,
-     "med": 11.2,
-     "p10": 2.0,
-     "p90": 24.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 25,
-     "med": 38.6,
-     "p10": 10.4,
-     "p90": 61.0,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2001,
-   "acad": 2000,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 3,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 30.0,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 28,
-     "med": 12.0,
-     "p10": 0.0,
-     "p90": 22.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 8.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 29,
-     "med": 39.6,
-     "p10": 13.4,
-     "p90": 61.9,
-     "clim_med": 18.0
-    }
-   }
-  },
-  {
-   "year": 2000,
-   "acad": 2000,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 29,
-     "med": 57.8,
-     "p10": 21.4,
-     "p90": 63.0,
-     "clim_med": 61.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 15.0,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 33,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 21.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2000,
-   "acad": 2000,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 29,
-     "med": 51.2,
-     "p10": 16.4,
-     "p90": 63.0,
-     "clim_med": 57.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 7.0,
-     "p10": 0.0,
-     "p90": 18.0,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 6.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 33,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 21.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2001,
-   "acad": 2000,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 49,
-     "med": 55.0,
-     "p10": 34.4,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 13,
-     "med": 7.0,
-     "p10": 0.0,
-     "p90": 15.2,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 1,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 17.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2001,
-   "acad": 2000,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 38,
-     "med": 50.0,
-     "p10": 27.8,
-     "p90": 62.0,
-     "clim_med": 62.0
-    },
-    "blue": {
-     "obs": 20,
-     "med": 9.0,
-     "p10": 1.0,
-     "p90": 19.0,
-     "clim_med": 1.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 2,
-     "med": 1.4,
-     "p10": 0.0,
-     "p90": 21.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2002,
-   "acad": 2001,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 25,
-     "med": 52.0,
-     "p10": 22.0,
-     "p90": 63.0,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 12,
-     "med": 5.6,
-     "p10": 0.0,
-     "p90": 17.8,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 26,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 20.2,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2002,
-   "acad": 2001,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 20,
-     "med": 45.1,
-     "p10": 12.0,
-     "p90": 60.8,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 12,
-     "med": 10.0,
-     "p10": 1.4,
-     "p90": 23.0,
-     "clim_med": 19.0
-    },
-    "amber": {
-     "obs": 4,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 27,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 21.6,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2001,
-   "acad": 2001,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 62.0,
-     "p10": 34.0,
-     "p90": 63.0,
-     "clim_med": 59.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 11.6,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 16.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2001,
-   "acad": 2001,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 61,
-     "med": 58.2,
-     "p10": 26.0,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 2,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 14.5,
-     "clim_med": 4.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 19.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2002,
-   "acad": 2001,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2002,
-   "acad": 2001,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 55.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 8.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2003,
-   "acad": 2002,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 32,
-     "med": 14.0,
-     "p10": 0.0,
-     "p90": 44.0,
-     "clim_med": 36.0
-    },
-    "amber": {
-     "obs": 21,
-     "med": 13.0,
-     "p10": 2.0,
-     "p90": 24.0,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 10,
-     "med": 28.0,
-     "p10": 9.0,
-     "p90": 53.0,
-     "clim_med": 14.0
-    }
-   }
-  },
-  {
-   "year": 2003,
-   "acad": 2002,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 22,
-     "med": 3.6,
-     "p10": 0.0,
-     "p90": 33.0,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 22,
-     "med": 14.0,
-     "p10": 3.0,
-     "p90": 27.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 6,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 9.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 13,
-     "med": 30.0,
-     "p10": 9.6,
-     "p90": 54.0,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2002,
-   "acad": 2002,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 28,
-     "med": 63.0,
-     "p10": 40.0,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 16,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 11.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 19,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 12.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2002,
-   "acad": 2002,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 26,
-     "med": 60.0,
-     "p10": 30.0,
-     "p90": 63.0,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 10,
-     "med": 2.2,
-     "p10": 0.0,
-     "p90": 12.8,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 5,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 22,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 13.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2003,
-   "acad": 2002,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 61.2,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2003,
-   "acad": 2002,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 58.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.2,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2004,
-   "acad": 2003,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 40,
-     "med": 52.0,
-     "p10": 18.4,
-     "p90": 63.0,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 12,
-     "med": 6.0,
-     "p10": 0.0,
-     "p90": 19.0,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 11,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 19.0,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2004,
-   "acad": 2003,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 27,
-     "med": 45.1,
-     "p10": 8.4,
-     "p90": 61.2,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 17,
-     "med": 11.0,
-     "p10": 1.4,
-     "p90": 27.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 5,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 14,
-     "med": 3.8,
-     "p10": 0.0,
-     "p90": 24.0,
-     "clim_med": 16.0
-    }
-   }
-  },
-  {
-   "year": 2003,
-   "acad": 2003,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 44.5,
-     "p90": 63.0,
-     "clim_med": 59.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 10.0,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 8.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2003,
-   "acad": 2003,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 37.0,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 15.0,
-     "clim_med": 4.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 9.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2004,
-   "acad": 2003,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 62,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2004,
-   "acad": 2003,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 60,
-     "med": 63.0,
-     "p10": 58.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 3,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.2,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2005,
-   "acad": 2004,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 38.0,
-     "p10": 13.0,
-     "p90": 57.4,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 12.0,
-     "p10": 4.0,
-     "p90": 22.0,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 9.9,
-     "p10": 1.0,
-     "p90": 35.4,
-     "clim_med": 16.0
-    }
-   }
-  },
-  {
-   "year": 2005,
-   "acad": 2004,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 23.2,
-     "p10": 3.0,
-     "p90": 49.5,
-     "clim_med": 19.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 18.0,
-     "p10": 6.4,
-     "p90": 36.0,
-     "clim_med": 18.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 3.0,
-     "p10": 0.4,
-     "p90": 7.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 10.0,
-     "p10": 1.6,
-     "p90": 38.2,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2004,
-   "acad": 2004,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 59,
-     "med": 60.0,
-     "p10": 28.6,
-     "p90": 63.0,
-     "clim_med": 61.0
-    },
-    "amber": {
-     "obs": 4,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 13.2,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 21.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2004,
-   "acad": 2004,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 47,
-     "med": 54.4,
-     "p10": 17.5,
-     "p90": 63.0,
-     "clim_med": 57.0
-    },
-    "blue": {
-     "obs": 16,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 15.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.5,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 22.2,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2005,
-   "acad": 2004,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 51.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 10.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2005,
-   "acad": 2004,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 61.1,
-     "p10": 42.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 1.9,
-     "p10": 0.0,
-     "p90": 13.4,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2006,
-   "acad": 2005,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 48.8,
-     "p10": 13.0,
-     "p90": 61.3,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 7.6,
-     "p10": 2.0,
-     "p90": 20.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 4.1,
-     "p10": 0.0,
-     "p90": 26.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2006,
-   "acad": 2005,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 61,
-     "med": 41.0,
-     "p10": 8.0,
-     "p90": 58.0,
-     "clim_med": 19.0
-    },
-    "blue": {
-     "obs": 2,
-     "med": 14.0,
-     "p10": 3.6,
-     "p90": 23.0,
-     "clim_med": 18.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 7.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 5.0,
-     "p10": 0.0,
-     "p90": 27.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2005,
-   "acad": 2005,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 62,
-     "med": 63.0,
-     "p10": 57.5,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2005,
-   "acad": 2005,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 62,
-     "med": 63.0,
-     "p10": 53.0,
-     "p90": 63.0,
-     "clim_med": 56.5
-    },
-    "blue": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 6.2,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2006,
-   "acad": 2005,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 51.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 9.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2006,
-   "acad": 2005,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 61.0,
-     "p10": 41.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 14.7,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2007,
-   "acad": 2006,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 13,
-     "med": 24.2,
-     "p10": 4.6,
-     "p90": 44.0,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 14,
-     "med": 14.4,
-     "p10": 9.0,
-     "p90": 24.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 36,
-     "med": 22.1,
-     "p10": 4.8,
-     "p90": 43.6,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2007,
-   "acad": 2006,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 2,
-     "med": 11.1,
-     "p10": 0.0,
-     "p90": 35.4,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 19,
-     "med": 17.2,
-     "p10": 8.8,
-     "p90": 31.0,
-     "clim_med": 18.0
-    },
-    "amber": {
-     "obs": 4,
-     "med": 5.0,
-     "p10": 2.0,
-     "p90": 9.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 38,
-     "med": 23.1,
-     "p10": 6.0,
-     "p90": 46.8,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2006,
-   "acad": 2006,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 53,
-     "med": 60.0,
-     "p10": 29.0,
-     "p90": 63.0,
-     "clim_med": 61.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 14.8,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 7,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 23.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2006,
-   "acad": 2006,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 45,
-     "med": 55.0,
-     "p10": 16.8,
-     "p90": 63.0,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 10,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 16.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 8,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 25.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2007,
-   "acad": 2006,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 57.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2007,
-   "acad": 2006,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 61,
-     "med": 63.0,
-     "p10": 53.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 2,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 9.2,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2008,
-   "acad": 2007,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 30,
-     "med": 32.6,
-     "p10": 11.0,
-     "p90": 57.4,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 15,
-     "med": 15.0,
-     "p10": 3.0,
-     "p90": 24.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 18,
-     "med": 12.0,
-     "p10": 0.0,
-     "p90": 38.0,
-     "clim_med": 16.0
-    }
-   }
-  },
-  {
-   "year": 2008,
-   "acad": 2007,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 25,
-     "med": 20.0,
-     "p10": 2.0,
-     "p90": 45.9,
-     "clim_med": 20.0
-    },
-    "blue": {
-     "obs": 15,
-     "med": 19.0,
-     "p10": 5.2,
-     "p90": 33.8,
-     "clim_med": 19.0
-    },
-    "amber": {
-     "obs": 5,
-     "med": 4.0,
-     "p10": 1.0,
-     "p90": 8.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 18,
-     "med": 14.0,
-     "p10": 0.0,
-     "p90": 38.6,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2007,
-   "acad": 2007,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 54,
-     "med": 37.0,
-     "p10": 10.4,
-     "p90": 61.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 7,
-     "med": 8.0,
-     "p10": 2.0,
-     "p90": 19.7,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 2,
-     "med": 12.0,
-     "p10": 0.0,
-     "p90": 41.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2007,
-   "acad": 2007,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 51,
-     "med": 27.6,
-     "p10": 7.0,
-     "p90": 59.2,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 5,
-     "med": 10.0,
-     "p10": 1.0,
-     "p90": 28.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 4,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 7.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 3,
-     "med": 13.6,
-     "p10": 0.0,
-     "p90": 44.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2008,
-   "acad": 2007,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 55,
-     "med": 63.0,
-     "p10": 57.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 5,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2008,
-   "acad": 2007,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 52,
-     "med": 63.0,
-     "p10": 49.2,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 5,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 11.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 5,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2009,
-   "acad": 2008,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 34,
-     "med": 45.8,
-     "p10": 13.0,
-     "p90": 60.4,
-     "clim_med": 36.0
-    },
-    "amber": {
-     "obs": 20,
-     "med": 10.0,
-     "p10": 2.0,
-     "p90": 21.1,
-     "clim_med": 11.0
-    },
-    "red": {
-     "obs": 9,
-     "med": 7.0,
-     "p10": 0.0,
-     "p90": 35.4,
-     "clim_med": 14.0
-    }
-   }
-  },
-  {
-   "year": 2009,
-   "acad": 2008,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 12,
-     "med": 36.0,
-     "p10": 6.8,
-     "p90": 55.8,
-     "clim_med": 22.0
-    },
-    "blue": {
-     "obs": 36,
-     "med": 14.6,
-     "p10": 5.4,
-     "p90": 29.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 5,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 6.4,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 10,
-     "med": 8.7,
-     "p10": 0.0,
-     "p90": 38.4,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2008,
-   "acad": 2008,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 54,
-     "med": 33.0,
-     "p10": 7.5,
-     "p90": 61.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 6,
-     "med": 8.2,
-     "p10": 1.6,
-     "p90": 20.0,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 3,
-     "med": 18.0,
-     "p10": 0.0,
-     "p90": 45.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2008,
-   "acad": 2008,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 48,
-     "med": 24.0,
-     "p10": 4.0,
-     "p90": 57.0,
-     "clim_med": 57.0
-    },
-    "blue": {
-     "obs": 10,
-     "med": 11.0,
-     "p10": 1.0,
-     "p90": 27.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 2,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 7.7,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 3,
-     "med": 18.0,
-     "p10": 0.0,
-     "p90": 46.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2009,
-   "acad": 2008,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2009,
-   "acad": 2008,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 57.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2010,
-   "acad": 2009,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 33,
-     "med": 43.2,
-     "p10": 13.0,
-     "p90": 60.0,
-     "clim_med": 35.0
-    },
-    "amber": {
-     "obs": 13,
-     "med": 11.0,
-     "p10": 3.0,
-     "p90": 23.6,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 17,
-     "med": 9.0,
-     "p10": 0.0,
-     "p90": 36.2,
-     "clim_med": 11.0
-    }
-   }
-  },
-  {
-   "year": 2010,
-   "acad": 2009,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 19,
-     "med": 31.2,
-     "p10": 7.4,
-     "p90": 53.6,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 23,
-     "med": 16.0,
-     "p10": 7.0,
-     "p90": 31.6,
-     "clim_med": 16.0
-    },
-    "amber": {
-     "obs": 4,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 7.4,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 17,
-     "med": 9.9,
-     "p10": 0.0,
-     "p90": 39.2,
-     "clim_med": 14.0
-    }
-   }
-  },
-  {
-   "year": 2009,
-   "acad": 2009,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 51,
-     "med": 63.0,
-     "p10": 38.0,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 8,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 11.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 4,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 16.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2009,
-   "acad": 2009,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 50,
-     "med": 59.0,
-     "p10": 26.0,
-     "p90": 63.0,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 3,
-     "med": 3.8,
-     "p10": 0.0,
-     "p90": 15.0,
-     "clim_med": 4.5
-    },
-    "amber": {
-     "obs": 4,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 6,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 17.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2010,
-   "acad": 2009,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 50.8,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 8.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2010,
-   "acad": 2009,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 61.1,
-     "p10": 43.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 1.9,
-     "p10": 0.0,
-     "p90": 13.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.8,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 6.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2011,
-   "acad": 2010,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 48,
-     "med": 51.7,
-     "p10": 16.0,
-     "p90": 63.0,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 12,
-     "med": 6.4,
-     "p10": 0.0,
-     "p90": 20.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 3,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 25.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2011,
-   "acad": 2010,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 39,
-     "med": 43.1,
-     "p10": 7.6,
-     "p90": 60.0,
-     "clim_med": 19.0
-    },
-    "blue": {
-     "obs": 16,
-     "med": 13.0,
-     "p10": 3.0,
-     "p90": 24.2,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 5,
-     "med": 4.4,
-     "p10": 0.0,
-     "p90": 27.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2010,
-   "acad": 2010,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 60.8,
-     "p10": 29.6,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 13.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 19.2,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2010,
-   "acad": 2010,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 54.0,
-     "p10": 21.5,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 16.0,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 19.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2011,
-   "acad": 2010,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 62.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2011,
-   "acad": 2010,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2012,
-   "acad": 2011,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 54.1,
-     "p10": 29.6,
-     "p90": 63.0,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 5.0,
-     "p10": 0.0,
-     "p90": 15.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 17.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2012,
-   "acad": 2011,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 48.4,
-     "p10": 12.0,
-     "p90": 61.0,
-     "clim_med": 19.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 7.0,
-     "p10": 2.0,
-     "p90": 23.0,
-     "clim_med": 18.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.8,
-     "p10": 0.0,
-     "p90": 17.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2011,
-   "acad": 2011,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 50.2,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 10.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2011,
-   "acad": 2011,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 43.2,
-     "p90": 63.0,
-     "clim_med": 56.5
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 12.0,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.4,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 6.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2012,
-   "acad": 2011,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 45,
-     "med": 63.0,
-     "p10": 63.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 10,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 8,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2012,
-   "acad": 2011,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 39,
-     "med": 63.0,
-     "p10": 62.6,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 10,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 11,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2013,
-   "acad": 2012,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 12,
-     "med": 7.4,
-     "p10": 0.0,
-     "p90": 38.4,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 23,
-     "med": 11.2,
-     "p10": 1.0,
-     "p90": 21.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 28,
-     "med": 37.0,
-     "p10": 11.0,
-     "p90": 58.8,
-     "clim_med": 16.0
-    }
-   }
-  },
-  {
-   "year": 2013,
-   "acad": 2012,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 5,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 30.0,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 19,
-     "med": 9.8,
-     "p10": 0.0,
-     "p90": 23.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 8,
-     "med": 4.0,
-     "p10": 1.0,
-     "p90": 8.6,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 31,
-     "med": 39.5,
-     "p10": 14.0,
-     "p90": 59.9,
-     "clim_med": 18.0
-    }
-   }
-  },
-  {
-   "year": 2012,
-   "acad": 2012,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 26,
-     "med": 32.7,
-     "p10": 6.0,
-     "p90": 61.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 17,
-     "med": 8.0,
-     "p10": 1.6,
-     "p90": 21.5,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 20,
-     "med": 12.4,
-     "p10": 0.0,
-     "p90": 45.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2012,
-   "acad": 2012,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 10,
-     "med": 24.0,
-     "p10": 3.5,
-     "p90": 57.0,
-     "clim_med": 56.5
-    },
-    "blue": {
-     "obs": 28,
-     "med": 11.2,
-     "p10": 2.2,
-     "p90": 23.5,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 4,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 8.7,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 21,
-     "med": 15.0,
-     "p10": 0.0,
-     "p90": 46.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2013,
-   "acad": 2012,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 50.6,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 7.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2013,
-   "acad": 2012,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 40.4,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 13.7,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2014,
-   "acad": 2013,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 0,
-     "med": 29.2,
-     "p10": 9.0,
-     "p90": 45.2,
-     "clim_med": 36.0
-    },
-    "amber": {
-     "obs": 6,
-     "med": 14.0,
-     "p10": 8.0,
-     "p90": 23.4,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 57,
-     "med": 16.6,
-     "p10": 5.4,
-     "p90": 41.5,
-     "clim_med": 12.0
-    }
-   }
-  },
-  {
-   "year": 2014,
-   "acad": 2013,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 0,
-     "med": 14.9,
-     "p10": 0.0,
-     "p90": 39.2,
-     "clim_med": 22.0
-    },
-    "blue": {
-     "obs": 2,
-     "med": 18.0,
-     "p10": 7.6,
-     "p90": 29.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 5.0,
-     "p10": 2.0,
-     "p90": 9.0,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 58,
-     "med": 19.1,
-     "p10": 8.0,
-     "p90": 44.4,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2013,
-   "acad": 2013,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 38.0,
-     "p90": 63.0,
-     "clim_med": 59.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 12.2,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 12.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2013,
-   "acad": 2013,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 58,
-     "med": 61.0,
-     "p10": 29.4,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 5,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 12.6,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.2,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 15.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2014,
-   "acad": 2013,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 62,
-     "med": 63.0,
-     "p10": 57.4,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2014,
-   "acad": 2013,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 58,
-     "med": 63.0,
-     "p10": 52.4,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 5,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 8.2,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2015,
-   "acad": 2014,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 44,
-     "med": 37.2,
-     "p10": 12.2,
-     "p90": 58.6,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 15,
-     "med": 12.0,
-     "p10": 3.4,
-     "p90": 25.0,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 4,
-     "med": 10.4,
-     "p10": 0.0,
-     "p90": 36.8,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2015,
-   "acad": 2014,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 30,
-     "med": 27.0,
-     "p10": 3.0,
-     "p90": 50.4,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 22,
-     "med": 17.0,
-     "p10": 8.0,
-     "p90": 32.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 5,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 8.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 6,
-     "med": 11.0,
-     "p10": 0.0,
-     "p90": 39.2,
-     "clim_med": 16.0
-    }
-   }
-  },
-  {
-   "year": 2014,
-   "acad": 2014,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 61,
-     "med": 61.0,
-     "p10": 30.0,
-     "p90": 63.0,
-     "clim_med": 59.5
-    },
-    "amber": {
-     "obs": 2,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 13.2,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 18.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2014,
-   "acad": 2014,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 55,
-     "med": 57.5,
-     "p10": 24.0,
-     "p90": 63.0,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 8,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 13.8,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 18.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2015,
-   "acad": 2014,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 61.2,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2015,
-   "acad": 2014,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 58.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.2,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2016,
-   "acad": 2015,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 13,
-     "med": 37.6,
-     "p10": 7.0,
-     "p90": 54.0,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 24,
-     "med": 12.0,
-     "p10": 4.0,
-     "p90": 19.0,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 26,
-     "med": 13.0,
-     "p10": 2.0,
-     "p90": 37.6,
-     "clim_med": 12.0
-    }
-   }
-  },
-  {
-   "year": 2016,
-   "acad": 2015,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 6,
-     "med": 25.9,
-     "p10": 2.0,
-     "p90": 43.9,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 20,
-     "med": 19.0,
-     "p10": 7.0,
-     "p90": 27.4,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 10,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 6.0,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 27,
-     "med": 14.4,
-     "p10": 2.9,
-     "p90": 39.6,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2015,
-   "acad": 2015,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 42.2,
-     "p90": 63.0,
-     "clim_med": 60.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 11.0,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 9.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2015,
-   "acad": 2015,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 62.0,
-     "p10": 37.0,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 12.6,
-     "clim_med": 4.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 10.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2016,
-   "acad": 2015,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 60,
-     "med": 62.0,
-     "p10": 42.2,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 2,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 10.8,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 8.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2016,
-   "acad": 2015,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 58,
-     "med": 58.0,
-     "p10": 35.5,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 2,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 14.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 2,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 8.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2017,
-   "acad": 2016,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 53,
-     "med": 51.2,
-     "p10": 16.2,
-     "p90": 63.0,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 9,
-     "med": 6.0,
-     "p10": 0.0,
-     "p90": 18.2,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 1,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 25.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2017,
-   "acad": 2016,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 43,
-     "med": 42.9,
-     "p10": 9.1,
-     "p90": 60.4,
-     "clim_med": 19.0
-    },
-    "blue": {
-     "obs": 16,
-     "med": 11.6,
-     "p10": 2.4,
-     "p90": 23.0,
-     "clim_med": 18.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 1.6,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 3,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 27.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2016,
-   "acad": 2016,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 61,
-     "med": 61.0,
-     "p10": 29.6,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 2,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 12.8,
-     "clim_med": 1.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 17.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2016,
-   "acad": 2016,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 60,
-     "med": 55.0,
-     "p10": 22.0,
-     "p90": 63.0,
-     "clim_med": 56.5
-    },
-    "blue": {
-     "obs": 3,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 15.5,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.5,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 18.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2017,
-   "acad": 2016,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2017,
-   "acad": 2016,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 57.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.6,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2018,
-   "acad": 2017,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 47,
-     "med": 38.9,
-     "p10": 12.0,
-     "p90": 53.9,
-     "clim_med": 32.0
-    },
-    "amber": {
-     "obs": 11,
-     "med": 11.0,
-     "p10": 5.1,
-     "p90": 23.4,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 5,
-     "med": 12.0,
-     "p10": 1.0,
-     "p90": 32.8,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2018,
-   "acad": 2017,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 21,
-     "med": 29.2,
-     "p10": 2.0,
-     "p90": 48.6,
-     "clim_med": 18.0
-    },
-    "blue": {
-     "obs": 34,
-     "med": 15.2,
-     "p10": 7.0,
-     "p90": 25.0,
-     "clim_med": 18.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 3.0,
-     "p10": 1.0,
-     "p90": 8.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 5,
-     "med": 13.9,
-     "p10": 1.1,
-     "p90": 37.0,
-     "clim_med": 18.0
-    }
-   }
-  },
-  {
-   "year": 2017,
-   "acad": 2017,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 43.2,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 10.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 10.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2017,
-   "acad": 2017,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 61.0,
-     "p10": 31.5,
-     "p90": 63.0,
-     "clim_med": 57.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 12.8,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 11.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2018,
-   "acad": 2017,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 60,
-     "med": 53.6,
-     "p10": 34.4,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 8.0,
-     "p10": 0.0,
-     "p90": 16.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 16.9,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2018,
-   "acad": 2017,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 56,
-     "med": 48.0,
-     "p10": 28.1,
-     "p90": 62.0,
-     "clim_med": 62.0
-    },
-    "blue": {
-     "obs": 7,
-     "med": 11.0,
-     "p10": 1.0,
-     "p90": 18.6,
-     "clim_med": 1.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 1.4,
-     "p10": 0.0,
-     "p90": 20.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2019,
-   "acad": 2018,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 57,
-     "med": 48.4,
-     "p10": 15.0,
-     "p90": 63.0,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 6,
-     "med": 8.0,
-     "p10": 0.0,
-     "p90": 18.2,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 26.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2019,
-   "acad": 2018,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 53,
-     "med": 39.0,
-     "p10": 12.0,
-     "p90": 59.8,
-     "clim_med": 20.0
-    },
-    "blue": {
-     "obs": 10,
-     "med": 14.2,
-     "p10": 2.8,
-     "p90": 22.6,
-     "clim_med": 19.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 6.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 5.0,
-     "p10": 0.0,
-     "p90": 27.0,
-     "clim_med": 18.0
-    }
-   }
-  },
-  {
-   "year": 2018,
-   "acad": 2018,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 44.0,
-     "p90": 63.0,
-     "clim_med": 59.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 10.8,
-     "clim_med": 3.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 7.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2018,
-   "acad": 2018,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 62.0,
-     "p10": 34.5,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 13.0,
-     "clim_med": 4.5
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 9.2,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2019,
-   "acad": 2018,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2019,
-   "acad": 2018,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 57.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.2,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2020,
-   "acad": 2019,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 3,
-     "med": 22.4,
-     "p10": 1.1,
-     "p90": 44.0,
-     "clim_med": 36.0
-    },
-    "amber": {
-     "obs": 13,
-     "med": 15.0,
-     "p10": 6.0,
-     "p90": 28.9,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 47,
-     "med": 19.0,
-     "p10": 2.0,
-     "p90": 48.2,
-     "clim_med": 12.0
-    }
-   }
-  },
-  {
-   "year": 2020,
-   "acad": 2019,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 0,
-     "med": 8.0,
-     "p10": 0.0,
-     "p90": 35.2,
-     "clim_med": 22.0
-    },
-    "blue": {
-     "obs": 8,
-     "med": 18.4,
-     "p10": 7.0,
-     "p90": 32.9,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 3,
-     "med": 4.0,
-     "p10": 2.0,
-     "p90": 9.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 52,
-     "med": 21.0,
-     "p10": 4.0,
-     "p90": 50.9,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2019,
-   "acad": 2019,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 12,
-     "med": 53.4,
-     "p10": 28.0,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 20,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 15.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 31,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 26.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2019,
-   "acad": 2019,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 7,
-     "med": 44.0,
-     "p10": 17.8,
-     "p90": 63.0,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 12,
-     "med": 6.0,
-     "p10": 0.0,
-     "p90": 20.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 8,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 6.8,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 36,
-     "med": 1.3,
-     "p10": 0.0,
-     "p90": 27.2,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2020,
-   "acad": 2019,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 55.4,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 6.4,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2020,
-   "acad": 2019,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 46.6,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 12.7,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.6,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.9,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2021,
-   "acad": 2020,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 9,
-     "med": 23.7,
-     "p10": 2.2,
-     "p90": 47.0,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 20,
-     "med": 16.0,
-     "p10": 7.0,
-     "p90": 28.6,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 34,
-     "med": 18.4,
-     "p10": 4.0,
-     "p90": 44.2,
-     "clim_med": 12.0
-    }
-   }
-  },
-  {
-   "year": 2021,
-   "acad": 2020,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 2,
-     "med": 9.7,
-     "p10": 0.0,
-     "p90": 36.4,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 22,
-     "med": 17.0,
-     "p10": 7.2,
-     "p90": 34.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 4,
-     "med": 4.8,
-     "p10": 2.0,
-     "p90": 8.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 35,
-     "med": 22.0,
-     "p10": 4.4,
-     "p90": 48.6,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2020,
-   "acad": 2020,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 49,
-     "med": 60.0,
-     "p10": 27.8,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 13,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 12.0,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 1,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 20.3,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2020,
-   "acad": 2020,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 24,
-     "med": 54.0,
-     "p10": 25.0,
-     "p90": 63.0,
-     "clim_med": 57.0
-    },
-    "blue": {
-     "obs": 34,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 12.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 3,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 2,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 20.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2021,
-   "acad": 2020,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2021,
-   "acad": 2020,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 58,
-     "med": 63.0,
-     "p10": 57.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 5,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.9,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2022,
-   "acad": 2021,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 54,
-     "med": 39.0,
-     "p10": 13.0,
-     "p90": 58.6,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 9,
-     "med": 12.0,
-     "p10": 3.0,
-     "p90": 25.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 9.0,
-     "p10": 0.0,
-     "p90": 34.8,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2022,
-   "acad": 2021,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 41,
-     "med": 28.0,
-     "p10": 4.6,
-     "p90": 52.9,
-     "clim_med": 19.0
-    },
-    "blue": {
-     "obs": 21,
-     "med": 16.0,
-     "p10": 7.2,
-     "p90": 29.1,
-     "clim_med": 16.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 6.6,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 10.0,
-     "p10": 0.0,
-     "p90": 35.8,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2021,
-   "acad": 2021,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 62,
-     "med": 56.2,
-     "p10": 22.4,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 1,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 14.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 25.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2021,
-   "acad": 2021,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 60,
-     "med": 51.0,
-     "p10": 14.6,
-     "p90": 63.0,
-     "clim_med": 56.0
-    },
-    "blue": {
-     "obs": 3,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 16.0,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 27.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2022,
-   "acad": 2021,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2022,
-   "acad": 2021,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 57.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2023,
-   "acad": 2022,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 37,
-     "med": 29.4,
-     "p10": 7.0,
-     "p90": 49.1,
-     "clim_med": 32.0
-    },
-    "amber": {
-     "obs": 8,
-     "med": 13.0,
-     "p10": 6.2,
-     "p90": 24.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 18,
-     "med": 17.4,
-     "p10": 4.4,
-     "p90": 44.0,
-     "clim_med": 14.0
-    }
-   }
-  },
-  {
-   "year": 2023,
-   "acad": 2022,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 33,
-     "med": 13.0,
-     "p10": 0.0,
-     "p90": 39.0,
-     "clim_med": 18.0
-    },
-    "blue": {
-     "obs": 9,
-     "med": 17.9,
-     "p10": 8.2,
-     "p90": 31.3,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 2,
-     "med": 4.0,
-     "p10": 1.0,
-     "p90": 8.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 19,
-     "med": 18.6,
-     "p10": 5.0,
-     "p90": 46.0,
-     "clim_med": 17.0
-    }
-   }
-  },
-  {
-   "year": 2022,
-   "acad": 2022,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 56,
-     "med": 63.0,
-     "p10": 52.0,
-     "p90": 63.0,
-     "clim_med": 61.0
-    },
-    "amber": {
-     "obs": 7,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 7.2,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2022,
-   "acad": 2022,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 50,
-     "med": 63.0,
-     "p10": 44.0,
-     "p90": 63.0,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 9,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 10.8,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 4,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 1.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2023,
-   "acad": 2022,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 49,
-     "med": 52.0,
-     "p10": 32.8,
-     "p90": 62.0,
-     "clim_med": 62.0
-    },
-    "amber": {
-     "obs": 13,
-     "med": 7.0,
-     "p10": 1.0,
-     "p90": 14.3,
-     "clim_med": 1.0
-    },
-    "red": {
-     "obs": 1,
-     "med": 3.1,
-     "p10": 0.0,
-     "p90": 22.9,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2023,
-   "acad": 2022,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 41,
-     "med": 47.0,
-     "p10": 24.6,
-     "p90": 62.0,
-     "clim_med": 62.0
-    },
-    "blue": {
-     "obs": 19,
-     "med": 9.0,
-     "p10": 1.0,
-     "p90": 16.1,
-     "clim_med": 1.0
-    },
-    "amber": {
-     "obs": 1,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 2,
-     "med": 4.1,
-     "p10": 0.0,
-     "p90": 23.9,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2024,
-   "acad": 2023,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 6,
-     "med": 11.6,
-     "p10": 0.0,
-     "p90": 38.8,
-     "clim_med": 33.0
-    },
-    "amber": {
-     "obs": 12,
-     "med": 13.0,
-     "p10": 6.1,
-     "p90": 24.0,
-     "clim_med": 13.0
-    },
-    "red": {
-     "obs": 45,
-     "med": 35.0,
-     "p10": 10.2,
-     "p90": 55.9,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2024,
-   "acad": 2023,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 0,
-     "med": 2.0,
-     "p10": 0.0,
-     "p90": 30.0,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 12,
-     "med": 10.6,
-     "p10": 2.0,
-     "p90": 24.0,
-     "clim_med": 18.0
-    },
-    "amber": {
-     "obs": 5,
-     "med": 4.0,
-     "p10": 1.0,
-     "p90": 8.4,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 46,
-     "med": 35.4,
-     "p10": 10.0,
-     "p90": 57.9,
-     "clim_med": 18.0
-    }
-   }
-  },
-  {
-   "year": 2023,
-   "acad": 2023,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 19,
-     "med": 56.0,
-     "p10": 28.0,
-     "p90": 63.0,
-     "clim_med": 61.0
-    },
-    "amber": {
-     "obs": 15,
-     "med": 3.0,
-     "p10": 0.0,
-     "p90": 13.5,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 29,
-     "med": 0.6,
-     "p10": 0.0,
-     "p90": 30.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2023,
-   "acad": 2023,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 16,
-     "med": 48.8,
-     "p10": 19.2,
-     "p90": 63.0,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 8,
-     "med": 6.5,
-     "p10": 0.0,
-     "p90": 17.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 9,
-     "med": 0.2,
-     "p10": 0.0,
-     "p90": 5.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 30,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 33.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2024,
-   "acad": 2023,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 54,
-     "med": 59.0,
-     "p10": 36.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 9,
-     "med": 4.0,
-     "p10": 0.0,
-     "p90": 12.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 9.6,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2024,
-   "acad": 2023,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 39,
-     "med": 53.0,
-     "p10": 32.2,
-     "p90": 62.0,
-     "clim_med": 62.0
-    },
-    "blue": {
-     "obs": 24,
-     "med": 8.0,
-     "p10": 1.0,
-     "p90": 17.1,
-     "clim_med": 1.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 1.0,
-     "p10": 0.0,
-     "p90": 3.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 13.4,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2025,
-   "acad": 2024,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 19,
-     "med": 19.0,
-     "p10": 0.0,
-     "p90": 44.0,
-     "clim_med": 36.0
-    },
-    "amber": {
-     "obs": 25,
-     "med": 14.6,
-     "p10": 5.6,
-     "p90": 28.2,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 19,
-     "med": 23.0,
-     "p10": 3.0,
-     "p90": 51.8,
-     "clim_med": 11.0
-    }
-   }
-  },
-  {
-   "year": 2025,
-   "acad": 2024,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 4,
-     "med": 6.0,
-     "p10": 0.0,
-     "p90": 34.0,
-     "clim_med": 22.0
-    },
-    "blue": {
-     "obs": 28,
-     "med": 16.0,
-     "p10": 4.1,
-     "p90": 31.0,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 11,
-     "med": 4.0,
-     "p10": 1.0,
-     "p90": 9.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 20,
-     "med": 24.6,
-     "p10": 4.0,
-     "p90": 53.6,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2024,
-   "acad": 2024,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 18,
-     "med": 18.0,
-     "p10": 0.0,
-     "p90": 60.5,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 14,
-     "med": 15.0,
-     "p10": 2.0,
-     "p90": 29.0,
-     "clim_med": 2.0
-    },
-    "red": {
-     "obs": 31,
-     "med": 26.7,
-     "p10": 0.0,
-     "p90": 52.5,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2024,
-   "acad": 2024,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 11,
-     "med": 5.6,
-     "p10": 0.0,
-     "p90": 56.5,
-     "clim_med": 56.5
-    },
-    "blue": {
-     "obs": 14,
-     "med": 15.0,
-     "p10": 0.0,
-     "p90": 29.2,
-     "clim_med": 4.0
-    },
-    "amber": {
-     "obs": 5,
-     "med": 5.0,
-     "p10": 0.0,
-     "p90": 10.5,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 33,
-     "med": 29.0,
-     "p10": 0.0,
-     "p90": 54.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2025,
-   "acad": 2024,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2025,
-   "acad": 2024,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 57.6,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.2,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2026,
-   "acad": 2025,
-   "term": "Hilary",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 0,
-     "med": 37.2,
-     "p10": 11.0,
-     "p90": 57.2,
-     "clim_med": 34.0
-    },
-    "amber": {
-     "obs": 11,
-     "med": 13.0,
-     "p10": 5.0,
-     "p90": 25.0,
-     "clim_med": 12.0
-    },
-    "red": {
-     "obs": 52,
-     "med": 10.0,
-     "p10": 0.0,
-     "p90": 37.0,
-     "clim_med": 13.0
-    }
-   }
-  },
-  {
-   "year": 2026,
-   "acad": 2025,
-   "term": "Hilary",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 0,
-     "med": 26.4,
-     "p10": 2.0,
-     "p90": 49.2,
-     "clim_med": 21.0
-    },
-    "blue": {
-     "obs": 2,
-     "med": 18.0,
-     "p10": 9.0,
-     "p90": 29.4,
-     "clim_med": 17.0
-    },
-    "amber": {
-     "obs": 8,
-     "med": 4.0,
-     "p10": 0.2,
-     "p90": 9.0,
-     "clim_med": 4.0
-    },
-    "red": {
-     "obs": 53,
-     "med": 11.0,
-     "p10": 0.0,
-     "p90": 38.6,
-     "clim_med": 15.0
-    }
-   }
-  },
-  {
-   "year": 2025,
-   "acad": 2025,
-   "term": "Michaelmas",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 56,
-     "med": 63.0,
-     "p10": 53.0,
-     "p90": 63.0,
-     "clim_med": 60.5
-    },
-    "amber": {
-     "obs": 7,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 7.0,
-     "clim_med": 2.5
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.8,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2025,
-   "acad": 2025,
-   "term": "Michaelmas",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 47,
-     "med": 63.0,
-     "p10": 47.0,
-     "p90": 63.0,
-     "clim_med": 57.5
-    },
-    "blue": {
-     "obs": 12,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 9.0,
-     "clim_med": 3.5
-    },
-    "amber": {
-     "obs": 4,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 3.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 4.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2026,
-   "acad": 2025,
-   "term": "Trinity",
-   "loc": "godstow",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 60.2,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 2.4,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
-  },
-  {
-   "year": 2026,
-   "acad": 2025,
-   "term": "Trinity",
-   "loc": "isis",
-   "flags": {
-    "green": {
-     "obs": 63,
-     "med": 63.0,
-     "p10": 55.0,
-     "p90": 63.0,
-     "clim_med": 63.0
-    },
-    "blue": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 8.0,
-     "clim_med": 0.0
-    },
-    "amber": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    },
-    "red": {
-     "obs": 0,
-     "med": 0.0,
-     "p10": 0.0,
-     "p90": 0.0,
-     "clim_med": 0.0
-    }
-   }
+ "torpids_skill": {
+  "week before": {
+   "skill": 0.318,
+   "n": 32
+  },
+  "1-2 months": {
+   "skill": 0.081,
+   "n": 59
+  },
+  "2-3 months": {
+   "skill": 0.083,
+   "n": 64
+  },
+  "3-4 months": {
+   "skill": 0.022,
+   "n": 69
+  },
+  "4+ months": {
+   "skill": 0.009,
+   "n": 133
+  },
+  "last week": {
+   "skill": 0.577,
+   "n": 17
+  },
+  "up to 1 month": {
+   "skill": 0.136,
+   "n": 59
   }
- ],
- "torpids_skill": [
-  {
-   "lead": "last week",
-   "n": 17,
-   "brier": 0.065,
-   "brier_clim": 0.154,
-   "skill": 0.577
-  },
-  {
-   "lead": "up to 1 month before",
-   "n": 59,
-   "brier": 0.148,
-   "brier_clim": 0.171,
-   "skill": 0.136
-  },
-  {
-   "lead": "1-2 months before",
-   "n": 91,
-   "brier": 0.172,
-   "brier_clim": 0.185,
-   "skill": 0.07
-  },
-  {
-   "lead": "2-3 months before",
-   "n": 64,
-   "brier": 0.17,
-   "brier_clim": 0.185,
-   "skill": 0.083
-  },
-  {
-   "lead": "3-4 months before",
-   "n": 69,
-   "brier": 0.18,
-   "brier_clim": 0.185,
-   "skill": 0.022
-  },
-  {
-   "lead": "4+ months before",
-   "n": 165,
-   "brier": 0.189,
-   "brier_clim": 0.19,
-   "skill": 0.008
-  },
-  {
-   "lead": "a week before (Wednesday of 6th week)",
-   "n": 32,
-   "brier": 0.126,
-   "brier_clim": 0.184,
-   "skill": 0.318
-  }
- ],
- "torpids_by_year": [
-  {
-   "year": 1994,
-   "obs": 0,
-   "1 Nov": 0.2,
-   "1 Dec": 0.17,
-   "1 Jan": 0.22,
-   "1 Feb": 0.27,
-   "15 Feb": 0.25,
-   "week before": 0.19
-  },
-  {
-   "year": 1995,
-   "obs": 0,
-   "1 Nov": 0.16,
-   "1 Dec": 0.09,
-   "1 Jan": 0.16,
-   "1 Feb": 0.24,
-   "15 Feb": 0.29,
-   "week before": 0.34
-  },
-  {
-   "year": 1996,
-   "obs": 0,
-   "1 Nov": 0.12,
-   "1 Dec": 0.09,
-   "1 Jan": 0.09,
-   "1 Feb": 0.06,
-   "15 Feb": 0.12,
-   "week before": 0.09
-  },
-  {
-   "year": 1997,
-   "obs": 0,
-   "1 Nov": 0.11,
-   "1 Dec": 0.06,
-   "1 Jan": 0.03,
-   "1 Feb": 0.03,
-   "15 Feb": 0.03,
-   "week before": 0.03
-  },
-  {
-   "year": 1998,
-   "obs": 0,
-   "1 Nov": 0.19,
-   "1 Dec": 0.17,
-   "1 Jan": 0.16,
-   "1 Feb": 0.14,
-   "15 Feb": 0.08,
-   "week before": 0.03
-  },
-  {
-   "year": 1999,
-   "obs": 0,
-   "1 Nov": 0.2,
-   "1 Dec": 0.19,
-   "1 Jan": 0.24,
-   "1 Feb": 0.32,
-   "15 Feb": 0.16,
-   "week before": 0.06
-  },
-  {
-   "year": 2000,
-   "obs": 1,
-   "1 Nov": 0.19,
-   "1 Dec": 0.21,
-   "1 Jan": 0.26,
-   "1 Feb": 0.14,
-   "15 Feb": 0.11,
-   "week before": 0.03
-  },
-  {
-   "year": 2001,
-   "obs": 0,
-   "1 Nov": 0.27,
-   "1 Dec": 0.37,
-   "1 Jan": 0.37,
-   "1 Feb": 0.4,
-   "15 Feb": 0.43,
-   "week before": 0.37
-  },
-  {
-   "year": 2002,
-   "obs": 1,
-   "1 Nov": 0.22,
-   "1 Dec": 0.11,
-   "1 Jan": 0.06,
-   "1 Feb": 0.06,
-   "15 Feb": 0.21,
-   "week before": 0.19
-  },
-  {
-   "year": 2003,
-   "obs": 0,
-   "1 Nov": 0.14,
-   "1 Dec": 0.22,
-   "1 Jan": 0.28,
-   "1 Feb": 0.31,
-   "15 Feb": 0.15,
-   "week before": 0.08
-  },
-  {
-   "year": 2004,
-   "obs": 0,
-   "1 Nov": 0.12,
-   "1 Dec": 0.11,
-   "1 Jan": 0.03,
-   "1 Feb": 0.03,
-   "15 Feb": 0.11,
-   "week before": 0.03
-  },
-  {
-   "year": 2005,
-   "obs": 0,
-   "1 Nov": 0.25,
-   "1 Dec": 0.24,
-   "1 Jan": 0.19,
-   "1 Feb": 0.04,
-   "15 Feb": 0.04,
-   "week before": 0.04
-  },
-  {
-   "year": 2006,
-   "obs": 0,
-   "1 Nov": 0.22,
-   "1 Dec": 0.06,
-   "1 Jan": 0.03,
-   "1 Feb": 0.03,
-   "15 Feb": 0.03,
-   "week before": 0.03
-  },
-  {
-   "year": 2007,
-   "obs": 1,
-   "1 Nov": 0.22,
-   "1 Dec": 0.34,
-   "1 Jan": 0.24,
-   "1 Feb": 0.24,
-   "15 Feb": 0.24,
-   "week before": 0.16
-  },
-  {
-   "year": 2008,
-   "obs": 0,
-   "1 Nov": 0.25,
-   "1 Dec": 0.27,
-   "1 Jan": 0.19,
-   "1 Feb": 0.25,
-   "15 Feb": 0.12,
-   "week before": 0.09
-  },
-  {
-   "year": 2009,
-   "obs": 0,
-   "1 Nov": 0.19,
-   "1 Dec": 0.19,
-   "1 Jan": 0.11,
-   "1 Feb": 0.14,
-   "15 Feb": 0.21,
-   "week before": 0.11
-  },
-  {
-   "year": 2010,
-   "obs": 0,
-   "1 Nov": 0.16,
-   "1 Dec": 0.29,
-   "1 Jan": 0.21,
-   "1 Feb": 0.24,
-   "15 Feb": 0.11,
-   "week before": 0.11
-  },
-  {
-   "year": 2011,
-   "obs": 0,
-   "1 Nov": 0.19,
-   "1 Dec": 0.12,
-   "1 Jan": 0.04,
-   "1 Feb": 0.04,
-   "15 Feb": 0.04,
-   "week before": 0.06
-  },
-  {
-   "year": 2012,
-   "obs": 0,
-   "1 Nov": 0.12,
-   "1 Dec": 0.04,
-   "1 Jan": 0.03,
-   "1 Feb": 0.03,
-   "15 Feb": 0.03,
-   "week before": 0.03
-  },
-  {
-   "year": 2013,
-   "obs": 0,
-   "1 Nov": 0.27,
-   "1 Dec": 0.44,
-   "1 Jan": 0.5,
-   "1 Feb": 0.4,
-   "15 Feb": 0.4,
-   "week before": 0.32
-  },
-  {
-   "year": 2014,
-   "obs": 1,
-   "1 Nov": 0.11,
-   "1 Dec": 0.08,
-   "1 Jan": 0.23,
-   "1 Feb": 0.25,
-   "15 Feb": 0.33,
-   "week before": 0.46
-  },
-  {
-   "year": 2015,
-   "obs": 0,
-   "1 Nov": 0.19,
-   "1 Dec": 0.19,
-   "1 Jan": 0.11,
-   "1 Feb": 0.14,
-   "15 Feb": 0.08,
-   "week before": 0.11
-  },
-  {
-   "year": 2016,
-   "obs": 0,
-   "1 Nov": 0.16,
-   "1 Dec": 0.14,
-   "1 Jan": 0.16,
-   "1 Feb": 0.16,
-   "15 Feb": 0.29,
-   "week before": 0.21
-  },
-  {
-   "year": 2017,
-   "obs": 0,
-   "1 Nov": 0.14,
-   "1 Dec": 0.19,
-   "1 Jan": 0.03,
-   "1 Feb": 0.03,
-   "15 Feb": 0.08,
-   "week before": 0.06
-  },
-  {
-   "year": 2018,
-   "obs": 0,
-   "1 Nov": 0.16,
-   "1 Dec": 0.07,
-   "1 Jan": 0.09,
-   "1 Feb": 0.09,
-   "15 Feb": 0.09,
-   "week before": 0.09
-  },
-  {
-   "year": 2019,
-   "obs": 0,
-   "1 Nov": 0.14,
-   "1 Dec": 0.04,
-   "1 Jan": 0.09,
-   "1 Feb": 0.06,
-   "15 Feb": 0.06,
-   "week before": 0.06
-  },
-  {
-   "year": 2020,
-   "obs": 1,
-   "1 Nov": 0.11,
-   "1 Dec": 0.17,
-   "1 Jan": 0.23,
-   "1 Feb": 0.25,
-   "15 Feb": 0.2,
-   "week before": 0.41
-  },
-  {
-   "year": 2022,
-   "obs": 0,
-   "1 Nov": 0.2,
-   "1 Dec": 0.07,
-   "1 Jan": 0.14,
-   "1 Feb": 0.04,
-   "15 Feb": 0.04,
-   "week before": 0.09
-  },
-  {
-   "year": 2023,
-   "obs": 0,
-   "1 Nov": 0.12,
-   "1 Dec": 0.29,
-   "1 Jan": 0.19,
-   "1 Feb": 0.24,
-   "15 Feb": 0.14,
-   "week before": 0.06
-  },
-  {
-   "year": 2024,
-   "obs": 1,
-   "1 Nov": 0.23,
-   "1 Dec": 0.26,
-   "1 Jan": 0.29,
-   "1 Feb": 0.26,
-   "15 Feb": 0.39,
-   "week before": 0.47
-  },
-  {
-   "year": 2025,
-   "obs": 0,
-   "1 Nov": 0.14,
-   "1 Dec": 0.34,
-   "1 Jan": 0.26,
-   "1 Feb": 0.31,
-   "15 Feb": 0.23,
-   "week before": 0.23
-  },
-  {
-   "year": 2026,
-   "obs": 1,
-   "1 Nov": 0.09,
-   "1 Dec": 0.14,
-   "1 Jan": 0.21,
-   "1 Feb": 0.28,
-   "15 Feb": 0.41,
-   "week before": 0.56
-  }
- ],
+ },
  "torpids_climatology": 0.219,
  "torpids_record": [
   {
    "year": 1993,
-   "first_day": "1993-03-03",
    "flow": 10.4,
    "outcome": "raced"
   },
   {
    "year": 1994,
-   "first_day": "1994-03-02",
    "flow": 28.3,
    "outcome": "day 1 raced, then flood"
   },
   {
    "year": 1995,
-   "first_day": "1995-03-01",
    "flow": 42.9,
    "outcome": "raced"
   },
   {
    "year": 1996,
-   "first_day": "1996-02-28",
    "flow": 19.8,
    "outcome": "raced"
   },
   {
    "year": 1997,
-   "first_day": "1997-03-05",
    "flow": 19.7,
    "outcome": "raced"
   },
   {
    "year": 1998,
-   "first_day": "1998-03-04",
    "flow": 33.2,
    "outcome": "raced"
   },
   {
    "year": 1999,
-   "first_day": "1999-03-03",
    "flow": 35.4,
    "outcome": "raced"
   },
   {
    "year": 2000,
-   "first_day": "2000-03-01",
    "flow": 45.2,
    "outcome": "cancelled"
   },
   {
    "year": 2001,
-   "first_day": "2001-02-28",
    "flow": 25.2,
    "outcome": "raced"
   },
   {
    "year": 2002,
-   "first_day": "2002-02-27",
    "flow": 49.1,
    "outcome": "cancelled"
   },
   {
    "year": 2003,
-   "first_day": "2003-03-05",
    "flow": 34.1,
    "outcome": "raced"
   },
   {
    "year": 2004,
-   "first_day": "2004-03-03",
    "flow": 12.3,
    "outcome": "raced"
   },
   {
    "year": 2005,
-   "first_day": "2005-03-02",
    "flow": 8.4,
    "outcome": "raced"
   },
   {
    "year": 2006,
-   "first_day": "2006-03-01",
    "flow": 6.9,
    "outcome": "raced"
   },
   {
    "year": 2007,
-   "first_day": "2007-02-28",
    "flow": 49.4,
    "outcome": "cancelled"
   },
   {
    "year": 2008,
-   "first_day": "2008-02-27",
    "flow": 16.7,
    "outcome": "raced"
   },
   {
    "year": 2009,
-   "first_day": "2009-03-04",
    "flow": 28.1,
    "outcome": "raced"
   },
   {
    "year": 2010,
-   "first_day": "2010-03-03",
    "flow": 26.5,
    "outcome": "raced"
   },
   {
    "year": 2011,
-   "first_day": "2011-03-02",
    "flow": 21.3,
    "outcome": "raced"
   },
   {
    "year": 2012,
-   "first_day": "2012-02-29",
    "flow": 7.1,
    "outcome": "raced"
   },
   {
    "year": 2013,
-   "first_day": "2013-02-27",
    "flow": 24.2,
    "outcome": "raced"
   },
   {
    "year": 2014,
-   "first_day": "2014-03-05",
    "flow": 52.5,
    "outcome": "cancelled"
   },
   {
    "year": 2015,
-   "first_day": "2015-03-04",
    "flow": 17.2,
    "outcome": "raced"
   },
   {
    "year": 2016,
-   "first_day": "2016-03-02",
    "flow": 22.0,
    "outcome": "raced"
   },
   {
    "year": 2017,
-   "first_day": "2017-03-01",
    "flow": 19.1,
    "outcome": "raced"
   },
   {
    "year": 2018,
-   "first_day": "2018-02-28",
    "flow": 14.0,
    "outcome": "partly lost to snow"
   },
   {
    "year": 2019,
-   "first_day": "2019-02-27",
    "flow": 11.4,
    "outcome": "raced"
   },
   {
    "year": 2020,
-   "first_day": "2020-03-04",
    "flow": 61.4,
    "outcome": "cancelled"
   },
   {
    "year": 2021,
-   "first_day": "2021-03-03",
    "flow": 26.8,
    "outcome": "not held (COVID)"
   },
   {
    "year": 2022,
-   "first_day": "2022-03-02",
    "flow": 31.8,
    "outcome": "raced"
   },
   {
    "year": 2023,
-   "first_day": "2023-03-01",
    "flow": 9.4,
    "outcome": "raced"
   },
   {
    "year": 2024,
-   "first_day": "2024-02-28",
    "flow": 61.8,
    "outcome": "cancelled"
   },
   {
    "year": 2025,
-   "first_day": "2025-03-05",
    "flow": 26.8,
    "outcome": "raced"
   },
   {
    "year": 2026,
-   "first_day": "2026-03-04",
    "flow": 45.6,
    "outcome": "cancelled"
   }
  ],
- "reconstruction": {
-  "isis": {
-   "daily_agreement": 0.885,
-   "days": 1764,
-   "terms": [
-    {
-     "term": "Hilary 2019",
-     "missing": 3,
-     "actual": {
-      "green": 52,
-      "blue": 8,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 53,
-      "blue": 10,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Trinity 2019",
-     "missing": 0,
-     "actual": {
-      "green": 63,
-      "blue": 0,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 63,
-      "blue": 0,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2019",
-     "missing": 0,
-     "actual": {
-      "green": 11,
-      "blue": 8,
-      "amber": 8,
-      "red": 36
-     },
-     "rebuilt": {
-      "green": 7,
-      "blue": 12,
-      "amber": 8,
-      "red": 36
-     }
-    },
-    {
-     "term": "Hilary 2020",
-     "missing": 0,
-     "actual": {
-      "green": 3,
-      "blue": 6,
-      "amber": 4,
-      "red": 50
-     },
-     "rebuilt": {
-      "green": 0,
-      "blue": 8,
-      "amber": 3,
-      "red": 52
-     }
-    },
-    {
-     "term": "Trinity 2021",
-     "missing": 0,
-     "actual": {
-      "green": 54,
-      "blue": 9,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 58,
-      "blue": 5,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2021",
-     "missing": 0,
-     "actual": {
-      "green": 60,
-      "blue": 3,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 60,
-      "blue": 3,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Hilary 2022",
-     "missing": 0,
-     "actual": {
-      "green": 38,
-      "blue": 17,
-      "amber": 5,
-      "red": 3
-     },
-     "rebuilt": {
-      "green": 41,
-      "blue": 21,
-      "amber": 1,
-      "red": 0
-     }
-    },
-    {
-     "term": "Trinity 2022",
-     "missing": 4,
-     "actual": {
-      "green": 59,
-      "blue": 0,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 63,
-      "blue": 0,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2022",
-     "missing": 4,
-     "actual": {
-      "green": 45,
-      "blue": 9,
-      "amber": 2,
-      "red": 3
-     },
-     "rebuilt": {
-      "green": 50,
-      "blue": 9,
-      "amber": 4,
-      "red": 0
-     }
-    },
-    {
-     "term": "Hilary 2023",
-     "missing": 2,
-     "actual": {
-      "green": 37,
-      "blue": 7,
-      "amber": 2,
-      "red": 15
-     },
-     "rebuilt": {
-      "green": 33,
-      "blue": 9,
-      "amber": 2,
-      "red": 19
-     }
-    },
-    {
-     "term": "Trinity 2023",
-     "missing": 0,
-     "actual": {
-      "green": 51,
-      "blue": 10,
-      "amber": 1,
-      "red": 1
-     },
-     "rebuilt": {
-      "green": 41,
-      "blue": 19,
-      "amber": 1,
-      "red": 2
-     }
-    },
-    {
-     "term": "Michaelmas 2023",
-     "missing": 4,
-     "actual": {
-      "green": 13,
-      "blue": 15,
-      "amber": 4,
-      "red": 27
-     },
-     "rebuilt": {
-      "green": 16,
-      "blue": 8,
-      "amber": 9,
-      "red": 30
-     }
-    },
-    {
-     "term": "Hilary 2024",
-     "missing": 0,
-     "actual": {
-      "green": 0,
-      "blue": 8,
-      "amber": 3,
-      "red": 52
-     },
-     "rebuilt": {
-      "green": 0,
-      "blue": 12,
-      "amber": 5,
-      "red": 46
-     }
-    },
-    {
-     "term": "Trinity 2024",
-     "missing": 0,
-     "actual": {
-      "green": 43,
-      "blue": 19,
-      "amber": 1,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 39,
-      "blue": 24,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2024",
-     "missing": 0,
-     "actual": {
-      "green": 14,
-      "blue": 10,
-      "amber": 4,
-      "red": 35
-     },
-     "rebuilt": {
-      "green": 11,
-      "blue": 14,
-      "amber": 5,
-      "red": 33
-     }
-    },
-    {
-     "term": "Hilary 2025",
-     "missing": 0,
-     "actual": {
-      "green": 14,
-      "blue": 27,
-      "amber": 6,
-      "red": 16
-     },
-     "rebuilt": {
-      "green": 4,
-      "blue": 28,
-      "amber": 11,
-      "red": 20
-     }
-    },
-    {
-     "term": "Trinity 2025",
-     "missing": 1,
-     "actual": {
-      "green": 62,
-      "blue": 0,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 63,
-      "blue": 0,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2025",
-     "missing": 5,
-     "actual": {
-      "green": 42,
-      "blue": 9,
-      "amber": 5,
-      "red": 2
-     },
-     "rebuilt": {
-      "green": 47,
-      "blue": 12,
-      "amber": 4,
-      "red": 0
-     }
-    },
-    {
-     "term": "Hilary 2026",
-     "missing": 0,
-     "actual": {
-      "green": 0,
-      "blue": 0,
-      "amber": 0,
-      "red": 63
-     },
-     "rebuilt": {
-      "green": 0,
-      "blue": 2,
-      "amber": 8,
-      "red": 53
-     }
-    },
-    {
-     "term": "Trinity 2026",
-     "missing": 5,
-     "actual": {
-      "green": 58,
-      "blue": 0,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 63,
-      "blue": 0,
-      "amber": 0,
-      "red": 0
-     }
-    }
-   ]
-  },
-  "godstow": {
-   "daily_agreement": 0.883,
-   "days": 1756,
-   "terms": [
-    {
-     "term": "Hilary 2019",
-     "missing": 3,
-     "actual": {
-      "green": 54,
-      "amber": 4,
-      "red": 2
-     },
-     "rebuilt": {
-      "green": 57,
-      "amber": 6,
-      "red": 0
-     }
-    },
-    {
-     "term": "Trinity 2019",
-     "missing": 0,
-     "actual": {
-      "green": 63,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 63,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2019",
-     "missing": 0,
-     "actual": {
-      "green": 12,
-      "amber": 15,
-      "red": 36
-     },
-     "rebuilt": {
-      "green": 12,
-      "amber": 20,
-      "red": 31
-     }
-    },
-    {
-     "term": "Hilary 2020",
-     "missing": 0,
-     "actual": {
-      "green": 3,
-      "amber": 16,
-      "red": 44
-     },
-     "rebuilt": {
-      "green": 3,
-      "amber": 13,
-      "red": 47
-     }
-    },
-    {
-     "term": "Trinity 2021",
-     "missing": 0,
-     "actual": {
-      "green": 63,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 63,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2021",
-     "missing": 0,
-     "actual": {
-      "green": 62,
-      "amber": 1,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 62,
-      "amber": 1,
-      "red": 0
-     }
-    },
-    {
-     "term": "Hilary 2022",
-     "missing": 2,
-     "actual": {
-      "green": 34,
-      "amber": 20,
-      "red": 7
-     },
-     "rebuilt": {
-      "green": 54,
-      "amber": 9,
-      "red": 0
-     }
-    },
-    {
-     "term": "Trinity 2022",
-     "missing": 4,
-     "actual": {
-      "green": 59,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 63,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2022",
-     "missing": 4,
-     "actual": {
-      "green": 50,
-      "amber": 3,
-      "red": 6
-     },
-     "rebuilt": {
-      "green": 56,
-      "amber": 7,
-      "red": 0
-     }
-    },
-    {
-     "term": "Hilary 2023",
-     "missing": 2,
-     "actual": {
-      "green": 37,
-      "amber": 8,
-      "red": 16
-     },
-     "rebuilt": {
-      "green": 37,
-      "amber": 8,
-      "red": 18
-     }
-    },
-    {
-     "term": "Trinity 2023",
-     "missing": 0,
-     "actual": {
-      "green": 48,
-      "amber": 14,
-      "red": 1
-     },
-     "rebuilt": {
-      "green": 49,
-      "amber": 13,
-      "red": 1
-     }
-    },
-    {
-     "term": "Michaelmas 2023",
-     "missing": 4,
-     "actual": {
-      "green": 16,
-      "amber": 3,
-      "red": 40
-     },
-     "rebuilt": {
-      "green": 19,
-      "amber": 15,
-      "red": 29
-     }
-    },
-    {
-     "term": "Hilary 2024",
-     "missing": 0,
-     "actual": {
-      "green": 0,
-      "amber": 9,
-      "red": 54
-     },
-     "rebuilt": {
-      "green": 6,
-      "amber": 12,
-      "red": 45
-     }
-    },
-    {
-     "term": "Trinity 2024",
-     "missing": 5,
-     "actual": {
-      "green": 29,
-      "amber": 24,
-      "red": 5
-     },
-     "rebuilt": {
-      "green": 54,
-      "amber": 9,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2024",
-     "missing": 0,
-     "actual": {
-      "green": 18,
-      "amber": 12,
-      "red": 33
-     },
-     "rebuilt": {
-      "green": 18,
-      "amber": 14,
-      "red": 31
-     }
-    },
-    {
-     "term": "Hilary 2025",
-     "missing": 0,
-     "actual": {
-      "green": 28,
-      "amber": 20,
-      "red": 15
-     },
-     "rebuilt": {
-      "green": 19,
-      "amber": 25,
-      "red": 19
-     }
-    },
-    {
-     "term": "Trinity 2025",
-     "missing": 1,
-     "actual": {
-      "green": 62,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 63,
-      "amber": 0,
-      "red": 0
-     }
-    },
-    {
-     "term": "Michaelmas 2025",
-     "missing": 5,
-     "actual": {
-      "green": 49,
-      "amber": 7,
-      "red": 2
-     },
-     "rebuilt": {
-      "green": 56,
-      "amber": 7,
-      "red": 0
-     }
-    },
-    {
-     "term": "Hilary 2026",
-     "missing": 0,
-     "actual": {
-      "green": 0,
-      "amber": 10,
-      "red": 53
-     },
-     "rebuilt": {
-      "green": 0,
-      "amber": 11,
-      "red": 52
-     }
-    },
-    {
-     "term": "Trinity 2026",
-     "missing": 5,
-     "actual": {
-      "green": 58,
-      "amber": 0,
-      "red": 0
-     },
-     "rebuilt": {
-      "green": 63,
-      "amber": 0,
-      "red": 0
-     }
-    }
-   ]
-  }
+ "flag_agreement": {
+  "isis": 0.914,
+  "godstow": 0.921
  }
 }

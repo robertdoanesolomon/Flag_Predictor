@@ -48,11 +48,10 @@ def lead_bucket(days_before: int) -> str:
     return bucket(days_before)
 
 
-def skill_lookup(ver: dict, loc: str, term: str, flag: str, lead: str):
+def skill_lookup(ver: dict, loc: str, period: str, flag: str, lead: str):
     for r in ver.get('skill', []):
-        if r['loc'] == loc and r['term'] == term and r['flag'] == flag and r['lead'] == lead:
-            return {'skill': r['skill'], 'mae': r['mae'], 'mae_clim': r['mae_clim'], 'in_range': r['in_range'],
-                    'years': r['years']}
+        if r['loc'] == loc and r['period'] == period and r['flag'] == flag and r['lead'] == lead:
+            return r['skill']
     return None
 
 
@@ -61,7 +60,7 @@ def term_summary(q: pd.Series, ens: T.Ensemble, term: str, acad: int, loc: str, 
     t0 = ens.t0
     w0, w1 = T.term_window(term, acad)
     names = T.NAMES[loc]
-    # so far: the OURCs flag where there is one, else the flag rebuilt from flow
+    # so far: the OURCs flag, or the differential's band when no flag flies, else the flag rebuilt from flow
     so_far = np.zeros(len(names), int)
     if w0 <= t0:
         days = pd.date_range(w0, min(t0, w1))
@@ -158,11 +157,11 @@ def main() -> None:
 
     terms = []
     for y in (acad, acad + 1):
-        for term in T.TERMS:
+        for term in T.PERIODS:
             w0, w1 = T.term_window(term, y)
             if w1 > t0 and w1 <= ens.days[-1]:
                 terms.append((term, y))
-    terms = terms[:3]
+    terms = terms[:5]
     # the river now: mean flow over the last 7 and 90 days against the same days in every past year
     def mean_to(t, n):
         return float(qk.loc[t - pd.Timedelta(days=n - 1):t].mean())
@@ -196,9 +195,8 @@ def main() -> None:
         samples, wts = T.mix(ens, tb)
         rf = T.race_flow(samples, ens.days, race)
         rfc = rf[len(ens.members):]
-        lead = ('last week' if tb <= 8 else 'up to 1 month before' if tb <= 31 else '1-2 months before' if tb <= 61
-                else '2-3 months before' if tb <= 92 else '3-4 months before' if tb <= 123 else '4+ months before')
-        sk = next((r for r in ver.get('torpids_skill', []) if r['lead'] == lead), None)
+        lead = 'last week' if tb <= 8 else lead_bucket(tb)
+        sk = (ver.get('torpids_skill') or {}).get(lead, {}).get('skill')
         torpids = {'year': int(race[0].year), 'first_day': f'{race[0]:%Y-%m-%d}', 'last_day': f'{race[-1]:%Y-%m-%d}',
                    'days_away': tb, 'chance': round(float(np.sum(wts * (rf >= T.TORPIDS_FLOW))), 2),
                    'chance_state_only': round(float((rf[:len(ens.members)] >= T.TORPIDS_FLOW).mean()), 2),
@@ -207,26 +205,16 @@ def main() -> None:
                    'flow_median': _wq(rf, wts, 50), 'flow_p10': _wq(rf, wts, 10), 'flow_p90': _wq(rf, wts, 90),
                    'lead': lead, 'skill': sk}
 
-    # Farmoor flow: the last 60 days and the outlook plume for 150 days
-    hist = qk.iloc[-60:]
-    n = 150
-    allm = np.concatenate([ens.members, ens.climatology])
-    wq = {p: [] for p in (10, 50, 90)}
-    for j in range(n):
-        _, wts = T.mix(ens, j + 1)
-        for p in wq:
-            wq[p].append(_wq(allm[:, j], wts, p))
-    plume = {'date': [f'{d:%Y-%m-%d}' for d in ens.days[:n]], 'p10': wq[10], 'p50': wq[50], 'p90': wq[90],
-             'clim_p10': np.round(np.percentile(ens.climatology[:, :n], 10, axis=0), 1).tolist(),
-             'clim_p50': np.round(np.percentile(ens.climatology[:, :n], 50, axis=0), 1).tolist(),
-             'clim_p90': np.round(np.percentile(ens.climatology[:, :n], 90, axis=0), 1).tolist()}
+    try:
+        seasonal = T.seasonal_rain(ROOT)
+    except Exception as e:              # noqa: BLE001 - the outlook does not depend on it
+        print(f'  seasonal forecast unavailable: {e}')
+        seasonal = []
     report = {'generated': pd.Timestamp.utcnow().strftime('%Y-%m-%d %H:%M UTC'), 'issued': f'{t0:%Y-%m-%d}',
               'members': len(ens.members), 'member_years': ens.years, 'state': state,
               'lines': T.LINES, 'names': T.NAMES, 'torpids_flow': T.TORPIDS_FLOW,
               'terms': out_terms, 'weekly': {loc: weekly(ens, loc, prev) for loc in ('isis', 'godstow')},
-              'torpids': torpids,
-              'flow': {'history': {'date': [f'{d:%Y-%m-%d}' for d in hist.index], 'flow': hist.round(2).tolist()},
-                       'outlook': plume}}
+              'torpids': torpids, 'seasonal': seasonal}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=1))
     print(f'Termly outlook from {t0:%Y-%m-%d}: Farmoor {state["flow"]} m3/s, {state["pct_normal_7d"]:.0f}% of normal '
@@ -234,6 +222,8 @@ def main() -> None:
     for t in out_terms['isis']:
         print(f"  Isis {t['label']} ({t['lead']}): " + ', '.join(
             f"{n} {v['median']:.0f} [{v['p10']:.0f}-{v['p90']:.0f}] (normal {v['normal_median']:.0f})" for n, v in t['flags'].items()))
+    for m in seasonal:
+        print(f"  SEAS5 {m['month']}: {m['median']} mm ({m['pct_normal']}% of normal), wet third {m['wet']:.0%}")
     if torpids:
         print(f"  Torpids {torpids['year']}: chance of a cancellation-level river {torpids['chance']:.0%} "
               f"(an average year {torpids['chance_clim']:.0%})")
