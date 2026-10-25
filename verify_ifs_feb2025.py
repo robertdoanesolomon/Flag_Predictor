@@ -98,7 +98,8 @@ def main() -> None:
                 if i + L >= len(d) or not np.isfinite(d[i + L]):
                     continue
                 o = d[i + L]
-                rows.append({'lead': L, 'valid': (t0 + pd.Timedelta(hours=L)).strftime('%Y-%m-%dT%H:%M'), 'obs': o, 'fell': fell[j, L - 1], 'ifs': fc[j, L - 1], 'pers': d[i],
+                rows.append({'lead': L, 'valid': (t0 + pd.Timedelta(hours=L)).strftime('%Y-%m-%dT%H:%M'), 'obs': o,
+                             'p10': p10[L], 'p90': p90[L], 'fell': fell[j, L - 1], 'ifs': fc[j, L - 1], 'pers': d[i],
                              'inside': p10[L] <= o <= p90[L], 'rain_ifs': float(rains[j, :L].sum()),
                              'rain_fell': float(data.rain[i + 1:i + L + 1].sum())})
         df = pd.DataFrame(rows)
@@ -117,7 +118,8 @@ def main() -> None:
         for L in (24, 72):
             g = df[df.lead == L].sort_values('valid')
             res[f'series{L}'] = {'valid': g.valid.tolist(), 'obs': g.obs.round(3).tolist(),
-                                 'ifs': g.ifs.round(3).tolist(), 'fell': g.fell.round(3).tolist()}
+                                 'ifs': g.ifs.round(3).tolist(), 'fell': g.fell.round(3).tolist(),
+                                 'p10': g.p10.round(3).tolist(), 'p90': g.p90.round(3).tolist()}
         report['locations'][loc] = res
         print(f'\n=== {loc}: {len(pos)} forecasts')
         print(pd.DataFrame(res['by_lead']).T.to_string())
