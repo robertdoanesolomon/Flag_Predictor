@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-25 08:24 UTC",
+ "generated": "2026-10-25 08:26 UTC",
  "issued": "2026-10-24",
  "members": 33,
  "member_years": [
@@ -2138,5 +2138,66 @@
   "lead": "3-4 months",
   "skill": 0.038
  },
- "seasonal": []
+ "seasonal": [
+  {
+   "month": "2026-11",
+   "median": 73,
+   "p10": 42,
+   "p90": 107,
+   "normal": 60,
+   "pct_normal": 121,
+   "wet": 0.49,
+   "dry": 0.12
+  },
+  {
+   "month": "2026-12",
+   "median": 79,
+   "p10": 44,
+   "p90": 129,
+   "normal": 70,
+   "pct_normal": 113,
+   "wet": 0.53,
+   "dry": 0.22
+  },
+  {
+   "month": "2027-01",
+   "median": 66,
+   "p10": 38,
+   "p90": 117,
+   "normal": 61,
+   "pct_normal": 108,
+   "wet": 0.49,
+   "dry": 0.37
+  },
+  {
+   "month": "2027-02",
+   "median": 55,
+   "p10": 32,
+   "p90": 97,
+   "normal": 50,
+   "pct_normal": 110,
+   "wet": 0.47,
+   "dry": 0.2
+  },
+  {
+   "month": "2027-03",
+   "median": 59,
+   "p10": 41,
+   "p90": 87,
+   "normal": 45,
+   "pct_normal": 131,
+   "wet": 0.51,
+   "dry": 0.08
+  },
+  {
+   "month": "2027-04",
+   "median": 62,
+   "p10": 28,
+   "p90": 103,
+   "normal": 52,
+   "pct_normal": 117,
+   "wet": 0.41,
+   "dry": 0.12
+  }
+ ]
 }

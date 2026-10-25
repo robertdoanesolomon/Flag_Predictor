@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 import sys
 import warnings
 from pathlib import Path
@@ -221,11 +222,18 @@ def main() -> None:
                    'flow_median': _wq(rf, wts, 50), 'flow_p10': _wq(rf, wts, 10), 'flow_p90': _wq(rf, wts, 90),
                    'lead': lead, 'skill': sk}
 
-    try:
-        seasonal = T.seasonal_rain(ROOT)
-    except Exception as e:              # noqa: BLE001 - the outlook does not depend on it
-        print(f'  seasonal forecast unavailable: {e}')
-        seasonal = []
+    # ECMWF's seasonal run changes once a month: if the fetch fails, keep the last one
+    seasonal = []
+    for attempt in range(3):
+        try:
+            seasonal = T.seasonal_rain(ROOT)
+            break
+        except Exception as e:          # noqa: BLE001 - the outlook does not depend on it
+            print(f'  seasonal forecast, attempt {attempt + 1}: {e}')
+            time.sleep(10 * (attempt + 1))
+    if not seasonal and OUT.exists():
+        seasonal = json.loads(OUT.read_text()).get('seasonal') or []
+        print(f'  kept the previous seasonal forecast ({len(seasonal)} months)')
     report = {'generated': pd.Timestamp.utcnow().strftime('%Y-%m-%d %H:%M UTC'), 'issued': f'{t0:%Y-%m-%d}',
               'members': len(ens.members), 'member_years': ens.years, 'state': state,
               'lines': T.LINES, 'names': T.NAMES, 'torpids_flow': T.TORPIDS_FLOW,
