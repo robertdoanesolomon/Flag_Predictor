@@ -1,0 +1,45 @@
+name: Verification rain (IFS previous runs)
+
+# For verification only: downloads what ECMWF IFS forecast for each rain station in Feb 2025, 1-7 days
+# ahead (fetch_ifs_previous_runs.py), for the "real forecast" backtest. Run from the Actions tab or by
+# changing data/verification/request.txt.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['data/verification/request.txt']
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pandas requests numpy
+      - name: Fetch
+        run: python fetch_ifs_previous_runs.py 2>&1 | tee data/verification/fetch_log.txt
+      - name: Commit
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          OUT=$(mktemp -d)
+          tar -cf "$OUT/v.tar" data/verification
+          for i in 1 2 3 4 5; do
+            git fetch --depth=1 origin main
+            git reset --hard origin/main
+            tar -xf "$OUT/v.tar"
+            git add data/verification
+            if git diff --cached --quiet; then echo "Nothing new"; exit 0; fi
+            git commit -m "Verification rain: IFS previous runs [skip ci]"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((i * 10))
+          done
+          exit 1
