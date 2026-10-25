@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-25 08:20 UTC",
+ "generated": "2026-10-25 08:24 UTC",
  "years": "1993/94-2025/26",
  "skill": [
   {
@@ -2278,50 +2278,50 @@
  },
  "torpids_skill": {
   "week before": {
-   "skill": 0.303,
+   "skill": 0.286,
    "n": 32
   },
   "1-2 months": {
-   "skill": 0.122,
+   "skill": 0.127,
    "n": 59
   },
   "2-3 months": {
-   "skill": 0.147,
+   "skill": 0.106,
    "n": 64
   },
   "3-4 months": {
-   "skill": 0.046,
+   "skill": 0.038,
    "n": 69
   },
   "4+ months": {
-   "skill": 0.024,
-   "n": 132
+   "skill": 0.025,
+   "n": 131
   },
   "last week": {
-   "skill": 0.595,
-   "n": 16
+   "skill": 0.515,
+   "n": 18
   },
   "up to 1 month": {
-   "skill": 0.164,
-   "n": 60
+   "skill": 0.201,
+   "n": 55
   }
  },
- "torpids_climatology": 0.25,
+ "torpids_climatology": 0.312,
  "torpids_record": [
   {
    "year": 1993,
-   "flow": 10.4,
+   "flow": 13.0,
    "outcome": "raced"
   },
   {
    "year": 1994,
-   "flow": 28.3,
-   "outcome": "day 1 raced, then flood"
+   "flow": 42.0,
+   "outcome": "three days lost"
   },
   {
    "year": 1995,
-   "flow": 42.9,
-   "outcome": "raced"
+   "flow": 57.7,
+   "outcome": "two days lost"
   },
   {
    "year": 1996,
@@ -2370,7 +2370,7 @@
   },
   {
    "year": 2005,
-   "flow": 8.4,
+   "flow": 8.0,
    "outcome": "raced"
   },
   {
@@ -2385,7 +2385,7 @@
   },
   {
    "year": 2008,
-   "flow": 16.7,
+   "flow": 16.2,
    "outcome": "raced"
   },
   {
@@ -2405,7 +2405,7 @@
   },
   {
    "year": 2012,
-   "flow": 7.1,
+   "flow": 8.3,
    "outcome": "raced"
   },
   {
@@ -2425,7 +2425,7 @@
   },
   {
    "year": 2016,
-   "flow": 22.0,
+   "flow": 26.7,
    "outcome": "raced"
   },
   {
@@ -2445,7 +2445,7 @@
   },
   {
    "year": 2020,
-   "flow": 61.4,
+   "flow": 57.0,
    "outcome": "cancelled"
   },
   {
@@ -2460,7 +2460,7 @@
   },
   {
    "year": 2023,
-   "flow": 9.4,
+   "flow": 11.5,
    "outcome": "raced"
   },
   {

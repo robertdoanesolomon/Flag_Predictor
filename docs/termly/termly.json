@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-25 08:22 UTC",
+ "generated": "2026-10-25 08:24 UTC",
  "issued": "2026-10-24",
  "members": 33,
  "member_years": [
@@ -73,7 +73,7 @@
    "red"
   ]
  },
- "torpids_flow": 44.0,
+ "torpids_flow": 42.0,
  "terms": {
   "isis": [
    {
@@ -2127,77 +2127,16 @@
   "first_day": "2027-02-24",
   "last_day": "2027-02-27",
   "days_away": 123,
-  "chance": 0.17,
-  "chance_state_only": 0.12,
-  "chance_clim": 0.21,
-  "chance_record": 0.25,
+  "chance": 0.2,
+  "chance_state_only": 0.15,
+  "chance_clim": 0.24,
+  "chance_record": 0.312,
   "trust": 0.5,
   "flow_median": 23.8,
   "flow_p10": 9.0,
   "flow_p90": 51.8,
   "lead": "3-4 months",
-  "skill": 0.046
+  "skill": 0.038
  },
- "seasonal": [
-  {
-   "month": "2026-11",
-   "median": 73,
-   "p10": 42,
-   "p90": 107,
-   "normal": 60,
-   "pct_normal": 121,
-   "wet": 0.49,
-   "dry": 0.12
-  },
-  {
-   "month": "2026-12",
-   "median": 79,
-   "p10": 44,
-   "p90": 129,
-   "normal": 70,
-   "pct_normal": 113,
-   "wet": 0.53,
-   "dry": 0.22
-  },
-  {
-   "month": "2027-01",
-   "median": 66,
-   "p10": 38,
-   "p90": 117,
-   "normal": 61,
-   "pct_normal": 108,
-   "wet": 0.49,
-   "dry": 0.37
-  },
-  {
-   "month": "2027-02",
-   "median": 55,
-   "p10": 32,
-   "p90": 97,
-   "normal": 50,
-   "pct_normal": 110,
-   "wet": 0.47,
-   "dry": 0.2
-  },
-  {
-   "month": "2027-03",
-   "median": 59,
-   "p10": 41,
-   "p90": 87,
-   "normal": 45,
-   "pct_normal": 131,
-   "wet": 0.51,
-   "dry": 0.08
-  },
-  {
-   "month": "2027-04",
-   "median": 62,
-   "p10": 28,
-   "p90": 103,
-   "normal": 52,
-   "pct_normal": 117,
-   "wet": 0.41,
-   "dry": 0.12
-  }
- ]
+ "seasonal": []
 }

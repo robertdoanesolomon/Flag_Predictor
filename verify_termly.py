@@ -8,7 +8,7 @@ separately).
 
   days at each flag   CRPS of the forecast as shown (blended by lead, termly.BLEND) against an average
                       year (all past years equally likely), as a skill score: 100% perfect, 0% no better
-  Torpids             Brier score of the chance of a Wed-Sat mean >= 44 m3/s, against an average year
+  Torpids             Brier score of the chance of a Wed-Sat mean >= 42 m3/s, against an average year
 
 Writes docs/termly/verification.json (read by the page) and a copy in figures/eval/.
 
@@ -32,7 +32,7 @@ from flag_predictor import termly as T  # noqa: E402
 
 LAST_YEAR = 2025
 LEADS = ['during', 'up to 1 month', '1-2 months', '2-3 months', '3-4 months', '4+ months']
-OUTCOME = {1994: 'day 1 raced, then flood', 2000: 'cancelled', 2002: 'cancelled', 2007: 'cancelled',
+OUTCOME = {1994: 'three days lost', 1995: 'two days lost', 2000: 'cancelled', 2002: 'cancelled', 2007: 'cancelled',
            2014: 'cancelled', 2018: 'partly lost to snow', 2020: 'cancelled', 2021: 'not held (COVID)',
            2024: 'cancelled', 2026: 'cancelled'}
 

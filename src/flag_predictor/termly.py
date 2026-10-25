@@ -9,10 +9,9 @@ Everything runs on Farmoor's daily mean flow (EA gauge 1100TH, record from June 
              counted as Red) and Godstow's 28 / 41.5 m3/s (Green | Amber | Red). Fitted on every day
              since 2017: the OURCs noon flag in term, the differential's flag band when no flag flies
              (vacations, Grey). Right on 91% (Isis) / 92% (Godstow) of days.
-  Torpids    since 1993 Torpids went ahead in every year whose Torpids week (Wed-Sat) averaged under
-             44 m3/s at Farmoor (highest 42.9 in 1995) and was cancelled in every year above it (2000,
-             2002, 2007, 2014, 2020, 2024, 2026). Exceptions: 2025 raced at 48 m3/s (6th week), and 1994
-             (three days lost to a flood; dates before 2024 assume 7th week and may be a week out).
+  Torpids    since 1993, every Torpids week (Wed-Sat, actual dates) averaging over 42 m3/s at Farmoor
+             was cancelled (2000, 2002, 2007, 2014, 2020, 2024, 2026) or lost days (1994, 1995); the one
+             exception is 2025, raced in full at 48 m3/s. Below 42 every one raced in full.
   outlook    an ensemble of one flow path per past year (33 members): each past year's weather from
              today's date on, started from today's catchment state. In normal scores (each day's flow
              ranked among all years' flows at that time of year; see Outlook), every path is that
@@ -34,7 +33,7 @@ import pandas as pd
 FLOW_FILE = Path('data') / 'termly' / 'farmoor_daily.csv'
 LINES = {'isis': (23.0, 34.5, 39.5), 'godstow': (28.0, 41.5)}
 NAMES = {'isis': ('green', 'blue', 'amber', 'red'), 'godstow': ('green', 'amber', 'red')}
-TORPIDS_FLOW = 44.0
+TORPIDS_FLOW = 42.0
 PREDICTORS = (7, 90)          # mean normal score of flow over the last 7 and 90 days
 POOL_DAYS = 15                # start dates within this many days of today's date pooled in the fit
 POOL_STEP = 3
@@ -181,9 +180,18 @@ def term_window(term: str, acad: int) -> tuple[pd.Timestamp, pd.Timestamp]:
     return s - pd.Timedelta(days=7), s + pd.Timedelta(days=55)
 
 
-# First day (Wednesday) of Torpids where OURCs has published it (ourcs.co.uk); it moves between 6th and
-# 7th week of Hilary. Other years are assumed to be 7th week.
-TORPIDS_START = {2024: '2024-02-28', 2025: '2025-02-26', 2026: '2026-03-04', 2027: '2027-02-24'}
+# First day (Wednesday) of Torpids. It moves between 6th and 7th week of Hilary (it ends on the Saturday that
+# is not the Women's Head of the River). From OURCs (2024-2027) and the dates in A. Dudhia's bumps pages
+# (eodg.atm.ox.ac.uk/user/dudhia/rowing/bumps/); 2009 unclear there (7th week assumed). Not held in 2021.
+TORPIDS_START = {
+    1993: '1993-02-24', 1994: '1994-02-23', 1995: '1995-02-22', 1996: '1996-02-28', 1997: '1997-03-05',
+    1998: '1998-03-04', 1999: '1999-03-03', 2000: '2000-03-01', 2001: '2001-02-28', 2002: '2002-02-27',
+    2003: '2003-03-05', 2004: '2004-03-03', 2005: '2005-02-23', 2006: '2006-03-01', 2007: '2007-02-28',
+    2008: '2008-02-20', 2009: '2009-03-04', 2010: '2010-03-03', 2011: '2011-03-02', 2012: '2012-02-22',
+    2013: '2013-02-27', 2014: '2014-03-05', 2015: '2015-03-04', 2016: '2016-02-24', 2017: '2017-03-01',
+    2018: '2018-02-28', 2019: '2019-02-27', 2020: '2020-02-26', 2022: '2022-03-02', 2023: '2023-02-22',
+    2024: '2024-02-28', 2025: '2025-02-26', 2026: '2026-03-04', 2027: '2027-02-24',
+}
 
 
 def race_days(event: str, acad: int) -> pd.DatetimeIndex:
