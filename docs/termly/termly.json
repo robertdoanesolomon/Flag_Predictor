@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-25 08:05 UTC",
+ "generated": "2026-10-25 08:20 UTC",
  "issued": "2026-10-24",
  "members": 33,
  "member_years": [
@@ -106,7 +106,7 @@
       "normal_median": 58.0,
       "normal_p10": 18.0,
       "normal_p90": 63.0,
-      "skill": 0.296
+      "skill": 0.297
      },
      "blue": {
       "so_far": 0,
@@ -121,13 +121,13 @@
       "normal_median": 3.0,
       "normal_p10": 0.0,
       "normal_p90": 14.2,
-      "skill": 0.087
+      "skill": 0.089
      },
      "amber": {
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 1.0,
+      "p90": 1.3,
       "mean": 0.4,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -230,9 +230,9 @@
     ]
    },
    {
-    "term": "Christmas vac",
+    "term": "Christmas Vac",
     "year": 2026,
-    "label": "Christmas vac 2026",
+    "label": "Christmas Vac 2026",
     "start": "2026-12-06",
     "end": "2027-01-09",
     "full_term_start": "2027-04-25",
@@ -254,7 +254,7 @@
       "mean": 21.6,
       "clim_median": 14.0,
       "clim_p10": 0.0,
-      "clim_p90": 34.0,
+      "clim_p90": 34.8,
       "normal_mean": 15.5,
       "normal_median": 16.0,
       "normal_p10": 0.0,
@@ -263,18 +263,18 @@
      },
      "blue": {
       "so_far": 0,
-      "median": 3.4,
+      "median": 3.0,
       "p10": 0.0,
       "p90": 11.8,
       "mean": 4.7,
       "clim_median": 5.0,
-      "clim_p10": 0.2,
+      "clim_p10": 0.0,
       "clim_p90": 13.8,
       "normal_mean": 5.7,
       "normal_median": 5.0,
       "normal_p10": 0.2,
       "normal_p90": 13.0,
-      "skill": -0.013
+      "skill": -0.012
      },
      "amber": {
       "so_far": 0,
@@ -311,7 +311,7 @@
     "chance_red_week_normal": 0.58,
     "analogs": [
      {
-      "label": "Christmas vac 2011",
+      "label": "Christmas Vac 2011",
       "pct_normal_90d": 34,
       "days": {
        "green": 35,
@@ -321,7 +321,7 @@
       }
      },
      {
-      "label": "Christmas vac 1996",
+      "label": "Christmas Vac 1996",
       "pct_normal_90d": 29,
       "days": {
        "green": 35,
@@ -331,7 +331,7 @@
       }
      },
      {
-      "label": "Christmas vac 2003",
+      "label": "Christmas Vac 2003",
       "pct_normal_90d": 41,
       "days": {
        "green": 33,
@@ -341,7 +341,7 @@
       }
      },
      {
-      "label": "Christmas vac 2005",
+      "label": "Christmas Vac 2005",
       "pct_normal_90d": 29,
       "days": {
        "green": 32,
@@ -351,7 +351,7 @@
       }
      },
      {
-      "label": "Christmas vac 1995",
+      "label": "Christmas Vac 1995",
       "pct_normal_90d": 24,
       "days": {
        "green": 18,
@@ -361,7 +361,7 @@
       }
      },
      {
-      "label": "Christmas vac 2022",
+      "label": "Christmas Vac 2022",
       "pct_normal_90d": 40,
       "days": {
        "green": 16,
@@ -371,7 +371,7 @@
       }
      },
      {
-      "label": "Christmas vac 2025",
+      "label": "Christmas Vac 2025",
       "pct_normal_90d": 32,
       "days": {
        "green": 0,
@@ -418,7 +418,7 @@
       "so_far": 0,
       "median": 13.0,
       "p10": 2.0,
-      "p90": 21.6,
+      "p90": 21.4,
       "mean": 12.7,
       "clim_median": 15.0,
       "clim_p10": 2.0,
@@ -536,9 +536,9 @@
     ]
    },
    {
-    "term": "Easter vac",
+    "term": "Easter Vac",
     "year": 2027,
-    "label": "Easter vac 2027",
+    "label": "Easter Vac 2027",
     "start": "2027-03-14",
     "end": "2027-04-17",
     "full_term_start": "2027-04-25",
@@ -569,13 +569,13 @@
      },
      "blue": {
       "so_far": 0,
-      "median": 3.0,
+      "median": 2.9,
       "p10": 0.0,
       "p90": 10.4,
       "mean": 4.5,
       "clim_median": 3.0,
       "clim_p10": 0.0,
-      "clim_p90": 10.0,
+      "clim_p90": 9.8,
       "normal_mean": 4.6,
       "normal_median": 2.0,
       "normal_p10": 0.0,
@@ -617,7 +617,7 @@
     "chance_red_week_normal": 0.18,
     "analogs": [
      {
-      "label": "Easter vac 2012",
+      "label": "Easter Vac 2012",
       "pct_normal_90d": 34,
       "days": {
        "green": 35,
@@ -627,7 +627,7 @@
       }
      },
      {
-      "label": "Easter vac 2026",
+      "label": "Easter Vac 2026",
       "pct_normal_90d": 32,
       "days": {
        "green": 28,
@@ -637,7 +637,7 @@
       }
      },
      {
-      "label": "Easter vac 1997",
+      "label": "Easter Vac 1997",
       "pct_normal_90d": 29,
       "days": {
        "green": 35,
@@ -647,7 +647,7 @@
       }
      },
      {
-      "label": "Easter vac 2004",
+      "label": "Easter Vac 2004",
       "pct_normal_90d": 41,
       "days": {
        "green": 35,
@@ -657,7 +657,7 @@
       }
      },
      {
-      "label": "Easter vac 1996",
+      "label": "Easter Vac 1996",
       "pct_normal_90d": 24,
       "days": {
        "green": 34,
@@ -667,7 +667,7 @@
       }
      },
      {
-      "label": "Easter vac 2006",
+      "label": "Easter Vac 2006",
       "pct_normal_90d": 29,
       "days": {
        "green": 31,
@@ -677,7 +677,7 @@
       }
      },
      {
-      "label": "Easter vac 2023",
+      "label": "Easter Vac 2023",
       "pct_normal_90d": 40,
       "days": {
        "green": 7,
@@ -754,7 +754,7 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 4.1,
+      "p90": 4.2,
       "mean": 1.3,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -863,7 +863,7 @@
      "green": {
       "so_far": 21,
       "median": 63.0,
-      "p10": 58.0,
+      "p10": 59.0,
       "p90": 63.0,
       "mean": 60.9,
       "clim_median": 61.0,
@@ -975,9 +975,9 @@
     ]
    },
    {
-    "term": "Christmas vac",
+    "term": "Christmas Vac",
     "year": 2026,
-    "label": "Christmas vac 2026",
+    "label": "Christmas Vac 2026",
     "start": "2026-12-06",
     "end": "2027-01-09",
     "full_term_start": "2027-04-25",
@@ -1023,7 +1023,7 @@
      },
      "red": {
       "so_far": 0,
-      "median": 4.8,
+      "median": 4.9,
       "p10": 0.0,
       "p90": 18.0,
       "mean": 6.6,
@@ -1041,7 +1041,7 @@
     "chance_red_week_normal": 0.58,
     "analogs": [
      {
-      "label": "Christmas vac 2011",
+      "label": "Christmas Vac 2011",
       "pct_normal_90d": 34,
       "days": {
        "green": 35,
@@ -1050,7 +1050,7 @@
       }
      },
      {
-      "label": "Christmas vac 2005",
+      "label": "Christmas Vac 2005",
       "pct_normal_90d": 29,
       "days": {
        "green": 32,
@@ -1059,7 +1059,7 @@
       }
      },
      {
-      "label": "Christmas vac 1996",
+      "label": "Christmas Vac 1996",
       "pct_normal_90d": 29,
       "days": {
        "green": 35,
@@ -1068,7 +1068,7 @@
       }
      },
      {
-      "label": "Christmas vac 2003",
+      "label": "Christmas Vac 2003",
       "pct_normal_90d": 41,
       "days": {
        "green": 34,
@@ -1077,7 +1077,7 @@
       }
      },
      {
-      "label": "Christmas vac 1995",
+      "label": "Christmas Vac 1995",
       "pct_normal_90d": 24,
       "days": {
        "green": 19,
@@ -1086,7 +1086,7 @@
       }
      },
      {
-      "label": "Christmas vac 2022",
+      "label": "Christmas Vac 2022",
       "pct_normal_90d": 40,
       "days": {
        "green": 17,
@@ -1095,7 +1095,7 @@
       }
      },
      {
-      "label": "Christmas vac 2025",
+      "label": "Christmas Vac 2025",
       "pct_normal_90d": 32,
       "days": {
        "green": 3,
@@ -1135,7 +1135,7 @@
       "normal_median": 33.0,
       "normal_p10": 6.2,
       "normal_p90": 58.6,
-      "skill": 0.124
+      "skill": 0.125
      },
      "amber": {
       "so_far": 0,
@@ -1145,12 +1145,12 @@
       "mean": 10.0,
       "clim_median": 12.0,
       "clim_p10": 2.4,
-      "clim_p90": 23.8,
+      "clim_p90": 24.0,
       "normal_mean": 13.0,
       "normal_median": 13.0,
       "normal_p10": 2.8,
-      "normal_p90": 23.0,
-      "skill": 0.09
+      "normal_p90": 23.8,
+      "skill": 0.092
      },
      "red": {
       "so_far": 0,
@@ -1211,8 +1211,8 @@
       "label": "Hilary 2004",
       "pct_normal_90d": 41,
       "days": {
-       "green": 39,
-       "amber": 13,
+       "green": 40,
+       "amber": 12,
        "red": 11
       }
      },
@@ -1237,9 +1237,9 @@
     ]
    },
    {
-    "term": "Easter vac",
+    "term": "Easter Vac",
     "year": 2027,
-    "label": "Easter vac 2027",
+    "label": "Easter Vac 2027",
     "start": "2027-03-14",
     "end": "2027-04-17",
     "full_term_start": "2027-04-25",
@@ -1262,7 +1262,7 @@
       "clim_median": 32.0,
       "clim_p10": 11.2,
       "clim_p90": 35.0,
-      "normal_mean": 28.9,
+      "normal_mean": 29.0,
       "normal_median": 32.0,
       "normal_p10": 12.8,
       "normal_p90": 35.0,
@@ -1272,12 +1272,12 @@
       "so_far": 0,
       "median": 2.0,
       "p10": 0.0,
-      "p90": 11.6,
-      "mean": 3.3,
+      "p90": 11.4,
+      "mean": 3.2,
       "clim_median": 2.0,
       "clim_p10": 0.0,
       "clim_p90": 10.2,
-      "normal_mean": 3.2,
+      "normal_mean": 3.1,
       "normal_median": 2.0,
       "normal_p10": 0.0,
       "normal_p90": 8.8,
@@ -1303,7 +1303,7 @@
     "chance_red_week_normal": 0.15,
     "analogs": [
      {
-      "label": "Easter vac 2012",
+      "label": "Easter Vac 2012",
       "pct_normal_90d": 34,
       "days": {
        "green": 35,
@@ -1312,7 +1312,7 @@
       }
      },
      {
-      "label": "Easter vac 2026",
+      "label": "Easter Vac 2026",
       "pct_normal_90d": 32,
       "days": {
        "green": 31,
@@ -1321,7 +1321,7 @@
       }
      },
      {
-      "label": "Easter vac 1997",
+      "label": "Easter Vac 1997",
       "pct_normal_90d": 29,
       "days": {
        "green": 35,
@@ -1330,7 +1330,7 @@
       }
      },
      {
-      "label": "Easter vac 2004",
+      "label": "Easter Vac 2004",
       "pct_normal_90d": 41,
       "days": {
        "green": 35,
@@ -1339,7 +1339,7 @@
       }
      },
      {
-      "label": "Easter vac 1996",
+      "label": "Easter Vac 1996",
       "pct_normal_90d": 24,
       "days": {
        "green": 35,
@@ -1348,7 +1348,7 @@
       }
      },
      {
-      "label": "Easter vac 2006",
+      "label": "Easter Vac 2006",
       "pct_normal_90d": 29,
       "days": {
        "green": 31,
@@ -1357,7 +1357,7 @@
       }
      },
      {
-      "label": "Easter vac 2023",
+      "label": "Easter Vac 2023",
       "pct_normal_90d": 40,
       "days": {
        "green": 11,
@@ -1403,7 +1403,7 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 8.2,
+      "p90": 8.0,
       "mean": 1.8,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -1548,7 +1548,7 @@
      0.9,
      0.876,
      0.832,
-     0.821,
+     0.822,
      0.796,
      0.623,
      0.451,
@@ -1563,7 +1563,7 @@
      0.484,
      0.589,
      0.641,
-     0.745,
+     0.749,
      0.749,
      0.778,
      0.784,
@@ -1586,7 +1586,7 @@
      0.063,
      0.081,
      0.094,
-     0.052,
+     0.051,
      0.098,
      0.171,
      0.181,
@@ -1601,7 +1601,7 @@
      0.257,
      0.217,
      0.215,
-     0.146,
+     0.143,
      0.121,
      0.08,
      0.085,
@@ -1702,7 +1702,7 @@
      0.727,
      0.641,
      0.662,
-     0.641,
+     0.645,
      0.532,
      0.446,
      0.316,
@@ -1717,7 +1717,7 @@
      0.459,
      0.558,
      0.628,
-     0.727,
+     0.732,
      0.736,
      0.771,
      0.784,
@@ -1740,7 +1740,7 @@
      0.126,
      0.143,
      0.087,
-     0.087,
+     0.082,
      0.177,
      0.195,
      0.195,
@@ -1755,7 +1755,7 @@
      0.268,
      0.234,
      0.208,
-     0.152,
+     0.147,
      0.13,
      0.082,
      0.078,
@@ -1906,11 +1906,11 @@
      0.531,
      0.591,
      0.587,
-     0.643,
-     0.677,
+     0.645,
+     0.675,
      0.628,
      0.74,
-     0.759,
+     0.763,
      0.843,
      0.82,
      0.835,
@@ -1944,11 +1944,11 @@
      0.25,
      0.184,
      0.13,
-     0.113,
-     0.139,
+     0.11,
+     0.141,
      0.165,
      0.14,
-     0.16,
+     0.157,
      0.09,
      0.073,
      0.042,
@@ -2022,11 +2022,11 @@
      0.368,
      0.481,
      0.498,
-     0.571,
-     0.589,
+     0.576,
+     0.584,
      0.602,
      0.727,
-     0.74,
+     0.745,
      0.827,
      0.814,
      0.831,
@@ -2060,11 +2060,11 @@
      0.264,
      0.255,
      0.165,
-     0.126,
-     0.199,
+     0.121,
+     0.203,
      0.173,
      0.139,
-     0.165,
+     0.16,
      0.1,
      0.074,
      0.039,
@@ -2124,19 +2124,19 @@
  },
  "torpids": {
   "year": 2027,
-  "first_day": "2027-03-03",
-  "last_day": "2027-03-06",
-  "days_away": 130,
+  "first_day": "2027-02-24",
+  "last_day": "2027-02-27",
+  "days_away": 123,
   "chance": 0.17,
   "chance_state_only": 0.12,
-  "chance_clim": 0.18,
-  "chance_record": 0.219,
-  "trust": 0.2,
-  "flow_median": 22.8,
-  "flow_p10": 9.8,
-  "flow_p90": 50.4,
-  "lead": "4+ months",
-  "skill": 0.009
+  "chance_clim": 0.21,
+  "chance_record": 0.25,
+  "trust": 0.5,
+  "flow_median": 23.8,
+  "flow_p10": 9.0,
+  "flow_p90": 51.8,
+  "lead": "3-4 months",
+  "skill": 0.046
  },
  "seasonal": [
   {

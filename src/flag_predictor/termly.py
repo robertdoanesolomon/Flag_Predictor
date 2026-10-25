@@ -11,8 +11,8 @@ Everything runs on Farmoor's daily mean flow (EA gauge 1100TH, record from June 
              (vacations, Grey). Right on 91% (Isis) / 92% (Godstow) of days.
   Torpids    since 1993 Torpids went ahead in every year whose Torpids week (Wed-Sat) averaged under
              44 m3/s at Farmoor (highest 42.9 in 1995) and was cancelled in every year above it (2000,
-             2002, 2007, 2014, 2020, 2024, 2026). The one exception is 1994 (28 m3/s by these dates;
-             three days lost to a flood the week before, so the dates may be a week out).
+             2002, 2007, 2014, 2020, 2024, 2026). Exceptions: 2025 raced at 48 m3/s (6th week), and 1994
+             (three days lost to a flood; dates before 2024 assume 7th week and may be a week out).
   outlook    an ensemble of one flow path per past year (33 members): each past year's weather from
              today's date on, started from today's catchment state. In normal scores (each day's flow
              ranked among all years' flows at that time of year; see Outlook), every path is that
@@ -42,7 +42,7 @@ FIRST_YEAR = 1993             # first academic year (Sep - Aug) with a full reco
 HORIZON = 300                 # days ahead
 MIN_FLOW = 0.3                # m3/s: floor before taking logs (summer lows read near zero)
 TERMS = ('Michaelmas', 'Hilary', 'Trinity')
-PERIODS = ('Michaelmas', 'Christmas vac', 'Hilary', 'Easter vac', 'Trinity')
+PERIODS = ('Michaelmas', 'Christmas Vac', 'Hilary', 'Easter Vac', 'Trinity')
 # The differential's flag bands (m), standing in for the flag when OURCs flies none (vacations, Grey).
 BANDS = {'isis': ((0.215, 0.33, 0.44, 0.535), ('green', 'blue', 'blue', 'amber', 'red')),
          'godstow': ((0.45, 0.75), ('green', 'amber', 'red'))}
@@ -173,18 +173,27 @@ def term_start(term: str, acad: int) -> pd.Timestamp:
 
 def term_window(term: str, acad: int) -> tuple[pd.Timestamp, pd.Timestamp]:
     """A term: Sunday of 0th week to Saturday of 8th week (63 days). A vacation: the days between."""
-    if term == 'Christmas vac':
+    if term == 'Christmas Vac':
         return term_window('Michaelmas', acad)[1] + pd.Timedelta(days=1), term_window('Hilary', acad)[0] - pd.Timedelta(days=1)
-    if term == 'Easter vac':
+    if term == 'Easter Vac':
         return term_window('Hilary', acad)[1] + pd.Timedelta(days=1), term_window('Trinity', acad)[0] - pd.Timedelta(days=1)
     s = term_start(term, acad)
     return s - pd.Timedelta(days=7), s + pd.Timedelta(days=55)
 
 
+# First day (Wednesday) of Torpids where OURCs has published it (ourcs.co.uk); it moves between 6th and
+# 7th week of Hilary. Other years are assumed to be 7th week.
+TORPIDS_START = {2024: '2024-02-28', 2025: '2025-02-26', 2026: '2026-03-04', 2027: '2027-02-24'}
+
+
 def race_days(event: str, acad: int) -> pd.DatetimeIndex:
-    """Torpids: Wednesday - Saturday of 7th week of Hilary; Eights: of 5th week of Trinity."""
-    s = term_start('Hilary', acad) + pd.Timedelta(days=45) if event == 'torpids' \
-        else term_start('Trinity', acad) + pd.Timedelta(days=31)
+    """Torpids: Wednesday - Saturday (published dates, else 7th week of Hilary); Eights: 5th week of Trinity."""
+    if event == 'torpids' and acad + 1 in TORPIDS_START:
+        s = pd.Timestamp(TORPIDS_START[acad + 1])
+    elif event == 'torpids':
+        s = term_start('Hilary', acad) + pd.Timedelta(days=45)
+    else:
+        s = term_start('Trinity', acad) + pd.Timedelta(days=31)
     return pd.date_range(s, periods=4, freq='D')
 
 

@@ -1,10 +1,10 @@
 {
- "generated": "2026-10-25 07:28 UTC",
+ "generated": "2026-10-25 08:20 UTC",
  "years": "1993/94-2025/26",
  "skill": [
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "1-2 months",
    "skill": 0.012,
@@ -15,7 +15,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "2-3 months",
    "skill": 0.027,
@@ -26,7 +26,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "3-4 months",
    "skill": 0.027,
@@ -37,7 +37,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "during",
    "skill": 0.089,
@@ -48,7 +48,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "up to 1 month",
    "skill": 0.072,
@@ -59,7 +59,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "1-2 months",
    "skill": 0.19,
@@ -70,7 +70,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "2-3 months",
    "skill": 0.054,
@@ -81,7 +81,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "3-4 months",
    "skill": 0.027,
@@ -92,7 +92,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "during",
    "skill": 0.362,
@@ -103,7 +103,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "up to 1 month",
    "skill": 0.293,
@@ -114,10 +114,10 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "1-2 months",
-   "skill": 0.158,
+   "skill": 0.159,
    "mae": 6.9,
    "mae_clim": 8.2,
    "in_range": 0.91,
@@ -125,7 +125,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "2-3 months",
    "skill": 0.025,
@@ -136,7 +136,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "3-4 months",
    "skill": 0.021,
@@ -147,7 +147,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "during",
    "skill": 0.203,
@@ -158,7 +158,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "up to 1 month",
    "skill": 0.263,
@@ -169,7 +169,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "1-2 months",
    "skill": 0.13,
@@ -180,7 +180,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "2-3 months",
    "skill": 0.112,
@@ -191,7 +191,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "3-4 months",
    "skill": 0.038,
@@ -202,7 +202,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "4+ months",
    "skill": 0.007,
@@ -213,7 +213,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "during",
    "skill": 0.158,
@@ -224,7 +224,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "up to 1 month",
    "skill": 0.148,
@@ -235,7 +235,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "1-2 months",
    "skill": 0.122,
@@ -246,7 +246,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "2-3 months",
    "skill": 0.098,
@@ -257,7 +257,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "3-4 months",
    "skill": 0.047,
@@ -268,7 +268,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "4+ months",
    "skill": 0.003,
@@ -279,7 +279,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "during",
    "skill": 0.208,
@@ -290,7 +290,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "up to 1 month",
    "skill": 0.077,
@@ -301,7 +301,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "1-2 months",
    "skill": 0.079,
@@ -312,7 +312,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "2-3 months",
    "skill": 0.074,
@@ -323,7 +323,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "3-4 months",
    "skill": 0.039,
@@ -334,7 +334,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "4+ months",
    "skill": 0.002,
@@ -345,7 +345,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "during",
    "skill": 0.131,
@@ -356,7 +356,7 @@
   },
   {
    "loc": "godstow",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "up to 1 month",
    "skill": 0.038,
@@ -491,7 +491,7 @@
    "period": "Hilary",
    "flag": "green",
    "lead": "up to 1 month",
-   "skill": 0.269,
+   "skill": 0.268,
    "mae": 12.5,
    "mae_clim": 17.9,
    "in_range": 0.82,
@@ -513,7 +513,7 @@
    "period": "Hilary",
    "flag": "red",
    "lead": "2-3 months",
-   "skill": 0.061,
+   "skill": 0.06,
    "mae": 13.0,
    "mae_clim": 14.9,
    "in_range": 0.83,
@@ -557,7 +557,7 @@
    "period": "Hilary",
    "flag": "red",
    "lead": "up to 1 month",
-   "skill": 0.167,
+   "skill": 0.166,
    "mae": 11.2,
    "mae_clim": 15.1,
    "in_range": 0.85,
@@ -568,7 +568,7 @@
    "period": "Michaelmas",
    "flag": "amber",
    "lead": "1-2 months",
-   "skill": 0.063,
+   "skill": 0.064,
    "mae": 4.6,
    "mae_clim": 5.5,
    "in_range": 0.83,
@@ -645,7 +645,7 @@
    "period": "Michaelmas",
    "flag": "red",
    "lead": "during",
-   "skill": 0.284,
+   "skill": 0.285,
    "mae": 3.3,
    "mae_clim": 4.0,
    "in_range": 0.93,
@@ -744,7 +744,7 @@
    "period": "Trinity",
    "flag": "green",
    "lead": "2-3 months",
-   "skill": -0.051,
+   "skill": -0.05,
    "mae": 3.1,
    "mae_clim": 3.0,
    "in_range": 0.91,
@@ -862,10 +862,10 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "1-2 months",
-   "skill": 0.059,
+   "skill": 0.058,
    "mae": 1.8,
    "mae_clim": 2.0,
    "in_range": 0.92,
@@ -873,7 +873,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "2-3 months",
    "skill": 0.03,
@@ -884,7 +884,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "3-4 months",
    "skill": 0.016,
@@ -895,7 +895,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "during",
    "skill": 0.056,
@@ -906,7 +906,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "amber",
    "lead": "up to 1 month",
    "skill": 0.102,
@@ -917,7 +917,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "blue",
    "lead": "1-2 months",
    "skill": -0.012,
@@ -928,7 +928,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "blue",
    "lead": "2-3 months",
    "skill": -0.018,
@@ -939,7 +939,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "blue",
    "lead": "3-4 months",
    "skill": 0.009,
@@ -950,7 +950,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "blue",
    "lead": "during",
    "skill": 0.05,
@@ -961,10 +961,10 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "blue",
    "lead": "up to 1 month",
-   "skill": 0.035,
+   "skill": 0.034,
    "mae": 4.0,
    "mae_clim": 4.0,
    "in_range": 0.86,
@@ -972,7 +972,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "1-2 months",
    "skill": 0.19,
@@ -983,7 +983,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "2-3 months",
    "skill": 0.068,
@@ -994,7 +994,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "3-4 months",
    "skill": 0.036,
@@ -1005,7 +1005,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "during",
    "skill": 0.431,
@@ -1016,7 +1016,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "green",
    "lead": "up to 1 month",
    "skill": 0.293,
@@ -1027,18 +1027,18 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "1-2 months",
    "skill": 0.16,
-   "mae": 7.5,
+   "mae": 7.4,
    "mae_clim": 8.5,
    "in_range": 0.91,
    "n": 66
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "2-3 months",
    "skill": 0.034,
@@ -1049,7 +1049,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "3-4 months",
    "skill": 0.027,
@@ -1060,7 +1060,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "during",
    "skill": 0.226,
@@ -1071,7 +1071,7 @@
   },
   {
    "loc": "isis",
-   "period": "Christmas vac",
+   "period": "Christmas Vac",
    "flag": "red",
    "lead": "up to 1 month",
    "skill": 0.269,
@@ -1082,7 +1082,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "1-2 months",
    "skill": 0.139,
@@ -1093,10 +1093,10 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "2-3 months",
-   "skill": 0.126,
+   "skill": 0.125,
    "mae": 0.9,
    "mae_clim": 1.1,
    "in_range": 0.89,
@@ -1104,7 +1104,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "3-4 months",
    "skill": 0.046,
@@ -1115,7 +1115,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "4+ months",
    "skill": 0.012,
@@ -1126,7 +1126,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "during",
    "skill": 0.141,
@@ -1137,7 +1137,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "amber",
    "lead": "up to 1 month",
    "skill": 0.121,
@@ -1148,10 +1148,10 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "blue",
    "lead": "1-2 months",
-   "skill": 0.07,
+   "skill": 0.069,
    "mae": 3.2,
    "mae_clim": 4.1,
    "in_range": 0.89,
@@ -1159,7 +1159,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "blue",
    "lead": "2-3 months",
    "skill": 0.088,
@@ -1170,7 +1170,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "blue",
    "lead": "3-4 months",
    "skill": 0.01,
@@ -1181,7 +1181,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "blue",
    "lead": "4+ months",
    "skill": 0.002,
@@ -1192,7 +1192,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "blue",
    "lead": "during",
    "skill": 0.073,
@@ -1203,7 +1203,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "blue",
    "lead": "up to 1 month",
    "skill": 0.146,
@@ -1214,7 +1214,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "1-2 months",
    "skill": 0.127,
@@ -1225,7 +1225,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "2-3 months",
    "skill": 0.111,
@@ -1236,7 +1236,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "3-4 months",
    "skill": 0.041,
@@ -1247,7 +1247,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "4+ months",
    "skill": 0.001,
@@ -1258,7 +1258,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "during",
    "skill": 0.229,
@@ -1269,7 +1269,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "green",
    "lead": "up to 1 month",
    "skill": 0.112,
@@ -1280,7 +1280,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "1-2 months",
    "skill": 0.085,
@@ -1291,7 +1291,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "2-3 months",
    "skill": 0.078,
@@ -1302,7 +1302,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "3-4 months",
    "skill": 0.044,
@@ -1313,7 +1313,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "4+ months",
    "skill": 0.002,
@@ -1324,7 +1324,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "during",
    "skill": 0.134,
@@ -1335,7 +1335,7 @@
   },
   {
    "loc": "isis",
-   "period": "Easter vac",
+   "period": "Easter Vac",
    "flag": "red",
    "lead": "up to 1 month",
    "skill": 0.045,
@@ -1360,7 +1360,7 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "2-3 months",
-   "skill": 0.046,
+   "skill": 0.045,
    "mae": 2.2,
    "mae_clim": 2.3,
    "in_range": 0.83,
@@ -1404,7 +1404,7 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "up to 1 month",
-   "skill": 0.119,
+   "skill": 0.118,
    "mae": 1.9,
    "mae_clim": 2.2,
    "in_range": 0.89,
@@ -1427,7 +1427,7 @@
    "flag": "blue",
    "lead": "2-3 months",
    "skill": 0.041,
-   "mae": 6.9,
+   "mae": 7.0,
    "mae_clim": 7.1,
    "in_range": 0.76,
    "n": 66
@@ -1481,7 +1481,7 @@
    "period": "Hilary",
    "flag": "green",
    "lead": "1-2 months",
-   "skill": 0.186,
+   "skill": 0.185,
    "mae": 14.9,
    "mae_clim": 19.0,
    "in_range": 0.83,
@@ -1603,7 +1603,7 @@
    "flag": "red",
    "lead": "up to 1 month",
    "skill": 0.176,
-   "mae": 11.6,
+   "mae": 11.5,
    "mae_clim": 14.8,
    "in_range": 0.85,
    "n": 66
@@ -1635,7 +1635,7 @@
    "period": "Michaelmas",
    "flag": "amber",
    "lead": "up to 1 month",
-   "skill": 0.052,
+   "skill": 0.051,
    "mae": 1.5,
    "mae_clim": 1.7,
    "in_range": 0.87,
@@ -1756,7 +1756,7 @@
    "period": "Trinity",
    "flag": "amber",
    "lead": "2-3 months",
-   "skill": -0.056,
+   "skill": -0.055,
    "mae": 0.4,
    "mae_clim": 0.4,
    "in_range": 0.91,
@@ -1822,7 +1822,7 @@
    "period": "Trinity",
    "flag": "blue",
    "lead": "2-3 months",
-   "skill": -0.004,
+   "skill": -0.003,
    "mae": 3.8,
    "mae_clim": 3.6,
    "in_range": 0.85,
@@ -2007,7 +2007,7 @@
  ],
  "at_start": {
   "godstow": {
-   "Christmas vac": {
+   "Christmas Vac": {
     "amber": {
      "skill": 0.115,
      "mae": 3.3,
@@ -2030,7 +2030,7 @@
      "n": 33
     }
    },
-   "Easter vac": {
+   "Easter Vac": {
     "amber": {
      "skill": 0.17,
      "mae": 2.4,
@@ -2055,7 +2055,7 @@
    },
    "Hilary": {
     "amber": {
-     "skill": 0.098,
+     "skill": 0.1,
      "mae": 5.3,
      "mae_clim": 5.6,
      "in_range": 0.82,
@@ -2124,16 +2124,16 @@
    }
   },
   "isis": {
-   "Christmas vac": {
+   "Christmas Vac": {
     "amber": {
-     "skill": 0.141,
+     "skill": 0.143,
      "mae": 1.6,
      "mae_clim": 2.0,
      "in_range": 0.88,
      "n": 33
     },
     "blue": {
-     "skill": -0.012,
+     "skill": -0.013,
      "mae": 4.1,
      "mae_clim": 4.1,
      "in_range": 0.88,
@@ -2154,7 +2154,7 @@
      "n": 33
     }
    },
-   "Easter vac": {
+   "Easter Vac": {
     "amber": {
      "skill": 0.184,
      "mae": 0.9,
@@ -2186,14 +2186,14 @@
    },
    "Hilary": {
     "amber": {
-     "skill": 0.1,
+     "skill": 0.099,
      "mae": 2.1,
      "mae_clim": 2.2,
      "in_range": 0.88,
      "n": 33
     },
     "blue": {
-     "skill": -0.005,
+     "skill": -0.004,
      "mae": 7.1,
      "mae_clim": 7.2,
      "in_range": 0.73,
@@ -2207,7 +2207,7 @@
      "n": 33
     },
     "red": {
-     "skill": 0.188,
+     "skill": 0.189,
      "mae": 11.2,
      "mae_clim": 14.6,
      "in_range": 0.79,
@@ -2278,35 +2278,35 @@
  },
  "torpids_skill": {
   "week before": {
-   "skill": 0.318,
+   "skill": 0.303,
    "n": 32
   },
   "1-2 months": {
-   "skill": 0.081,
+   "skill": 0.122,
    "n": 59
   },
   "2-3 months": {
-   "skill": 0.083,
+   "skill": 0.147,
    "n": 64
   },
   "3-4 months": {
-   "skill": 0.022,
+   "skill": 0.046,
    "n": 69
   },
   "4+ months": {
-   "skill": 0.009,
-   "n": 133
+   "skill": 0.024,
+   "n": 132
   },
   "last week": {
-   "skill": 0.577,
-   "n": 17
+   "skill": 0.595,
+   "n": 16
   },
   "up to 1 month": {
-   "skill": 0.136,
-   "n": 59
+   "skill": 0.164,
+   "n": 60
   }
  },
- "torpids_climatology": 0.219,
+ "torpids_climatology": 0.25,
  "torpids_record": [
   {
    "year": 1993,
@@ -2470,7 +2470,7 @@
   },
   {
    "year": 2025,
-   "flow": 26.8,
+   "flow": 48.4,
    "outcome": "raced"
   },
   {
