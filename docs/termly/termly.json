@@ -1,6 +1,6 @@
 {
- "generated": "2026-10-25 09:03 UTC",
- "issued": "2026-10-24",
+ "generated": "2026-10-25 09:06 UTC",
+ "issued": "2026-10-14",
  "members": 33,
  "member_years": [
   1993,
@@ -38,16 +38,16 @@
   2025
  ],
  "state": {
-  "date": "2026-10-24",
-  "flow": 3.55,
-  "flow_7d": 2.14,
-  "normal": 5.5,
-  "pct_normal_7d": 39.0,
-  "pct_normal_90d": 33.0,
+  "date": "2026-10-14",
+  "flow": 0.45,
+  "flow_7d": 0.9,
+  "normal": 3.5,
+  "pct_normal_7d": 31.0,
+  "pct_normal_90d": 34.0,
   "wetter_years_90d": 29,
   "n_years": 33,
-  "score_7d": -0.862,
-  "score_90d": -1.113
+  "score_7d": -1.299,
+  "score_90d": -1.134
  },
  "lines": {
   "isis": [
@@ -84,50 +84,50 @@
     "end": "2026-12-05",
     "full_term_start": "2026-10-11",
     "days": 63,
-    "days_done": 21,
+    "days_done": 11,
     "tercile": {
-     "lower": 0.78,
-     "higher": 0.05,
-     "usual": 0.17
+     "lower": 0.72,
+     "higher": 0.03,
+     "usual": 0.25
     },
     "lead": "during",
     "trust": 0.9,
     "flags": {
      "green": {
-      "so_far": 21,
+      "so_far": 11,
       "median": 63.0,
-      "p10": 53.6,
+      "p10": 51.6,
       "p90": 63.0,
-      "mean": 59.9,
+      "mean": 59.6,
       "clim_median": 59.0,
-      "clim_p10": 31.0,
+      "clim_p10": 26.0,
       "clim_p90": 63.0,
       "normal_mean": 49.1,
       "normal_median": 58.0,
       "normal_p10": 18.0,
       "normal_p90": 63.0,
-      "skill": 0.297
+      "skill": 0.296
      },
      "blue": {
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
       "p90": 8.0,
-      "mean": 1.9,
+      "mean": 2.1,
       "clim_median": 2.0,
       "clim_p10": 0.0,
-      "clim_p90": 10.8,
+      "clim_p90": 12.6,
       "normal_mean": 5.7,
       "normal_median": 3.0,
       "normal_p10": 0.0,
       "normal_p90": 14.2,
-      "skill": 0.089
+      "skill": 0.087
      },
      "amber": {
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 1.3,
+      "p90": 2.0,
       "mean": 0.4,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -142,11 +142,11 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 1.1,
+      "p90": 2.9,
       "mean": 0.9,
       "clim_median": 0.0,
       "clim_p10": 0.0,
-      "clim_p90": 21.0,
+      "clim_p90": 22.8,
       "normal_mean": 6.4,
       "normal_median": 0.0,
       "normal_p10": 0.0,
@@ -154,22 +154,12 @@
       "skill": 0.278
      }
     },
-    "chance_red_week": 0.05,
+    "chance_red_week": 0.02,
     "chance_red_week_normal": 0.24,
     "analogs": [
      {
-      "label": "Michaelmas 2011",
-      "pct_normal_90d": 34,
-      "days": {
-       "green": 63,
-       "blue": 0,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Michaelmas 2025",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 48,
        "blue": 11,
@@ -179,7 +169,7 @@
      },
      {
       "label": "Michaelmas 2005",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 62,
        "blue": 1,
@@ -189,7 +179,7 @@
      },
      {
       "label": "Michaelmas 1996",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 63,
        "blue": 0,
@@ -199,7 +189,7 @@
      },
      {
       "label": "Michaelmas 2022",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 51,
        "blue": 8,
@@ -208,8 +198,8 @@
       }
      },
      {
-      "label": "Michaelmas 2003",
-      "pct_normal_90d": 41,
+      "label": "Michaelmas 2011",
+      "pct_normal_90d": 39,
       "days": {
        "green": 63,
        "blue": 0,
@@ -219,7 +209,17 @@
      },
      {
       "label": "Michaelmas 1995",
-      "pct_normal_90d": 24,
+      "pct_normal_90d": 27,
+      "days": {
+       "green": 63,
+       "blue": 0,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
+      "label": "Michaelmas 2003",
+      "pct_normal_90d": 48,
       "days": {
        "green": 63,
        "blue": 0,
@@ -248,13 +248,13 @@
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 20.4,
+      "median": 21.0,
       "p10": 5.0,
       "p90": 35.0,
-      "mean": 21.6,
+      "mean": 21.8,
       "clim_median": 14.0,
       "clim_p10": 0.0,
-      "clim_p90": 34.8,
+      "clim_p90": 34.0,
       "normal_mean": 15.5,
       "normal_median": 16.0,
       "normal_p10": 0.0,
@@ -263,18 +263,18 @@
      },
      "blue": {
       "so_far": 0,
-      "median": 3.0,
+      "median": 5.0,
       "p10": 0.0,
-      "p90": 11.8,
-      "mean": 4.7,
+      "p90": 13.0,
+      "mean": 5.6,
       "clim_median": 5.0,
-      "clim_p10": 0.0,
+      "clim_p10": 0.2,
       "clim_p90": 13.8,
       "normal_mean": 5.7,
       "normal_median": 5.0,
       "normal_p10": 0.2,
       "normal_p90": 13.0,
-      "skill": -0.012
+      "skill": -0.013
      },
      "amber": {
       "so_far": 0,
@@ -293,10 +293,10 @@
      },
      "red": {
       "so_far": 0,
-      "median": 5.0,
+      "median": 4.0,
       "p10": 0.0,
       "p90": 19.0,
-      "mean": 7.1,
+      "mean": 6.0,
       "clim_median": 10.0,
       "clim_p10": 0.0,
       "clim_p90": 22.8,
@@ -307,12 +307,12 @@
       "skill": 0.16
      }
     },
-    "chance_red_week": 0.48,
+    "chance_red_week": 0.39,
     "chance_red_week_normal": 0.58,
     "analogs": [
      {
-      "label": "Christmas Vac 2011",
-      "pct_normal_90d": 34,
+      "label": "Christmas Vac 1996",
+      "pct_normal_90d": 33,
       "days": {
        "green": 35,
        "blue": 0,
@@ -321,8 +321,8 @@
       }
      },
      {
-      "label": "Christmas Vac 1996",
-      "pct_normal_90d": 29,
+      "label": "Christmas Vac 2011",
+      "pct_normal_90d": 39,
       "days": {
        "green": 35,
        "blue": 0,
@@ -332,7 +332,7 @@
      },
      {
       "label": "Christmas Vac 2003",
-      "pct_normal_90d": 41,
+      "pct_normal_90d": 48,
       "days": {
        "green": 33,
        "blue": 2,
@@ -342,7 +342,7 @@
      },
      {
       "label": "Christmas Vac 2005",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 32,
        "blue": 1,
@@ -352,7 +352,7 @@
      },
      {
       "label": "Christmas Vac 1995",
-      "pct_normal_90d": 24,
+      "pct_normal_90d": 27,
       "days": {
        "green": 18,
        "blue": 8,
@@ -362,7 +362,7 @@
      },
      {
       "label": "Christmas Vac 2022",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 16,
        "blue": 2,
@@ -372,7 +372,7 @@
      },
      {
       "label": "Christmas Vac 2025",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 0,
        "blue": 8,
@@ -392,19 +392,19 @@
     "days": 63,
     "days_done": 0,
     "tercile": {
-     "lower": 0.47,
+     "lower": 0.52,
      "higher": 0.16,
-     "usual": 0.37
+     "usual": 0.32
     },
     "lead": "2-3 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 33.0,
-      "p10": 2.0,
-      "p90": 58.6,
-      "mean": 32.9,
+      "median": 39.1,
+      "p10": 5.0,
+      "p90": 58.0,
+      "mean": 35.5,
       "clim_median": 22.0,
       "clim_p10": 0.4,
       "clim_p90": 54.8,
@@ -416,10 +416,10 @@
      },
      "blue": {
       "so_far": 0,
-      "median": 13.0,
-      "p10": 2.0,
-      "p90": 21.4,
-      "mean": 12.7,
+      "median": 11.2,
+      "p10": 3.1,
+      "p90": 21.0,
+      "mean": 12.0,
       "clim_median": 15.0,
       "clim_p10": 2.0,
       "clim_p90": 27.0,
@@ -433,8 +433,8 @@
       "so_far": 0,
       "median": 3.0,
       "p10": 0.0,
-      "p90": 7.6,
-      "mean": 3.2,
+      "p90": 6.0,
+      "mean": 2.9,
       "clim_median": 4.0,
       "clim_p10": 0.2,
       "clim_p90": 7.8,
@@ -446,10 +446,10 @@
      },
      "red": {
       "so_far": 0,
-      "median": 10.0,
+      "median": 8.0,
       "p10": 0.0,
-      "p90": 46.0,
-      "mean": 14.2,
+      "p90": 38.4,
+      "mean": 12.7,
       "clim_median": 17.0,
       "clim_p10": 0.0,
       "clim_p90": 46.8,
@@ -460,22 +460,12 @@
       "skill": 0.067
      }
     },
-    "chance_red_week": 0.54,
+    "chance_red_week": 0.52,
     "chance_red_week_normal": 0.64,
     "analogs": [
      {
-      "label": "Hilary 2012",
-      "pct_normal_90d": 34,
-      "days": {
-       "green": 63,
-       "blue": 0,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Hilary 2006",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 61,
        "blue": 2,
@@ -484,8 +474,18 @@
       }
      },
      {
+      "label": "Hilary 2012",
+      "pct_normal_90d": 39,
+      "days": {
+       "green": 63,
+       "blue": 0,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
       "label": "Hilary 1997",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 55,
        "blue": 5,
@@ -495,7 +495,7 @@
      },
      {
       "label": "Hilary 1996",
-      "pct_normal_90d": 24,
+      "pct_normal_90d": 27,
       "days": {
        "green": 37,
        "blue": 17,
@@ -505,7 +505,7 @@
      },
      {
       "label": "Hilary 2004",
-      "pct_normal_90d": 41,
+      "pct_normal_90d": 48,
       "days": {
        "green": 29,
        "blue": 15,
@@ -515,7 +515,7 @@
      },
      {
       "label": "Hilary 2023",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 34,
        "blue": 8,
@@ -525,7 +525,7 @@
      },
      {
       "label": "Hilary 2026",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 0,
        "blue": 2,
@@ -554,10 +554,10 @@
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 29.0,
-      "p10": 6.4,
+      "median": 30.0,
+      "p10": 7.0,
       "p90": 35.0,
-      "mean": 25.9,
+      "mean": 26.0,
       "clim_median": 29.0,
       "clim_p10": 7.0,
       "clim_p90": 35.0,
@@ -569,13 +569,13 @@
      },
      "blue": {
       "so_far": 0,
-      "median": 2.9,
+      "median": 3.0,
       "p10": 0.0,
       "p90": 10.4,
-      "mean": 4.5,
+      "mean": 4.4,
       "clim_median": 3.0,
       "clim_p10": 0.0,
-      "clim_p90": 9.8,
+      "clim_p90": 10.0,
       "normal_mean": 4.6,
       "normal_median": 2.0,
       "normal_p10": 0.0,
@@ -601,8 +601,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 16.6,
-      "mean": 3.6,
+      "p90": 16.2,
+      "mean": 3.5,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 15.8,
@@ -617,18 +617,8 @@
     "chance_red_week_normal": 0.18,
     "analogs": [
      {
-      "label": "Easter Vac 2012",
-      "pct_normal_90d": 34,
-      "days": {
-       "green": 35,
-       "blue": 0,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Easter Vac 2026",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 28,
        "blue": 6,
@@ -638,7 +628,7 @@
      },
      {
       "label": "Easter Vac 1997",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 35,
        "blue": 0,
@@ -647,8 +637,8 @@
       }
      },
      {
-      "label": "Easter Vac 2004",
-      "pct_normal_90d": 41,
+      "label": "Easter Vac 2012",
+      "pct_normal_90d": 39,
       "days": {
        "green": 35,
        "blue": 0,
@@ -658,7 +648,7 @@
      },
      {
       "label": "Easter Vac 1996",
-      "pct_normal_90d": 24,
+      "pct_normal_90d": 27,
       "days": {
        "green": 34,
        "blue": 1,
@@ -667,8 +657,18 @@
       }
      },
      {
+      "label": "Easter Vac 2004",
+      "pct_normal_90d": 48,
+      "days": {
+       "green": 35,
+       "blue": 0,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
       "label": "Easter Vac 2006",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 31,
        "blue": 2,
@@ -678,7 +678,7 @@
      },
      {
       "label": "Easter Vac 2023",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 7,
        "blue": 5,
@@ -698,9 +698,9 @@
     "days": 63,
     "days_done": 0,
     "tercile": {
-     "lower": 0.34,
+     "lower": 0.33,
      "higher": 0.3,
-     "usual": 0.36
+     "usual": 0.37
     },
     "lead": "4+ months",
     "trust": 0.2,
@@ -708,7 +708,7 @@
      "green": {
       "so_far": 0,
       "median": 63.0,
-      "p10": 43.8,
+      "p10": 44.0,
       "p90": 63.0,
       "mean": 58.1,
       "clim_median": 63.0,
@@ -724,7 +724,7 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 11.2,
+      "p90": 11.8,
       "mean": 3.3,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -739,8 +739,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 1.6,
-      "mean": 0.3,
+      "p90": 1.9,
+      "mean": 0.4,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 1.8,
@@ -754,8 +754,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 4.2,
-      "mean": 1.3,
+      "p90": 4.0,
+      "mean": 1.2,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 3.6,
@@ -771,7 +771,7 @@
     "analogs": [
      {
       "label": "Trinity 2026",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 63,
        "blue": 0,
@@ -781,7 +781,7 @@
      },
      {
       "label": "Trinity 2006",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 63,
        "blue": 0,
@@ -791,7 +791,17 @@
      },
      {
       "label": "Trinity 1997",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
+      "days": {
+       "green": 63,
+       "blue": 0,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
+      "label": "Trinity 1996",
+      "pct_normal_90d": 27,
       "days": {
        "green": 63,
        "blue": 0,
@@ -801,7 +811,7 @@
      },
      {
       "label": "Trinity 2004",
-      "pct_normal_90d": 41,
+      "pct_normal_90d": 48,
       "days": {
        "green": 60,
        "blue": 3,
@@ -810,18 +820,8 @@
       }
      },
      {
-      "label": "Trinity 1996",
-      "pct_normal_90d": 24,
-      "days": {
-       "green": 63,
-       "blue": 0,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Trinity 2023",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 42,
        "blue": 18,
@@ -831,7 +831,7 @@
      },
      {
       "label": "Trinity 2012",
-      "pct_normal_90d": 34,
+      "pct_normal_90d": 39,
       "days": {
        "green": 39,
        "blue": 10,
@@ -851,23 +851,23 @@
     "end": "2026-12-05",
     "full_term_start": "2026-10-11",
     "days": 63,
-    "days_done": 21,
+    "days_done": 11,
     "tercile": {
-     "lower": 0.78,
-     "higher": 0.05,
-     "usual": 0.17
+     "lower": 0.72,
+     "higher": 0.03,
+     "usual": 0.25
     },
     "lead": "during",
     "trust": 0.9,
     "flags": {
      "green": {
-      "so_far": 21,
+      "so_far": 11,
       "median": 63.0,
-      "p10": 59.0,
+      "p10": 57.3,
       "p90": 63.0,
-      "mean": 60.9,
+      "mean": 60.8,
       "clim_median": 61.0,
-      "clim_p10": 32.4,
+      "clim_p10": 29.4,
       "clim_p90": 63.0,
       "normal_mean": 52.4,
       "normal_median": 61.0,
@@ -879,11 +879,11 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 4.2,
+      "p90": 5.3,
       "mean": 1.3,
       "clim_median": 2.0,
       "clim_p10": 0.0,
-      "clim_p90": 9.0,
+      "clim_p90": 10.0,
       "normal_mean": 4.8,
       "normal_median": 2.0,
       "normal_p10": 0.0,
@@ -894,11 +894,11 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 0.0,
+      "p90": 2.4,
       "mean": 0.8,
       "clim_median": 0.0,
       "clim_p10": 0.0,
-      "clim_p90": 18.6,
+      "clim_p90": 22.2,
       "normal_mean": 5.9,
       "normal_median": 0.0,
       "normal_p10": 0.0,
@@ -906,21 +906,12 @@
       "skill": 0.285
      }
     },
-    "chance_red_week": 0.05,
+    "chance_red_week": 0.02,
     "chance_red_week_normal": 0.24,
     "analogs": [
      {
-      "label": "Michaelmas 2011",
-      "pct_normal_90d": 34,
-      "days": {
-       "green": 63,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Michaelmas 2025",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 56,
        "amber": 7,
@@ -929,7 +920,7 @@
      },
      {
       "label": "Michaelmas 2005",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 62,
        "amber": 1,
@@ -938,7 +929,7 @@
      },
      {
       "label": "Michaelmas 1996",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 63,
        "amber": 0,
@@ -947,7 +938,7 @@
      },
      {
       "label": "Michaelmas 2022",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 56,
        "amber": 7,
@@ -955,8 +946,8 @@
       }
      },
      {
-      "label": "Michaelmas 2003",
-      "pct_normal_90d": 41,
+      "label": "Michaelmas 2011",
+      "pct_normal_90d": 39,
       "days": {
        "green": 63,
        "amber": 0,
@@ -965,7 +956,16 @@
      },
      {
       "label": "Michaelmas 1995",
-      "pct_normal_90d": 24,
+      "pct_normal_90d": 27,
+      "days": {
+       "green": 63,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
+      "label": "Michaelmas 2003",
+      "pct_normal_90d": 48,
       "days": {
        "green": 63,
        "amber": 0,
@@ -993,10 +993,10 @@
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 23.0,
+      "median": 26.0,
       "p10": 8.0,
       "p90": 35.0,
-      "mean": 23.8,
+      "mean": 24.6,
       "clim_median": 17.0,
       "clim_p10": 0.6,
       "clim_p90": 35.0,
@@ -1008,10 +1008,10 @@
      },
      "amber": {
       "so_far": 0,
-      "median": 4.0,
+      "median": 5.0,
       "p10": 0.0,
       "p90": 10.0,
-      "mean": 4.6,
+      "mean": 5.0,
       "clim_median": 6.0,
       "clim_p10": 0.0,
       "clim_p90": 12.8,
@@ -1023,10 +1023,10 @@
      },
      "red": {
       "so_far": 0,
-      "median": 4.9,
+      "median": 2.2,
       "p10": 0.0,
       "p90": 18.0,
-      "mean": 6.6,
+      "mean": 5.4,
       "clim_median": 9.0,
       "clim_p10": 0.0,
       "clim_p90": 20.6,
@@ -1037,21 +1037,12 @@
       "skill": 0.159
      }
     },
-    "chance_red_week": 0.43,
+    "chance_red_week": 0.33,
     "chance_red_week_normal": 0.58,
     "analogs": [
      {
-      "label": "Christmas Vac 2011",
-      "pct_normal_90d": 34,
-      "days": {
-       "green": 35,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Christmas Vac 2005",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 32,
        "amber": 3,
@@ -1060,7 +1051,16 @@
      },
      {
       "label": "Christmas Vac 1996",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
+      "days": {
+       "green": 35,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
+      "label": "Christmas Vac 2011",
+      "pct_normal_90d": 39,
       "days": {
        "green": 35,
        "amber": 0,
@@ -1069,7 +1069,7 @@
      },
      {
       "label": "Christmas Vac 2003",
-      "pct_normal_90d": 41,
+      "pct_normal_90d": 48,
       "days": {
        "green": 34,
        "amber": 1,
@@ -1078,7 +1078,7 @@
      },
      {
       "label": "Christmas Vac 1995",
-      "pct_normal_90d": 24,
+      "pct_normal_90d": 27,
       "days": {
        "green": 19,
        "amber": 9,
@@ -1087,7 +1087,7 @@
      },
      {
       "label": "Christmas Vac 2022",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 17,
        "amber": 9,
@@ -1096,7 +1096,7 @@
      },
      {
       "label": "Christmas Vac 2025",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 3,
        "amber": 10,
@@ -1115,19 +1115,19 @@
     "days": 63,
     "days_done": 0,
     "tercile": {
-     "lower": 0.47,
+     "lower": 0.52,
      "higher": 0.16,
-     "usual": 0.37
+     "usual": 0.32
     },
     "lead": "2-3 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 43.4,
-      "p10": 7.0,
-      "p90": 63.0,
-      "mean": 40.0,
+      "median": 47.0,
+      "p10": 11.2,
+      "p90": 61.4,
+      "mean": 41.7,
       "clim_median": 34.0,
       "clim_p10": 6.2,
       "clim_p90": 58.6,
@@ -1135,29 +1135,29 @@
       "normal_median": 33.0,
       "normal_p10": 6.2,
       "normal_p90": 58.6,
-      "skill": 0.125
+      "skill": 0.124
      },
      "amber": {
       "so_far": 0,
-      "median": 10.0,
-      "p10": 0.0,
-      "p90": 18.8,
-      "mean": 10.0,
+      "median": 9.0,
+      "p10": 1.6,
+      "p90": 19.6,
+      "mean": 9.6,
       "clim_median": 12.0,
       "clim_p10": 2.4,
-      "clim_p90": 24.0,
+      "clim_p90": 23.8,
       "normal_mean": 13.0,
       "normal_median": 13.0,
       "normal_p10": 2.8,
-      "normal_p90": 23.8,
-      "skill": 0.092
+      "normal_p90": 23.0,
+      "skill": 0.09
      },
      "red": {
       "so_far": 0,
-      "median": 9.8,
+      "median": 6.1,
       "p10": 0.0,
-      "p90": 43.0,
-      "mean": 13.0,
+      "p90": 36.0,
+      "mean": 11.7,
       "clim_median": 16.0,
       "clim_p10": 0.0,
       "clim_p90": 44.6,
@@ -1168,12 +1168,12 @@
       "skill": 0.06
      }
     },
-    "chance_red_week": 0.54,
+    "chance_red_week": 0.49,
     "chance_red_week_normal": 0.64,
     "analogs": [
      {
-      "label": "Hilary 2012",
-      "pct_normal_90d": 34,
+      "label": "Hilary 2006",
+      "pct_normal_90d": 33,
       "days": {
        "green": 63,
        "amber": 0,
@@ -1181,8 +1181,8 @@
       }
      },
      {
-      "label": "Hilary 2006",
-      "pct_normal_90d": 29,
+      "label": "Hilary 2012",
+      "pct_normal_90d": 39,
       "days": {
        "green": 63,
        "amber": 0,
@@ -1191,7 +1191,7 @@
      },
      {
       "label": "Hilary 1997",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 59,
        "amber": 2,
@@ -1200,7 +1200,7 @@
      },
      {
       "label": "Hilary 1996",
-      "pct_normal_90d": 24,
+      "pct_normal_90d": 27,
       "days": {
        "green": 46,
        "amber": 13,
@@ -1209,16 +1209,16 @@
      },
      {
       "label": "Hilary 2004",
-      "pct_normal_90d": 41,
+      "pct_normal_90d": 48,
       "days": {
-       "green": 40,
-       "amber": 12,
+       "green": 39,
+       "amber": 13,
        "red": 11
       }
      },
      {
       "label": "Hilary 2023",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 37,
        "amber": 8,
@@ -1227,7 +1227,7 @@
      },
      {
       "label": "Hilary 2026",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 0,
        "amber": 11,
@@ -1258,11 +1258,11 @@
       "median": 32.0,
       "p10": 9.0,
       "p90": 35.0,
-      "mean": 28.6,
+      "mean": 28.7,
       "clim_median": 32.0,
       "clim_p10": 11.2,
       "clim_p90": 35.0,
-      "normal_mean": 29.0,
+      "normal_mean": 28.9,
       "normal_median": 32.0,
       "normal_p10": 12.8,
       "normal_p90": 35.0,
@@ -1272,12 +1272,12 @@
       "so_far": 0,
       "median": 2.0,
       "p10": 0.0,
-      "p90": 11.4,
+      "p90": 10.8,
       "mean": 3.2,
       "clim_median": 2.0,
       "clim_p10": 0.0,
       "clim_p90": 10.2,
-      "normal_mean": 3.1,
+      "normal_mean": 3.2,
       "normal_median": 2.0,
       "normal_p10": 0.0,
       "normal_p90": 8.8,
@@ -1287,7 +1287,7 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 15.0,
+      "p90": 13.2,
       "mean": 3.2,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -1303,17 +1303,8 @@
     "chance_red_week_normal": 0.15,
     "analogs": [
      {
-      "label": "Easter Vac 2012",
-      "pct_normal_90d": 34,
-      "days": {
-       "green": 35,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Easter Vac 2026",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 31,
        "amber": 4,
@@ -1322,7 +1313,7 @@
      },
      {
       "label": "Easter Vac 1997",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 35,
        "amber": 0,
@@ -1330,8 +1321,8 @@
       }
      },
      {
-      "label": "Easter Vac 2004",
-      "pct_normal_90d": 41,
+      "label": "Easter Vac 2012",
+      "pct_normal_90d": 39,
       "days": {
        "green": 35,
        "amber": 0,
@@ -1340,7 +1331,16 @@
      },
      {
       "label": "Easter Vac 1996",
-      "pct_normal_90d": 24,
+      "pct_normal_90d": 27,
+      "days": {
+       "green": 35,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
+      "label": "Easter Vac 2004",
+      "pct_normal_90d": 48,
       "days": {
        "green": 35,
        "amber": 0,
@@ -1349,7 +1349,7 @@
      },
      {
       "label": "Easter Vac 2006",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 31,
        "amber": 2,
@@ -1358,7 +1358,7 @@
      },
      {
       "label": "Easter Vac 2023",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 11,
        "amber": 1,
@@ -1377,9 +1377,9 @@
     "days": 63,
     "days_done": 0,
     "tercile": {
-     "lower": 0.34,
+     "lower": 0.33,
      "higher": 0.3,
-     "usual": 0.36
+     "usual": 0.37
     },
     "lead": "4+ months",
     "trust": 0.2,
@@ -1387,7 +1387,7 @@
      "green": {
       "so_far": 0,
       "median": 63.0,
-      "p10": 52.2,
+      "p10": 51.8,
       "p90": 63.0,
       "mean": 60.2,
       "clim_median": 63.0,
@@ -1419,7 +1419,7 @@
       "median": 0.0,
       "p10": 0.0,
       "p90": 3.0,
-      "mean": 1.1,
+      "mean": 1.0,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 2.6,
@@ -1435,7 +1435,7 @@
     "analogs": [
      {
       "label": "Trinity 2026",
-      "pct_normal_90d": 32,
+      "pct_normal_90d": 34,
       "days": {
        "green": 63,
        "amber": 0,
@@ -1444,7 +1444,7 @@
      },
      {
       "label": "Trinity 2006",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
       "days": {
        "green": 63,
        "amber": 0,
@@ -1453,7 +1453,16 @@
      },
      {
       "label": "Trinity 1997",
-      "pct_normal_90d": 29,
+      "pct_normal_90d": 33,
+      "days": {
+       "green": 63,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
+      "label": "Trinity 1996",
+      "pct_normal_90d": 27,
       "days": {
        "green": 63,
        "amber": 0,
@@ -1462,7 +1471,7 @@
      },
      {
       "label": "Trinity 2004",
-      "pct_normal_90d": 41,
+      "pct_normal_90d": 48,
       "days": {
        "green": 62,
        "amber": 1,
@@ -1470,17 +1479,8 @@
       }
      },
      {
-      "label": "Trinity 1996",
-      "pct_normal_90d": 24,
-      "days": {
-       "green": 63,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Trinity 2023",
-      "pct_normal_90d": 40,
+      "pct_normal_90d": 36,
       "days": {
        "green": 49,
        "amber": 13,
@@ -1489,7 +1489,7 @@
      },
      {
       "label": "Trinity 2012",
-      "pct_normal_90d": 34,
+      "pct_normal_90d": 39,
       "days": {
        "green": 45,
        "amber": 10,
@@ -1503,6 +1503,7 @@
  "weekly": {
   "isis": {
    "week": [
+    "2026-10-18",
     "2026-10-25",
     "2026-11-01",
     "2026-11-08",
@@ -1537,172 +1538,172 @@
     "2027-05-30",
     "2027-06-06",
     "2027-06-13",
-    "2027-06-20",
-    "2027-06-27"
+    "2027-06-20"
    ],
    "chance": {
     "green": [
-     0.969,
-     0.918,
-     0.927,
-     0.9,
-     0.876,
-     0.832,
-     0.822,
-     0.796,
-     0.623,
-     0.451,
-     0.389,
-     0.403,
-     0.4,
-     0.406,
-     0.47,
-     0.498,
-     0.539,
-     0.526,
-     0.484,
-     0.589,
-     0.641,
-     0.749,
-     0.749,
-     0.778,
-     0.784,
-     0.84,
-     0.822,
-     0.861,
-     0.924,
-     0.972,
      0.971,
-     0.957,
+     0.965,
+     0.911,
+     0.896,
+     0.88,
+     0.89,
+     0.867,
+     0.803,
+     0.799,
+     0.65,
+     0.458,
+     0.406,
+     0.455,
+     0.383,
+     0.394,
+     0.478,
+     0.515,
+     0.561,
+     0.504,
+     0.5,
+     0.591,
+     0.644,
+     0.746,
+     0.755,
+     0.784,
+     0.788,
+     0.843,
+     0.819,
+     0.863,
+     0.925,
+     0.975,
+     0.971,
+     0.958,
      0.971,
      0.978,
-     0.991,
-     0.984
+     0.991
     ],
     "blue": [
-     0.018,
-     0.039,
-     0.013,
-     0.063,
-     0.081,
-     0.094,
-     0.051,
-     0.098,
-     0.171,
-     0.181,
-     0.172,
-     0.206,
-     0.205,
-     0.267,
-     0.238,
-     0.169,
-     0.18,
-     0.236,
-     0.257,
-     0.217,
-     0.215,
-     0.143,
-     0.121,
+     0.016,
+     0.02,
+     0.056,
+     0.055,
+     0.074,
+     0.06,
+     0.066,
      0.08,
+     0.094,
+     0.184,
+     0.209,
+     0.238,
+     0.182,
+     0.221,
+     0.236,
+     0.247,
+     0.165,
+     0.171,
+     0.24,
+     0.25,
+     0.221,
+     0.211,
+     0.147,
+     0.116,
+     0.074,
      0.085,
-     0.122,
-     0.11,
-     0.089,
+     0.119,
+     0.113,
+     0.09,
      0.037,
-     0.028,
+     0.025,
      0.029,
-     0.026,
-     0.011,
+     0.025,
+     0.012,
      0.022,
-     0.009,
-     0.016
+     0.009
     ],
     "amber": [
+     0.002,
      0.009,
      0.008,
      0.005,
      0.01,
-     0.008,
+     0.015,
+     0.019,
+     0.035,
+     0.016,
+     0.035,
+     0.073,
+     0.068,
+     0.094,
+     0.065,
+     0.071,
+     0.043,
+     0.043,
      0.026,
-     0.029,
-     0.016,
-     0.052,
-     0.059,
-     0.078,
-     0.074,
-     0.067,
-     0.08,
-     0.052,
-     0.03,
-     0.024,
-     0.045,
      0.044,
-     0.055,
-     0.037,
-     0.038,
-     0.017,
-     0.016,
      0.04,
+     0.052,
+     0.038,
+     0.036,
+     0.019,
+     0.013,
+     0.038,
      0.008,
      0.009,
      0.012,
-     0.014,
+     0.016,
      0.0,
      0.0,
-     0.005,
-     0.0,
+     0.006,
      0.0,
      0.0,
      0.0
     ],
     "red": [
-     0.004,
-     0.035,
-     0.055,
-     0.026,
+     0.011,
+     0.006,
+     0.025,
+     0.044,
+     0.036,
      0.035,
      0.048,
-     0.099,
+     0.081,
      0.091,
-     0.155,
-     0.309,
-     0.361,
-     0.317,
-     0.328,
-     0.248,
-     0.24,
-     0.303,
-     0.258,
-     0.193,
-     0.215,
-     0.139,
-     0.107,
+     0.131,
+     0.261,
+     0.288,
+     0.268,
+     0.331,
+     0.299,
+     0.232,
+     0.277,
+     0.242,
+     0.212,
+     0.21,
+     0.136,
+     0.106,
      0.07,
-     0.113,
-     0.126,
-     0.092,
+     0.11,
+     0.13,
+     0.089,
      0.03,
-     0.06,
-     0.037,
-     0.025,
+     0.059,
+     0.035,
+     0.022,
      0.0,
      0.0,
-     0.012,
+     0.01,
      0.017,
-     0.0,
      0.0,
      0.0
     ]
    },
    "chance_clim": {
     "green": [
-     0.844,
+     0.853,
+     0.827,
      0.745,
      0.775,
      0.727,
      0.641,
      0.662,
-     0.645,
+     0.641,
      0.532,
      0.446,
      0.316,
@@ -1717,7 +1718,7 @@
      0.459,
      0.558,
      0.628,
-     0.732,
+     0.727,
      0.736,
      0.771,
      0.784,
@@ -1730,17 +1731,17 @@
      0.957,
      0.97,
      0.978,
-     0.991,
-     0.983
+     0.991
     ],
     "blue": [
-     0.091,
+     0.082,
+     0.1,
      0.126,
      0.048,
      0.126,
      0.143,
      0.087,
-     0.082,
+     0.087,
      0.177,
      0.195,
      0.195,
@@ -1755,7 +1756,7 @@
      0.268,
      0.234,
      0.208,
-     0.147,
+     0.152,
      0.13,
      0.082,
      0.078,
@@ -1768,10 +1769,10 @@
      0.026,
      0.013,
      0.022,
-     0.009,
-     0.017
+     0.009
     ],
     "amber": [
+     0.009,
      0.043,
      0.022,
      0.009,
@@ -1806,11 +1807,11 @@
      0.004,
      0.0,
      0.0,
-     0.0,
      0.0
     ],
     "red": [
-     0.022,
+     0.056,
+     0.03,
      0.108,
      0.169,
      0.13,
@@ -1844,13 +1845,13 @@
      0.013,
      0.017,
      0.0,
-     0.0,
      0.0
     ]
    }
   },
   "godstow": {
    "week": [
+    "2026-10-18",
     "2026-10-25",
     "2026-11-01",
     "2026-11-08",
@@ -1885,128 +1886,128 @@
     "2027-05-30",
     "2027-06-06",
     "2027-06-13",
-    "2027-06-20",
-    "2027-06-27"
+    "2027-06-20"
    ],
    "chance": {
     "green": [
-     0.978,
+     0.98,
+     0.975,
      0.939,
-     0.938,
-     0.941,
-     0.939,
-     0.865,
-     0.858,
+     0.931,
+     0.917,
+     0.925,
+     0.91,
      0.855,
-     0.7,
-     0.53,
-     0.456,
-     0.51,
-     0.477,
+     0.859,
+     0.728,
+     0.558,
+     0.512,
      0.531,
-     0.591,
-     0.587,
-     0.645,
-     0.675,
-     0.628,
-     0.74,
-     0.763,
-     0.843,
-     0.82,
-     0.835,
+     0.478,
+     0.489,
+     0.606,
+     0.608,
+     0.671,
+     0.631,
+     0.631,
+     0.738,
+     0.767,
+     0.844,
+     0.824,
+     0.838,
      0.821,
      0.913,
-     0.876,
-     0.925,
-     0.946,
-     0.99,
+     0.875,
+     0.922,
+     0.948,
+     0.991,
      0.996,
      0.978,
-     0.978,
-     0.996,
+     0.979,
      0.996,
      0.996
     ],
     "amber": [
-     0.018,
-     0.029,
-     0.015,
-     0.035,
-     0.029,
-     0.095,
-     0.048,
-     0.061,
-     0.155,
-     0.186,
-     0.204,
-     0.208,
-     0.221,
-     0.25,
-     0.184,
-     0.13,
-     0.11,
-     0.141,
-     0.165,
-     0.14,
-     0.157,
-     0.09,
-     0.073,
-     0.042,
-     0.101,
-     0.057,
-     0.075,
-     0.043,
-     0.035,
      0.01,
+     0.02,
+     0.039,
+     0.029,
+     0.048,
+     0.042,
+     0.047,
+     0.068,
+     0.064,
+     0.148,
+     0.221,
+     0.218,
+     0.222,
+     0.214,
+     0.238,
+     0.18,
+     0.136,
+     0.1,
+     0.171,
+     0.164,
+     0.146,
+     0.153,
+     0.091,
+     0.069,
+     0.037,
+     0.105,
+     0.056,
+     0.077,
+     0.047,
+     0.034,
+     0.009,
      0.004,
      0.018,
-     0.004,
      0.004,
      0.004,
      0.004
     ],
     "red": [
-     0.003,
+     0.01,
+     0.005,
+     0.023,
+     0.041,
+     0.035,
      0.033,
-     0.048,
-     0.024,
-     0.033,
-     0.04,
-     0.094,
-     0.084,
-     0.145,
-     0.284,
-     0.339,
-     0.282,
-     0.302,
-     0.219,
-     0.225,
-     0.284,
-     0.245,
-     0.184,
-     0.207,
-     0.119,
-     0.081,
-     0.067,
-     0.107,
-     0.123,
-     0.078,
+     0.043,
+     0.077,
+     0.077,
+     0.124,
+     0.222,
+     0.27,
+     0.248,
+     0.307,
+     0.273,
+     0.214,
+     0.255,
+     0.229,
+     0.197,
+     0.205,
+     0.116,
+     0.08,
+     0.065,
+     0.106,
+     0.125,
+     0.074,
      0.03,
      0.048,
-     0.032,
-     0.019,
+     0.031,
+     0.018,
      0.0,
      0.0,
      0.003,
-     0.017,
-     0.0,
+     0.016,
      0.0,
      0.0
     ]
    },
    "chance_clim": {
     "green": [
-     0.892,
+     0.9,
+     0.874,
      0.797,
      0.81,
      0.792,
@@ -2022,11 +2023,11 @@
      0.368,
      0.481,
      0.498,
-     0.576,
-     0.584,
+     0.571,
+     0.589,
      0.602,
      0.727,
-     0.745,
+     0.74,
      0.827,
      0.814,
      0.831,
@@ -2040,11 +2041,11 @@
      0.978,
      0.978,
      0.996,
-     0.996,
      0.996
     ],
     "amber": [
-     0.091,
+     0.048,
+     0.1,
      0.108,
      0.039,
      0.087,
@@ -2060,11 +2061,11 @@
      0.264,
      0.255,
      0.165,
-     0.121,
-     0.203,
+     0.126,
+     0.199,
      0.173,
      0.139,
-     0.16,
+     0.165,
      0.1,
      0.074,
      0.039,
@@ -2078,11 +2079,11 @@
      0.017,
      0.004,
      0.004,
-     0.004,
      0.004
     ],
     "red": [
-     0.017,
+     0.052,
+     0.026,
      0.095,
      0.152,
      0.121,
@@ -2116,7 +2117,6 @@
      0.004,
      0.017,
      0.0,
-     0.0,
      0.0
     ]
    }
@@ -2126,17 +2126,17 @@
   "year": 2027,
   "first_day": "2027-02-24",
   "last_day": "2027-02-27",
-  "days_away": 123,
-  "chance": 0.2,
-  "chance_state_only": 0.15,
+  "days_away": 133,
+  "chance": 0.22,
+  "chance_state_only": 0.12,
   "chance_clim": 0.24,
   "chance_record": 0.312,
-  "trust": 0.5,
-  "flow_median": 23.8,
-  "flow_p10": 9.0,
-  "flow_p90": 51.8,
-  "lead": "3-4 months",
-  "skill": 0.038
+  "trust": 0.2,
+  "flow_median": 24.7,
+  "flow_p10": 9.5,
+  "flow_p90": 57.4,
+  "lead": "4+ months",
+  "skill": 0.025
  },
  "seasonal": [
   {
