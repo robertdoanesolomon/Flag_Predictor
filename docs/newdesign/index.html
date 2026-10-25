@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flag Predictor · new design</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* A boathouse board, not an app: hairline rules, square edges, no shadows. The only colour is the flags'. */
+:root {
+  --paper: #f3f4f1;
+  --ink: #16201c;
+  --soft: #4f5b56;
+  --rule: #c7cdc8;
+  --faint: #e3e7e3;
+  --link: #16201c;
+  --display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --body: 'Source Serif 4', Georgia, serif;
+  --green: #008001; --lblue: #02bfff; --dblue: #000080; --amber: #ffa503; --red: #e10600; --none: #9aa39e;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --paper: #101614; --ink: #e6ebe8; --soft: #a1aea8; --rule: #33403b; --faint: #1b2421; --link: #e6ebe8;
+          --dblue: #3b46c9; --none: #66726d; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); }
+body { font-family: var(--body); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+a { color: var(--link); text-underline-offset: 3px; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 28px max(18px, env(safe-area-inset-right)) 64px max(18px, env(safe-area-inset-left)); }
+
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;
+         border-bottom: 3px solid var(--ink); padding-bottom: 10px; }
+.mark { font-family: var(--display); font-weight: 700; font-size: 34px; letter-spacing: 0.01em; line-height: 1; }
+.mark small { font-weight: 500; font-size: 18px; color: var(--soft); margin-left: 10px; letter-spacing: 0; }
+.stamp { font-family: var(--display); font-size: 17px; color: var(--soft); font-variant-numeric: tabular-nums; }
+
+/* the board: one row per stretch */
+.board { margin-top: 0; }
+.row { display: grid; grid-template-columns: 200px 172px 1fr; align-items: stretch; border-bottom: 1px solid var(--rule);
+       cursor: pointer; }
+.row:hover .name { text-decoration: underline; text-underline-offset: 4px; }
+.row[aria-selected="true"] { background: var(--faint); }
+.row:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.who { display: flex; gap: 14px; align-items: center; padding: 16px 0 16px 4px; }
+.flag { width: 46px; height: 32px; flex: none; clip-path: polygon(0 0, 100% 0, 82% 50%, 100% 100%, 0 100%); }
+.name { font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.05; }
+.name span { display: block; font-weight: 500; font-size: 16px; color: var(--soft); }
+.now { display: flex; flex-direction: column; justify-content: center; padding: 10px 12px; border-left: 1px solid var(--rule); }
+.now b { font-family: var(--display); font-weight: 700; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.now span { font-size: 13px; color: var(--soft); }
+.days { display: grid; grid-template-columns: repeat(10, 1fr); border-left: 1px solid var(--rule); }
+.day { display: flex; flex-direction: column; justify-content: space-between; padding: 6px 6px 7px; border-right: 1px solid var(--paper);
+       min-height: 78px; font-family: var(--display); position: relative; }
+.day .d { font-size: 14px; font-weight: 600; }
+.day .p { font-size: 13px; opacity: .9; font-variant-numeric: tabular-nums; }
+.day.light { color: #fff; } .day.dark { color: #10140f; }
+.day.split::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--other); }
+.days.nf .day { color: var(--ink); background: transparent; border-right: 1px solid var(--faint); }
+
+.lede { font-size: 18px; max-width: 66ch; margin: 22px 0 6px; }
+.lede b { font-weight: 600; }
+
+/* chart */
+.chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-top: 30px;
+              border-top: 1px solid var(--ink); padding-top: 10px; }
+.chart-head h2 { font-family: var(--display); font-weight: 600; font-size: 24px; margin: 0; }
+.key { font-size: 13.5px; color: var(--soft); display: flex; gap: 18px; flex-wrap: wrap; }
+.key i { display: inline-block; width: 22px; height: 0; border-top: 2px solid var(--ink); vertical-align: middle; margin-right: 6px; }
+.key i.est { border-top-style: dotted; }
+.key i.fc { border-top: 2px solid var(--ink); opacity: .55; }
+.key i.band { height: 10px; border: 0; background: var(--ink); opacity: .12; vertical-align: -1px; }
+svg text { font-family: var(--display); fill: var(--soft); font-size: 13px; }
+#chart { width: 100%; height: auto; display: block; margin-top: 8px; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 32px; margin-top: 26px; border-top: 1px solid var(--rule); }
+.notes p { margin: 12px 0 0; font-size: 15px; color: var(--soft); }
+.notes b { color: var(--ink); font-weight: 600; }
+footer { margin-top: 36px; padding-top: 12px; border-top: 3px solid var(--ink); font-size: 14px; color: var(--soft);
+         display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+@media (max-width: 760px) {
+  .row { grid-template-columns: 1fr auto; }
+  .now { border-left: 0; align-items: flex-end; text-align: right; }
+  .days { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--rule); grid-template-columns: repeat(5, 1fr); }
+  .day { min-height: 58px; border-bottom: 1px solid var(--paper); }
+  .name { font-size: 23px; }
+  .now b { font-size: 28px; }
+}
+@media (prefers-reduced-motion: no-preference) { .row { transition: background .15s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark">Flag Predictor<small>Oxford Thames</small></div>
+    <div class="stamp" id="stamp">Loading…</div>
+  </header>
+
+  <div class="board" id="board" role="listbox" aria-label="Stretches"></div>
+  <p class="lede" id="lede"></p>
+
+  <div class="chart-head">
+    <h2 id="chart-title">Isis</h2>
+    <div class="key"><span><i></i>Measured</span><span><i class="est"></i>Estimated, gauge offline</span>
+      <span><i class="fc"></i>Forecast</span><span><i class="band"></i>Likely range</span></div>
+  </div>
+  <svg id="chart" viewBox="0 0 1000 380" role="img" aria-label="Differential, last three days and next ten"></svg>
+
+  <div class="notes" id="notes"></div>
+
+  <footer>
+    <span>Differential and flag bands from Environment Agency gauges; rain forecast ECMWF (50 members). Not an official OURCs product.</span>
+    <span><a href="../">Current site</a> · <a href="../termly/">Long-range forecast</a></span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const COL = { green: 'var(--green)', light_blue: 'var(--lblue)', dark_blue: 'var(--dblue)', amber: 'var(--amber)', red: 'var(--red)', none: 'var(--none)' };
+  const NAME = { green: 'Green', light_blue: 'Light Blue', dark_blue: 'Dark Blue', amber: 'Amber', red: 'Red', none: 'No flag' };
+  const LIGHT_TEXT = { green: 1, dark_blue: 1, red: 1 };
+  const STRETCH = { isis: ['Isis', 'Iffley to Folly Bridge'], godstow: ['Godstow', 'above Godstow Lock'], wallingford: ['Wallingford', 'no OURCs flag'] };
+  const utc = (s) => new Date(/Z|[+-]\d\d:\d\d$/.test(s) ? s : s + 'Z');
+  const uk = (d, o) => d.toLocaleString('en-GB', Object.assign({ timeZone: 'Europe/London' }, o));
+  const fmt = (v) => (v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+  let D, sel = 'isis';
+  try { const s = localStorage.getItem('nd-loc'); if (s) sel = s; } catch (e) {}
+
+  // most likely flag at 12:00 UK each day, and how sure
+  function dailyFlags(loc) {
+    const fp = loc.flag_probability; if (!fp || !fp.times) return [];
+    const out = [], seen = new Set();
+    fp.times.forEach((t, i) => {
+      const d = utc(t), hour = +uk(d, { hour: '2-digit', hour12: false }), key = uk(d, { year: 'numeric', month: '2-digit', day: '2-digit' });
+      if (hour !== 12 || seen.has(key)) return;
+      seen.add(key);
+      const ps = Object.entries(fp.probabilities).map(([f, a]) => [f, a[i] || 0]).sort((a, b) => b[1] - a[1]);
+      out.push({ date: d, flag: ps[0][0], p: ps[0][1], second: ps[1] });
+    });
+    return out.slice(0, 10);
+  }
+
+  function dailyPeaks(loc) {
+    const e = loc.ensemble, out = [], by = new Map();
+    e.times.forEach((t, i) => {
+      const d = utc(t), key = uk(d, { weekday: 'short', day: 'numeric' });
+      const v = (e.total && e.total.p50 ? e.total.p50 : e.mean)[i];
+      if (!by.has(key)) by.set(key, { date: d, max: v }); else by.get(key).max = Math.max(by.get(key).max, v);
+    });
+    return [...by.values()].slice(1, 11);
+  }
+
+  function row(key) {
+    const loc = D.locations[key], cur = loc.current, flags = key !== 'wallingford';
+    const est = loc.estimated && loc.estimated.hours >= 4;
+    const flag = flags ? cur.flag_key : 'none';
+    let cells;
+    if (flags) {
+      cells = dailyFlags(loc).map((d) => {
+        const split = d.p < 0.7 && d.second && d.second[1] >= 0.2;
+        return `<div class="day ${LIGHT_TEXT[d.flag] ? 'light' : 'dark'}${split ? ' split' : ''}" style="background:${COL[d.flag]};${split ? `--other:${COL[d.second[0]]}` : ''}"
+          title="${uk(d.date, { weekday: 'long', day: 'numeric', month: 'short' })}: ${NAME[d.flag]} ${Math.round(100 * d.p)}%${split ? `, ${NAME[d.second[0]]} ${Math.round(100 * d.second[1])}%` : ''}">
+          <span class="d">${uk(d.date, { weekday: 'short' })} ${uk(d.date, { day: 'numeric' })}</span><span class="p">${Math.round(100 * d.p)}%</span></div>`;
+      }).join('');
+    } else {
+      cells = dailyPeaks(loc).map((d) => `<div class="day"><span class="d">${uk(d.date, { weekday: 'short' })} ${uk(d.date, { day: 'numeric' })}</span><span class="p">${fmt(d.max)}</span></div>`).join('');
+    }
+    return `<div class="row" role="option" tabindex="0" data-loc="${key}" aria-selected="${key === sel}">
+      <div class="who"><div class="flag" style="background:${COL[flag]}"></div>
+        <div class="name">${STRETCH[key][0]}<span>${flags ? NAME[cur.flag_key] : STRETCH[key][1]}</span></div></div>
+      <div class="now"><b>${est ? '≈' : ''}${fmt(cur.differential)}<span style="font-size:18px"> m</span></b><span>${est ? 'estimated, gauge offline' : 'differential now'}</span></div>
+      <div class="days${flags ? '' : ' nf'}">${cells}</div></div>`;
+  }
+
+  function lede() {
+    const parts = ['isis', 'godstow'].map((k) => {
+      const o = D.locations[k].flag_outlook, nm = STRETCH[k][0];
+      if (!o) return '';
+      const up = o.windows.tomorrow.up, dn = o.windows.tomorrow.down;
+      if (up >= 0.3) return `<b>${nm}</b>: ${Math.round(100 * up)}% chance of going up a band by tomorrow.`;
+      if (dn >= 0.3) return `<b>${nm}</b>: ${Math.round(100 * dn)}% chance of coming down a band by tomorrow.`;
+      return `<b>${nm}</b> stays ${NAME[o.current_flag]} through tomorrow.`;
+    });
+    const r = D.locations.isis.summary;
+    return parts.join(' ') + ` ${r.next_7d_rain_mm.toFixed(0)} mm of rain forecast for the catchment over the next 7 days (${r.next_7d_rain_p10_mm.toFixed(0)}–${r.next_7d_rain_p90_mm.toFixed(0)}).`;
+  }
+
+  function chart(key) {
+    const loc = D.locations[key], svg = document.getElementById('chart');
+    const narrow = svg.parentElement.clientWidth < 640;
+    const W = narrow ? 560 : 1000, H = narrow ? 400 : 380, L = 42, R = narrow ? 88 : 92, T = 14, B = 34;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const t0 = utc(loc.forecast_start).getTime(), x0 = t0 - 3 * 864e5, x1 = t0 + 10 * 864e5;
+    const h15 = loc.historical_15min, sif = h15 && h15.stand_in_from ? utc(h15.stand_in_from).getTime() : Infinity;
+    const hist = (h15 ? h15.times : loc.historical.times).map((t, i) => [utc(t).getTime(), (h15 ? h15.differential : loc.historical.differential)[i]])
+      .filter((p) => p[1] !== null && p[0] >= x0);
+    const e = loc.ensemble, tot = e.total || {};
+    const ft = e.times.map((t) => utc(t).getTime());
+    const mid = tot.p50 || e.mean, lo = tot.p10 || e.p10, hi = tot.p90 || e.p90;
+    const vals = [...hist.map((p) => p[1]), ...lo, ...hi].filter((v) => v !== null);
+    const th = loc.thresholds, flags = key !== 'wallingford';
+    let ymin = Math.min(...vals), ymax = Math.max(...vals);
+    if (flags) ymax = Math.max(ymax, th.light_blue[0] + 0.05);
+    const pad = (ymax - ymin) * 0.12 || 0.05; ymin -= pad; ymax += pad;
+    const X = (t) => L + (t - x0) / (x1 - x0) * (W - L - R), Y = (v) => T + (ymax - v) / (ymax - ymin) * (H - T - B);
+    const path = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join('');
+    let g = '';
+    // days
+    for (let t = new Date(x0); t.getTime() <= x1; t = new Date(t.getTime() + 864e5)) {
+      const mid0 = utc(t.toISOString().slice(0, 10) + 'T00:00:00').getTime();
+      if (mid0 < x0) continue;
+      g += `<line x1="${X(mid0)}" x2="${X(mid0)}" y1="${T}" y2="${H - B}" stroke="var(--faint)"/>`;
+      const lab = narrow ? uk(new Date(mid0 + 432e5), { weekday: 'narrow' }) : uk(new Date(mid0 + 432e5), { weekday: 'short', day: 'numeric' });
+      g += `<text x="${X(mid0 + 432e5)}" y="${H - 12}" text-anchor="middle">${lab}</text>`;
+    }
+    // flag lines: a short coloured tick and name at the right edge, a hairline across
+    if (flags) {
+      Object.entries(th).forEach(([f, [a, b]]) => {
+        if (a > -1e8 && a > ymin && a < ymax) g += `<line x1="${L}" x2="${W - R}" y1="${Y(a)}" y2="${Y(a)}" stroke="var(--rule)" stroke-dasharray="2 4"/>`;
+        const top = Math.min(b, ymax), bot = Math.max(a, ymin);
+        if (top > bot) {
+          g += `<rect x="${W - R + 6}" y="${Y(top)}" width="6" height="${Y(bot) - Y(top)}" fill="${COL[f]}"/>`;
+          if (Y(bot) - Y(top) > 16) g += `<text x="${W - R + 18}" y="${(Y(top) + Y(bot)) / 2 + 4}">${NAME[f]}</text>`;
+        }
+      });
+    }
+    // y ticks
+    const step = (ymax - ymin) > 0.6 ? 0.2 : (ymax - ymin) > 0.25 ? 0.1 : 0.05;
+    for (let v = Math.ceil(ymin / step) * step; v <= ymax; v += step) g += `<text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${fmt(v)}</text>`;
+    // range, forecast, measured
+    const band = ft.map((t, i) => [t, hi[i]]).concat(ft.map((t, i) => [t, lo[i]]).reverse());
+    g += `<path d="${path(band)}Z" fill="var(--ink)" opacity=".1"/>`;
+    g += `<path d="${path(ft.map((t, i) => [t, mid[i]]))}" fill="none" stroke="var(--ink)" stroke-width="2.2" opacity=".55"/>`;
+    const solid = hist.filter((p) => p[0] < sif), dotted = hist.filter((p) => p[0] >= sif);
+    if (solid.length) g += `<path d="${path(solid)}" fill="none" stroke="var(--ink)" stroke-width="2.4"/>`;
+    if (dotted.length) g += `<path d="${path(solid.slice(-1).concat(dotted))}" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-dasharray="1.5 4" stroke-linecap="round"/>`;
+    g += `<line x1="${X(t0)}" x2="${X(t0)}" y1="${T}" y2="${H - B}" stroke="var(--ink)"/>`;
+    g += `<text x="${X(t0) + 6}" y="${T + 12}" style="fill:var(--ink)">Now</text>`;
+    svg.innerHTML = g;
+    document.getElementById('chart-title').textContent = `${STRETCH[key][0]}: last 3 days and next 10`;
+  }
+
+  function notes(key) {
+    const loc = D.locations[key], n = [];
+    if (loc.official_flag && key !== 'wallingford') {
+      const of = loc.official_flag;
+      n.push(`<b>Official flag</b>: ${NAME[of.flag] || of.label}, set ${uk(utc(of.set_at), { weekday: 'short', day: 'numeric', month: 'short' })}. ${(of.notices || [])[0] || ''}`);
+    }
+    if (loc.gauge_stand_in && loc.gauge_stand_in.since) n.push(`<b>${loc.gauge_stand_in.gauge} gauge offline</b> since ${uk(utc(loc.gauge_stand_in.since), { day: 'numeric', month: 'short' })}; the ${loc.gauge_stand_in.stand_in} gauge stands in (dotted line).`);
+    const s = loc.summary;
+    n.push(`<b>Rain</b>: ${s.last_7d_rain_mm.toFixed(0)} mm in the last 7 days; ${s.next_24h_rain_mm.toFixed(0)} mm forecast in the next 24 hours.`);
+    n.push(`<b>Highest in the next 10 days</b>: about ${fmt(s.peak_10d_differential)} m, ${uk(utc(s.peak_10d_time), { weekday: 'long', hour: 'numeric', hour12: true })}.`);
+    document.getElementById('notes').innerHTML = n.map((x) => `<p>${x}</p>`).join('');
+  }
+
+  function render() {
+    document.getElementById('board').innerHTML = D.location_order.map(row).join('');
+    document.querySelectorAll('.row').forEach((r) => {
+      const go = () => { sel = r.dataset.loc; try { localStorage.setItem('nd-loc', sel); } catch (e) {} render(); };
+      r.addEventListener('click', go);
+      r.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
+    });
+    chart(sel); notes(sel);
+  }
+
+  fetch('../forecast_data.json?t=' + Date.now()).then((r) => r.json()).then((d) => {
+    D = d;
+    let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => chart(sel), 150); });
+    if (!D.locations[sel]) sel = 'isis';
+    document.getElementById('stamp').textContent = 'Updated ' + uk(utc(D.generated_at), { hour: '2-digit', minute: '2-digit', weekday: 'short', day: 'numeric', month: 'short' });
+    document.getElementById('lede').innerHTML = lede();
+    render();
+  }).catch(() => { document.getElementById('stamp').textContent = 'Could not load the forecast.'; });
+})();
+</script>
+</body>
+</html>
