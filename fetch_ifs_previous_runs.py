@@ -16,8 +16,13 @@ import pandas as pd
 import requests
 
 ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT / 'src'))
-from flag_predictor.config import RAINFALL_STATION_COORDINATES, WALLINGFORD_RAINFALL_STATION_COORDINATES  # noqa: E402
+# config.py on its own (the package __init__ pulls in torch, which this job does not need)
+import importlib.util  # noqa: E402
+_spec = importlib.util.spec_from_file_location('fp_config', ROOT / 'src' / 'flag_predictor' / 'config.py')
+_cfg = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_cfg)
+RAINFALL_STATION_COORDINATES = _cfg.RAINFALL_STATION_COORDINATES
+WALLINGFORD_RAINFALL_STATION_COORDINATES = _cfg.WALLINGFORD_RAINFALL_STATION_COORDINATES
 
 OUT = ROOT / 'data' / 'verification' / 'ifs_previous_runs_2025.csv'
 URL = 'https://previous-runs-api.open-meteo.com/v1/forecast'
