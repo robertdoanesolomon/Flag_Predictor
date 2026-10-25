@@ -1178,3 +1178,12 @@ Jan+Feb from December +0.20 / -0.01 / +0.16; Feb from a February start +0.69 / +
 outlook's member years (1993/94-2015/16): Met Office -1.0 to -1.8% overall, average -1.9 to -2.3% (ECMWF on the
 same years -1.0 to -2.2%); no consistent gain for Hilary or Torpids. GloSea's NAO skill does not show up in
 upper-Thames rainfall. Neither model used.
+
+**Feb 2025 with the rain that was actually forecast (25 Oct 2026).** `verify_ifs_feb2025.py`: ECMWF IFS as
+issued (Open-Meteo Previous Runs, 1-7 days ahead; `fetch_ifs_previous_runs.py` in Actions), deterministic,
+range from the model-error library only; forecasts every 6 h, 20 Jan - 28 Feb 2025. Typical error (m), IFS /
+rain that fell / no change: Isis 24 h 0.037/0.037/0.069, 72 h 0.084/0.070/0.195, 168 h 0.103/0.082/0.316;
+Godstow 72 h 0.078/0.056/0.228, 168 h 0.117/0.061/0.371; Wallingford 72 h 0.118/0.077/0.349. Right band at
+72 h: Isis 39/49/30%, Godstow 74/80/46%. IFS under-forecast the rain more the further ahead (mean rain to
++168 h 14.8 mm forecast vs 17.1 mm fell). The likely range (model error only) held the river 60-74% of the
+time (target 80%): rain spread is needed on top, as the live site does with the 50 members.
