@@ -1,2 +1,4 @@
 --- 2026-10-24 20:39 UTC (all)
 CDSAPI_KEY is not set: add the repository secret (Settings > Secrets and variables > Actions).
+--- 2026-10-25 07:25 UTC (all)
+CDSAPI_KEY is not set: add the repository secret (Settings > Secrets and variables > Actions).
