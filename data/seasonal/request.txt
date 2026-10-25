@@ -1,2 +1,3 @@
 # Changing this file starts the seasonal download (.github/workflows/seasonal_download.yml).
 2026-10-24 first full download
+2026-10-25 retry
