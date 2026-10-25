@@ -56,6 +56,9 @@ def requests_wanted(today: dt.date, latest_only: bool) -> list[dict]:
             yrs51 = [y for y in range(2022, today.year + 1) if (2022, 11) <= (y, m) <= (today.year, today.month)
                      and not (y == today.year and m == today.month and today.day < 6)]
             out.append({'name': f'ecmwf_s51_fc_{m:02d}', 'system': '51', 'years': yrs51, 'month': m})
+            # Met Office GloSea hindcasts (1993-2016) from the newest system that has them, for comparison
+            out.append({'name': f'ukmo_hc_{m:02d}', 'centre': 'ukmo', 'systems': ['604', '603', '602', '601', '600'],
+                        'years': list(range(1993, 2017)), 'month': m})
     return [r for r in out if r['years'] and not (RAW / f"{r['name']}.nc").exists()]
 
 
@@ -63,8 +66,8 @@ def retrieve(client, req: dict) -> str:
     target = RAW / f"{req['name']}.nc"
     tmp = target.with_suffix('.part')
     body = {
-        'originating_centre': 'ecmwf',
-        'system': req['system'],
+        'originating_centre': req.get('centre', 'ecmwf'),
+        'system': req.get('system'),
         'variable': VARIABLES,
         'product_type': ['monthly_mean'],
         'year': [str(y) for y in req['years']],
@@ -74,7 +77,16 @@ def retrieve(client, req: dict) -> str:
         'area': AREA,
     }
     t0 = time.time()
-    client.retrieve(DATASET, body, str(tmp))
+    systems = req.get('systems') or [req['system']]
+    for i, system in enumerate(systems):
+        body['system'] = system
+        try:
+            client.retrieve(DATASET, body, str(tmp))
+            break
+        except Exception:                 # noqa: BLE001 - try the next (older) system
+            if i == len(systems) - 1:
+                raise
+    req = req | {'name': req['name'], 'used_system': body['system']}
     # Several variables can come back as a zip of NetCDF files: keep each one.
     if zipfile.is_zipfile(tmp):
         with zipfile.ZipFile(tmp) as z:
@@ -85,7 +97,7 @@ def retrieve(client, req: dict) -> str:
         tmp.unlink()
     else:
         tmp.rename(target)
-    return f"{req['name']}: ok ({len(req['years'])} years, {time.time() - t0:.0f} s)"
+    return f"{req['name']}: ok (system {req.get('used_system')}, {len(req['years'])} years, {time.time() - t0:.0f} s)"
 
 
 def main() -> int:

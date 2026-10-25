@@ -3,3 +3,4 @@
 2026-10-25 retry
 2026-10-25 secret CDS_API_KEY
 2026-10-25 sequential retry
+2026-10-25 Met Office hindcasts
