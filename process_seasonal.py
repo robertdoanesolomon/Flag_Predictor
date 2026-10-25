@@ -24,6 +24,8 @@ def main() -> None:
     for f in sorted(RAW.glob('*.nc')):
         centre = f.name.split('_')[0]
         d = xr.open_dataset(f)
+        if 'indexing_time' in d.dims:      # Met Office: lagged ensemble, indexed by its nominal start
+            d = d.rename({'indexing_time': 'forecast_reference_time'})
         d = d.where((d.latitude >= 51) & (d.latitude <= 52.5) & (d.longitude >= -2.5) & (d.longitude <= -1.0), drop=True)
         pr = (d.tprate * 86400 * 1000).mean(['latitude', 'longitude'])          # mm/day
         if centre == 'ecmwf':

@@ -1170,3 +1170,11 @@ months): overall 1-2% worse for terms and Vacs; small gains only for Hilary from
 (+5-6%) and Torpids from 15 Feb (+6%) and 1 Mar (+62%, but 12 years, driven by 2014 and 2026). Not
 used in the outlook. The page shows the latest run as rainfall per month, quantile-mapped from the model's
 own past forecasts (same start month and lead) onto ERA5.
+
+**Met Office GloSea (system 604 hindcasts 1993-2016) and the two-model average (25 Oct 2026).** Monthly rain
+skill over the catchment (Spearman r, mean over start months, months 1/2/3): ECMWF 0.34/0.11/0.07, Met Office
+0.25/0.08/0.01, average 0.31/0.11/0.06. Winter totals: DJF from November ECMWF +0.02, Met Office -0.28;
+Jan+Feb from December +0.20 / -0.01 / +0.16; Feb from a February start +0.69 / +0.19 / +0.48. Weighting the
+outlook's member years (1993/94-2015/16): Met Office -1.0 to -1.8% overall, average -1.9 to -2.3% (ECMWF on the
+same years -1.0 to -2.2%); no consistent gain for Hilary or Torpids. GloSea's NAO skill does not show up in
+upper-Thames rainfall. Neither model used.
