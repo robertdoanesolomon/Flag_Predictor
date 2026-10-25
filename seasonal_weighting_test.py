@@ -9,8 +9,21 @@ from flag_predictor import termly as T
 from verify_termly import bucket
 ROOT=Path('/home/claude/flag_predictor')
 q=T.load_flow(ROOT)
+import argparse
+ap=argparse.ArgumentParser(); ap.add_argument('--centre',default='ecmwf'); ap.add_argument('--last',type=int,default=2025)
+ARGS=ap.parse_args()
 s=pd.read_csv(ROOT/'data/seasonal/seas5_upper_thames.csv')
-EM=s.groupby(['init','lead']).rain_mm.mean().unstack()          # init x lead (ensemble mean, mm)
+if 'centre' not in s: s['centre']='ecmwf'
+def em_for(c):
+    e=s[s.centre==c].groupby(['init','lead']).rain_mm.mean().unstack()
+    # standardise each start month and lead across years, so centres can be averaged
+    st=e.index.str[5:]
+    return e.groupby(st).transform(lambda x:(x-x.mean())/x.std())
+if ARGS.centre=='mean':
+    a,b=em_for('ecmwf'),em_for('ukmo'); common=a.index.intersection(b.index)
+    EM=(a.loc[common]+b.loc[common])/2
+else:
+    EM=em_for(ARGS.centre)
 era=pd.read_csv(ROOT/'data/termly/era5_monthly_rain.csv',index_col=0,parse_dates=True).iloc[:,0]
 era.index=era.index.to_period('M')
 def run_for(t0):
@@ -44,7 +57,7 @@ def weights(t0, Y, years, K):
     return w/w.sum(), r, zf
 ISS=[(m,d) for m in (9,10,11,12,1,2,3,4) for d in (1,15)]
 rows=[]
-for Y in range(T.FIRST_YEAR,2026):
+for Y in range(T.FIRST_YEAR,ARGS.last+1):
     model=T.Outlook(q,exclude=Y)
     for (mm,dd) in ISS:
         t0=pd.Timestamp(Y if mm>=9 else Y+1,mm,dd)
