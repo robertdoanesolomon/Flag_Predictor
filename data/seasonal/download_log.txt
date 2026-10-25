@@ -68,3 +68,18 @@ ecmwf_s51_hc_08: ok (24 years, 118 s)
 ecmwf_s5_fc_08: ok (6 years, 118 s)
 ecmwf_s51_hc_10: ok (24 years, 121 s)
 done: 24 ok, 0 failed; files now: 36
+--- 2026-10-25 09:09 UTC (all)
+12 requests to make
+ukmo_hc_01: ok (system 604, 24 years, 179 s)
+ukmo_hc_02: ok (system 604, 24 years, 179 s)
+ukmo_hc_03: ok (system 604, 24 years, 119 s)
+ukmo_hc_04: ok (system 604, 24 years, 180 s)
+ukmo_hc_05: ok (system 604, 24 years, 179 s)
+ukmo_hc_06: ok (system 604, 24 years, 119 s)
+ukmo_hc_07: ok (system 604, 24 years, 179 s)
+ukmo_hc_08: ok (system 604, 24 years, 179 s)
+ukmo_hc_09: ok (system 604, 24 years, 177 s)
+ukmo_hc_10: ok (system 604, 24 years, 179 s)
+ukmo_hc_11: ok (system 604, 24 years, 178 s)
+ukmo_hc_12: ok (system 604, 24 years, 121 s)
+done: 12 ok, 0 failed; files now: 48
