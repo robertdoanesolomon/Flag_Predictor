@@ -110,7 +110,7 @@ def main() -> int:
         log(f'{len(todo)} requests to make')
         start = time.time()
         failed = 0
-        with ThreadPoolExecutor(max_workers=4) as pool:
+        with ThreadPoolExecutor(max_workers=1) as pool:   # the CDS rejects parallel requests per dataset
             futs = {}
             for req in todo:
                 futs[pool.submit(lambda r=req: retrieve(client, r) if (time.time() - start) / 60 < BUDGET_MIN
