@@ -2423,7 +2423,7 @@
    *   archive/observed.json     hourly observed differential since archiving began
    *   archive/now.json          what each recent forecast said about the latest reading
    */
-  const HISTORY = { loading: null, index: null, observed: null, now: null, issues: new Map(), view: {}, pos: {} };
+  const HISTORY = { loading: null, index: null, observed: null, estimated: null, now: null, issues: new Map(), view: {}, pos: {} };
   const HOUR_MS = 3600 * 1000;
 
   function renderHistoryBlockHtml(key) {
@@ -2455,8 +2455,9 @@
   function loadHistory() {
     if (HISTORY.loading) return HISTORY.loading;
     const get = (p) => fetch(p, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
-    HISTORY.loading = Promise.all([get(ARCHIVE_BASE + 'index.json'), get(ARCHIVE_BASE + 'observed.json'), get(ARCHIVE_BASE + 'now.json')])
-      .then(([index, observed, now]) => { HISTORY.index = index; HISTORY.observed = observed; HISTORY.now = now; });
+    HISTORY.loading = Promise.all([get(ARCHIVE_BASE + 'index.json'), get(ARCHIVE_BASE + 'observed.json'), get(ARCHIVE_BASE + 'now.json'),
+      get(ARCHIVE_BASE + 'estimated.json')])
+      .then(([index, observed, now, estimated]) => { HISTORY.index = index; HISTORY.observed = observed; HISTORY.now = now; HISTORY.estimated = estimated; });
     return HISTORY.loading;
   }
 
@@ -2471,23 +2472,42 @@
   }
 
   /** Observed series for a location as {t: [ms], y: [m]}: archive plus the latest payload. */
+  // What the river did: real readings (the archive's hourly record, then this run's 15-minute readings) and,
+  // where a gauge was offline, the estimated differential (est = true; drawn dotted). Sorted by time.
   function observedFor(key, loc) {
-    const t = [], y = [];
-    const enc = HISTORY.observed && HISTORY.observed[key];
-    if (enc && enc.values) {
-      const start = parseUtc(enc.start).getTime();
-      const step = (enc.step_h || 1) * HOUR_MS;
-      enc.values.forEach((v, i) => { if (v !== null) { t.push(start + i * step); y.push(v); } });
-    }
-    const last = t.length ? t[t.length - 1] : -Infinity;
-    if (loc && loc.historical) {
+    const pts = new Map();                      // ms -> [value, estimated]
+    const decode = (enc, est) => {
+      if (!enc || !enc.values) return;
+      const start = parseUtc(enc.start).getTime(), step = (enc.step_h || 1) * HOUR_MS;
+      enc.values.forEach((v, i) => { if (v !== null && (!est || !pts.has(start + i * step))) pts.set(start + i * step, [v, est]); });
+    };
+    decode(HISTORY.observed && HISTORY.observed[key], false);
+    const h15 = loc && loc.historical_15min;
+    if (h15 && h15.times && h15.times.length) {
+      const standInFrom = h15.stand_in_from ? parseUtc(h15.stand_in_from).getTime() : Infinity;
+      h15.times.forEach((iso, i) => {
+        const ms = parseUtc(iso).getTime(), v = h15.differential[i];
+        if (v !== null && v !== undefined) pts.set(ms, [v, ms >= standInFrom]);
+      });
+    } else if (loc && loc.historical) {
       loc.historical.times.forEach((iso, i) => {
-        const ms = parseUtc(iso).getTime();
         const v = loc.historical.differential[i];
-        if (ms > last && v !== null) { t.push(ms); y.push(v); }
+        if (v !== null) pts.set(parseUtc(iso).getTime(), [v, false]);
       });
     }
-    return { t, y };
+    // estimates only where there is no real reading in that hour
+    const realHours = new Set([...pts].filter(([, p]) => !p[1]).map(([ms]) => Math.floor(ms / HOUR_MS)));
+    const addEst = (ms, v) => { if (v !== null && v !== undefined && !realHours.has(Math.floor(ms / HOUR_MS)) && !pts.has(ms)) pts.set(ms, [v, true]); };
+    const est = HISTORY.estimated && HISTORY.estimated[key];
+    if (est && est.values) {
+      const start = parseUtc(est.start).getTime(), step = (est.step_h || 1) * HOUR_MS;
+      est.values.forEach((v, i) => addEst(start + i * step, v));
+    }
+    [loc && loc.gauge_stand_in, loc && loc.estimated].forEach((part) => {
+      if (part && part.times) part.times.forEach((iso, k) => addEst(parseUtc(iso).getTime(), part.values[k]));
+    });
+    const t = [...pts.keys()].sort((x, y) => x - y);
+    return { t, y: t.map(ms => pts.get(ms)[0]), est: t.map(ms => pts.get(ms)[1]) };
   }
 
   function flagOf(value, thresholds, key) {
@@ -2625,11 +2645,22 @@
     const lo = hasTotal ? v.total_p10 : v.p10;
     const hi = hasTotal ? v.total_p90 : v.p90;
     const obs = observedFor(key, loc);
-    const obsX = [], obsY = [];
-    const obsAt = new Map();
+    const obsX = [], obsY = [], estX = [], estY = [];
+    const obsAt = new Map(), estAt = new Set();
+    const idx = obs.t.map((ms, i) => i).filter(i => obs.t[i] >= t0 - 48 * HOUR_MS);
+    idx.forEach((i, j) => {
+      const x = isoNaive(obs.t[i]), y = obs.y[i], e = obs.est[i];
+      obsX.push(x); obsY.push(e ? null : y);
+      // the dotted line also takes the real readings either side of it, so the two lines join
+      const touches = e || (j > 0 && obs.est[idx[j - 1]]) || (j < idx.length - 1 && obs.est[idx[j + 1]]);
+      estX.push(x); estY.push(touches ? y : null);
+    });
     obs.t.forEach((ms, i) => {
-      if (ms >= t0 - 48 * HOUR_MS) { obsX.push(isoNaive(ms)); obsY.push(obs.y[i]); }
-      if (ms >= t0) obsAt.set(Math.round((ms - t0) / HOUR_MS), obs.y[i]);
+      if (ms >= t0 && (ms - t0) % HOUR_MS === 0) {
+        const h = (ms - t0) / HOUR_MS;
+        obsAt.set(h, obs.y[i]);
+        if (obs.est[i]) estAt.add(h);
+      }
     });
 
     const traces = [
@@ -2639,7 +2670,9 @@
       { type: 'scatter', mode: 'lines', x: times, y: v.mean, line: { color: T.meanLine, width: 3 },
         name: 'Forecast', hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>Forecast %{y:.2f} m<extra></extra>' },
       { type: 'scatter', mode: 'lines', x: obsX, y: obsY, line: { color: T.historicalLine, width: 2.5 },
-        name: 'Observed', hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>Observed %{y:.2f} m<extra></extra>' }
+        name: 'Observed', hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>Observed %{y:.2f} m<extra></extra>' },
+      { type: 'scatter', mode: 'lines', x: estX, y: estY, line: { color: T.historicalLine, width: 2.5, dash: 'dot' },
+        name: EST_LABEL, hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>about %{y:.2f} m<extra>${EST_LABEL}</extra>` }
     ];
     const issuedIso = isoNaive(t0);
     const nowIso = isoNaive(Date.now());
@@ -2648,7 +2681,7 @@
       { type: 'line', x0: nowIso, x1: nowIso, yref: 'paper', y0: 0, y1: 1, line: { color: T.nowLine, width: 2, dash: 'dash' } }
     ];
     const layout = historyLayout(loc, key, T, [isoNaive(t0 - 48 * HOUR_MS), isoNaive(t0 + 240 * HOUR_MS)],
-      [...obsY, ...v.mean, ...hi], shapes, 'Height differential (m)');
+      [...obsY, ...estY, ...v.mean, ...hi].filter(x => x !== null), shapes, 'Height differential (m)');
     layout.margin.b = 32;                       // no x-axis title in this view
     layout.annotations = [
       { x: issuedIso, xref: 'x', y: 1, yref: 'paper', text: 'Issued', showarrow: false, xanchor: 'left', yanchor: 'top', xshift: 4,
@@ -2675,16 +2708,17 @@
     block.querySelector('.history-label').innerHTML =
       `Forecast from <strong>${fmtShortDateTime(v.t0)}</strong> · ${ago}`;
     const bandName = hasTotal ? 'likely range' : 'rain spread';
+    const nEst = [...estAt].filter(h => h >= 1 && h < v.mean.length).length;
     block.querySelector('.history-score').innerHTML = n
-      ? `<span><strong>${n}</strong> h observed since</span>` +
+      ? `<span><strong>${n}</strong> h observed since${nEst ? ` (${nEst} estimated, gauge offline)` : ''}</span>` +
         `<span>typical error <strong>${(absErr / n).toFixed(2)} m</strong></span>` +
         (flagN ? `<span>right ${BAND_WORD} <strong>${Math.round(100 * flagRight / flagN)}%</strong> of hours</span>` : '') +
         (hasTotal ? `<span>within the likely range <strong>${Math.round(100 * inBand / n)}%</strong> of hours</span>` : '')
       : '<span>No readings since this forecast yet.</span>';
     block.querySelector('.history-note').innerHTML = PREVIEW
-      ? 'Shaded: its likely range. Black: what the river did.'
+      ? 'Shaded: its likely range. Black: what the river did (dotted: estimated, gauge offline).'
       : hasTotal
-      ? 'Purple line: what the forecast said (ensemble mean). Shaded: its likely range, combining the rain-forecast spread with the model\'s own past errors. Black: what the river did.'
+      ? 'Purple line: what the forecast said (ensemble mean). Shaded: its likely range, combining the rain-forecast spread with the model\'s own past errors. Black: what the river did (dotted: estimated, gauge offline).'
       : 'Purple line: what the forecast said (ensemble mean). Blue shading: the spread from the rain forecast alone (this forecast was archived before the model-error range was added). Black: what the river did.';
   }
 
@@ -2719,7 +2753,7 @@
     const xStart = isoNaive(target - 10.5 * 24 * HOUR_MS);
     const shapes = [
       { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: data.observed, y1: data.observed,
-        line: { color: T.historicalLine, width: 2, dash: 'dash' } },
+        line: { color: T.historicalLine, width: 2, dash: data.estimated ? 'dot' : 'dash' } },
       { type: 'line', x0: targetIso, x1: targetIso, yref: 'paper', y0: 0, y1: 1, line: { color: T.nowLine, width: 2, dash: 'dash' } }
     ];
     const layout = historyLayout(loc, key, T, [xStart, isoNaive(target + 12 * HOUR_MS)], [...hi, data.observed], shapes,
@@ -2727,7 +2761,7 @@
     layout.xaxis.title = { text: 'When the forecast was issued', font: { size: 12, color: T.font } };
     layout.annotations = [{
       xref: 'paper', x: 0.01, y: data.observed, yref: 'y', yanchor: 'bottom', xanchor: 'left', showarrow: false,
-      text: `Observed ${fmtDiff(data.observed)} m`, font: { size: 11, color: T.font },
+      text: data.estimated ? `Estimated ${fmtDiff(data.observed)} m (gauge offline)` : `Observed ${fmtDiff(data.observed)} m`, font: { size: 11, color: T.font },
       bgcolor: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(22,34,31,0.85)' : 'rgba(255,255,255,0.85)'
     }];
     clearPlaceholder(plotId);
@@ -2740,7 +2774,7 @@
     const flagNow = flagOf(data.observed, loc.thresholds, key);
     const flagHits = rows.filter(r => flagOf(r.mean, loc.thresholds, key) === flagNow).length;
     block.querySelector('.history-label').innerHTML =
-      `What each forecast from the last 10 days said the differential would be at the latest reading, <strong>${fmtShortDateTime(readingAt(loc, data.target))}</strong>`;
+      `What each forecast from the last 10 days said the differential would be at the latest ${data.estimated ? 'estimate (gauge offline)' : 'reading'}, <strong>${fmtShortDateTime(data.estimated ? data.target : readingAt(loc, data.target))}</strong>`;
     const e1 = errs(0, 48), e2 = errs(48, 120), e3 = errs(120, 260);
     block.querySelector('.history-score').innerHTML =
       (e1 !== null ? `<span>issued 0–2 days before: off by <strong>${e1} m</strong></span>` : '') +

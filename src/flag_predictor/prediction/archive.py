@@ -96,18 +96,60 @@ def merge_observed(archive_dir: Path, payloads: Dict[str, dict]) -> Dict[str, pd
     return out
 
 
-def encode_series(s: pd.Series) -> dict:
-    """Compact hourly series: a start time and one value per hour (null for gaps)."""
+def payload_estimates(payload: dict) -> Optional[pd.Series]:
+    """Hourly estimated differential while a gauge is offline: the stand-in gauge (e.g. Botanic Gardens
+    for King's Mill) and the neighbouring-stretch estimate. Never used where a real reading exists."""
+    parts = []
+    h15 = payload.get('historical_15min') or {}
+    if h15.get('times') and h15.get('stand_in_from'):
+        s = pd.Series(pd.to_numeric(pd.Series(h15['differential']), errors='coerce').to_numpy(), index=_naive_utc(h15['times']))
+        parts.append(s[s.index >= _naive_utc([h15['stand_in_from']])[0]])
+    for key in ('gauge_stand_in', 'estimated'):
+        part = payload.get(key) or {}
+        if part.get('times') and part.get('values'):
+            parts.append(pd.Series(pd.to_numeric(pd.Series(part['values']), errors='coerce').to_numpy(),
+                                   index=_naive_utc(part['times'])))
+    if not parts:
+        return None
+    s = pd.concat(parts).dropna()
+    s = s[~s.index.duplicated(keep='first')].sort_index()          # 15-min stand-in readings before hourly estimates
+    return s.resample('15min').mean().dropna() if len(s) else None
+
+
+def merge_estimated(archive_dir: Path, payloads: Dict[str, dict], observed: Dict[str, pd.Series]) -> Dict[str, pd.Series]:
+    """Fold each payload's estimated differential into estimated.json (15-minute), minus times with a real reading."""
+    path = archive_dir / 'estimated.json'
+    stored = _load_json(path, {})
+    out: Dict[str, pd.Series] = {}
+    for loc in set(stored) | set(payloads):
+        series = observed_series(stored.get(loc))
+        new = payload_estimates(payloads[loc]) if loc in payloads else None
+        if new is not None and len(new):
+            series = new if series is None else new.combine_first(series)
+        if series is None or not len(series):
+            continue
+        real = observed.get(loc)
+        if real is not None and len(real):
+            series = series[~series.index.floor('1h').isin(real.index)]
+        if len(series):
+            out[loc] = series.sort_index()
+    _dump(path, {loc: encode_series(s, step_min=15) for loc, s in out.items()})
+    return out
+
+
+def encode_series(s: pd.Series, step_min: int = 60) -> dict:
+    """Compact regular series: a start time and one value per step (null for gaps)."""
     s = s.sort_index()
-    full = s.reindex(pd.date_range(s.index[0], s.index[-1], freq='1h'))
-    return {'start': full.index[0].strftime('%Y-%m-%dT%H:%M:%S'), 'step_h': 1,
+    full = s.reindex(pd.date_range(s.index[0], s.index[-1], freq=f'{step_min}min'))
+    return {'start': full.index[0].strftime('%Y-%m-%dT%H:%M:%S'), 'step_h': step_min / 60,
             'values': _round(full.to_numpy(), 4)}
 
 
 def observed_series(enc: Optional[dict]) -> Optional[pd.Series]:
     if not enc or not enc.get('values'):
         return None
-    idx = pd.date_range(pd.Timestamp(enc['start']), periods=len(enc['values']), freq=f"{enc.get('step_h', 1)}h")
+    idx = pd.date_range(pd.Timestamp(enc['start']), periods=len(enc['values']),
+                        freq=f"{int(round(60 * enc.get('step_h', 1)))}min")
     return pd.Series(pd.to_numeric(pd.Series(enc['values']), errors='coerce').to_numpy(), index=idx).dropna()
 
 
@@ -170,11 +212,18 @@ def rebuild_index(archive_dir: Path) -> list:
     return entries
 
 
-def build_now(archive_dir: Path, observed: Dict[str, pd.Series], lookback_days: int = NOW_LOOKBACK_DAYS) -> dict:
-    """For the latest observation per location: what each recent issue forecast for it."""
+def build_now(archive_dir: Path, observed: Dict[str, pd.Series], lookback_days: int = NOW_LOOKBACK_DAYS,
+              estimated: Optional[Dict[str, pd.Series]] = None) -> dict:
+    """For the latest observation per location (or the latest estimate, if the gauge has been offline since):
+    what each recent issue forecast for it."""
     out = {'version': ARCHIVE_VERSION, 'locations': {}}
     issues = sorted((archive_dir / 'issues').glob('*.json'))
-    for loc, obs in observed.items():
+    for loc in set(observed) | set(estimated or {}):
+        obs = observed.get(loc)
+        est = (estimated or {}).get(loc)
+        is_est = False
+        if est is not None and len(est) and (obs is None or not len(obs) or est.index[-1] > obs.index[-1]):
+            obs, is_est = est, True
         if obs is None or not len(obs):
             continue
         target = obs.index[-1]
@@ -197,7 +246,7 @@ def build_now(archive_dir: Path, observed: Dict[str, pd.Series], lookback_days: 
                     row[k] = v[k][lead]
             rows.append(row)
         out['locations'][loc] = {'target': target.strftime('%Y-%m-%dT%H:%M:%S'),
-                                 'observed': round(float(obs.iloc[-1]), 4), 'forecasts': rows}
+                                 'observed': round(float(obs.iloc[-1]), 4), 'estimated': is_est, 'forecasts': rows}
     _dump(archive_dir / 'now.json', out)
     return out
 
@@ -282,6 +331,7 @@ def update_archive(docs_dir: Path, payloads: Dict[str, dict], model: str,
     archive_dir = Path(docs_dir) / 'archive'
     now = pd.Timestamp.utcnow() if now is None else pd.Timestamp(now)
     observed = merge_observed(archive_dir, payloads)
+    estimated = merge_estimated(archive_dir, payloads, observed)
     slot = slot_id(now)
     wrote = write_issue(archive_dir, slot, payloads, model, now)
     raw = None
@@ -289,5 +339,5 @@ def update_archive(docs_dir: Path, payloads: Dict[str, dict], model: str,
         raw = write_raw_inputs(Path(raw_dir), slot, member_rain,
                                {loc: p.get('current', {}).get('differential') for loc, p in payloads.items()})
     rebuild_index(archive_dir)
-    build_now(archive_dir, observed)
+    build_now(archive_dir, observed, estimated=estimated)
     return {'slot': slot, 'wrote_issue': wrote, 'raw': str(raw) if raw else None}
