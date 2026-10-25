@@ -18,6 +18,7 @@
       --accent: #0b3d2e; --accent-soft: #1c6b53;
       --shadow: 0 6px 18px rgba(15, 30, 25, 0.08), 0 2px 4px rgba(15, 30, 25, 0.04);
       --green: #008001; --blue: #1f63d6; --amber: #ffa503; --red: #e8170f;
+      --lower: #2f9e8f; --usual: #cfd8d4; --higher: #7b4fb3;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -55,6 +56,16 @@
     .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
     tr.vac td:first-child { color: var(--text-soft); font-style: italic; }
     .chart { width: 100%; height: 300px; }
+    .prow { display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .prow:last-child { border-bottom: none; }
+    .pname { font-weight: 600; } .pname small { display: block; font-weight: 400; color: var(--text-muted); font-size: 12px; }
+    .say { margin-bottom: 6px; font-size: 15px; }
+    .tbar { display: flex; height: 16px; border-radius: 8px; overflow: hidden; font-size: 11px; font-weight: 700; }
+    .tbar div { display: flex; align-items: center; justify-content: center; color: #fff; }
+    .tbar .u { color: #122a23; }
+    .key { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-muted); margin-top: 10px; }
+    .key i { display: inline-block; width: 12px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+    @media (max-width: 560px) { .prow { grid-template-columns: 1fr; gap: 4px; } }
     .scroll { overflow-x: auto; }
     footer { margin-top: 24px; text-align: center; color: var(--text-muted); font-size: 12.5px; line-height: 1.6; }
     @media (max-width: 560px) { th, td { padding: 7px 4px; font-size: 13px; } .panel { padding: 14px; } }
@@ -67,8 +78,8 @@
     <h1>Termly outlook</h1>
     <span class="muted" id="issued"></span>
   </header>
-  <p class="lede">Days at each flag for the rest of this term and the terms and vacations after it, worked out from
-    Farmoor flow. In the vacations, the flag means the differential's flag band. Updated daily.</p>
+  <p class="lede">How high the river is likely to be this term and over the next few, against a usual year, from
+    Farmoor flow. Updated daily.</p>
 
   <div class="tabs">
     <button class="tab active" data-loc="isis">Isis</button>
@@ -80,10 +91,10 @@
   </section>
 
   <section class="panel">
-    <h2>Days at each flag</h2>
-    <div class="scroll"><table id="periods"></table></div>
-    <p class="muted">Days at each flag: 10th–90th percentile of the outlook. Below: the average year since 1993, mean
-      and 10th–90th percentile. Red includes Black. Terms run from 0th to 8th week.</p>
+    <h2>River height against a usual year</h2>
+    <div id="periods"></div>
+    <div class="key"><span><i style="background:var(--lower)"></i>Lower</span><span><i style="background:var(--usual)"></i>About usual</span><span><i style="background:var(--higher)"></i>Higher</span></div>
+    <p class="muted">Usual is the middle third of years since 1993, for the river's average over the period. Terms run from 0th to 8th week.</p>
   </section>
 
   <section class="panel">
@@ -134,21 +145,28 @@
       ${s.n_years} years since 1993.`;
   }
 
+  function sentence(c) {
+    const lo = c.lower, hi = c.higher;
+    if (lo >= 0.6) return 'Very likely lower than usual.';
+    if (hi >= 0.6) return 'Very likely higher than usual.';
+    if (lo >= 0.5) return 'Likely lower than usual.';
+    if (hi >= 0.5) return 'Likely higher than usual.';
+    if (lo >= 0.4 && hi <= 0.2) return 'Leaning lower than usual.';
+    if (hi >= 0.4 && lo <= 0.2) return 'Leaning higher than usual.';
+    return 'No clear signal.';
+  }
+
   function renderPeriods() {
-    const names = D.names[loc];
-    let h = '<thead><tr><th></th>' + names.map((n) => `<th><span class="dot" style="background:${HEX[n]}"></span>${NAME[n]}</th>`).join('') +
-      '</tr></thead><tbody>';
-    D.terms[loc].forEach((t) => {
-      const left = t.days_done > 0 ? ` <span class="muted">(${t.days - t.days_done} days left)</span>` : '';
-      h += `<tr class="${t.term.includes('vac') ? 'vac' : ''}"><td>${t.label}${left}</td>`;
-      names.forEach((n) => {
-        const f = t.flags[n], lo = r0(f.p10), hi = r0(f.p90);
-        const nlo = r0(f.normal_p10), nhi = r0(f.normal_p90);
-        h += `<td><span class="n">${lo === hi ? lo : lo + '–' + hi}</span><span class="avg">avg ${r0(f.normal_mean)} (${nlo === nhi ? nlo : nlo + '–' + nhi})</span></td>`;
-      });
-      h += '</tr>';
-    });
-    document.getElementById('periods').innerHTML = h + '</tbody>';
+    const P = (x) => Math.round(100 * x);
+    const seg = (x, cls, col) => `<div class="${cls}" style="width:${P(x)}%;background:${col}">${P(x) >= 9 ? P(x) + '%' : ''}</div>`;
+    document.getElementById('periods').innerHTML = D.terms[loc].map((t) => {
+      const c = t.tercile;
+      const left = t.days_done > 0 ? `${t.days - t.days_done} days left` : `${d8(t.start)} – ${d8(t.end)}`;
+      return `<div class="prow"><div class="pname">${t.label}<small>${left}</small></div><div>
+        <div class="say">${sentence(c)}</div>
+        <div class="tbar">${seg(c.lower, '', 'var(--lower)')}${seg(c.usual, 'u', 'var(--usual)')}${seg(c.higher, '', 'var(--higher)')}</div>
+      </div></div>`;
+    }).join('');
   }
 
   function renderTorpids() {
@@ -156,10 +174,10 @@
     const cancelled = (V ? V.torpids_record : []).filter((r) => r.outcome === 'cancelled').map((r) => r.year);
     const avg = V ? V.torpids_climatology : t && t.chance_clim;
     document.getElementById('torpids').innerHTML = t
-      ? `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): <b>${pct(t.chance)}</b> chance of a river high enough to
-        cancel it (an average year: ${pct(avg)}). Since 1993 it has been cancelled whenever Torpids week averaged over
-        ${D.torpids_flow} m³/s at Farmoor${cancelled.length ? ': ' + cancelled.join(', ') : ''}.
-        ${t.skill != null && t.skill < 0.1 ? '<span class="muted">This far ahead the outlook is no better than the average year; it becomes useful in the final week or two.</span>' : ''}`
+      ? `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): <b>${pct(t.chance)}</b> chance of cancellation
+        (usual: ${pct(avg)}). Since 1993 it has been cancelled whenever Farmoor averaged over ${D.torpids_flow} m³/s that
+        week${cancelled.length ? ' (' + cancelled.join(', ') + ')' : ''}.
+        ${t.skill != null && t.skill < 0.1 ? '<span class="muted">This far ahead, no better than the usual odds.</span>' : ''}`
       : 'The next Torpids is too far ahead.';
   }
 

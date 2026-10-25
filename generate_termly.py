@@ -97,10 +97,25 @@ def term_summary(q: pd.Series, ens: T.Ensemble, term: str, acad: int, loc: str, 
                     'normal_p90': _q(normal[:, k], 90),
                     'skill': skill_lookup(ver, loc, term, n, lead)}
     worst = tot[:, -1]
+    # higher or lower than usual: mean flow over the period against the past years' terciles
+    usual = []
+    for y in range(T.FIRST_YEAR, acad):
+        a0, a1 = T.term_window(term, y)
+        usual.append(float(q.loc[a0:a1].mean()))
+    lo_t, hi_t = np.percentile(usual, [100 / 3, 200 / 3])
+    if w1 > t0:
+        s_ = max(w0, t0 + pd.Timedelta(days=1))
+        sel = (ens.days >= s_) & (ens.days <= w1)
+        past = q.loc[w0:t0].to_numpy() if w0 <= t0 else np.array([])
+        pm = (samples[:, sel].sum(1) + past.sum()) / (sel.sum() + len(past))
+    else:
+        pm = np.full(len(samples), float(q.loc[w0:w1].mean()))
+    tercile = {'lower': round(float(np.sum(wts * (pm < lo_t))), 2), 'higher': round(float(np.sum(wts * (pm > hi_t))), 2)}
+    tercile['usual'] = round(1 - tercile['lower'] - tercile['higher'], 2)
     return {'term': term, 'year': int(w0.year), 'label': f'{term} {w0.year}', 'start': f'{w0:%Y-%m-%d}',
             'end': f'{w1:%Y-%m-%d}', 'full_term_start': f'{T.term_start(term, acad):%Y-%m-%d}',
             'days': int((w1 - w0).days + 1), 'days_done': int(max(0, min((t0 - w0).days + 1, (w1 - w0).days + 1))),
-            'lead': lead, 'trust': T.blend_weight(max(0, (w0 - t0).days)), 'flags': flags,
+            'tercile': tercile, 'lead': lead, 'trust': T.blend_weight(max(0, (w0 - t0).days)), 'flags': flags,
             'chance_red_week': round(float(np.sum(wts * (worst >= 7))), 2),
             'chance_red_week_normal': round(float((normal[:, -1] >= 7).mean()), 2),
             'analogs': analog_terms(rebuilt_all, term, acad, analogs, loc)}
