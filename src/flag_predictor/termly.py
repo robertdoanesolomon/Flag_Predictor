@@ -410,6 +410,8 @@ def seasonal_rain(root: Path, today: pd.Timestamp | None = None) -> list[dict]:
     since 1993, and replaced by the same percentile of ERA5 rainfall for that month."""
     today = pd.Timestamp.utcnow().tz_localize(None) if today is None else pd.Timestamp(today)
     s = pd.read_csv(Path(root) / SEAS5_FILE)
+    if 'centre' in s:
+        s = s[s.centre == 'ecmwf']
     era = pd.read_csv(Path(root) / ERA5_FILE, index_col=0, parse_dates=True).iloc[:, 0]
     era = era[era.index.year >= FIRST_YEAR]
     latest = max(i for i in s.init.unique() if pd.Period(i, 'M') <= today.to_period('M'))
