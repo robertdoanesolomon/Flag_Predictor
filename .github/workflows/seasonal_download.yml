@@ -36,7 +36,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install
-        run: pip install "cdsapi>=0.7.4"
+        run: pip install "cdsapi>=0.7.4" xarray netCDF4 pandas
 
       - name: Download
         continue-on-error: true
@@ -46,6 +46,10 @@ jobs:
           else
             python download_seasonal.py
           fi
+
+      - name: Catchment rainfall table
+        if: always()
+        run: python process_seasonal.py
 
       # Only data/seasonal/ is committed, which nothing else writes: put it on top of the latest main.
       - name: Commit

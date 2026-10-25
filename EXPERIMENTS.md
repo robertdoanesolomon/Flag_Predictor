@@ -1159,3 +1159,14 @@ ERA5 Nov-Feb rain +21 mm/decade, p = 0.11), but no trend is significant (p 0.27-
 25 years) was 0.3-1.2% worse (CRPS) than equal weights; shifting members by a fitted normal-score trend was
 ~3% worse (the trend estimate is unstable: 0.038 per year from data to 2008, 0.011 to 2025). Equal weights
 kept; Outlook.ensemble(trend=) left in, off.
+
+**ECMWF SEAS5 seasonal forecasts (25 Oct 2026).** All runs 1993-2026 from C3S (hindcasts 1993-2016 SEAS5.1,
+forecasts SEAS5 2017-Oct 2022, SEAS5.1 since; 25 members), catchment box, `process_seasonal.py` ->
+data/seasonal/seas5_upper_thames.csv. Rain skill (Spearman r, ensemble mean vs ERA5 monthly): first month
+0.1-0.6 (Feb start 0.58, Apr 0.60), second month mostly 0-0.45, beyond ~0. Jan+Feb total: r 0.30 from an
+Oct start, 0.17 Nov, 0.27 Dec, 0.04 Jan. Model is 4-9% wetter than ERA5 Sep-Feb, 9% drier Apr-Jun.
+Weighting the outlook's member years by the forecast (seasonal_weighting_test.py; first 1, 2 or 3 forecast
+months): overall 1-2% worse for terms and Vacs; small gains only for Hilary from up to a month before
+(+5-6%) and Torpids from 15 Feb (+6%) and 1 Mar (+62%, but 12 years, driven by 2014 and 2026). Not
+used in the outlook. The page shows the latest run as rainfall per month, quantile-mapped from the model's
+own past forecasts (same start month and lead) onto ERA5.

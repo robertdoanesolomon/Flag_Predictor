@@ -98,8 +98,9 @@
   <section class="panel">
     <h2>Seasonal rainfall forecast</h2>
     <div id="seasonal" class="chart"></div>
-    <p class="muted">ECMWF's seasonal forecast for the upper Thames: middle value and 10th–90th percentile, against the
-      1993–2026 normal. Not yet corrected for the model's own bias.</p>
+    <p class="muted" id="seasonal-note">ECMWF's seasonal forecast for the upper Thames, corrected using its forecasts for
+      past years: middle value and 10th–90th percentile, against the 1993–2026 normal. Only the first month or two
+      have shown any skill.</p>
   </section>
 
   <section class="panel">
@@ -173,6 +174,9 @@
     const dark = matchMedia('(prefers-color-scheme: dark)').matches;
     const col = getComputedStyle(document.documentElement).getPropertyValue('--text-soft');
     const x = s.map((m) => MON[+m.month.slice(5, 7) - 1]);
+    if (s[0].run) document.getElementById('seasonal-note').innerHTML = `ECMWF's ${MON[+s[0].run.slice(5, 7) - 1]} forecast for
+      the upper Thames, corrected using its forecasts for past years: middle value and 10th–90th percentile, against the
+      1993–2026 normal. Only the first month or two have shown any skill.`;
     Plotly.react('seasonal', [
       { type: 'bar', x, y: s.map((m) => m.normal), name: 'Normal', marker: { color: dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.10)' },
         hovertemplate: 'normal %{y} mm<extra></extra>' },

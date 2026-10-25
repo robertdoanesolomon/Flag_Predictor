@@ -247,7 +247,7 @@ def main() -> None:
         print(f"  Isis {t['label']} ({t['lead']}): " + ', '.join(
             f"{n} {v['p10']:.0f}-{v['p90']:.0f} (average {v['normal_mean']:.0f})" for n, v in t['flags'].items()))
     for m in seasonal:
-        print(f"  SEAS5 {m['month']}: {m['median']} mm ({m['pct_normal']}% of normal), wet third {m['wet']:.0%}")
+        print(f"  SEAS5 {m['month']}: {m['median']} mm (normal {m['normal']}), wet third {m['wet']:.0%}")
     if torpids:
         print(f"  Torpids {torpids['year']}: chance of a cancellation-level river {torpids['chance']:.0%} "
               f"(an average year {torpids['chance_clim']:.0%})")

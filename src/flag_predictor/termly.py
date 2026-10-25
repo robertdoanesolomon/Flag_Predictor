@@ -399,40 +399,33 @@ def crps(ens: np.ndarray, obs: float) -> float:
 
 # ---------------------------------------------------------------- seasonal rainfall forecast
 
-RAIN_POINTS = ((51.95, -1.95), (51.70, -1.90), (51.65, -1.60), (51.85, -1.50))   # across the catchment
 ERA5_FILE = Path('data') / 'termly' / 'era5_monthly_rain.csv'
+SEAS5_FILE = Path('data') / 'seasonal' / 'seas5_upper_thames.csv'
 
 
-def seasonal_rain(root: Path, timeout: int = 60) -> list[dict]:
-    """ECMWF SEAS5 (latest monthly run, 51 members, via Open-Meteo): rain over the catchment above
-    Farmoor for each whole month ahead, against ERA5 rainfall for that month since 1993. Not yet
-    corrected for the model's own bias (needs the SEAS5 hindcasts)."""
-    import requests
-    lat = ','.join(str(p[0]) for p in RAIN_POINTS)
-    lon = ','.join(str(p[1]) for p in RAIN_POINTS)
-    r = requests.get('https://seasonal-api.open-meteo.com/v1/seasonal', timeout=timeout,
-                     params={'latitude': lat, 'longitude': lon, 'daily': 'precipitation_sum',
-                             'models': 'ecmwf_seas5', 'forecast_days': 215})
-    r.raise_for_status()
-    js = r.json()
-    js = js if isinstance(js, list) else [js]
-    keys = [k for k in js[0]['daily'] if k.startswith('precipitation_sum')]
-    days = pd.to_datetime(js[0]['daily']['time'])
-    rain = np.nanmean([[np.array(j['daily'][k], dtype=float) for k in keys] for j in js], axis=0)  # members x days
-    ok = np.isfinite(rain).all(axis=0)
-    rain, days = rain[:, ok], days[ok]
-    clim = pd.read_csv(Path(root) / ERA5_FILE, index_col=0, parse_dates=True).iloc[:, 0]
-    clim = clim[clim.index.year >= FIRST_YEAR]          # every complete month to date
+def seasonal_rain(root: Path, today: pd.Timestamp | None = None) -> list[dict]:
+    """ECMWF SEAS5 (latest monthly run from the C3S archive, 25 members): rain over the catchment above
+    Farmoor for each month still to come, corrected for the model's bias by quantile mapping. Each member's
+    month total is ranked among the model's own forecasts for that start month and lead in every other year
+    since 1993, and replaced by the same percentile of ERA5 rainfall for that month."""
+    today = pd.Timestamp.utcnow().tz_localize(None) if today is None else pd.Timestamp(today)
+    s = pd.read_csv(Path(root) / SEAS5_FILE)
+    era = pd.read_csv(Path(root) / ERA5_FILE, index_col=0, parse_dates=True).iloc[:, 0]
+    era = era[era.index.year >= FIRST_YEAR]
+    latest = max(i for i in s.init.unique() if pd.Period(i, 'M') <= today.to_period('M'))
+    init = pd.Period(latest, 'M')
     out = []
-    for per in pd.PeriodIndex(days, freq='M').unique():
-        sel = pd.PeriodIndex(days, freq='M') == per
-        if sel.sum() < per.days_in_month:
+    for lead, g in s[s.init == latest].groupby('lead'):
+        valid = init + int(lead) - 1
+        if valid.start_time <= today:
             continue
-        tot = rain[:, sel].sum(axis=1)
-        c = clim[clim.index.month == per.month]
-        lo, hi = c.quantile(1 / 3), c.quantile(2 / 3)
-        out.append({'month': str(per), 'median': round(float(np.median(tot))), 'p10': round(float(np.percentile(tot, 10))),
-                    'p90': round(float(np.percentile(tot, 90))), 'normal': round(float(c.median())),
-                    'pct_normal': round(float(100 * np.median(tot) / c.median())),
-                    'wet': round(float((tot > hi).mean()), 2), 'dry': round(float((tot < lo).mean()), 2)})
+        clim = s[(s.init.str[5:] == latest[5:]) & (s.lead == lead) & (s.init.str[:4] != latest[:4])].rain_mm.to_numpy()
+        obs = era[era.index.month == valid.month].to_numpy()
+        pct = np.array([(clim < v).mean() + 0.5 * (clim == v).mean() for v in g.rain_mm])
+        mapped = np.quantile(obs, np.clip(pct, 0, 1))
+        lo, hi = np.quantile(obs, [1 / 3, 2 / 3])
+        out.append({'month': str(valid), 'lead': int(lead), 'run': latest,
+                    'median': round(float(np.median(mapped))), 'p10': round(float(np.percentile(mapped, 10))),
+                    'p90': round(float(np.percentile(mapped, 90))), 'normal': round(float(np.median(obs))),
+                    'wet': round(float((mapped > hi).mean()), 2), 'dry': round(float((mapped < lo).mean()), 2)})
     return out
