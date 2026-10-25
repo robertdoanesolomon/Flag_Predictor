@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-25 07:51 UTC",
+ "generated": "2026-10-25 07:53 UTC",
  "issued": "2026-10-24",
  "members": 33,
  "member_years": [
@@ -279,7 +279,7 @@
       "normal_median": 1.0,
       "normal_p10": 0.0,
       "normal_p90": 5.8,
-      "skill": 0.059
+      "skill": 0.058
      },
      "red": {
       "so_far": 0,
@@ -427,7 +427,7 @@
       "normal_median": 4.0,
       "normal_p10": 0.2,
       "normal_p90": 8.0,
-      "skill": 0.046
+      "skill": 0.045
      },
      "red": {
       "so_far": 0,
@@ -873,7 +873,7 @@
       "normal_median": 0.0,
       "normal_p10": 0.0,
       "normal_p90": 27.2,
-      "skill": 0.284
+      "skill": 0.285
      }
     },
     "chance_red_week": 0.05,
@@ -999,7 +999,7 @@
       "normal_median": 9.0,
       "normal_p10": 0.0,
       "normal_p90": 21.6,
-      "skill": 0.158
+      "skill": 0.159
      }
     },
     "chance_red_week": 0.43,
@@ -1125,7 +1125,7 @@
       "normal_median": 17.0,
       "normal_p10": 0.0,
       "normal_p90": 44.6,
-      "skill": 0.061
+      "skill": 0.06
      }
     },
     "chance_red_week": 0.54,
