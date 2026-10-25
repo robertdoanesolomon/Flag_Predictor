@@ -273,7 +273,16 @@ class Outlook:
             return None
         return np.where(np.isnan(a), 0.0, a)
 
-    def ensemble(self, t0: pd.Timestamp) -> Ensemble:
+    def z_trend(self, before: pd.Timestamp | None = None) -> float:
+        """Linear trend of the academic-year mean normal score (per year), from full years before ``before``."""
+        z = self.z if before is None else self.z[self.z.index < before]
+        acad = np.where(z.index.month >= 9, z.index.year, z.index.year - 1)
+        g = z.groupby(acad).agg(['mean', 'count'])
+        g = g[(g['count'] > 330) & (g.index >= FIRST_YEAR)]
+        return float(np.polyfit(g.index, g['mean'], 1)[0]) if len(g) > 5 else 0.0
+
+    def ensemble(self, t0: pd.Timestamp, trend: float = 0.0) -> Ensemble:
+        """``trend``: normal-score change per year; each member is moved by trend x (this year - its year)."""
         t0 = pd.Timestamp(t0).normalize()
         acad0 = academic_year(t0)
         x_now = self._state(t0)
@@ -297,8 +306,12 @@ class Outlook:
         X, R, own = np.array(X), np.array(R), np.array(own)
         C = np.linalg.lstsq(X, R, rcond=None)[0]                       # (n_predictors, HORIZON)
         cond = x_now @ C + (R - X @ C)[own]
+        clim = R[own]
+        if trend:
+            shift = trend * (acad0 - np.array([y for y, o in zip(yrs, own) if o]))[:, None]
+            cond, clim = cond + shift, clim + shift
         days = pd.date_range(t0 + pd.Timedelta(days=1), periods=HORIZON)
-        return Ensemble(t0=t0, days=days, members=self.to_flow(cond, days), climatology=self.to_flow(R[own], days),
+        return Ensemble(t0=t0, days=days, members=self.to_flow(cond, days), climatology=self.to_flow(clim, days),
                         years=[y for y, o in zip(yrs, own) if o],
                         state={f'{w}d': round(float(v), 3) for w, v in zip(self.predictors, x_now)})
 

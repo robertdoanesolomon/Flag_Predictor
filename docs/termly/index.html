@@ -82,8 +82,8 @@
   <section class="panel">
     <h2>Days at each flag</h2>
     <div class="scroll"><table id="periods"></table></div>
-    <p class="muted">Days at each flag, 8 years in 10, with the average year below. Red includes Black. Terms run
-      from 0th to 8th week.</p>
+    <p class="muted">Days at each flag: 10th–90th percentile of the outlook. Below: the average year since 1993, mean
+      and 10th–90th percentile. Red includes Black. Terms run from 0th to 8th week.</p>
   </section>
 
   <section class="panel">
@@ -143,7 +143,8 @@
       h += `<tr class="${t.term.includes('vac') ? 'vac' : ''}"><td>${t.label}${left}</td>`;
       names.forEach((n) => {
         const f = t.flags[n], lo = r0(f.p10), hi = r0(f.p90);
-        h += `<td><span class="n">${lo === hi ? lo : lo + '–' + hi}</span><span class="avg">avg ${r0(f.normal_mean)}</span></td>`;
+        const nlo = r0(f.normal_p10), nhi = r0(f.normal_p90);
+        h += `<td><span class="n">${lo === hi ? lo : lo + '–' + hi}</span><span class="avg">avg ${r0(f.normal_mean)} (${nlo === nhi ? nlo : nlo + '–' + nhi})</span></td>`;
       });
       h += '</tr>';
     });

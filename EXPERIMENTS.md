@@ -1151,3 +1151,11 @@ Skill for the Christmas vac from the day before it starts: 28% (red days, Isis);
 now also shows ECMWF SEAS5 monthly rainfall (Open-Meteo, catchment average) against ERA5 1993-2025, not
 yet bias-corrected or used in the outlook; the current run is 8-31% above the ERA5 normal in every month,
 which looks partly like model bias, to be checked against the SEAS5 hindcasts (CDS secret CDS_API_KEY).
+
+**Climate change: recent years or a trend? (25 Oct).** Since 1993 every period has got wetter (Isis red days:
+Michaelmas +2.4, Christmas vac +1.7, Hilary +3.5 per decade; Hilary 1993-2008 mean 16.8, 2009-2025 22.2;
+ERA5 Nov-Feb rain +21 mm/decade, p = 0.11), but no trend is significant (p 0.27-0.35). Forward test,
+2008/09-2025/26, each year forecast only from earlier years: weighting members by recency (e-folding 10, 15,
+25 years) was 0.3-1.2% worse (CRPS) than equal weights; shifting members by a fitted normal-score trend was
+~3% worse (the trend estimate is unstable: 0.038 per year from data to 2008, 0.011 to 2025). Equal weights
+kept; Outlook.ensemble(trend=) left in, off.
