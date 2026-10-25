@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b3d2e">
   <meta name="description" content="Days at each OURCs flag this term and next, and the chance of Torpids being cancelled, from Farmoor flow.">
-  <title>Termly outlook · Flag Predictor</title>
+  <title>Long-range river forecast · Flag Predictor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
@@ -75,26 +75,19 @@
 <div class="page">
   <a href="../">← 10-day forecast</a>
   <header>
-    <h1>Termly outlook</h1>
+    <h1>Long-range river forecast</h1>
     <span class="muted" id="issued"></span>
   </header>
-  <p class="lede">How high the river is likely to be this term and over the next few, against a usual year, from
-    Farmoor flow. Updated daily.</p>
-
-  <div class="tabs">
-    <button class="tab active" data-loc="isis">Isis</button>
-    <button class="tab" data-loc="godstow">Godstow</button>
-  </div>
+  <p class="lede">How high the river is likely to be this term and over the next few, compared with a usual year.
+    Updated daily.</p>
 
   <section class="panel">
     <p class="now" id="now">Loading…</p>
   </section>
 
   <section class="panel">
-    <h2>River height against a usual year</h2>
     <div id="periods"></div>
     <div class="key"><span><i style="background:var(--lower)"></i>Lower</span><span><i style="background:var(--usual)"></i>About usual</span><span><i style="background:var(--higher)"></i>Higher</span></div>
-    <p class="muted">Usual is the middle third of years since 1993, for the river's average over the period. Terms run from 0th to 8th week.</p>
   </section>
 
   <section class="panel">
@@ -104,45 +97,40 @@
 
   <section class="panel">
     <h2>Seasonal rainfall forecast</h2>
-    <div class="scroll"><table id="seasonal"></table></div>
-    <p class="muted">ECMWF SEAS5 (51 members), averaged over the catchment above Farmoor, against 1993–2025 rainfall
-      (ERA5). It is not yet corrected for the model's own bias or used in the numbers above.</p>
-  </section>
-
-  <section class="panel">
-    <h2>Week by week</h2>
-    <div id="weekly" class="chart"></div>
+    <div id="seasonal" class="chart"></div>
+    <p class="muted">ECMWF's seasonal forecast for the upper Thames: middle value and 10th–90th percentile, against the
+      1993–2025 normal. Not yet corrected for the model's own bias.</p>
   </section>
 
   <section class="panel">
     <h2>How it works</h2>
-    <p style="margin:0 0 8px" id="lines"></p>
-    <p style="margin:0">Each of the 33 years since 1993 gives one possible future: its flow from today's date onwards,
-      adjusted for how wet the catchment is now. The further ahead, the closer this is to an average year. Tested on
-      every year since 1993/94 with that year left out.</p>
+    <p style="margin:0">Each year since 1993 gives one possible future: its weather from today's date onwards, started
+      from how wet the catchment is now. The further ahead, the closer this gets to a usual year. Usual means the middle
+      third of years since 1993; terms run from 0th to 8th week. Tested on every year since 1993/94 with that year left
+      out.</p>
   </section>
 
-  <footer>Flow: Environment Agency (Farmoor). Flags: OURCs. Rainfall: ECMWF via Open-Meteo, ERA5.
+  <footer>Flow: Environment Agency. Flags: OURCs. Rainfall: ECMWF via Open-Meteo, ERA5.
     Not an official OURCs product. <a href="../">flagpredictor.com</a></footer>
 </div>
 
 <script>
 (function () {
-  const HEX = { green: '#008001', blue: '#1f63d6', amber: '#ffa503', red: '#e8170f' };
-  const NAME = { green: 'Green', blue: 'Blue', amber: 'Amber', red: 'Red' };
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const d8 = (s) => { const d = new Date(s + 'T12:00:00Z'); return d.getUTCDate() + ' ' + MON[d.getUTCMonth()]; };
   const pct = (x) => (x == null ? '–' : Math.round(100 * x) + '%');
-  const r0 = (x) => Math.round(x);
-  let D, V, loc = 'isis';
-  try { const s = localStorage.getItem('termly-loc'); if (s === 'isis' || s === 'godstow') loc = s; } catch (e) {}
+  let D, V;
 
   function renderNow() {
     const s = D.state;
     const rank = s.pct_normal_90d < 100 ? `drier than ${s.wetter_years_90d}` : `wetter than ${s.n_years - s.wetter_years_90d}`;
-    document.getElementById('now').innerHTML = `Farmoor <b>${s.flow.toFixed(1)} m³/s</b> on ${d8(s.date)} (normal about
-      ${s.normal}). Over the last 90 days the river has been at <b>${r0(s.pct_normal_90d)}%</b> of normal, ${rank} of the
-      ${s.n_years} years since 1993.`;
+    document.getElementById('now').innerHTML = `The river is low for the time of year: over the last 90 days it has been
+      at <b>${Math.round(s.pct_normal_90d)}%</b> of normal, ${rank} of the ${s.n_years} years since 1993.`;
+    if (s.pct_normal_90d >= 80 && s.pct_normal_90d <= 125)
+      document.getElementById('now').innerHTML = `The river is about normal for the time of year (${Math.round(s.pct_normal_90d)}% over the last 90 days).`;
+    else if (s.pct_normal_90d > 125)
+      document.getElementById('now').innerHTML = `The river is high for the time of year: over the last 90 days it has been
+        at <b>${Math.round(s.pct_normal_90d)}%</b> of normal, ${rank} of the ${s.n_years} years since 1993.`;
   }
 
   function sentence(c) {
@@ -159,7 +147,7 @@
   function renderPeriods() {
     const P = (x) => Math.round(100 * x);
     const seg = (x, cls, col) => `<div class="${cls}" style="width:${P(x)}%;background:${col}">${P(x) >= 9 ? P(x) + '%' : ''}</div>`;
-    document.getElementById('periods').innerHTML = D.terms[loc].map((t) => {
+    document.getElementById('periods').innerHTML = D.terms.isis.map((t) => {
       const c = t.tercile;
       const left = t.days_done > 0 ? `${t.days - t.days_done} days left` : `${d8(t.start)} – ${d8(t.end)}`;
       return `<div class="prow"><div class="pname">${t.label}<small>${left}</small></div><div>
@@ -171,65 +159,41 @@
 
   function renderTorpids() {
     const t = D.torpids;
-    const cancelled = (V ? V.torpids_record : []).filter((r) => r.outcome === 'cancelled').map((r) => r.year);
     const avg = V ? V.torpids_climatology : t && t.chance_clim;
-    document.getElementById('torpids').innerHTML = t
-      ? `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): <b>${pct(t.chance)}</b> chance of cancellation
-        (usual: ${pct(avg)}). Since 1993 it has been cancelled whenever Farmoor averaged over ${D.torpids_flow} m³/s that
-        week${cancelled.length ? ' (' + cancelled.join(', ') + ')' : ''}.
-        ${t.skill != null && t.skill < 0.1 ? '<span class="muted">This far ahead, no better than the usual odds.</span>' : ''}`
-      : 'The next Torpids is too far ahead.';
+    if (!t) { document.getElementById('torpids').textContent = 'Too far ahead.'; return; }
+    let h = `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): <b>${pct(t.chance)}</b> chance of cancellation (usual: ${pct(avg)}).`;
+    if (t.days_away <= 12) h += ` Torpids is now inside the <a href="../">10-day forecast</a>: use that for the flags on each day.`;
+    else if (t.days_away <= 45) h += ` From ${d8(new Date(Date.parse(t.first_day) - 10 * 864e5).toISOString().slice(0, 10))} it will be inside the <a href="../">10-day forecast</a>.`;
+    document.getElementById('torpids').innerHTML = h;
   }
 
   function renderSeasonal() {
     const s = D.seasonal || [];
-    if (!s.length) { document.getElementById('seasonal').innerHTML = '<tr><td>Not available today.</td></tr>'; return; }
-    const mon = (m) => MON[+m.slice(5, 7) - 1] + ' ' + m.slice(2, 4);
-    document.getElementById('seasonal').innerHTML = '<thead><tr><th>Month</th><th>Forecast (mm)</th><th>Normal</th>' +
-      '<th>Wetter third</th><th>Drier third</th></tr></thead><tbody>' +
-      s.map((m) => `<tr><td>${mon(m.month)}</td><td><span class="n">${m.median}</span> <span class="r">(${m.p10}–${m.p90})</span></td>
-        <td>${m.normal}</td><td>${pct(m.wet)}</td><td>${pct(m.dry)}</td></tr>`).join('') + '</tbody>';
-  }
-
-  function renderWeekly() {
-    const w = D.weekly[loc], dark = matchMedia('(prefers-color-scheme: dark)').matches;
-    const traces = D.names[loc].map((n) => ({ type: 'bar', name: NAME[n], x: w.week, y: w.chance[n].map((v) => 100 * v),
-      marker: { color: HEX[n] }, hovertemplate: NAME[n] + ' %{y:.0f}%<extra></extra>' }));
-    const shapes = D.terms[loc].filter((t) => !t.term.includes('vac')).map((t) => ({ type: 'rect', xref: 'x', yref: 'paper',
-      x0: t.start, x1: t.end, y0: 0, y1: 1, line: { width: 0 }, layer: 'below', fillcolor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }));
+    if (!s.length) { document.getElementById('seasonal').innerHTML = '<p class="muted">Not available today.</p>'; return; }
+    const dark = matchMedia('(prefers-color-scheme: dark)').matches;
     const col = getComputedStyle(document.documentElement).getPropertyValue('--text-soft');
-    Plotly.react('weekly', traces, {
-      barmode: 'stack', bargap: 0.1, margin: { l: 36, r: 8, t: 6, b: 34 }, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-      font: { family: 'Inter, sans-serif', size: 12, color: col }, showlegend: false, shapes, hovermode: 'x unified',
-      xaxis: { type: 'date', tickformat: '%b' }, yaxis: { range: [0, 100], ticksuffix: '%', gridcolor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' },
-    }, { displayModeBar: false, responsive: true });
+    const x = s.map((m) => MON[+m.month.slice(5, 7) - 1]);
+    Plotly.react('seasonal', [
+      { type: 'bar', x, y: s.map((m) => m.normal), name: 'Normal', marker: { color: dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.10)' },
+        hovertemplate: 'normal %{y} mm<extra></extra>' },
+      { type: 'scatter', mode: 'markers', x, y: s.map((m) => m.median), name: 'Forecast',
+        marker: { color: '#2f9e8f', size: 11 },
+        error_y: { type: 'data', symmetric: false, array: s.map((m) => m.p90 - m.median), arrayminus: s.map((m) => m.median - m.p10), color: '#2f9e8f', thickness: 2, width: 6 },
+        hovertemplate: 'forecast %{y} mm<extra></extra>' },
+    ], { margin: { l: 44, r: 8, t: 6, b: 30 }, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', bargap: 0.35,
+      font: { family: 'Inter, sans-serif', size: 12, color: col }, legend: { orientation: 'h', y: 1.12 },
+      yaxis: { title: 'mm', rangemode: 'tozero', gridcolor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' } },
+      { displayModeBar: false, responsive: true });
   }
-
-  function render() {
-    document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('active', b.dataset.loc === loc));
-    const l = D.lines[loc], names = D.names[loc];
-    const steps = l.map((v, i) => `${NAME[names[i + 1]]} at ${v}`).join(', ');
-    document.getElementById('lines').textContent = `The flag follows Farmoor flow closely. Taking the average of
-      today's and yesterday's flow (Farmoor is upstream, so Oxford lags it by up to a day), ${loc === 'isis' ? 'the Isis' : 'Godstow'}
-      goes ${steps} m³/s. These lines match the flag (or the band, in
-      vacations) on ${V ? pct(V.flag_agreement[loc]) : '–'} of days since 2017.`;
-    renderPeriods(); renderWeekly();
-  }
-
-  document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => {
-    loc = b.dataset.loc;
-    try { localStorage.setItem('termly-loc', loc); } catch (e) {}
-    render();
-  }));
 
   Promise.all([
     fetch('termly.json?t=' + Date.now()).then((r) => r.json()),
     fetch('verification.json?t=' + Date.now()).then((r) => (r.ok ? r.json() : null)).catch(() => null),
   ]).then(([d, v]) => {
     D = d; V = v;
-    document.getElementById('issued').textContent = 'Flow to ' + d8(D.issued);
-    renderNow(); renderTorpids(); renderSeasonal(); render();
-  }).catch(() => { document.getElementById('now').textContent = 'Could not load the outlook.'; });
+    document.getElementById('issued').textContent = 'Updated ' + d8(D.issued);
+    renderNow(); renderPeriods(); renderTorpids(); renderSeasonal();
+  }).catch(() => { document.getElementById('now').textContent = 'Could not load the forecast.'; });
 })();
 </script>
 </body>
