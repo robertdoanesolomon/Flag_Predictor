@@ -82,9 +82,8 @@
   <section class="panel">
     <h2>Days at each flag</h2>
     <div class="scroll"><table id="periods"></table></div>
-    <p class="muted">Middle value with the range in brackets (8 years in 10), and an average year below. Skill is how
-      much better than an average year past outlooks were from this far ahead, for days at red. 0th to 8th week for
-      terms.</p>
+    <p class="muted">Days at each flag, 8 years in 10, with the average year below. Red includes Black. Terms run
+      from 0th to 8th week.</p>
   </section>
 
   <section class="panel">
@@ -138,18 +137,15 @@
   function renderPeriods() {
     const names = D.names[loc];
     let h = '<thead><tr><th></th>' + names.map((n) => `<th><span class="dot" style="background:${HEX[n]}"></span>${NAME[n]}</th>`).join('') +
-      '<th>Skill</th></tr></thead><tbody>';
+      '</tr></thead><tbody>';
     D.terms[loc].forEach((t) => {
-      const vac = t.term.includes('vac');
-      const label = t.days_done > 0 ? `${t.label} <span class="muted">(${t.days - t.days_done} days left)</span>` : t.label;
-      h += `<tr class="${vac ? 'vac' : ''}"><td>${label}<span class="avg">${d8(t.start)} – ${d8(t.end)}</span></td>`;
+      const left = t.days_done > 0 ? ` <span class="muted">(${t.days - t.days_done} days left)</span>` : '';
+      h += `<tr class="${t.term.includes('vac') ? 'vac' : ''}"><td>${t.label}${left}</td>`;
       names.forEach((n) => {
-        const f = t.flags[n];
-        const range = f.p10 === f.p90 ? '' : ` <span class="r">(${r0(f.p10)}–${r0(f.p90)})</span>`;
-        h += `<td><span class="n">${r0(f.median)}</span>${range}<span class="avg">avg ${r0(f.normal_median)}</span></td>`;
+        const f = t.flags[n], lo = r0(f.p10), hi = r0(f.p90);
+        h += `<td><span class="n">${lo === hi ? lo : lo + '–' + hi}</span><span class="avg">avg ${r0(f.normal_mean)}</span></td>`;
       });
-      const sk = t.flags.red.skill;
-      h += `<td>${sk == null || sk < 0.05 ? '–' : pct(sk)}</td></tr>`;
+      h += '</tr>';
     });
     document.getElementById('periods').innerHTML = h + '</tbody>';
   }

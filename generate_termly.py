@@ -92,6 +92,7 @@ def term_summary(q: pd.Series, ens: T.Ensemble, term: str, acad: int, loc: str, 
         flags[n] = {'so_far': int(so_far[k]), 'median': _wq(tot[:, k], wts, 50), 'p10': _wq(tot[:, k], wts, 10),
                     'p90': _wq(tot[:, k], wts, 90), 'mean': round(float(np.sum(wts * tot[:, k])), 1),
                     'clim_median': _q(tot_c[:, k], 50), 'clim_p10': _q(tot_c[:, k], 10), 'clim_p90': _q(tot_c[:, k], 90),
+                    'normal_mean': round(float(normal[:, k].mean()), 1),
                     'normal_median': _q(normal[:, k], 50), 'normal_p10': _q(normal[:, k], 10),
                     'normal_p90': _q(normal[:, k], 90),
                     'skill': skill_lookup(ver, loc, term, n, lead)}
@@ -221,7 +222,7 @@ def main() -> None:
           f'(7 days), {state["pct_normal_90d"]:.0f}% (90 days)')
     for t in out_terms['isis']:
         print(f"  Isis {t['label']} ({t['lead']}): " + ', '.join(
-            f"{n} {v['median']:.0f} [{v['p10']:.0f}-{v['p90']:.0f}] (normal {v['normal_median']:.0f})" for n, v in t['flags'].items()))
+            f"{n} {v['p10']:.0f}-{v['p90']:.0f} (average {v['normal_mean']:.0f})" for n, v in t['flags'].items()))
     for m in seasonal:
         print(f"  SEAS5 {m['month']}: {m['median']} mm ({m['pct_normal']}% of normal), wet third {m['wet']:.0%}")
     if torpids:
