@@ -194,8 +194,9 @@
     document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('active', b.dataset.loc === loc));
     const l = D.lines[loc], names = D.names[loc];
     const steps = l.map((v, i) => `${NAME[names[i + 1]]} at ${v}`).join(', ');
-    document.getElementById('lines').textContent = `Farmoor flow sets the flag closely. On the mean of the last two
-      days, ${loc === 'isis' ? 'the Isis' : 'Godstow'} goes ${steps} m³/s. These lines match the flag (or the band, in
+    document.getElementById('lines').textContent = `The flag follows Farmoor flow closely. Taking the average of
+      today's and yesterday's flow (Farmoor is upstream, so Oxford lags it by up to a day), ${loc === 'isis' ? 'the Isis' : 'Godstow'}
+      goes ${steps} m³/s. These lines match the flag (or the band, in
       vacations) on ${V ? pct(V.flag_agreement[loc]) : '–'} of days since 2017.`;
     renderPeriods(); renderWeekly();
   }
