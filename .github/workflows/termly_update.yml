@@ -57,12 +57,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           OUT=$(mktemp -d)
-          tar -cf "$OUT/termly.tar" docs/termly data/termly
+          # data files only: never the page, which may have changed on main since this run started
+          tar -cf "$OUT/termly.tar" docs/termly/termly.json docs/termly/verification.json data/termly
           for i in 1 2 3 4 5; do
             git fetch --depth=1 origin main
             git reset --hard origin/main
             tar -xf "$OUT/termly.tar"
-            git add docs/termly data/termly
+            git add docs/termly/termly.json docs/termly/verification.json data/termly
             if git diff --cached --quiet; then echo "Nothing new"; exit 0; fi
             git commit -m "Termly outlook [skip ci]"
             if git push origin HEAD:main; then exit 0; fi
