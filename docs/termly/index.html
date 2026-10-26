@@ -99,7 +99,7 @@
     <h2>Next six weeks</h2>
     <div id="ec46" class="chart"></div>
     <p class="muted">ECMWF's extended-range forecast (51 members) for weekly rain over the upper Thames, Monday to
-      Sunday: middle value and 10th–90th percentile, against the 1993–2026 normal. Not yet corrected for bias or
+      Sunday: middle value and 10th–90th percentile, against the 1993–2025 normal (CRU TS). Not yet corrected for bias or
       tested here.</p>
   </section>
 
@@ -107,19 +107,20 @@
     <h2>Seasonal rainfall forecast</h2>
     <div id="seasonal" class="chart"></div>
     <p class="muted" id="seasonal-note">ECMWF's seasonal forecast for the upper Thames, corrected using its forecasts for
-      past years: middle value and 10th–90th percentile, against the 1993–2026 normal. Only the first month or two
+      past years: middle value and 10th–90th percentile, against the 1993–2025 normal (CRU TS). Only the first month or two
       have shown any skill.</p>
   </section>
 
   <section class="panel">
     <h2>How it works</h2>
-    <p style="margin:0">Each year since 1993 gives one possible future: its weather from today's date onwards, started
-      from how wet the catchment is now. The further ahead, the closer this gets to a usual year. Usual means the middle
-      third of years since 1993; terms run from 0th to 8th week. Tested on every year since 1993/94 with that year left
-      out.</p>
+    <p style="margin:0">It is built from Farmoor's river flow since 1992. Each year since 1993 gives one possible
+      future: how its flow went from this date onwards, adjusted to start from how wet the catchment is now. The
+      further ahead, the more this looks like a usual year. Usual means the middle third of years since 1993; terms
+      run from 0th to 8th week. Every year since 1993/94 was forecast from the other years to check how well it
+      works.</p>
   </section>
 
-  <footer>Flow: Environment Agency. Flags: OURCs. Rainfall: ECMWF via Open-Meteo, ERA5.
+  <footer>Flow: Environment Agency. Flags: OURCs. Rainfall: ECMWF via Copernicus and Open-Meteo; CRU TS (UEA).
     Not an official OURCs product. <a href="../">flagpredictor.com</a></footer>
 </div>
 
@@ -133,12 +134,12 @@
   function renderNow() {
     const s = D.state;
     const rank = s.pct_normal_90d < 100 ? `drier than ${s.wetter_years_90d}` : `wetter than ${s.n_years - s.wetter_years_90d}`;
-    document.getElementById('now').innerHTML = `The river is low for the time of year: over the last 90 days it has been
+    document.getElementById('now').innerHTML = `The river flow rate is low for the time of year: over the last 90 days it has been
       at <b>${Math.round(s.pct_normal_90d)}%</b> of normal, ${rank} of the ${s.n_years} years since 1993.`;
     if (s.pct_normal_90d >= 80 && s.pct_normal_90d <= 125)
-      document.getElementById('now').innerHTML = `The river is about normal for the time of year (${Math.round(s.pct_normal_90d)}% over the last 90 days).`;
+      document.getElementById('now').innerHTML = `The river flow rate is about normal for the time of year (${Math.round(s.pct_normal_90d)}% over the last 90 days).`;
     else if (s.pct_normal_90d > 125)
-      document.getElementById('now').innerHTML = `The river is high for the time of year: over the last 90 days it has been
+      document.getElementById('now').innerHTML = `The river flow rate is high for the time of year: over the last 90 days it has been
         at <b>${Math.round(s.pct_normal_90d)}%</b> of normal, ${rank} of the ${s.n_years} years since 1993.`;
   }
 
@@ -184,7 +185,7 @@
     const x = s.map((m) => MON[+m.month.slice(5, 7) - 1]);
     if (s[0].run) document.getElementById('seasonal-note').innerHTML = `ECMWF's ${MON[+s[0].run.slice(5, 7) - 1]} forecast for
       the upper Thames, corrected using its forecasts for past years: middle value and 10th–90th percentile, against the
-      1993–2026 normal. Only the first month or two have shown any skill.`;
+      1993–2025 normal (CRU TS). Only the first month or two have shown any skill.`;
     Plotly.react('seasonal', [
       { type: 'bar', x, y: s.map((m) => m.normal), name: 'Normal', marker: { color: dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.10)' },
         hovertemplate: 'normal %{y} mm<extra></extra>' },
@@ -208,12 +209,12 @@
     Plotly.react('ec46', [
       { type: 'bar', x, y: w.map((r) => r.normal), name: 'Normal', marker: { color: dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.10)' },
         hovertemplate: 'normal %{y} mm<extra></extra>' },
-      { type: 'scatter', mode: 'markers', x, y: w.map((r) => r.median), name: 'Forecast', marker: { color: '#2f9e8f', size: 11 },
+      { type: 'scatter', mode: 'markers', x, y: w.map((r) => r.median), name: 'Forecast', marker: { color: '#2b6cb0', size: 11 },
         error_y: { type: 'data', symmetric: false, array: w.map((r) => r.p90 - r.median), arrayminus: w.map((r) => r.median - r.p10),
-          color: '#2f9e8f', thickness: 2, width: 6 }, hovertemplate: 'forecast %{y} mm<extra></extra>' },
-    ], { margin: { l: 44, r: 8, t: 6, b: 30 }, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', bargap: 0.35,
+          color: '#2b6cb0', thickness: 2, width: 6 }, hovertemplate: 'forecast %{y} mm<extra></extra>' },
+    ], { margin: { l: 44, r: 8, t: 6, b: 48 }, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', bargap: 0.35,
       font: { family: 'Inter, sans-serif', size: 12, color: col }, legend: { orientation: 'h', y: 1.12 },
-      xaxis: { title: 'week starting' },
+      xaxis: { title: { text: 'week starting', standoff: 14 } },
       yaxis: { title: 'mm', rangemode: 'tozero', gridcolor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' } },
       { displayModeBar: false, responsive: true });
   }

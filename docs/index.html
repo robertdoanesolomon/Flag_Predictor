@@ -2716,10 +2716,10 @@
         (hasTotal ? `<span>within the likely range <strong>${Math.round(100 * inBand / n)}%</strong> of hours</span>` : '')
       : '<span>No readings since this forecast yet.</span>';
     block.querySelector('.history-note').innerHTML = PREVIEW
-      ? 'Shaded: its likely range. Black: what the river did (dotted: estimated, gauge offline).'
+      ? 'Shaded: its likely range. Black: actual differential (dotted: estimated, gauge offline).'
       : hasTotal
-      ? 'Purple line: what the forecast said (ensemble mean). Shaded: its likely range, combining the rain-forecast spread with the model\'s own past errors. Black: what the river did (dotted: estimated, gauge offline).'
-      : 'Purple line: what the forecast said (ensemble mean). Blue shading: the spread from the rain forecast alone (this forecast was archived before the model-error range was added). Black: what the river did.';
+      ? 'Purple line: what the forecast said (ensemble mean). Shaded: its likely range, combining the rain-forecast spread with the model\'s own past errors. Black: actual differential (dotted: estimated, gauge offline).'
+      : 'Purple line: what the forecast said (ensemble mean). Blue shading: the spread from the rain forecast alone (this forecast was archived before the model-error range was added). Black: actual differential.';
   }
 
   function drawNowView(key, loc, block) {

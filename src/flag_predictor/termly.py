@@ -399,7 +399,7 @@ def crps(ens: np.ndarray, obs: float) -> float:
 
 # ---------------------------------------------------------------- seasonal rainfall forecast
 
-ERA5_FILE = Path('data') / 'termly' / 'era5_monthly_rain.csv'
+OBS_RAIN_FILE = Path('data') / 'termly' / 'cru_monthly_rain.csv'   # CRU TS 4.10 (build_cru_rain.py)
 SEAS5_FILE = Path('data') / 'seasonal' / 'seas5_upper_thames.csv'
 
 
@@ -407,12 +407,12 @@ def seasonal_rain(root: Path, today: pd.Timestamp | None = None) -> list[dict]:
     """ECMWF SEAS5 (latest monthly run from the C3S archive, 25 members): rain over the catchment above
     Farmoor for each month still to come, corrected for the model's bias by quantile mapping. Each member's
     month total is ranked among the model's own forecasts for that start month and lead in every other year
-    since 1993, and replaced by the same percentile of ERA5 rainfall for that month."""
+    since 1993, and replaced by the same percentile of observed (CRU TS) rainfall for that month."""
     today = pd.Timestamp.utcnow().tz_localize(None) if today is None else pd.Timestamp(today)
     s = pd.read_csv(Path(root) / SEAS5_FILE)
     if 'centre' in s:
         s = s[s.centre == 'ecmwf']
-    era = pd.read_csv(Path(root) / ERA5_FILE, index_col=0, parse_dates=True).iloc[:, 0]
+    era = pd.read_csv(Path(root) / OBS_RAIN_FILE, index_col=0, parse_dates=True).iloc[:, 0]
     era = era[era.index.year >= FIRST_YEAR]
     latest = max(i for i in s.init.unique() if pd.Period(i, 'M') <= today.to_period('M'))
     init = pd.Period(latest, 'M')
@@ -440,7 +440,7 @@ EC46_POINTS = ((51.95, -1.95), (51.70, -1.90), (51.65, -1.60), (51.85, -1.50))  
 
 def ec46_rain(root: Path, timeout: int = 60) -> list[dict]:
     """ECMWF extended range (EC46, latest run, all members, via Open-Meteo): rain over the catchment above
-    Farmoor for each whole week (Mon-Sun) ahead, against the ERA5 normal for that time of year (the month's
+    Farmoor for each whole week (Mon-Sun) ahead, against the CRU TS normal for that time of year (the month's
     normal, scaled to 7 days). Raw model output: not yet corrected for bias or tested for skill."""
     import requests
     r = requests.get('https://seasonal-api.open-meteo.com/v1/seasonal', timeout=timeout, params={
@@ -454,7 +454,7 @@ def ec46_rain(root: Path, timeout: int = 60) -> list[dict]:
     rain = np.nanmean([[np.array(j['daily'][k], dtype=float) for k in keys] for j in js], axis=0)   # members x days
     ok = np.isfinite(rain).all(axis=0)
     rain, days = rain[:, ok], days[ok]
-    era = pd.read_csv(Path(root) / ERA5_FILE, index_col=0, parse_dates=True).iloc[:, 0]
+    era = pd.read_csv(Path(root) / OBS_RAIN_FILE, index_col=0, parse_dates=True).iloc[:, 0]
     era = era[era.index.year >= FIRST_YEAR]
     out = []
     first = days[0] + pd.Timedelta(days=(7 - days[0].dayofweek) % 7)      # the next Monday (or today)
