@@ -1,0 +1,52 @@
+name: Download EC46 re-forecasts
+
+# ECMWF extended-range re-forecasts (S2S archive, ECDS) for testing the long-range outlook: fetch_ec46.py.
+# Uses the CDS_API_KEY secret. Change data/ec46/request.txt (first word "probe" for a single small test).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['data/ec46/request.txt']
+
+concurrency:
+  group: ec46-download
+  cancel-in-progress: false
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    permissions:
+      contents: write
+    env:
+      CDSAPI_KEY: ${{ secrets.CDS_API_KEY || secrets.CDSAPI_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install "cdsapi>=0.7.4"
+      - name: Download
+        continue-on-error: true
+        run: |
+          if head -c 5 data/ec46/request.txt | grep -q probe; then python fetch_ec46.py --probe; else python fetch_ec46.py; fi
+      - name: Commit
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          OUT=$(mktemp -d)
+          tar -cf "$OUT/ec46.tar" data/ec46
+          for i in 1 2 3 4 5; do
+            git fetch --depth=1 origin main
+            git reset --hard origin/main
+            tar -xf "$OUT/ec46.tar"
+            git add data/ec46
+            if git diff --cached --quiet; then echo "Nothing new"; exit 0; fi
+            git commit -m "EC46 re-forecasts: download [skip ci]"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((i * 10))
+          done
+          exit 1
