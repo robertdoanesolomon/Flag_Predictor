@@ -141,6 +141,11 @@ jobs:
           generate_once() {
             local rc=0
             python generate_all_location_figures.py --primary hybrid --output-dir docs --preview-dir docs/preview --preview-model hybrid_srh || rc=$?
+            # The long-range forecast (docs/termly) once a day, here as well as in its own scheduled
+            # workflow: GitHub's schedules can be skipped, the external 15-minute timer is reliable.
+            if python -c "import json,datetime,sys; d=json.load(open('docs/termly/termly.json')); sys.exit(0 if d['generated'][:10]!=datetime.datetime.utcnow().strftime('%Y-%m-%d') and datetime.datetime.utcnow().hour>=5 else 1)"; then
+              python generate_termly.py || echo "Long-range forecast failed (left as it was)."
+            fi
             if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
               echo "Figure generation failed hard (exit $rc)."
               exit "$rc"
@@ -161,6 +166,7 @@ jobs:
           commit_docs_if_changed() {
             git add docs/
             if [ -d data/forecast_archive ]; then git add data/forecast_archive/; fi
+            if [ -d data/termly ]; then git add data/termly/; fi
             if git diff --cached --quiet; then
               echo "No changes under docs/ or data/forecast_archive/"
               return 1
