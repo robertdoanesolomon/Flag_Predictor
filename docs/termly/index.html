@@ -96,6 +96,14 @@
   </section>
 
   <section class="panel">
+    <h2>Next six weeks</h2>
+    <div id="ec46" class="chart"></div>
+    <p class="muted">ECMWF's extended-range forecast (51 members) for weekly rain over the upper Thames, Monday to
+      Sunday: middle value and 10th–90th percentile, against the 1993–2026 normal. Not yet corrected for bias or
+      tested here.</p>
+  </section>
+
+  <section class="panel">
     <h2>Seasonal rainfall forecast</h2>
     <div id="seasonal" class="chart"></div>
     <p class="muted" id="seasonal-note">ECMWF's seasonal forecast for the upper Thames, corrected using its forecasts for
@@ -190,13 +198,33 @@
       { displayModeBar: false, responsive: true });
   }
 
+  function renderEc46() {
+    const w = D.ec46 || [];
+    const el = document.getElementById('ec46');
+    if (!w.length) { el.innerHTML = '<p class="muted">Not available today.</p>'; return; }
+    const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const col = getComputedStyle(document.documentElement).getPropertyValue('--text-soft');
+    const x = w.map((r) => d8(r.week));
+    Plotly.react('ec46', [
+      { type: 'bar', x, y: w.map((r) => r.normal), name: 'Normal', marker: { color: dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.10)' },
+        hovertemplate: 'normal %{y} mm<extra></extra>' },
+      { type: 'scatter', mode: 'markers', x, y: w.map((r) => r.median), name: 'Forecast', marker: { color: '#2f9e8f', size: 11 },
+        error_y: { type: 'data', symmetric: false, array: w.map((r) => r.p90 - r.median), arrayminus: w.map((r) => r.median - r.p10),
+          color: '#2f9e8f', thickness: 2, width: 6 }, hovertemplate: 'forecast %{y} mm<extra></extra>' },
+    ], { margin: { l: 44, r: 8, t: 6, b: 30 }, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', bargap: 0.35,
+      font: { family: 'Inter, sans-serif', size: 12, color: col }, legend: { orientation: 'h', y: 1.12 },
+      xaxis: { title: 'week starting' },
+      yaxis: { title: 'mm', rangemode: 'tozero', gridcolor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' } },
+      { displayModeBar: false, responsive: true });
+  }
+
   Promise.all([
     fetch('termly.json?t=' + Date.now()).then((r) => r.json()),
     fetch('verification.json?t=' + Date.now()).then((r) => (r.ok ? r.json() : null)).catch(() => null),
   ]).then(([d, v]) => {
     D = d; V = v;
     document.getElementById('issued').textContent = 'Updated ' + d8(D.issued);
-    renderNow(); renderPeriods(); renderTorpids(); renderSeasonal();
+    renderNow(); renderPeriods(); renderTorpids(); renderSeasonal(); renderEc46();
   }).catch(() => { document.getElementById('now').textContent = 'Could not load the forecast.'; });
 })();
 </script>

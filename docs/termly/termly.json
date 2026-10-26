@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-26 11:33 UTC",
+ "generated": "2026-10-26 12:15 UTC",
  "issued": "2026-10-25",
  "members": 33,
  "member_years": [
@@ -2193,6 +2193,56 @@
    "normal": 45,
    "wet": 0.28,
    "dry": 0.2
+  }
+ ],
+ "ec46": [
+  {
+   "week": "2026-10-26",
+   "median": 8,
+   "p10": 5,
+   "p90": 11,
+   "normal": 13,
+   "members": 51
+  },
+  {
+   "week": "2026-11-02",
+   "median": 2,
+   "p10": 0,
+   "p90": 13,
+   "normal": 14,
+   "members": 51
+  },
+  {
+   "week": "2026-11-09",
+   "median": 11,
+   "p10": 1,
+   "p90": 31,
+   "normal": 14,
+   "members": 51
+  },
+  {
+   "week": "2026-11-16",
+   "median": 19,
+   "p10": 3,
+   "p90": 36,
+   "normal": 14,
+   "members": 51
+  },
+  {
+   "week": "2026-11-23",
+   "median": 17,
+   "p10": 3,
+   "p90": 47,
+   "normal": 14,
+   "members": 51
+  },
+  {
+   "week": "2026-11-30",
+   "median": 19,
+   "p10": 3,
+   "p90": 41,
+   "normal": 16,
+   "members": 51
   }
  ]
 }

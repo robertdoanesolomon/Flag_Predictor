@@ -231,6 +231,11 @@ def main() -> None:
         except Exception as e:          # noqa: BLE001 - the outlook does not depend on it
             print(f'  seasonal forecast, attempt {attempt + 1}: {e}')
             time.sleep(10 * (attempt + 1))
+    try:
+        ec46 = T.ec46_rain(ROOT)
+    except Exception as e:              # noqa: BLE001
+        print(f'  EC46 unavailable: {e}')
+        ec46 = json.loads(OUT.read_text()).get('ec46', []) if OUT.exists() else []
     if not seasonal and OUT.exists():
         seasonal = json.loads(OUT.read_text()).get('seasonal') or []
         print(f'  kept the previous seasonal forecast ({len(seasonal)} months)')
@@ -238,7 +243,7 @@ def main() -> None:
               'members': len(ens.members), 'member_years': ens.years, 'state': state,
               'lines': T.LINES, 'names': T.NAMES, 'torpids_flow': T.TORPIDS_FLOW,
               'terms': out_terms, 'weekly': {loc: weekly(ens, loc, prev) for loc in ('isis', 'godstow')},
-              'torpids': torpids, 'seasonal': seasonal}
+              'torpids': torpids, 'seasonal': seasonal, 'ec46': ec46}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=1))
     print(f'Termly outlook from {t0:%Y-%m-%d}: Farmoor {state["flow"]} m3/s, {state["pct_normal_7d"]:.0f}% of normal '

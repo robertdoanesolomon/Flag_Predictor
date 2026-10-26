@@ -431,3 +431,41 @@ def seasonal_rain(root: Path, today: pd.Timestamp | None = None) -> list[dict]:
                     'p90': round(float(np.percentile(mapped, 90))), 'normal': round(float(np.median(obs))),
                     'wet': round(float((mapped > hi).mean()), 2), 'dry': round(float((mapped < lo).mean()), 2)})
     return out
+
+
+# ---------------------------------------------------------------- extended-range (EC46) weekly rainfall
+
+EC46_POINTS = ((51.95, -1.95), (51.70, -1.90), (51.65, -1.60), (51.85, -1.50))   # across the catchment
+
+
+def ec46_rain(root: Path, timeout: int = 60) -> list[dict]:
+    """ECMWF extended range (EC46, latest run, all members, via Open-Meteo): rain over the catchment above
+    Farmoor for each whole week (Mon-Sun) ahead, against the ERA5 normal for that time of year (the month's
+    normal, scaled to 7 days). Raw model output: not yet corrected for bias or tested for skill."""
+    import requests
+    r = requests.get('https://seasonal-api.open-meteo.com/v1/seasonal', timeout=timeout, params={
+        'latitude': ','.join(str(p[0]) for p in EC46_POINTS), 'longitude': ','.join(str(p[1]) for p in EC46_POINTS),
+        'daily': 'precipitation_sum', 'models': 'ecmwf_ec46', 'forecast_days': 46})
+    r.raise_for_status()
+    js = r.json()
+    js = js if isinstance(js, list) else [js]
+    keys = [k for k in js[0]['daily'] if k.startswith('precipitation_sum')]
+    days = pd.to_datetime(js[0]['daily']['time'])
+    rain = np.nanmean([[np.array(j['daily'][k], dtype=float) for k in keys] for j in js], axis=0)   # members x days
+    ok = np.isfinite(rain).all(axis=0)
+    rain, days = rain[:, ok], days[ok]
+    era = pd.read_csv(Path(root) / ERA5_FILE, index_col=0, parse_dates=True).iloc[:, 0]
+    era = era[era.index.year >= FIRST_YEAR]
+    out = []
+    first = days[0] + pd.Timedelta(days=(7 - days[0].dayofweek) % 7)      # the next Monday (or today)
+    for w in range(7):
+        a = first + pd.Timedelta(days=7 * w)
+        sel = (days >= a) & (days < a + pd.Timedelta(days=7))
+        if sel.sum() < 7:
+            break
+        tot = rain[:, sel].sum(axis=1)
+        mid = a + pd.Timedelta(days=3)
+        normal = float(era[era.index.month == mid.month].median()) * 7 / mid.days_in_month
+        out.append({'week': f'{a:%Y-%m-%d}', 'median': round(float(np.median(tot))), 'p10': round(float(np.percentile(tot, 10))),
+                    'p90': round(float(np.percentile(tot, 90))), 'normal': round(normal), 'members': int(rain.shape[0])})
+    return out
