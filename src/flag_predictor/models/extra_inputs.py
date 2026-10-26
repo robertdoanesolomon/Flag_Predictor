@@ -66,6 +66,8 @@ INPUT_SETS = {
                      + ['up_0569TH_rise', 'up_0569TH_d24'],
     # Hannington Bridge alone (Farmoor flow is already a standard input): the lean version of soil_rise_han
     'han': ['up_0569TH_rise', 'up_0569TH_d24'],
+    # the upstream river gauges (natural reaches, no lock gauges) and Hannington, without soil moisture
+    'rise_han': [f'up_{r}_rise' for r in _FIRST_SET] + ['up_0569TH_rise', 'up_0569TH_d24'],
 }
 
 

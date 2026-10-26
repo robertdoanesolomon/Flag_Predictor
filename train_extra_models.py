@@ -45,7 +45,7 @@ def main() -> None:
     ap.add_argument('--seeds', default='0,1,2,3,4')
     ap.add_argument('--locations', default='all')
     ap.add_argument('--threads', type=int, default=2)
-    ap.add_argument('--inputs', default='all', choices=['none', 'all', 'soil', 'soil_rise', 'soil_rise_han', 'han'])
+    ap.add_argument('--inputs', default='all', choices=['none', 'all', 'soil', 'soil_rise', 'soil_rise_han', 'han', 'rise_han'])
     args = ap.parse_args()
     torch.set_num_threads(args.threads)
     locations = ['isis', 'godstow', 'wallingford'] if args.locations == 'all' else args.locations.split(',')
