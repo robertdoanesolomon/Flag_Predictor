@@ -1,0 +1,2 @@
+--- 2026-10-26 10:09 UTC (probe)
+2025-11-03_cf.grib: FAILED HTTPError: 403 Client Error: Forbidden for url: https://ecds.ecmwf.int/api/retrieve/v1/processes/s2s-reforecasts/execution | required licences not accepted | Not all the required licences have been accepted; please visit https://ecds.ecmwf.int/datasets/s2s-reforecasts?tab=download#manage-licences to accept the required licence(s).
