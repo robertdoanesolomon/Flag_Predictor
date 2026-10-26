@@ -2,3 +2,7 @@
 2025-11-03_cf.grib: FAILED HTTPError: 403 Client Error: Forbidden for url: https://ecds.ecmwf.int/api/retrieve/v1/processes/s2s-reforecasts/execution | required licences not accepted | Not all the required licences have been accepted; please visit https://ecds.ecmwf.int/datasets/s2s-reforecasts?tab=download#manage-licences to accept the required licence(s).
 --- 2026-10-26 10:10 UTC (probe)
 2025-11-03_cf.grib: FAILED HTTPError: 400 Client Error: Bad Request for url: https://ecds.ecmwf.int/api/retrieve/v1/jobs/abc40894-6b51-4410-abe3-567ef63ef74c/results | The job has failed | The job failed with: MarsRuntimeError | MARS has returned an error, please check your selection. | Request submitted to the MARS server: | [{'area': ['53/-3/50.5/0'], 'class': ['s2'], 'database': ['marsth-ecmwf'], 'dataset': ['s2s'], 'date': ['2025-11-03'], 'expect': ['any'], 'expver': ['prod'], 'grid': ['1.5/1.5'], 'hdate': [], 'levtype': ['sfc'], 'model': ['glob'], 'origin': ['ecmf'], 'param': ['228228'], 'step': ['0/24/48/72/96/120/144/168/192/216/240/264/288/312/336/360/384/408/432/456/480/504/528/552/576/600/624/648/672/696/720/744/768/792/816/840/864/888/912/936/960/984/1008/1032/1056/1080/1104'], 'stream': ['enfh'], 'time': ['00:00:00'], 'type': ['cf']}] | Full error message: | mars - ERROR  - 20261026.101156 - file (standard input) line 9 : syntax error
+--- 2026-10-26 10:21 UTC (probe)
+2025-11-03_cf.grib: ok (20 kB, 5839 s)
+2025-11-03_pf.grib: ok (206 kB, 6090 s)
+done; files: 2
