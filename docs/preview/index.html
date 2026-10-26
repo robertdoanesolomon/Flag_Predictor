@@ -995,7 +995,7 @@
         const terms = D.terms.isis.filter((t) => !t.term.includes('Vac')).slice(0, 2);
         const li = terms.map((t) => `<li><b>${t.term}:</b> river ${say(t.tercile)}${pct(t.tercile)}</li>`);
         const T = D.torpids;
-        if (T && T.chance != null) li.push(`<li><b>Torpids ${T.year}:</b> ${Math.round(100 * (1 - T.chance))}% goes ahead (usual ${Math.round(100 * (1 - T.chance_clim))}%)</li>`);
+        if (T && T.chance != null) li.push(`<li><b>Torpids ${T.year}:</b> ${Math.round(100 * (1 - T.chance))}% goes ahead (usual ${Math.round(100 * (1 - (T.chance_record ?? T.chance_clim)))}%)</li>`);
         document.getElementById('lr-lines').innerHTML = li.join('');
         card.hidden = false;
       }).catch(() => {});
