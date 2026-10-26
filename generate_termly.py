@@ -182,12 +182,13 @@ def main() -> None:
     # the river now: mean flow over the last 7 and 90 days against the same days in every past year
     def mean_to(t, n):
         return float(qk.loc[t - pd.Timedelta(days=n - 1):t].mean())
-    past7, past90 = [], []
+    past7, past14, past90 = [], [], []
     for y in range(T.FIRST_YEAR, acad):
         t = T._same_date(t0, acad - y)
         past7.append(mean_to(t, 7))
         past90.append(mean_to(t, 90))
-    now7, now90 = mean_to(t0, 7), mean_to(t0, 90)
+        past14.append(mean_to(t, 14))
+    now7, now14, now90 = mean_to(t0, 7), mean_to(t0, 14), mean_to(t0, 90)
     med90 = float(np.median(past90))
     near = sorted(range(len(past90)), key=lambda i: abs(np.log(past90[i] / now90)))[:N_ANALOGS]
     analogs = [{'acad': T.FIRST_YEAR + i, 'issued': f'{t0:%Y-%m-%d}', 'pct_normal_90d': round(100 * past90[i] / med90)}
@@ -197,6 +198,8 @@ def main() -> None:
              'pct_normal_7d': round(100 * now7 / float(np.median(past7)), 0),
              'pct_normal_90d': round(100 * now90 / float(np.median(past90)), 0),
              'wetter_years_90d': int(sum(v > now90 for v in past90)), 'n_years': len(past90),
+             'pct_normal_14d': round(100 * now14 / float(np.median(past14)), 0),
+             'wetter_years_14d': int(sum(v > now14 for v in past14)),
              'score_7d': ens.state['7d'], 'score_90d': ens.state['90d']}
 
     prev = float(qk.dropna().iloc[-1])

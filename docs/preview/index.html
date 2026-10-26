@@ -412,6 +412,15 @@
     body:not(.on-preview-page) details.preview-banner { display: none; }
     .only-preview-page { display: none; }
     body.on-preview-page .only-preview-page { display: inline; }
+    .lr-card { display: block; margin: 20px 0 14px 0; padding: 12px 14px; border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); text-decoration: none; }
+    .lr-card[hidden] { display: none; }
+    .lr-card:hover { border-color: var(--accent-soft); }
+    .lr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .lr-head h2 { margin: 0; font-size: 1rem; font-weight: 700; }
+    .lr-more { font-size: 0.86rem; font-weight: 600; color: var(--accent-soft); white-space: nowrap; }
+    .lr-lines { margin: 6px 0 0 0; padding: 0; list-style: none; font-size: 0.92rem; color: var(--text-soft); line-height: 1.5; }
+    .lr-lines b { color: var(--text); font-weight: 600; }
     .alerts-card {
       margin: 20px 0 14px 0;
       padding: 12px 14px;
@@ -968,6 +977,30 @@
         <div>Fetching the latest forecast…</div>
       </div>
     </div>
+
+    <a class="lr-card" id="lr-card" href="termly/" hidden>
+      <div class="lr-head"><h2>Long-range river forecast</h2><span class="lr-more">Terms, Vacs and Torpids &rarr;</span></div>
+      <ul class="lr-lines" id="lr-lines"></ul>
+    </a>
+    <script>
+    (function () {
+      const base = location.pathname.includes('/preview/') ? '../termly/' : 'termly/';
+      const card = document.getElementById('lr-card'); card.href = base;
+      const say = (c) => c.lower >= 0.6 ? 'very likely lower than usual' : c.higher >= 0.6 ? 'very likely higher than usual'
+        : c.lower >= 0.5 ? 'likely lower than usual' : c.higher >= 0.5 ? 'likely higher than usual'
+        : c.lower >= 0.4 && c.higher <= 0.2 ? 'leaning lower than usual' : c.higher >= 0.4 && c.lower <= 0.2 ? 'leaning higher than usual'
+        : 'no clear signal';
+      const pct = (c) => { const k = c.lower >= c.higher ? c.lower : c.higher; return (c.lower >= 0.4 || c.higher >= 0.4) ? ` (${Math.round(100 * k)}%)` : ''; };
+      fetch(base + 'termly.json', { cache: 'no-cache' }).then((r) => r.json()).then((D) => {
+        const terms = D.terms.isis.filter((t) => !t.term.includes('Vac')).slice(0, 2);
+        const li = terms.map((t) => `<li><b>${t.term}:</b> river ${say(t.tercile)}${pct(t.tercile)}</li>`);
+        const T = D.torpids;
+        if (T && T.chance != null) li.push(`<li><b>Torpids ${T.year}:</b> ${Math.round(100 * (1 - T.chance))}% goes ahead (usual ${Math.round(100 * (1 - T.chance_clim))}%)</li>`);
+        document.getElementById('lr-lines').innerHTML = li.join('');
+        card.hidden = false;
+      }).catch(() => {});
+    })();
+    </script>
 
     <section class="alerts-card only-preview" id="alerts-card" aria-labelledby="alerts-title">
       <div class="alerts-head">
