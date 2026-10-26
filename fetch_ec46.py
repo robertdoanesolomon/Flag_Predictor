@@ -7,7 +7,7 @@ Runs in GitHub Actions (ec46_download.yml) with the CDS_API_KEY secret (CDS keys
 must have accepted the ECDS terms and the TIGGE/S2S licence). Writes data/ec46/raw/<date>.grib and a log.
 
     python fetch_ec46.py --probe            # one small request, to check access and keys
-    python fetch_ec46.py                    # every Monday/Thursday model date for a year (skips files on disk)
+    python fetch_ec46.py                    # every Mon/Thu model date Oct-Mar, one MARS request each (skips files on disk)
 """
 import argparse
 import datetime as dt
@@ -24,29 +24,31 @@ STEPS = [str(h) for h in range(0, 1105, 24)]                # daily accumulation
 BUDGET_MIN = 300
 
 
-def request(date: dt.date, kind: str, years: int = 20) -> dict:
+def request(date: dt.date, kind, years: int = 20) -> dict:
     hdates = [f'{date.year - k}-{date:%m-%d}' for k in range(1, years + 1)]          # lists: '/' strings get lost
     r = {'class': 's2', 'dataset': 's2s', 'date': f'{date:%Y-%m-%d}', 'hdate': hdates, 'expver': 'prod',
          'levtype': 'sfc', 'model': 'glob', 'origin': 'ecmf', 'param': '228228', 'step': STEPS, 'stream': 'enfh',
          'time': '00:00:00', 'type': kind, 'grid': '1.5/1.5', 'area': '53/-3/50.5/0', 'data_format': 'grib'}
-    if kind == 'pf':
+    if 'pf' in kind:
         r['number'] = [str(n) for n in range(1, 11)]
     return r
 
 
 def model_dates(start: dt.date, end: dt.date):
-    d = start
+    """Mondays and Thursdays from October to March (the months that matter), newest first."""
+    d, out = start, []
     while d <= end:
-        if d.weekday() in (0, 3):
-            yield d
+        if d.weekday() in (0, 3) and d.month in (10, 11, 12, 1, 2, 3):
+            out.append(d)
         d += dt.timedelta(days=1)
+    return out[::-1]
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument('--probe', action='store_true')
-    ap.add_argument('--start', default='2025-06-30')
-    ap.add_argument('--end', default='2026-06-29')
+    ap.add_argument('--start', default='2025-10-01')
+    ap.add_argument('--end', default='2026-03-31')
     a = ap.parse_args()
     RAW.mkdir(parents=True, exist_ok=True)
     lines = [f'--- {dt.datetime.utcnow():%Y-%m-%d %H:%M} UTC ({"probe" if a.probe else "all"})']
@@ -63,21 +65,20 @@ def main() -> int:
         dates = [dt.date(2025, 11, 3)] if a.probe else list(model_dates(dt.date.fromisoformat(a.start), dt.date.fromisoformat(a.end)))
         t_start = time.time()
         for d in dates:
-            for kind in ('cf', 'pf'):
-                target = RAW / f'{d:%Y-%m-%d}_{kind}.grib'
-                if target.exists():
-                    continue
-                if (time.time() - t_start) / 60 > BUDGET_MIN:
-                    log('time budget reached; rerun to continue')
-                    return 0
-                t0 = time.time()
-                try:
-                    c.retrieve('s2s-reforecasts', request(d, kind, 2 if a.probe else 20), str(target))
-                    log(f'{target.name}: ok ({target.stat().st_size // 1024} kB, {time.time() - t0:.0f} s)')
-                except Exception as e:      # noqa: BLE001
-                    log(f'{target.name}: FAILED {type(e).__name__}: {" | ".join(str(e).splitlines()[:8])[:1500]}')
-                    if a.probe:
-                        return 1
+            target = RAW / f'{d:%Y-%m-%d}.grib'
+            if target.exists() or (RAW / f'{d:%Y-%m-%d}_cf.grib').exists() and a.probe:
+                continue
+            if (time.time() - t_start) / 60 > BUDGET_MIN:
+                log('time budget reached; the next scheduled run continues')
+                return 0
+            t0 = time.time()
+            try:
+                c.retrieve('s2s-reforecasts', request(d, ['cf', 'pf'], 2 if a.probe else 20), str(target))
+                log(f'{target.name}: ok ({target.stat().st_size // 1024} kB, {time.time() - t0:.0f} s)')
+            except Exception as e:      # noqa: BLE001
+                log(f'{target.name}: FAILED {type(e).__name__}: {" | ".join(str(e).splitlines()[:8])[:1500]}')
+                if a.probe:
+                    return 1
         log(f'done; files: {len(list(RAW.glob("*.grib")))}')
         return 0
     except Exception:                       # noqa: BLE001

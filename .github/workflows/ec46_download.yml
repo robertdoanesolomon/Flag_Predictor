@@ -3,6 +3,9 @@ name: Download EC46 re-forecasts
 # ECMWF extended-range re-forecasts (S2S archive, ECDS) for testing the long-range outlook: fetch_ec46.py.
 # Uses the CDS_API_KEY secret. Change data/ec46/request.txt (first word "probe" for a single small test).
 on:
+  # MARS (tape) can take hours per request: run daily until every date is on disk
+  schedule:
+    - cron: "17 1 * * *"
   workflow_dispatch:
   push:
     branches: [main]
@@ -15,7 +18,7 @@ concurrency:
 jobs:
   download:
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    timeout-minutes: 350
     permissions:
       contents: write
     env:
