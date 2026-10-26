@@ -20,17 +20,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 RAW = ROOT / 'data' / 'ec46' / 'raw'
 LOG = ROOT / 'data' / 'ec46' / 'log.txt'
-STEPS = '/'.join(str(h) for h in range(0, 1105, 24))       # daily accumulations to day 46
+STEPS = [str(h) for h in range(0, 1105, 24)]                # daily accumulations to day 46
 BUDGET_MIN = 300
 
 
 def request(date: dt.date, kind: str, years: int = 20) -> dict:
-    hdates = '/'.join(f'{date.year - k}-{date:%m-%d}' for k in range(1, years + 1))
+    hdates = [f'{date.year - k}-{date:%m-%d}' for k in range(1, years + 1)]          # lists: '/' strings get lost
     r = {'class': 's2', 'dataset': 's2s', 'date': f'{date:%Y-%m-%d}', 'hdate': hdates, 'expver': 'prod',
          'levtype': 'sfc', 'model': 'glob', 'origin': 'ecmf', 'param': '228228', 'step': STEPS, 'stream': 'enfh',
          'time': '00:00:00', 'type': kind, 'grid': '1.5/1.5', 'area': '53/-3/50.5/0', 'data_format': 'grib'}
     if kind == 'pf':
-        r['number'] = '1/2/3/4/5/6/7/8/9/10'
+        r['number'] = [str(n) for n in range(1, 11)]
     return r
 
 
