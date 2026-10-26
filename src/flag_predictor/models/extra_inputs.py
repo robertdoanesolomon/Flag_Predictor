@@ -64,6 +64,8 @@ INPUT_SETS = {
     # plus the upper Thames at Hannington Bridge: how far above its 14-day low, and its 24 h change
     'soil_rise_han': ['soil_vwc', 'soil_vwc_d7'] + [f'up_{r}_rise' for r in _FIRST_SET]
                      + ['up_0569TH_rise', 'up_0569TH_d24'],
+    # Hannington Bridge alone (Farmoor flow is already a standard input): the lean version of soil_rise_han
+    'han': ['up_0569TH_rise', 'up_0569TH_d24'],
 }
 
 
