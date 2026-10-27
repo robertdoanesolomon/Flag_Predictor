@@ -128,7 +128,12 @@ def merge_and_clean_data(
         else:
             aggregation_rules[col] = "mean"  # Default to mean
     
-    df_hourly = df.resample('1h').agg(aggregation_rules)
+    # Rain is summed with min_count=1 so an hour with no reading stays missing (a plain sum
+    # would turn a gauge that is down into 0 mm of rain).
+    rain_in = [c for c in df.columns if aggregation_rules.get(c) == "sum"]
+    df_hourly = df.resample('1h').agg({c: r for c, r in aggregation_rules.items() if c not in rain_in})
+    if rain_in:
+        df_hourly = df_hourly.join(df[rain_in].resample('1h').sum(min_count=1))[list(df.columns)]
     df = df_hourly.copy()
     
     # Clean data - remove NaN differentials
@@ -143,9 +148,18 @@ def merge_and_clean_data(
     level_cols = [col for col in df.columns if col.startswith("level")]
     groundwater_cols = [col for col in df.columns if col.startswith("groundwater")]
     
-    # Fill rainfall with 0
-    for col in rainfall_cols:
-        df[col] = df[col].fillna(0)
+    # Rainfall: a gauge that is down takes the mean of the gauges reporting that hour, so it
+    # neither adds nor removes rain from the catchment average. Hours when no gauge reported
+    # count as dry, except at the very end of the record (the feed not yet in): those stay
+    # missing so the page can top them up from the live EA readings.
+    if rainfall_cols:
+        rain = df[rainfall_cols].clip(lower=0, upper=50)
+        row_mean = rain.mean(axis=1)
+        rain = rain.apply(lambda c: c.fillna(row_mean))
+        reported = row_mean.notna().to_numpy()
+        last = int(np.flatnonzero(reported)[-1]) + 1 if reported.any() else 0
+        rain.iloc[:last] = rain.iloc[:last].fillna(0)
+        df[rainfall_cols] = rain
     
     # Fill flow, level, groundwater with forward fill then backward fill
     # This preserves actual measurements rather than filling with 0
@@ -306,11 +320,13 @@ def merge_rain_and_flow(
             aggregation_rules[col] = 'sum'
         else:
             aggregation_rules[col] = 'mean'
-    df = df.resample('1h').agg(aggregation_rules)
-
-    for col in rainfall_station_names:
-        if col in df.columns:
-            df[col] = df[col].fillna(0).clip(lower=0, upper=50)
+    rain_in = [c for c in df.columns if aggregation_rules[c] == 'sum']
+    df = df.resample('1h').agg({c: r for c, r in aggregation_rules.items() if c not in rain_in}).join(
+        df[rain_in].resample('1h').sum(min_count=1))[list(df.columns)]
+    if rain_in:   # a gauge that is down takes the mean of those reporting; no gauge at all = dry
+        rain = df[rain_in].clip(lower=0, upper=50)
+        row_mean = rain.mean(axis=1)
+        df[rain_in] = rain.apply(lambda c: c.fillna(row_mean)).fillna(0)
     flow_cols = [c for c in df.columns if c.startswith('flow')]
     for col in flow_cols:
         df[col] = df[col].ffill().bfill()
