@@ -171,8 +171,10 @@ def main() -> None:
     fetched, weighting = None, None
     try:
         fetched = T.ec46_fetch()
-        ens.year_w, weighting = T.forecast_year_weights(ens, ROOT, *fetched)
-        print(f"  EC46 weighting: {weighting['effective_years']} effective years; most weight to {weighting['top_years']}")
+        yw, weighting = T.forecast_year_weights(ens, ROOT, *fetched)
+        if T.EC46_WEIGHTING:
+            ens.year_w = yw
+        print(f"  EC46 weighting {'on' if T.EC46_WEIGHTING else 'OFF (logged only)'}: {weighting['effective_years']} effective years")
         log = ROOT / 'data' / 'termly' / 'ec46_log.csv'      # kept to measure EC46's own skill here later
         rows = pd.DataFrame([{'issued': f'{t0:%Y-%m-%d}', 'run_first_day': f'{fetched[0][0]:%Y-%m-%d}', **w}
                              for w in weighting['weeks']])
@@ -220,6 +222,8 @@ def main() -> None:
     prev = float(qk.dropna().iloc[-1])
     out_terms = {loc: [term_summary(qk, ens, term, y, loc, actual[loc], rebuilt[loc], ver, analogs) for term, y in terms]
                  for loc in ('isis', 'godstow')}
+    if weighting is not None and not T.EC46_WEIGHTING:
+        weighting['applied'] = False
     if ens.year_w is not None:          # the same without the weather forecasts, to show what they changed
         w_keep, ens.year_w = ens.year_w, None
         for loc in out_terms:
