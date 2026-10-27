@@ -463,7 +463,7 @@ def ec46_fetch(timeout: int = 60) -> tuple[pd.DatetimeIndex, np.ndarray]:
 # after the issue day. Provisional: typical ECMWF extended-range skill for weekly UK rainfall, rounded down;
 # to be refitted on the EC46 re-forecasts (fetch_ec46.py) when they arrive. Beyond three weeks: no skill.
 EC46_SKILL = (0.6, 0.3, 0.15)
-EC46_WEIGHTING = False          # off until tested on the EC46 re-forecasts (27 Oct 2026)
+EC46_WEIGHTING = True           # provisional skill; refit on the EC46 re-forecasts when they arrive
 ERA5_DAILY = Path('data') / 'termly' / 'era5_daily_rain.csv'
 MIN_EFFECTIVE_YEARS = 15
 
