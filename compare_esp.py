@@ -28,14 +28,16 @@ ap.add_argument('--out', default='figures/eval/esp_compare.csv')
 a = ap.parse_args()
 
 q = T.load_flow(ROOT)
-VARIANTS = ('stat', 'esp', 'esp_blend')
+VARIANTS = ('stat', 'esp', 'pool')
 
 
 def weights(name, ens_stat, ens_esp, lead):
     if name == 'stat':
         return T.mix(ens_stat, lead)
-    if name == 'esp_blend':
-        return T.mix(ens_esp, lead)
+    if name == 'pool':          # half the weight on each outlook
+        s1, w1 = T.mix(ens_stat, lead)
+        n = len(ens_esp.members)
+        return np.concatenate([s1, ens_esp.members]), np.r_[0.5 * w1, np.full(n, 0.5 / n)]
     n = len(ens_esp.members)
     return np.concatenate([ens_esp.members, ens_esp.climatology]), np.r_[np.full(n, 1 / n), np.zeros(n)]
 
