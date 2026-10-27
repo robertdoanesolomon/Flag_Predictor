@@ -167,6 +167,19 @@ def main() -> None:
     ver = json.loads(VERIFY.read_text()) if VERIFY.exists() else {}
     model = T.Outlook(qk)
     ens = model.ensemble(t0)
+    # weather forecasts: weight the member years by how well their rain fits EC46's next three weeks
+    fetched, weighting = None, None
+    try:
+        fetched = T.ec46_fetch()
+        ens.year_w, weighting = T.forecast_year_weights(ens, ROOT, *fetched)
+        print(f"  EC46 weighting: {weighting['effective_years']} effective years; most weight to {weighting['top_years']}")
+        log = ROOT / 'data' / 'termly' / 'ec46_log.csv'      # kept to measure EC46's own skill here later
+        rows = pd.DataFrame([{'issued': f'{t0:%Y-%m-%d}', 'run_first_day': f'{fetched[0][0]:%Y-%m-%d}', **w}
+                             for w in weighting['weeks']])
+        old_log = pd.read_csv(log) if log.exists() else pd.DataFrame()
+        pd.concat([old_log, rows]).drop_duplicates(['issued', 'from'], keep='last').to_csv(log, index=False)
+    except Exception as e:              # noqa: BLE001
+        print(f'  EC46 weighting off: {e}')
     acad = T.academic_year(t0)
     actual = {loc: T.daily_flags(ROOT, loc) for loc in ('isis', 'godstow')}
     actual = {k: v[v.index <= t0] for k, v in actual.items()}
@@ -207,6 +220,12 @@ def main() -> None:
     prev = float(qk.dropna().iloc[-1])
     out_terms = {loc: [term_summary(qk, ens, term, y, loc, actual[loc], rebuilt[loc], ver, analogs) for term, y in terms]
                  for loc in ('isis', 'godstow')}
+    if ens.year_w is not None:          # the same without the weather forecasts, to show what they changed
+        w_keep, ens.year_w = ens.year_w, None
+        for loc in out_terms:
+            for t, (term, y) in zip(out_terms[loc], terms):
+                t['tercile_river_only'] = term_summary(qk, ens, term, y, loc, actual[loc], rebuilt[loc], ver, analogs)['tercile']
+        ens.year_w = w_keep
 
     # Torpids: the next one
     ty = acad if T.race_days('torpids', acad)[-1] > t0 else acad + 1
@@ -224,6 +243,8 @@ def main() -> None:
                    'chance_state_only': round(float((rf[:len(ens.members)] >= T.TORPIDS_FLOW).mean()), 2),
                    'chance_clim': round(float((rfc >= T.TORPIDS_FLOW).mean()), 2),
                    'chance_record': ver.get('torpids_climatology'), 'trust': T.blend_weight(tb),
+                   'chance_river_only': round(float(np.sum(T.mix(T.Ensemble(**{**ens.__dict__, 'year_w': None}), tb)[1]
+                                                    * (rf >= T.TORPIDS_FLOW))), 2),
                    'flow_median': _wq(rf, wts, 50), 'flow_p10': _wq(rf, wts, 10), 'flow_p90': _wq(rf, wts, 90),
                    'lead': lead, 'skill': sk}
 
@@ -237,7 +258,7 @@ def main() -> None:
             print(f'  seasonal forecast, attempt {attempt + 1}: {e}')
             time.sleep(10 * (attempt + 1))
     try:
-        ec46 = T.ec46_rain(ROOT)
+        ec46 = T.ec46_rain(ROOT, fetched=fetched) if fetched is not None else T.ec46_rain(ROOT)
     except Exception as e:              # noqa: BLE001
         print(f'  EC46 unavailable: {e}')
         ec46 = json.loads(OUT.read_text()).get('ec46', []) if OUT.exists() else []
@@ -248,7 +269,8 @@ def main() -> None:
               'members': len(ens.members), 'member_years': ens.years, 'state': state,
               'lines': T.LINES, 'names': T.NAMES, 'torpids_flow': T.TORPIDS_FLOW,
               'terms': out_terms, 'weekly': {loc: weekly(ens, loc, prev) for loc in ('isis', 'godstow')},
-              'torpids': torpids, 'seasonal': seasonal, 'ec46': ec46}
+              'torpids': torpids, 'seasonal': seasonal, 'ec46': ec46,
+              'forecast_weighting': weighting}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=1))
     print(f'Termly outlook from {t0:%Y-%m-%d}: Farmoor {state["flow"]} m3/s, {state["pct_normal_7d"]:.0f}% of normal '

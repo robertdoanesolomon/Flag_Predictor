@@ -27,6 +27,7 @@ import datetime as dt
 from dataclasses import dataclass
 from pathlib import Path
 
+from typing import Optional
 import numpy as np
 import pandas as pd
 
@@ -226,6 +227,7 @@ class Ensemble:
     climatology: np.ndarray         # (n, HORIZON) the same years without the conditioning
     years: list                     # the academic year each member's weather comes from
     state: dict                     # today's normal scores, mean over the last 7 and 90 days
+    year_w: Optional[np.ndarray] = None   # weight of each year from the weather forecasts (sums to 1); None = equal
 
 
 class Outlook:
@@ -356,8 +358,11 @@ def mix(ens: 'Ensemble', lead_days: float) -> tuple[np.ndarray, np.ndarray]:
     """(samples, weights): the conditioned and climatology members together, weighted for this lead."""
     w = blend_weight(lead_days)
     n, m = len(ens.members), len(ens.climatology)
-    return (np.concatenate([ens.members, ens.climatology]),
-            np.r_[np.full(n, w / n), np.full(m, (1 - w) / m)])
+    yw = np.full(n, 1 / n)
+    if ens.year_w is not None:      # the forecast weights cover three weeks: fade them out for periods further off
+        a = float(np.clip(1 - (lead_days - 21) / 49, 0, 1))
+        yw = a * ens.year_w + (1 - a) * yw
+    return (np.concatenate([ens.members, ens.climatology]), np.r_[w * yw, (1 - w) * yw])
 
 
 def wquantile(x: np.ndarray, w: np.ndarray, p: float) -> float:
@@ -438,10 +443,8 @@ def seasonal_rain(root: Path, today: pd.Timestamp | None = None) -> list[dict]:
 EC46_POINTS = ((51.95, -1.95), (51.70, -1.90), (51.65, -1.60), (51.85, -1.50))   # across the catchment
 
 
-def ec46_rain(root: Path, timeout: int = 60) -> list[dict]:
-    """ECMWF extended range (EC46, latest run, all members, via Open-Meteo): rain over the catchment above
-    Farmoor for each whole week (Mon-Sun) ahead, against the CRU TS normal for that time of year (the month's
-    normal, scaled to 7 days). Raw model output: not yet corrected for bias or tested for skill."""
+def ec46_fetch(timeout: int = 60) -> tuple[pd.DatetimeIndex, np.ndarray]:
+    """The latest EC46 run via Open-Meteo: (days, rain members x days), mm/day, mean over the catchment points."""
     import requests
     r = requests.get('https://seasonal-api.open-meteo.com/v1/seasonal', timeout=timeout, params={
         'latitude': ','.join(str(p[0]) for p in EC46_POINTS), 'longitude': ','.join(str(p[1]) for p in EC46_POINTS),
@@ -453,7 +456,65 @@ def ec46_rain(root: Path, timeout: int = 60) -> list[dict]:
     days = pd.to_datetime(js[0]['daily']['time'])
     rain = np.nanmean([[np.array(j['daily'][k], dtype=float) for k in keys] for j in js], axis=0)   # members x days
     ok = np.isfinite(rain).all(axis=0)
-    rain, days = rain[:, ok], days[ok]
+    return days[ok], rain[:, ok]
+
+
+# How well EC46's ensemble-mean rain over 7 days matches what fell (correlation), for days 1-7, 8-14 and 15-21
+# after the issue day. Provisional: typical ECMWF extended-range skill for weekly UK rainfall, rounded down;
+# to be refitted on the EC46 re-forecasts (fetch_ec46.py) when they arrive. Beyond three weeks: no skill.
+EC46_SKILL = (0.6, 0.3, 0.15)
+ERA5_DAILY = Path('data') / 'termly' / 'era5_daily_rain.csv'
+MIN_EFFECTIVE_YEARS = 15
+
+
+def forecast_year_weights(ens: 'Ensemble', root: Path, days: pd.DatetimeIndex, rain: np.ndarray) -> tuple[np.ndarray, dict]:
+    """Weight each member year by how well its rain (ERA5) over the next three weeks fits the EC46 forecast.
+
+    For each week ahead: the forecast's ensemble-mean total is ranked among that week's totals in every year since
+    1993 (a normal score z_f), and so is each member year's own total (z_y). With skill r for that week, the
+    weight is the likelihood ratio p(z_y | forecast) / p(z_y) = N(z_y; r z_f, 1 - r^2) / N(z_y; 0, 1), multiplied
+    over the weeks. Never fewer than MIN_EFFECTIVE_YEARS years' worth of weight (flattened if needed)."""
+    from scipy.special import ndtri
+    obs = pd.read_csv(Path(root) / ERA5_DAILY, index_col=0, parse_dates=True).iloc[:, 0]
+    acad0 = academic_year(ens.t0)
+    years = np.array(ens.years)
+    lw, weeks = np.zeros(len(years)), []
+    start = max(days[0], ens.t0 + pd.Timedelta(days=1))
+    for k, r in enumerate(EC46_SKILL):
+        a = start + pd.Timedelta(days=7 * k)
+        sel = (days >= a) & (days < a + pd.Timedelta(days=7))
+        if sel.sum() < 7 or r <= 0:
+            break
+        fc = float(rain[:, sel].sum(axis=1).mean())
+        def total(y):
+            b = _same_date(a, acad0 - y)
+            v = obs.reindex(pd.date_range(b, periods=7))
+            return float(v.sum()) if v.notna().all() else np.nan
+        clim = np.array([total(y) for y in range(FIRST_YEAR, acad0)])
+        clim = clim[np.isfinite(clim)]
+        def z(x):
+            return float(ndtri(np.clip(((clim < x).sum() + 0.5 * (clim == x).sum() + 0.5) / (len(clim) + 1), 0.01, 0.99)))
+        zf = z(fc)
+        zy = np.array([z(v) if np.isfinite(v := total(y)) else 0.0 for y in years])
+        lw += -0.5 * (zy - r * zf) ** 2 / (1 - r * r) + 0.5 * zy ** 2
+        weeks.append({'from': f'{a:%Y-%m-%d}', 'forecast_mm': round(fc, 1), 'normal_mm': round(float(np.median(clim)), 1),
+                      'z': round(zf, 2), 'skill': r})
+    lam = 1.0
+    for _ in range(30):
+        w = np.exp(lam * (lw - lw.max()))
+        w /= w.sum()
+        if 1 / np.sum(w ** 2) >= MIN_EFFECTIVE_YEARS:
+            break
+        lam *= 0.8
+    return w, {'weeks': weeks, 'effective_years': round(float(1 / np.sum(w ** 2)), 1), 'flattened': round(lam, 2),
+               'top_years': [int(years[i]) for i in np.argsort(-w)[:5]]}
+
+
+def ec46_rain(root: Path, timeout: int = 60, fetched=None) -> list[dict]:
+    """ECMWF extended range (EC46, latest run, all members, via Open-Meteo): rain over the catchment above
+    Farmoor for each whole week (Mon-Sun) ahead, against the CRU TS normal for that time of year (the month's
+    normal, scaled to 7 days). Raw model output, shown as it comes."""
+    days, rain = fetched if fetched is not None else ec46_fetch(timeout)
     era = pd.read_csv(Path(root) / OBS_RAIN_FILE, index_col=0, parse_dates=True).iloc[:, 0]
     era = era[era.index.year >= FIRST_YEAR]
     out = []
