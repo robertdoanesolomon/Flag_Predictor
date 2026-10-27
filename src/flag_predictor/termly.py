@@ -530,3 +530,62 @@ def ec46_rain(root: Path, timeout: int = 60, fetched=None) -> list[dict]:
         out.append({'week': f'{a:%Y-%m-%d}', 'median': round(float(np.median(tot))), 'p10': round(float(np.percentile(tot, 10))),
                     'p90': round(float(np.percentile(tot, 90))), 'normal': round(normal), 'members': int(rain.shape[0])})
     return out
+
+
+# Torpids in its last five weeks: the outlook's chance adjusted by the rain since 1 January (Anu Dudhia's
+# observation that a wet January and February loses Torpids). logit p' = a + b logit p + c z (days so far / 60),
+# z = this year's mean rain since 1 Jan against the same days in every year since 1994 (ERA5). Fitted
+# leave-one-year-out on hindcasts 1994-2026 (Brier skill vs the record: last week 36 -> 52%, 1-3 weeks 22 -> 27%,
+# 3-5 weeks 18 -> 22%; worse beyond five weeks, so not used then).
+TORPIDS_RAIN_COEF = (0.38, 0.82, 1.29)
+TORPIDS_RAIN_DAYS = 35
+
+
+def rain_since_jan1(root: Path, t0: pd.Timestamp, timeout: int = 60) -> Optional[pd.Series]:
+    """Daily catchment rain from 1 January to t0: ERA5 (stored, then Open-Meteo's archive), with Open-Meteo's
+    recent analysis for the last few days the archive does not have yet."""
+    import requests
+    jan1 = pd.Timestamp(t0.year, 1, 1)
+    obs = pd.read_csv(Path(root) / ERA5_DAILY, index_col=0, parse_dates=True).iloc[:, 0]
+    s = obs.loc[jan1:t0]
+    if len(s) and s.index[-1] >= t0:
+        return s
+    lat, lon = '51.75,52.0,52.0,51.75,51.75,52.0', '-2.0,-2.0,-1.5,-1.5,-1.0,-1.0'
+    got = []
+    for url, extra in (('https://archive-api.open-meteo.com/v1/archive', {'start_date': f'{jan1:%Y-%m-%d}', 'end_date': f'{t0:%Y-%m-%d}'}),
+                       ('https://api.open-meteo.com/v1/forecast', {'past_days': 92, 'forecast_days': 1})):
+        try:
+            r = requests.get(url, timeout=timeout, params={'latitude': lat, 'longitude': lon, 'daily': 'precipitation_sum',
+                                                           'timezone': 'GMT', **extra})
+            r.raise_for_status()
+            js = r.json()
+            js = js if isinstance(js, list) else [js]
+            v = np.nanmean([np.array(j['daily']['precipitation_sum'], dtype=float) for j in js], axis=0)
+            got.append(pd.Series(v, index=pd.to_datetime(js[0]['daily']['time'])).dropna())
+        except Exception as e:          # noqa: BLE001
+            print(f'  rain since 1 Jan: {url.split("/")[2]} failed ({e})')
+    for g in got:
+        s = s.combine_first(g)
+    s = s.loc[jan1:t0]
+    full = pd.date_range(jan1, t0)
+    return s if s.reindex(full).notna().all() else None
+
+
+def torpids_rain_adjust(root: Path, p: float, t0: pd.Timestamp, race_start: pd.Timestamp) -> tuple[float, Optional[dict]]:
+    """(adjusted chance, details) in the last TORPIDS_RAIN_DAYS before Torpids from 1 January; else (p, None)."""
+    before = (race_start - t0).days
+    if not (0 < before <= TORPIDS_RAIN_DAYS) or t0 < pd.Timestamp(race_start.year, 1, 1):
+        return p, None
+    s = rain_since_jan1(root, t0)
+    if s is None:
+        return p, None
+    obs = pd.read_csv(Path(root) / ERA5_DAILY, index_col=0, parse_dates=True).iloc[:, 0]
+    n = len(s)
+    others = [obs.loc[pd.Timestamp(y, 1, 1):pd.Timestamp(y, 1, 1) + pd.Timedelta(days=n - 1)].mean()
+              for y in range(1994, race_start.year)]
+    z = (s.mean() - np.mean(others)) / np.std(others)
+    a, b, c = TORPIDS_RAIN_COEF
+    lp = np.log(np.clip(p, 0.02, 0.98) / (1 - np.clip(p, 0.02, 0.98)))
+    p2 = float(1 / (1 + np.exp(-(a + b * lp + c * z * n / 60))))
+    return p2, {'rain_mm_per_day': round(float(s.mean()), 2), 'days': n, 'normal_mm_per_day': round(float(np.mean(others)), 2),
+                'chance_before_rain': round(p, 2)}

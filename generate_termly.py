@@ -247,6 +247,9 @@ def main() -> None:
                                                     * (rf >= T.TORPIDS_FLOW))), 2),
                    'flow_median': _wq(rf, wts, 50), 'flow_p10': _wq(rf, wts, 10), 'flow_p90': _wq(rf, wts, 90),
                    'lead': lead, 'skill': sk}
+        adj, info = T.torpids_rain_adjust(ROOT, torpids['chance'], t0, race[0])
+        if info:
+            torpids['chance'], torpids['rain_since_jan1'] = round(adj, 2), info
 
     # ECMWF's seasonal run changes once a month: if the fetch fails, keep the last one
     seasonal = []
