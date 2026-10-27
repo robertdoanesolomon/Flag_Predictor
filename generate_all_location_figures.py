@@ -778,23 +778,25 @@ def render_location_outputs(
         and not col.startswith("groundwater_mAOD_")
     ]
     historical_rainfall_hourly = last_8_days[rainfall_cols].mean(axis=1)  # Average across stations
-    # The frame stops at the last river reading. While the river gauges are offline the rain
-    # gauges usually are not: carry the rain history on to now from the EA API.
+    # The frame only has hours with a river reading, so any hour the river gauge missed (an
+    # outage, or since its last reading) has no rain in it. Rain gauges are separate: put the
+    # rain on a full hourly grid to now and fill every missing hour from the EA rain gauges.
     try:
         hr = historical_rainfall_hourly.copy()
         hr.index = _ensure_timezone_naive(hr.index)
-        last_rain = hr.dropna().index.max()
-        now_naive = pd.Timestamp.utcnow().tz_localize(None)
-        if last_rain is not None and now_naive - last_rain > pd.Timedelta(hours=3):
+        now_naive = pd.Timestamp.now('UTC').tz_localize(None).floor('1h')
+        grid = pd.date_range(_ensure_timezone_naive(pd.DatetimeIndex([history_start]))[0], now_naive, freq='1h')
+        hr = hr.groupby(hr.index.floor('1h')).sum(min_count=1).reindex(grid)
+        gaps = int(hr.isna().sum())
+        if gaps:
             from flag_predictor.prediction.hybrid_live import recent_gauge_rain
             more = recent_gauge_rain(rainfall_cols)
             if more is not None:
-                more = more[(more.index > last_rain) & (more.index <= now_naive)]
-                if len(more):
-                    historical_rainfall_hourly = pd.concat([hr, more])
-                    print(f"  Rain history carried on {len(more)} h past the last river reading (EA rain gauges)")
+                hr = hr.fillna(more.groupby(more.index.floor('1h')).sum(min_count=1).reindex(grid))
+            print(f"  Rain: {gaps - int(hr.isna().sum())} of {gaps} hours without a river reading filled from the EA rain gauges")
+        historical_rainfall_hourly = hr
     except Exception as exc:
-        print(f"  [rain] could not extend the rain history ({type(exc).__name__}: {exc})")
+        print(f"  [rain] could not fill the rain history ({type(exc).__name__}: {exc})")
     historical_rainfall_daily = uk_daily(historical_rainfall_hourly)  # Daily totals (UK calendar days)
 
     # 2. Forecast rainfall - calculate ensemble statistics
