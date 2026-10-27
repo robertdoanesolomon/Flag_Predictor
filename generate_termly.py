@@ -200,6 +200,8 @@ def main() -> None:
              'wetter_years_90d': int(sum(v > now90 for v in past90)), 'n_years': len(past90),
              'pct_normal_14d': round(100 * now14 / float(np.median(past14)), 0),
              'wetter_years_14d': int(sum(v > now14 for v in past14)),
+             'pct_normal_7d': round(100 * now7 / float(np.median(past7)), 0),
+             'wetter_years_7d': int(sum(v > now7 for v in past7)),
              'score_7d': ens.state['7d'], 'score_90d': ens.state['90d']}
 
     prev = float(qk.dropna().iloc[-1])

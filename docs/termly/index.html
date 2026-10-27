@@ -133,12 +133,12 @@
   let D, V;
 
   function renderNow() {
-    const s = D.state, p = Math.round(s.pct_normal_14d), w = s.wetter_years_14d;
+    const s = D.state, p = Math.round(s.pct_normal_7d), w = s.wetter_years_7d;
     const rank = p < 100 ? `lower than ${w}` : `higher than ${s.n_years - w}`;
     const lvl = p < 80 ? 'low' : p > 125 ? 'high' : 'about normal';
     document.getElementById('now').innerHTML = lvl === 'about normal'
-      ? `The river flow rate is about normal for the time of year (<b>${p}%</b> of normal over the last two weeks).`
-      : `The river flow rate is ${lvl} for the time of year: over the last two weeks it has been at <b>${p}%</b>
+      ? `The river flow rate is about normal for the time of year (<b>${p}%</b> of normal over the last week).`
+      : `The river flow rate is ${lvl} for the time of year: over the last week it has been at <b>${p}%</b>
         of normal, ${rank} of the ${s.n_years} years since 1993.`;
   }
 
