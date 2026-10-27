@@ -170,7 +170,7 @@
       const c = t.tercile;
       const left = t.days_done > 0 ? `${t.days - t.days_done} days left` : `${d8(t.start)} – ${d8(t.end)}`;
       return `<div class="prow"><div class="pname">${t.label}<small>${left}</small></div><div>
-        <div class="say">${sentence(c)}${nudge(t)}</div>
+        <div class="say">${sentence(c)}</div>
         <div class="tbar">${seg(c.lower, '', 'var(--lower)')}${seg(c.usual, 'u', 'var(--usual)')}${seg(c.higher, '', 'var(--higher)')}</div>
       </div></div>`;
     }).join('');
