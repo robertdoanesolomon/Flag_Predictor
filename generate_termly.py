@@ -113,6 +113,7 @@ def term_summary(q: pd.Series, ens: T.Ensemble, term: str, acad: int, loc: str, 
         pm = np.full(len(samples), float(q.loc[w0:w1].mean()))
     tercile = {'lower': round(float(np.sum(wts * (pm < lo_t))), 2), 'higher': round(float(np.sum(wts * (pm > hi_t))), 2)}
     tercile['usual'] = round(1 - tercile['lower'] - tercile['higher'], 2)
+    tercile = T.calibrate_tercile(ROOT, tercile, max(0, (w0 - t0).days))
     return {'term': term, 'year': int(w0.year), 'label': f'{term} {w0.year}', 'start': f'{w0:%Y-%m-%d}',
             'end': f'{w1:%Y-%m-%d}', 'full_term_start': f'{T.term_start(term, acad):%Y-%m-%d}',
             'days': int((w1 - w0).days + 1), 'days_done': int(max(0, min((t0 - w0).days + 1, (w1 - w0).days + 1))),
@@ -251,9 +252,17 @@ def main() -> None:
                                                     * (rf >= T.TORPIDS_FLOW))), 2),
                    'flow_median': _wq(rf, wts, 50), 'flow_p10': _wq(rf, wts, 10), 'flow_p90': _wq(rf, wts, 90),
                    'lead': lead, 'skill': sk}
+        # bias correction (calibrate_termly.py): the record when the forecast has shown no skill this far out;
+        # in the last weeks from 1 January, the rain-since-January adjustment (itself fitted on outcomes)
+        torpids['chance_raw'] = torpids['chance']
+        cal = T._calibration(ROOT) or {}
         adj, info = T.torpids_rain_adjust(ROOT, torpids['chance'], t0, race[0])
-        if info:
+        if T.calibration_group_torpids(tb) in cal.get('torpids_record_only', []) and ver.get('torpids_climatology') is not None:
+            torpids['chance'], torpids['too_early'] = ver['torpids_climatology'], True
+        elif info:
             torpids['chance'], torpids['rain_since_jan1'] = round(adj, 2), info
+        else:
+            torpids['chance'] = round(1 - T.calibrate_torpids(ROOT, 1 - torpids['chance'], tb), 2)
 
     # ECMWF's seasonal run changes once a month: if the fetch fails, keep the last one
     seasonal = []

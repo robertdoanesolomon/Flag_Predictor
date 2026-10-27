@@ -24,6 +24,7 @@ Everything runs on Farmoor's daily mean flow (EA gauge 1100TH, record from June 
 from __future__ import annotations
 
 import datetime as dt
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -590,3 +591,44 @@ def torpids_rain_adjust(root: Path, p: float, t0: pd.Timestamp, race_start: pd.T
     p2 = float(1 / (1 + np.exp(-(a + b * lp + c * z * n / 60))))
     return p2, {'rain_mm_per_day': round(float(s.mean()), 2), 'days': n, 'normal_mm_per_day': round(float(np.mean(others)), 2),
                 'chance_before_rain': round(p, 2)}
+
+
+# Bias correction of the page's percentages (calibrate_termly.py, from leave-one-year-out hindcasts):
+# logit p' = a + b logit p for each lead group.
+CALIBRATION_FILE = Path('data') / 'termly' / 'calibration.json'
+
+
+def calibration_group(lead_days: int) -> str:
+    return 'during' if lead_days <= 0 else 'up to 1 month' if lead_days <= 31 else '1-3 months' if lead_days <= 92 else '3+ months'
+
+
+def calibration_group_torpids(days_before: int) -> str:
+    return 'last 5 weeks' if days_before <= 35 else '5 weeks-3 months' if days_before <= 92 else '3+ months'
+
+
+def _calibration(root: Path) -> Optional[dict]:
+    f = Path(root) / CALIBRATION_FILE
+    return json.loads(f.read_text()) if f.exists() else None
+
+
+def _cal(b, p: float) -> float:
+    p = min(max(p, 0.01), 0.99)
+    return float(1 / (1 + np.exp(-(b[0] + b[1] * np.log(p / (1 - p))))))
+
+
+def calibrate_tercile(root: Path, t: dict, lead_days: int) -> dict:
+    """{'lower','usual','higher'} bias-corrected for this lead."""
+    c = _calibration(root)
+    b = c and c['terms'].get(calibration_group(lead_days))
+    if not b:
+        return t
+    lo, hi = _cal(b['lower'], t['lower']), _cal(b['higher'], t['higher'])
+    s = max(1.0, lo + hi)
+    lo, hi = round(lo / s, 2), round(hi / s, 2)
+    return {'lower': lo, 'higher': hi, 'usual': round(1 - lo - hi, 2)}
+
+
+def calibrate_torpids(root: Path, p_go: float, days_before: int) -> float:
+    c = _calibration(root)
+    b = c and c['torpids'].get(calibration_group_torpids(days_before))
+    return _cal(b, p_go) if b else p_go
