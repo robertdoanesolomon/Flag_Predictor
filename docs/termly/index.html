@@ -99,7 +99,7 @@
   <section class="panel">
     <h2>Next six weeks</h2>
     <div id="ec46" class="chart"></div>
-    <p class="muted">ECMWF's extended-range forecast (51 members) for weekly rain over the upper Thames, Monday to
+    <p class="muted" id="ec46-note">ECMWF's extended-range forecast (51 members) for weekly rain over the upper Thames, Monday to
       Sunday: middle value and 10th–90th percentile, against the 1993–2025 normal (CRU TS). Not yet corrected for bias or
       tested here.</p>
   </section>
@@ -216,6 +216,10 @@
     if (!w.length) { el.innerHTML = '<p class="muted">Not available today.</p>'; return; }
     const dark = matchMedia('(prefers-color-scheme: dark)').matches;
     const col = getComputedStyle(document.documentElement).getPropertyValue('--text-soft');
+    if (D.ec46_run) {
+      const n = document.getElementById('ec46-note');
+      n.textContent = n.textContent.replace(/^ECMWF's extended-range forecast/, `ECMWF's extended-range forecast from ${d8(D.ec46_run)}`);
+    }
     const x = w.map((r) => d8(r.week));
     Plotly.react('ec46', [
       { type: 'bar', x, y: w.map((r) => r.normal), name: 'Normal', marker: { color: dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.10)' },
