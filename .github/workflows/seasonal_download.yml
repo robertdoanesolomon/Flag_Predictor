@@ -4,14 +4,18 @@ name: Download seasonal forecasts
 # Needs the repository secret CDS_API_KEY (the Copernicus Climate Data Store personal access token).
 #   - the whole archive (hindcasts 1993-2016 + forecasts since 2017): run from the Actions tab, or
 #     change data/seasonal/request.txt; files already downloaded are skipped, so reruns fill gaps
-#   - each month's new forecast: the schedule below (ECMWF publishes on the 5th)
+#   - each month's new forecast: the schedule below (ECMWF publishes on the 5th). It tries on the 6th,
+#     7th and 8th; a try is skipped once this month's run is in seas5_upper_thames.csv, so the 7th and
+#     8th only do anything if the 6th failed (or ECMWF was late)
+#   - when a new forecast is committed, the long-range page is rebuilt straight away (termly_update.yml),
+#     rather than waiting for the next morning's daily rebuild
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths: ['data/seasonal/request.txt']
   schedule:
-    - cron: "41 7 6 * *"
+    - cron: "41 7 6,7,8 * *"
 
 concurrency:
   group: seasonal-download
@@ -23,6 +27,7 @@ jobs:
     timeout-minutes: 330
     permissions:
       contents: write
+      actions: write          # to start termly_update.yml once a new forecast is in
     env:
       CDSAPI_URL: https://cds.climate.copernicus.eu/api
       CDSAPI_KEY: ${{ secrets.CDS_API_KEY || secrets.CDSAPI_KEY }}
@@ -31,14 +36,27 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Already have this month's run?
+        id: have
+        if: ${{ github.event_name == 'schedule' }}
+        run: |
+          MONTH="$(date -u +%Y-%m)"
+          if grep -q "^ecmwf,${MONTH}," data/seasonal/seas5_upper_thames.csv; then
+            echo "SEAS5 run ${MONTH} already processed: nothing to do."
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-python@v5
+        if: ${{ steps.have.outputs.skip != '1' }}
         with:
           python-version: "3.11"
 
       - name: Install
+        if: ${{ steps.have.outputs.skip != '1' }}
         run: pip install "cdsapi>=0.7.4" xarray netCDF4 pandas
 
       - name: Download
+        if: ${{ steps.have.outputs.skip != '1' }}
         continue-on-error: true
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
@@ -48,12 +66,13 @@ jobs:
           fi
 
       - name: Catchment rainfall table
-        if: always()
+        if: ${{ always() && steps.have.outputs.skip != '1' }}
         run: python process_seasonal.py
 
       # Only data/seasonal/ is committed, which nothing else writes: put it on top of the latest main.
       - name: Commit
-        if: always()
+        id: commit
+        if: ${{ always() && steps.have.outputs.skip != '1' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -65,8 +84,18 @@ jobs:
             tar -xf "$OUT/seasonal.tar"
             git add data/seasonal
             if git diff --cached --quiet; then echo "Nothing new"; exit 0; fi
+            NEW=0; git diff --cached --quiet -- data/seasonal/seas5_upper_thames.csv || NEW=1
             git commit -m "Seasonal forecasts: download [skip ci]"
-            if git push origin HEAD:main; then exit 0; fi
+            if git push origin HEAD:main; then echo "new_forecast=${NEW}" >> "$GITHUB_OUTPUT"; exit 0; fi
             sleep $((i * 10))
           done
           exit 1
+
+      # Rebuild the long-range page now, so a new month's run shows the same day. Only when a new
+      # forecast went in (not just a new line in the download log). GITHUB_TOKEN may start
+      # workflow_dispatch runs (unlike pushes, which don't).
+      - name: Rebuild the long-range page
+        if: ${{ always() && steps.commit.outputs.new_forecast == '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run termly_update.yml --ref main
