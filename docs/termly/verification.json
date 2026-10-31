@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-27 16:44 UTC",
+ "generated": "2026-10-31 16:06 UTC",
  "years": "1993/94-2025/26",
  "skill": [
   {
@@ -7,8 +7,8 @@
    "period": "Christmas Vac",
    "flag": "amber",
    "lead": "1-2 months",
-   "skill": 0.012,
-   "mae": 3.7,
+   "skill": 0.011,
+   "mae": 3.8,
    "mae_clim": 3.7,
    "in_range": 0.95,
    "n": 66
@@ -21,7 +21,7 @@
    "skill": 0.027,
    "mae": 3.7,
    "mae_clim": 3.7,
-   "in_range": 0.97,
+   "in_range": 0.95,
    "n": 66
   },
   {
@@ -40,9 +40,9 @@
    "period": "Christmas Vac",
    "flag": "amber",
    "lead": "during",
-   "skill": 0.09,
+   "skill": 0.091,
    "mae": 2.1,
-   "mae_clim": 2.5,
+   "mae_clim": 2.6,
    "in_range": 0.88,
    "n": 66
   },
@@ -51,7 +51,7 @@
    "period": "Christmas Vac",
    "flag": "amber",
    "lead": "up to 1 month",
-   "skill": 0.073,
+   "skill": 0.072,
    "mae": 3.4,
    "mae_clim": 3.7,
    "in_range": 0.95,
@@ -62,7 +62,7 @@
    "period": "Christmas Vac",
    "flag": "green",
    "lead": "1-2 months",
-   "skill": 0.19,
+   "skill": 0.191,
    "mae": 8.5,
    "mae_clim": 10.2,
    "in_range": 0.97,
@@ -76,7 +76,7 @@
    "skill": 0.054,
    "mae": 10.3,
    "mae_clim": 10.2,
-   "in_range": 0.89,
+   "in_range": 0.91,
    "n": 66
   },
   {
@@ -95,9 +95,9 @@
    "period": "Christmas Vac",
    "flag": "green",
    "lead": "during",
-   "skill": 0.362,
+   "skill": 0.361,
    "mae": 3.1,
-   "mae_clim": 5.2,
+   "mae_clim": 5.3,
    "in_range": 0.92,
    "n": 66
   },
@@ -118,7 +118,7 @@
    "flag": "red",
    "lead": "1-2 months",
    "skill": 0.159,
-   "mae": 6.9,
+   "mae": 7.0,
    "mae_clim": 8.2,
    "in_range": 0.91,
    "n": 66
@@ -129,7 +129,7 @@
    "flag": "red",
    "lead": "2-3 months",
    "skill": 0.025,
-   "mae": 8.6,
+   "mae": 8.5,
    "mae_clim": 8.2,
    "in_range": 0.89,
    "n": 66
@@ -150,7 +150,7 @@
    "period": "Christmas Vac",
    "flag": "red",
    "lead": "during",
-   "skill": 0.204,
+   "skill": 0.202,
    "mae": 3.6,
    "mae_clim": 4.9,
    "in_range": 0.91,
@@ -172,7 +172,7 @@
    "period": "Easter Vac",
    "flag": "amber",
    "lead": "1-2 months",
-   "skill": 0.13,
+   "skill": 0.124,
    "mae": 2.5,
    "mae_clim": 2.8,
    "in_range": 0.91,
@@ -183,9 +183,9 @@
    "period": "Easter Vac",
    "flag": "amber",
    "lead": "2-3 months",
-   "skill": 0.109,
+   "skill": 0.103,
    "mae": 2.5,
-   "mae_clim": 2.8,
+   "mae_clim": 2.9,
    "in_range": 0.92,
    "n": 66
   },
@@ -196,7 +196,7 @@
    "lead": "3-4 months",
    "skill": 0.038,
    "mae": 2.7,
-   "mae_clim": 2.8,
+   "mae_clim": 2.9,
    "in_range": 0.91,
    "n": 66
   },
@@ -206,9 +206,9 @@
    "flag": "amber",
    "lead": "4+ months",
    "skill": 0.007,
-   "mae": 2.8,
-   "mae_clim": 2.8,
-   "in_range": 0.89,
+   "mae": 2.9,
+   "mae_clim": 2.9,
+   "in_range": 0.9,
    "n": 165
   },
   {
@@ -216,7 +216,7 @@
    "period": "Easter Vac",
    "flag": "amber",
    "lead": "during",
-   "skill": 0.158,
+   "skill": 0.156,
    "mae": 1.3,
    "mae_clim": 1.4,
    "in_range": 0.94,
@@ -227,7 +227,7 @@
    "period": "Easter Vac",
    "flag": "amber",
    "lead": "up to 1 month",
-   "skill": 0.148,
+   "skill": 0.145,
    "mae": 2.5,
    "mae_clim": 2.8,
    "in_range": 0.93,
@@ -238,7 +238,7 @@
    "period": "Easter Vac",
    "flag": "green",
    "lead": "1-2 months",
-   "skill": 0.122,
+   "skill": 0.119,
    "mae": 5.8,
    "mae_clim": 6.6,
    "in_range": 0.92,
@@ -249,7 +249,7 @@
    "period": "Easter Vac",
    "flag": "green",
    "lead": "2-3 months",
-   "skill": 0.097,
+   "skill": 0.096,
    "mae": 5.9,
    "mae_clim": 6.6,
    "in_range": 0.88,
@@ -262,7 +262,7 @@
    "lead": "3-4 months",
    "skill": 0.047,
    "mae": 6.3,
-   "mae_clim": 6.5,
+   "mae_clim": 6.6,
    "in_range": 0.88,
    "n": 66
   },
@@ -272,8 +272,8 @@
    "flag": "green",
    "lead": "4+ months",
    "skill": 0.003,
-   "mae": 6.5,
-   "mae_clim": 6.5,
+   "mae": 6.6,
+   "mae_clim": 6.6,
    "in_range": 0.88,
    "n": 165
   },
@@ -282,7 +282,7 @@
    "period": "Easter Vac",
    "flag": "green",
    "lead": "during",
-   "skill": 0.208,
+   "skill": 0.207,
    "mae": 3.1,
    "mae_clim": 3.3,
    "in_range": 0.92,
@@ -293,9 +293,9 @@
    "period": "Easter Vac",
    "flag": "green",
    "lead": "up to 1 month",
-   "skill": 0.077,
+   "skill": 0.076,
    "mae": 6.1,
-   "mae_clim": 6.3,
+   "mae_clim": 6.4,
    "in_range": 0.89,
    "n": 70
   },
@@ -315,7 +315,7 @@
    "period": "Easter Vac",
    "flag": "red",
    "lead": "2-3 months",
-   "skill": 0.075,
+   "skill": 0.076,
    "mae": 3.6,
    "mae_clim": 3.8,
    "in_range": 0.89,
@@ -351,7 +351,7 @@
    "skill": 0.131,
    "mae": 2.1,
    "mae_clim": 2.2,
-   "in_range": 0.87,
+   "in_range": 0.86,
    "n": 83
   },
   {
@@ -370,10 +370,10 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "1-2 months",
-   "skill": 0.075,
+   "skill": 0.074,
    "mae": 5.3,
-   "mae_clim": 5.7,
-   "in_range": 0.82,
+   "mae_clim": 5.6,
+   "in_range": 0.83,
    "n": 66
   },
   {
@@ -381,9 +381,9 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "2-3 months",
-   "skill": 0.092,
+   "skill": 0.09,
    "mae": 5.3,
-   "mae_clim": 5.7,
+   "mae_clim": 5.6,
    "in_range": 0.85,
    "n": 66
   },
@@ -394,7 +394,7 @@
    "lead": "3-4 months",
    "skill": 0.019,
    "mae": 5.7,
-   "mae_clim": 5.7,
+   "mae_clim": 5.6,
    "in_range": 0.82,
    "n": 66
   },
@@ -404,8 +404,8 @@
    "flag": "amber",
    "lead": "4+ months",
    "skill": 0.012,
-   "mae": 5.6,
-   "mae_clim": 5.7,
+   "mae": 5.7,
+   "mae_clim": 5.6,
    "in_range": 0.82,
    "n": 33
   },
@@ -414,10 +414,10 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "during",
-   "skill": 0.138,
+   "skill": 0.134,
    "mae": 2.9,
    "mae_clim": 3.5,
-   "in_range": 0.88,
+   "in_range": 0.86,
    "n": 132
   },
   {
@@ -425,10 +425,10 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "up to 1 month",
-   "skill": 0.122,
-   "mae": 5.4,
-   "mae_clim": 5.7,
-   "in_range": 0.83,
+   "skill": 0.116,
+   "mae": 5.3,
+   "mae_clim": 5.6,
+   "in_range": 0.85,
    "n": 66
   },
   {
@@ -436,9 +436,9 @@
    "period": "Hilary",
    "flag": "green",
    "lead": "1-2 months",
-   "skill": 0.169,
+   "skill": 0.166,
    "mae": 14.7,
-   "mae_clim": 17.9,
+   "mae_clim": 17.8,
    "in_range": 0.83,
    "n": 66
   },
@@ -447,9 +447,9 @@
    "period": "Hilary",
    "flag": "green",
    "lead": "2-3 months",
-   "skill": 0.125,
+   "skill": 0.124,
    "mae": 15.2,
-   "mae_clim": 17.9,
+   "mae_clim": 17.8,
    "in_range": 0.8,
    "n": 66
   },
@@ -458,9 +458,9 @@
    "period": "Hilary",
    "flag": "green",
    "lead": "3-4 months",
-   "skill": 0.034,
+   "skill": 0.033,
    "mae": 17.1,
-   "mae_clim": 17.9,
+   "mae_clim": 17.8,
    "in_range": 0.83,
    "n": 66
   },
@@ -470,8 +470,8 @@
    "flag": "green",
    "lead": "4+ months",
    "skill": 0.011,
-   "mae": 17.9,
-   "mae_clim": 17.9,
+   "mae": 17.6,
+   "mae_clim": 17.8,
    "in_range": 0.82,
    "n": 33
   },
@@ -480,7 +480,7 @@
    "period": "Hilary",
    "flag": "green",
    "lead": "during",
-   "skill": 0.326,
+   "skill": 0.322,
    "mae": 6.4,
    "mae_clim": 10.1,
    "in_range": 0.9,
@@ -491,10 +491,10 @@
    "period": "Hilary",
    "flag": "green",
    "lead": "up to 1 month",
-   "skill": 0.268,
-   "mae": 12.5,
-   "mae_clim": 17.9,
-   "in_range": 0.82,
+   "skill": 0.265,
+   "mae": 12.6,
+   "mae_clim": 17.8,
+   "in_range": 0.83,
    "n": 66
   },
   {
@@ -546,7 +546,7 @@
    "period": "Hilary",
    "flag": "red",
    "lead": "during",
-   "skill": 0.249,
+   "skill": 0.248,
    "mae": 5.2,
    "mae_clim": 7.1,
    "in_range": 0.89,
@@ -557,10 +557,10 @@
    "period": "Hilary",
    "flag": "red",
    "lead": "up to 1 month",
-   "skill": 0.166,
+   "skill": 0.167,
    "mae": 11.2,
-   "mae_clim": 15.1,
-   "in_range": 0.85,
+   "mae_clim": 14.9,
+   "in_range": 0.83,
    "n": 66
   },
   {
@@ -568,7 +568,7 @@
    "period": "Michaelmas",
    "flag": "amber",
    "lead": "1-2 months",
-   "skill": 0.065,
+   "skill": 0.064,
    "mae": 4.6,
    "mae_clim": 5.5,
    "in_range": 0.83,
@@ -602,7 +602,7 @@
    "flag": "green",
    "lead": "1-2 months",
    "skill": 0.029,
-   "mae": 11.4,
+   "mae": 11.3,
    "mae_clim": 11.0,
    "in_range": 0.87,
    "n": 23
@@ -634,8 +634,8 @@
    "period": "Michaelmas",
    "flag": "red",
    "lead": "1-2 months",
-   "skill": 0.03,
-   "mae": 5.4,
+   "skill": 0.029,
+   "mae": 5.5,
    "mae_clim": 5.4,
    "in_range": 0.91,
    "n": 23
@@ -679,7 +679,7 @@
    "flag": "amber",
    "lead": "2-3 months",
    "skill": -0.044,
-   "mae": 2.2,
+   "mae": 2.3,
    "mae_clim": 2.1,
    "in_range": 0.86,
    "n": 66
@@ -712,7 +712,7 @@
    "flag": "amber",
    "lead": "during",
    "skill": 0.157,
-   "mae": 0.4,
+   "mae": 0.5,
    "mae_clim": 0.5,
    "in_range": 0.96,
    "n": 136
@@ -725,7 +725,7 @@
    "skill": 0.177,
    "mae": 1.8,
    "mae_clim": 2.1,
-   "in_range": 0.89,
+   "in_range": 0.91,
    "n": 66
   },
   {
@@ -744,10 +744,10 @@
    "period": "Trinity",
    "flag": "green",
    "lead": "2-3 months",
-   "skill": -0.05,
-   "mae": 3.1,
+   "skill": -0.051,
+   "mae": 3.2,
    "mae_clim": 3.0,
-   "in_range": 0.91,
+   "in_range": 0.89,
    "n": 66
   },
   {
@@ -791,7 +791,7 @@
    "skill": 0.144,
    "mae": 2.6,
    "mae_clim": 3.0,
-   "in_range": 0.94,
+   "in_range": 0.92,
    "n": 66
   },
   {
@@ -810,7 +810,7 @@
    "period": "Trinity",
    "flag": "red",
    "lead": "2-3 months",
-   "skill": -0.09,
+   "skill": -0.089,
    "mae": 0.9,
    "mae_clim": 0.9,
    "in_range": 0.89,
@@ -821,7 +821,7 @@
    "period": "Trinity",
    "flag": "red",
    "lead": "3-4 months",
-   "skill": -0.021,
+   "skill": -0.02,
    "mae": 0.9,
    "mae_clim": 0.9,
    "in_range": 0.89,
@@ -865,7 +865,7 @@
    "period": "Christmas Vac",
    "flag": "amber",
    "lead": "1-2 months",
-   "skill": 0.058,
+   "skill": 0.056,
    "mae": 1.8,
    "mae_clim": 2.0,
    "in_range": 0.92,
@@ -887,7 +887,7 @@
    "period": "Christmas Vac",
    "flag": "amber",
    "lead": "3-4 months",
-   "skill": 0.016,
+   "skill": 0.017,
    "mae": 2.0,
    "mae_clim": 2.0,
    "in_range": 0.88,
@@ -898,7 +898,7 @@
    "period": "Christmas Vac",
    "flag": "amber",
    "lead": "during",
-   "skill": 0.061,
+   "skill": 0.063,
    "mae": 0.9,
    "mae_clim": 1.0,
    "in_range": 0.88,
@@ -909,7 +909,7 @@
    "period": "Christmas Vac",
    "flag": "amber",
    "lead": "up to 1 month",
-   "skill": 0.102,
+   "skill": 0.101,
    "mae": 1.7,
    "mae_clim": 2.0,
    "in_range": 0.89,
@@ -931,7 +931,7 @@
    "period": "Christmas Vac",
    "flag": "blue",
    "lead": "2-3 months",
-   "skill": -0.017,
+   "skill": -0.018,
    "mae": 4.3,
    "mae_clim": 4.0,
    "in_range": 0.88,
@@ -942,7 +942,7 @@
    "period": "Christmas Vac",
    "flag": "blue",
    "lead": "3-4 months",
-   "skill": 0.009,
+   "skill": 0.008,
    "mae": 4.1,
    "mae_clim": 4.0,
    "in_range": 0.91,
@@ -953,7 +953,7 @@
    "period": "Christmas Vac",
    "flag": "blue",
    "lead": "during",
-   "skill": 0.05,
+   "skill": 0.052,
    "mae": 2.6,
    "mae_clim": 2.8,
    "in_range": 0.83,
@@ -989,7 +989,7 @@
    "skill": 0.068,
    "mae": 10.1,
    "mae_clim": 10.3,
-   "in_range": 0.88,
+   "in_range": 0.89,
    "n": 66
   },
   {
@@ -1008,10 +1008,10 @@
    "period": "Christmas Vac",
    "flag": "green",
    "lead": "during",
-   "skill": 0.43,
+   "skill": 0.431,
    "mae": 2.5,
    "mae_clim": 4.9,
-   "in_range": 0.94,
+   "in_range": 0.95,
    "n": 66
   },
   {
@@ -1020,9 +1020,9 @@
    "flag": "green",
    "lead": "up to 1 month",
    "skill": 0.293,
-   "mae": 7.4,
+   "mae": 7.5,
    "mae_clim": 10.3,
-   "in_range": 0.88,
+   "in_range": 0.89,
    "n": 66
   },
   {
@@ -1063,7 +1063,7 @@
    "period": "Christmas Vac",
    "flag": "red",
    "lead": "during",
-   "skill": 0.226,
+   "skill": 0.225,
    "mae": 3.6,
    "mae_clim": 4.9,
    "in_range": 0.91,
@@ -1096,7 +1096,7 @@
    "period": "Easter Vac",
    "flag": "amber",
    "lead": "2-3 months",
-   "skill": 0.126,
+   "skill": 0.12,
    "mae": 0.9,
    "mae_clim": 1.1,
    "in_range": 0.88,
@@ -1121,7 +1121,7 @@
    "skill": 0.012,
    "mae": 1.1,
    "mae_clim": 1.1,
-   "in_range": 0.89,
+   "in_range": 0.91,
    "n": 165
   },
   {
@@ -1129,7 +1129,7 @@
    "period": "Easter Vac",
    "flag": "amber",
    "lead": "during",
-   "skill": 0.141,
+   "skill": 0.14,
    "mae": 0.5,
    "mae_clim": 0.5,
    "in_range": 0.94,
@@ -1140,7 +1140,7 @@
    "period": "Easter Vac",
    "flag": "amber",
    "lead": "up to 1 month",
-   "skill": 0.121,
+   "skill": 0.12,
    "mae": 1.0,
    "mae_clim": 1.0,
    "in_range": 0.9,
@@ -1162,10 +1162,10 @@
    "period": "Easter Vac",
    "flag": "blue",
    "lead": "2-3 months",
-   "skill": 0.088,
-   "mae": 3.4,
+   "skill": 0.085,
+   "mae": 3.5,
    "mae_clim": 4.2,
-   "in_range": 0.91,
+   "in_range": 0.92,
    "n": 66
   },
   {
@@ -1173,7 +1173,7 @@
    "period": "Easter Vac",
    "flag": "blue",
    "lead": "3-4 months",
-   "skill": 0.01,
+   "skill": 0.009,
    "mae": 4.0,
    "mae_clim": 4.2,
    "in_range": 0.89,
@@ -1206,7 +1206,7 @@
    "period": "Easter Vac",
    "flag": "blue",
    "lead": "up to 1 month",
-   "skill": 0.146,
+   "skill": 0.144,
    "mae": 3.0,
    "mae_clim": 4.0,
    "in_range": 0.91,
@@ -1217,10 +1217,10 @@
    "period": "Easter Vac",
    "flag": "green",
    "lead": "1-2 months",
-   "skill": 0.126,
+   "skill": 0.124,
    "mae": 7.0,
    "mae_clim": 9.5,
-   "in_range": 0.91,
+   "in_range": 0.89,
    "n": 66
   },
   {
@@ -1228,10 +1228,10 @@
    "period": "Easter Vac",
    "flag": "green",
    "lead": "2-3 months",
-   "skill": 0.111,
+   "skill": 0.108,
    "mae": 7.0,
    "mae_clim": 9.5,
-   "in_range": 0.91,
+   "in_range": 0.89,
    "n": 66
   },
   {
@@ -1239,9 +1239,9 @@
    "period": "Easter Vac",
    "flag": "green",
    "lead": "3-4 months",
-   "skill": 0.041,
+   "skill": 0.04,
    "mae": 8.3,
-   "mae_clim": 9.4,
+   "mae_clim": 9.5,
    "in_range": 0.89,
    "n": 66
   },
@@ -1252,7 +1252,7 @@
    "lead": "4+ months",
    "skill": 0.001,
    "mae": 9.3,
-   "mae_clim": 9.4,
+   "mae_clim": 9.5,
    "in_range": 0.9,
    "n": 165
   },
@@ -1261,8 +1261,8 @@
    "period": "Easter Vac",
    "flag": "green",
    "lead": "during",
-   "skill": 0.229,
-   "mae": 3.5,
+   "skill": 0.228,
+   "mae": 3.6,
    "mae_clim": 4.2,
    "in_range": 0.92,
    "n": 83
@@ -1272,10 +1272,10 @@
    "period": "Easter Vac",
    "flag": "green",
    "lead": "up to 1 month",
-   "skill": 0.112,
+   "skill": 0.11,
    "mae": 7.4,
    "mae_clim": 9.2,
-   "in_range": 0.89,
+   "in_range": 0.9,
    "n": 70
   },
   {
@@ -1294,7 +1294,7 @@
    "period": "Easter Vac",
    "flag": "red",
    "lead": "2-3 months",
-   "skill": 0.077,
+   "skill": 0.078,
    "mae": 4.0,
    "mae_clim": 4.1,
    "in_range": 0.89,
@@ -1349,7 +1349,7 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "1-2 months",
-   "skill": 0.035,
+   "skill": 0.036,
    "mae": 2.2,
    "mae_clim": 2.3,
    "in_range": 0.83,
@@ -1360,8 +1360,8 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "2-3 months",
-   "skill": 0.044,
-   "mae": 2.2,
+   "skill": 0.045,
+   "mae": 2.1,
    "mae_clim": 2.3,
    "in_range": 0.83,
    "n": 66
@@ -1385,7 +1385,7 @@
    "skill": 0.016,
    "mae": 2.2,
    "mae_clim": 2.3,
-   "in_range": 0.85,
+   "in_range": 0.91,
    "n": 33
   },
   {
@@ -1393,7 +1393,7 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "during",
-   "skill": 0.153,
+   "skill": 0.155,
    "mae": 1.0,
    "mae_clim": 1.2,
    "in_range": 0.93,
@@ -1404,10 +1404,10 @@
    "period": "Hilary",
    "flag": "amber",
    "lead": "up to 1 month",
-   "skill": 0.114,
+   "skill": 0.108,
    "mae": 2.0,
-   "mae_clim": 2.2,
-   "in_range": 0.89,
+   "mae_clim": 2.3,
+   "in_range": 0.88,
    "n": 66
   },
   {
@@ -1418,7 +1418,7 @@
    "skill": 0.006,
    "mae": 7.1,
    "mae_clim": 7.1,
-   "in_range": 0.71,
+   "in_range": 0.7,
    "n": 66
   },
   {
@@ -1427,7 +1427,7 @@
    "flag": "blue",
    "lead": "2-3 months",
    "skill": 0.04,
-   "mae": 7.0,
+   "mae": 6.9,
    "mae_clim": 7.1,
    "in_range": 0.76,
    "n": 66
@@ -1451,7 +1451,7 @@
    "skill": 0.009,
    "mae": 7.0,
    "mae_clim": 7.1,
-   "in_range": 0.85,
+   "in_range": 0.82,
    "n": 33
   },
   {
@@ -1459,10 +1459,10 @@
    "period": "Hilary",
    "flag": "blue",
    "lead": "during",
-   "skill": 0.041,
+   "skill": 0.04,
    "mae": 4.5,
    "mae_clim": 4.5,
-   "in_range": 0.8,
+   "in_range": 0.81,
    "n": 132
   },
   {
@@ -1470,9 +1470,9 @@
    "period": "Hilary",
    "flag": "blue",
    "lead": "up to 1 month",
-   "skill": 0.026,
+   "skill": 0.024,
    "mae": 6.9,
-   "mae_clim": 7.2,
+   "mae_clim": 7.1,
    "in_range": 0.76,
    "n": 66
   },
@@ -1482,9 +1482,9 @@
    "flag": "green",
    "lead": "1-2 months",
    "skill": 0.185,
-   "mae": 14.9,
+   "mae": 15.0,
    "mae_clim": 19.0,
-   "in_range": 0.83,
+   "in_range": 0.85,
    "n": 66
   },
   {
@@ -1495,7 +1495,7 @@
    "skill": 0.14,
    "mae": 15.6,
    "mae_clim": 19.0,
-   "in_range": 0.83,
+   "in_range": 0.82,
    "n": 66
   },
   {
@@ -1517,7 +1517,7 @@
    "skill": 0.017,
    "mae": 17.4,
    "mae_clim": 19.0,
-   "in_range": 0.82,
+   "in_range": 0.85,
    "n": 33
   },
   {
@@ -1537,9 +1537,9 @@
    "flag": "green",
    "lead": "up to 1 month",
    "skill": 0.294,
-   "mae": 12.6,
-   "mae_clim": 19.5,
-   "in_range": 0.85,
+   "mae": 12.4,
+   "mae_clim": 19.0,
+   "in_range": 0.88,
    "n": 66
   },
   {
@@ -1558,7 +1558,7 @@
    "period": "Hilary",
    "flag": "red",
    "lead": "2-3 months",
-   "skill": 0.068,
+   "skill": 0.067,
    "mae": 13.4,
    "mae_clim": 14.7,
    "in_range": 0.8,
@@ -1603,9 +1603,9 @@
    "flag": "red",
    "lead": "up to 1 month",
    "skill": 0.176,
-   "mae": 11.6,
-   "mae_clim": 14.8,
-   "in_range": 0.85,
+   "mae": 11.5,
+   "mae_clim": 14.7,
+   "in_range": 0.83,
    "n": 66
   },
   {
@@ -1613,7 +1613,7 @@
    "period": "Michaelmas",
    "flag": "amber",
    "lead": "1-2 months",
-   "skill": 0.065,
+   "skill": 0.064,
    "mae": 1.7,
    "mae_clim": 1.9,
    "in_range": 0.91,
@@ -1624,7 +1624,7 @@
    "period": "Michaelmas",
    "flag": "amber",
    "lead": "during",
-   "skill": 0.058,
+   "skill": 0.06,
    "mae": 0.9,
    "mae_clim": 1.0,
    "in_range": 0.88,
@@ -1635,7 +1635,7 @@
    "period": "Michaelmas",
    "flag": "amber",
    "lead": "up to 1 month",
-   "skill": 0.05,
+   "skill": 0.051,
    "mae": 1.5,
    "mae_clim": 1.7,
    "in_range": 0.87,
@@ -1647,7 +1647,7 @@
    "flag": "blue",
    "lead": "1-2 months",
    "skill": 0.043,
-   "mae": 5.9,
+   "mae": 5.8,
    "mae_clim": 6.3,
    "in_range": 0.78,
    "n": 23
@@ -1657,7 +1657,7 @@
    "period": "Michaelmas",
    "flag": "blue",
    "lead": "during",
-   "skill": 0.089,
+   "skill": 0.088,
    "mae": 2.6,
    "mae_clim": 2.9,
    "in_range": 0.87,
@@ -1668,8 +1668,8 @@
    "period": "Michaelmas",
    "flag": "blue",
    "lead": "up to 1 month",
-   "skill": 0.067,
-   "mae": 4.6,
+   "skill": 0.066,
+   "mae": 4.7,
    "mae_clim": 5.2,
    "in_range": 0.86,
    "n": 71
@@ -1681,7 +1681,7 @@
    "lead": "1-2 months",
    "skill": 0.038,
    "mae": 14.2,
-   "mae_clim": 14.3,
+   "mae_clim": 14.2,
    "in_range": 0.87,
    "n": 23
   },
@@ -1690,7 +1690,7 @@
    "period": "Michaelmas",
    "flag": "green",
    "lead": "during",
-   "skill": 0.297,
+   "skill": 0.296,
    "mae": 5.4,
    "mae_clim": 7.9,
    "in_range": 0.88,
@@ -1702,9 +1702,9 @@
    "flag": "green",
    "lead": "up to 1 month",
    "skill": 0.097,
-   "mae": 11.9,
+   "mae": 11.8,
    "mae_clim": 13.0,
-   "in_range": 0.89,
+   "in_range": 0.9,
    "n": 71
   },
   {
@@ -1748,7 +1748,7 @@
    "skill": -0.017,
    "mae": 0.4,
    "mae_clim": 0.4,
-   "in_range": 0.92,
+   "in_range": 0.93,
    "n": 73
   },
   {
@@ -1756,7 +1756,7 @@
    "period": "Trinity",
    "flag": "amber",
    "lead": "2-3 months",
-   "skill": -0.055,
+   "skill": -0.054,
    "mae": 0.4,
    "mae_clim": 0.4,
    "in_range": 0.91,
@@ -1770,7 +1770,7 @@
    "skill": 0.001,
    "mae": 0.4,
    "mae_clim": 0.4,
-   "in_range": 0.91,
+   "in_range": 0.89,
    "n": 66
   },
   {
@@ -1778,7 +1778,7 @@
    "period": "Trinity",
    "flag": "amber",
    "lead": "4+ months",
-   "skill": -0.006,
+   "skill": -0.005,
    "mae": 0.4,
    "mae_clim": 0.4,
    "in_range": 0.88,
@@ -1792,7 +1792,7 @@
    "skill": -0.07,
    "mae": 0.1,
    "mae_clim": 0.1,
-   "in_range": 0.96,
+   "in_range": 0.97,
    "n": 136
   },
   {
@@ -1803,7 +1803,7 @@
    "skill": 0.035,
    "mae": 0.4,
    "mae_clim": 0.4,
-   "in_range": 0.91,
+   "in_range": 0.94,
    "n": 66
   },
   {
@@ -1833,7 +1833,7 @@
    "period": "Trinity",
    "flag": "blue",
    "lead": "3-4 months",
-   "skill": 0.019,
+   "skill": 0.018,
    "mae": 3.6,
    "mae_clim": 3.6,
    "in_range": 0.86,
@@ -1878,7 +1878,7 @@
    "flag": "green",
    "lead": "1-2 months",
    "skill": 0.018,
-   "mae": 4.8,
+   "mae": 4.9,
    "mae_clim": 4.9,
    "in_range": 0.88,
    "n": 73
@@ -1899,8 +1899,8 @@
    "period": "Trinity",
    "flag": "green",
    "lead": "3-4 months",
-   "skill": 0.015,
-   "mae": 5.1,
+   "skill": 0.014,
+   "mae": 5.0,
    "mae_clim": 5.1,
    "in_range": 0.88,
    "n": 66
@@ -1954,7 +1954,7 @@
    "period": "Trinity",
    "flag": "red",
    "lead": "2-3 months",
-   "skill": -0.08,
+   "skill": -0.079,
    "mae": 1.1,
    "mae_clim": 1.1,
    "in_range": 0.88,
@@ -2017,7 +2017,7 @@
     },
     "green": {
      "skill": 0.346,
-     "mae": 6.5,
+     "mae": 6.4,
      "mae_clim": 10.0,
      "in_range": 0.91,
      "n": 33
@@ -2040,14 +2040,14 @@
     },
     "green": {
      "skill": 0.083,
-     "mae": 6.4,
+     "mae": 6.5,
      "mae_clim": 6.4,
      "in_range": 0.88,
      "n": 33
     },
     "red": {
      "skill": 0.026,
-     "mae": 3.7,
+     "mae": 3.6,
      "mae_clim": 3.7,
      "in_range": 0.85,
      "n": 33
@@ -2055,16 +2055,16 @@
    },
    "Hilary": {
     "amber": {
-     "skill": 0.097,
+     "skill": 0.095,
      "mae": 5.4,
-     "mae_clim": 5.6,
+     "mae_clim": 5.5,
      "in_range": 0.82,
      "n": 33
     },
     "green": {
-     "skill": 0.286,
-     "mae": 12.8,
-     "mae_clim": 17.9,
+     "skill": 0.283,
+     "mae": 12.9,
+     "mae_clim": 17.8,
      "in_range": 0.85,
      "n": 33
     },
@@ -2085,7 +2085,7 @@
      "n": 33
     },
     "green": {
-     "skill": 0.2,
+     "skill": 0.199,
      "mae": 8.4,
      "mae_clim": 10.7,
      "in_range": 0.91,
@@ -2126,7 +2126,7 @@
   "isis": {
    "Christmas Vac": {
     "amber": {
-     "skill": 0.143,
+     "skill": 0.144,
      "mae": 1.6,
      "mae_clim": 2.0,
      "in_range": 0.88,
@@ -2141,7 +2141,7 @@
     },
     "green": {
      "skill": 0.375,
-     "mae": 6.3,
+     "mae": 6.2,
      "mae_clim": 10.0,
      "in_range": 0.91,
      "n": 33
@@ -2156,29 +2156,29 @@
    },
    "Easter Vac": {
     "amber": {
-     "skill": 0.184,
+     "skill": 0.182,
      "mae": 0.9,
      "mae_clim": 1.0,
      "in_range": 0.91,
      "n": 33
     },
     "blue": {
-     "skill": 0.138,
-     "mae": 3.1,
-     "mae_clim": 3.8,
+     "skill": 0.137,
+     "mae": 3.2,
+     "mae_clim": 3.9,
      "in_range": 0.88,
      "n": 33
     },
     "green": {
-     "skill": 0.12,
+     "skill": 0.119,
      "mae": 7.7,
      "mae_clim": 9.1,
-     "in_range": 0.91,
+     "in_range": 0.88,
      "n": 33
     },
     "red": {
      "skill": 0.037,
-     "mae": 4.1,
+     "mae": 4.0,
      "mae_clim": 4.1,
      "in_range": 0.85,
      "n": 33
@@ -2186,14 +2186,14 @@
    },
    "Hilary": {
     "amber": {
-     "skill": 0.108,
-     "mae": 2.2,
+     "skill": 0.105,
+     "mae": 2.1,
      "mae_clim": 2.2,
      "in_range": 0.88,
      "n": 33
     },
     "blue": {
-     "skill": -0.007,
+     "skill": -0.008,
      "mae": 7.2,
      "mae_clim": 7.2,
      "in_range": 0.73,
@@ -2208,7 +2208,7 @@
     },
     "red": {
      "skill": 0.187,
-     "mae": 11.3,
+     "mae": 11.2,
      "mae_clim": 14.6,
      "in_range": 0.79,
      "n": 33
@@ -2216,15 +2216,15 @@
    },
    "Michaelmas": {
     "amber": {
-     "skill": 0.105,
+     "skill": 0.104,
      "mae": 1.5,
      "mae_clim": 1.8,
      "in_range": 0.85,
      "n": 33
     },
     "blue": {
-     "skill": 0.082,
-     "mae": 4.4,
+     "skill": 0.081,
+     "mae": 4.5,
      "mae_clim": 5.4,
      "in_range": 0.85,
      "n": 33
@@ -2232,12 +2232,12 @@
     "green": {
      "skill": 0.193,
      "mae": 10.8,
-     "mae_clim": 13.6,
-     "in_range": 0.85,
+     "mae_clim": 13.5,
+     "in_range": 0.88,
      "n": 33
     },
     "red": {
-     "skill": 0.196,
+     "skill": 0.195,
      "mae": 5.7,
      "mae_clim": 6.4,
      "in_range": 0.91,
@@ -2268,7 +2268,7 @@
     },
     "red": {
      "skill": 0.183,
-     "mae": 0.9,
+     "mae": 1.0,
      "mae_clim": 1.1,
      "in_range": 0.94,
      "n": 33
@@ -2282,15 +2282,15 @@
    "n": 32
   },
   "1-2 months": {
-   "skill": 0.124,
+   "skill": 0.122,
    "n": 59
   },
   "2-3 months": {
-   "skill": 0.106,
+   "skill": 0.107,
    "n": 64
   },
   "3-4 months": {
-   "skill": 0.038,
+   "skill": 0.04,
    "n": 69
   },
   "4+ months": {
@@ -2330,7 +2330,7 @@
   },
   {
    "year": 1997,
-   "flow": 19.7,
+   "flow": 19.8,
    "outcome": "raced"
   },
   {
@@ -2360,7 +2360,7 @@
   },
   {
    "year": 2003,
-   "flow": 34.1,
+   "flow": 34.2,
    "outcome": "raced"
   },
   {
@@ -2481,6 +2481,6 @@
  ],
  "flag_agreement": {
   "isis": 0.914,
-  "godstow": 0.921
+  "godstow": 0.922
  }
 }
