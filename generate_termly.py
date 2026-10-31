@@ -275,9 +275,11 @@ def main() -> None:
             time.sleep(10 * (attempt + 1))
     try:
         ec46 = T.ec46_rain(ROOT, fetched=fetched) if fetched is not None else T.ec46_rain(ROOT)
+        ec46_run = T.ec46_run_date()
     except Exception as e:              # noqa: BLE001
         print(f'  EC46 unavailable: {e}')
-        ec46 = json.loads(OUT.read_text()).get('ec46', []) if OUT.exists() else []
+        prev_out = json.loads(OUT.read_text()) if OUT.exists() else {}
+        ec46, ec46_run = prev_out.get('ec46', []), prev_out.get('ec46_run')
     if not seasonal and OUT.exists():
         seasonal = json.loads(OUT.read_text()).get('seasonal') or []
         print(f'  kept the previous seasonal forecast ({len(seasonal)} months)')
@@ -285,7 +287,7 @@ def main() -> None:
               'members': len(ens.members), 'member_years': ens.years, 'state': state,
               'lines': T.LINES, 'names': T.NAMES, 'torpids_flow': T.TORPIDS_FLOW,
               'terms': out_terms, 'weekly': {loc: weekly(ens, loc, prev) for loc in ('isis', 'godstow')},
-              'torpids': torpids, 'seasonal': seasonal, 'ec46': ec46,
+              'torpids': torpids, 'seasonal': seasonal, 'ec46': ec46, 'ec46_run': ec46_run,
               'forecast_weighting': weighting}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=1))

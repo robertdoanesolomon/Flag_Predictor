@@ -512,6 +512,19 @@ def forecast_year_weights(ens: 'Ensemble', root: Path, days: pd.DatetimeIndex, r
                'top_years': [int(years[i]) for i in np.argsort(-w)[:5]]}
 
 
+def ec46_run_date(timeout: int = 30) -> Optional[str]:
+    """The start date (YYYY-MM-DD, 00 UTC) of the EC46 run Open-Meteo is serving, from its model metadata;
+    None if that can't be read. Shown on the page so a reader can see which run the chart is."""
+    import requests
+    try:
+        r = requests.get('https://seasonal-api.open-meteo.com/data/ecmwf_ec46/static/meta.json', timeout=timeout)
+        r.raise_for_status()
+        return f"{pd.Timestamp(int(r.json()['last_run_initialisation_time']), unit='s'):%Y-%m-%d}"
+    except Exception as e:              # noqa: BLE001 - the caption just goes without the date
+        print(f'  EC46 run date unavailable: {e}')
+        return None
+
+
 def ec46_rain(root: Path, timeout: int = 60, fetched=None) -> list[dict]:
     """ECMWF extended range (EC46, latest run, all members, via Open-Meteo): rain over the catchment above
     Farmoor for each whole week (Mon-Sun) ahead, against the CRU TS normal for that time of year (the month's
