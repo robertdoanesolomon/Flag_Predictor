@@ -111,6 +111,34 @@ class StepLayerTests(unittest.TestCase):
         self.assertEqual(out.total.shape, total.shape)
         self.assertIn('windows', out.outlook)
 
+    def test_old_parameter_files_still_load_and_run(self):
+        import json
+        import tempfile
+        j = params().to_json()
+        for k in ('size_kind', 'hazard_calm'):
+            j.pop(k, None)
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / 'old.json'
+            path.write_text(json.dumps(j))
+            p = SL.StepParams.load(path)
+        self.assertEqual(p.size_kind, 'linear')
+        self.assertFalse(p.hazard_calm)
+        y = np.zeros((20, 97))
+        z = SL.simulate(p, np.zeros(49), y, np.zeros(24), np.zeros(96), self.t0)
+        self.assertEqual(z.shape, y.shape)
+
+    def test_linear_tr_sizes_are_small_in_quiet_water_and_follow_floods(self):
+        p = params()
+        p.size_kind = 'linear_tr'
+        p.size_w = {d: np.r_[np.zeros(3), 0.3, 0.2, 0.0, 0.0] for d in ('up', 'down')}
+        p.size_b = {d: 0.04 for d in ('up', 'down')}
+        p.size_q = {d: np.ones(21) for d in ('up', 'down')}
+        u = np.full(2, 0.5)
+        quiet = p.jump_size('up', np.zeros((2, 4)), np.zeros(2), np.zeros(2), u)
+        flood = p.jump_size('up', np.tile([0.1, 0.2, 0.3, 0.4], (2, 1)), np.full(2, 0.2), np.full(2, 10.0), u)
+        np.testing.assert_allclose(quiet, 0.04)
+        np.testing.assert_allclose(flood, 0.04 + 0.3 * 0.4 + 0.2 * 0.2)
+
 
 if __name__ == '__main__':
     unittest.main()

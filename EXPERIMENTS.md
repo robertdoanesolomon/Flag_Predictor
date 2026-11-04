@@ -1186,4 +1186,58 @@ rain that fell / no change: Isis 24 h 0.037/0.037/0.069, 72 h 0.084/0.070/0.195,
 Godstow 72 h 0.078/0.056/0.228, 168 h 0.117/0.061/0.371; Wallingford 72 h 0.118/0.077/0.349. Right band at
 72 h: Isis 39/49/30%, Godstow 74/80/46%. IFS under-forecast the rain more the further ahead (mean rain to
 +168 h 14.8 mm forecast vs 17.1 mm fell). The likely range (model error only) held the river 60-74% of the
-time (target 80%): rain spread is needed on top, as the live site does with the 50 members.
+time (target 80%): rain spread is needed on top, as the live site does with the 51 members.
+
+## Step layer: spikes in quiet water, and all 51 rain members (Nov 2026)
+
+**Rain members.** Open-Meteo's ECMWF AIFS ensemble returns 51 columns (control
++ 50 perturbed); the site took the first 50, dropping `member50`. It now uses
+all 51 (510 outcomes with model error).
+
+**The spikes.** On a flat, dry forecast some plotted members jumped 3–12 cm in
+one hour and slid back over ~40 h (6 of 50 at the Isis on 3 Nov). On the river,
+held jumps of > 4 cm in quiet water are rare (17–22 in the whole record per
+stretch) and mostly stay put. Two causes:
+
+* Sizes: fitted on the pending move alone, so the intercept (5–10 cm) is the
+  size of jumps in floods where the forecast already follows the river. Quiet
+  water got flood-sized jumps (Wallingford down: 8.4 cm median vs 5.4 observed).
+* Hazard: in quiet water it fired 2–10× too often at the Isis and Wallingford
+  (e.g. Isis up, test: 0.24 %/h vs 0.02 %/h). 2019, the partial first year of
+  the 15-minute record, has 6–12× the quiet-water jumps of any later year.
+
+Tried (`fit_step_layer.py`, `backtest_step_layer.py`; size checks are pinball
+loss on 2023 / test jumps):
+
+* Overshoot factor binned by fitted size: no change (every quiet jump is in the
+  bottom bin).
+* Calm-water hazard terms (|trend| and a 0–1 calm index of no pending move,
+  trend or rain) and training from 2020: log loss better in all 12
+  location/direction/period checks; quiet-water rates close to observed.
+* Sizes in log space with trend and rain: best pinball loss, but loses the flood
+  jumps' link to the pending move and costs CRPS (Wallingford worse than not
+  stepping).
+* Sizes linear in the pending move plus trend and rain (`linear_tr`): better
+  pinball than the deployed fit in all 12 checks, quiet sizes nearer observed.
+
+Backtest of full outcomes (smooth + model errors borrowed from the other
+period, as on the site; `--with-error`), first 48 h, 50 draws:
+
+| | deployed | calm hazard only | calm + linear_tr (v3) |
+|---|---|---|---|
+| Isis CRPS (smooth 1.67) | 1.55 | 1.56 | 1.58 |
+| Godstow CRPS (smooth 2.02) | 1.96 | 1.96 | 1.97 |
+| Wallingford CRPS (smooth 2.54) | 2.46 | 2.46 | 2.49 |
+| Isis Brier up today / by tomorrow | 0.0160 / 0.0211 | 0.0167 / 0.0217 | 0.0166 / 0.0215 |
+| Isis Brier down today / by tomorrow | 0.0229 / 0.0307 | 0.0225 / 0.0303 | 0.0235 / 0.0314 |
+| Godstow Brier up today / by tomorrow | 0.0149 / 0.0204 | 0.0150 / 0.0203 | 0.0151 / 0.0201 |
+| Quiet starts: outcomes > 10 cm off (Isis / Godstow / Wallingford; river 0.2 / 6.8 / 0.4 %) | 6.6 / 13.6 / 13.6 % | 4.9 / 12.7 / 9.3 % | 4.2 / 11.7 / 7.5 % |
+
+Plotted members alone (no model error), quiet starts > 10 cm off: deployed
+4.0 / 4.4 / 9.5 %, log-size version 2.1 / 1.9 / 1.8 %.
+
+Reading: the realistic quiet water costs a little skill. The big quiet-water
+jumps were standing in for hour-scale spread the outcomes otherwise lack (the
+real river wanders > 5 cm in 28 % of quiet starts at Godstow, 45 % at
+Wallingford). Deployed parameters unchanged; the code reads both the old
+(`size_kind` 'linear') and new parameter files.

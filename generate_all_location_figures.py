@@ -1247,7 +1247,7 @@ def preview_extras(location: str, live) -> dict:
 def generate_spaghetti_figure(
     location: str,
     output_dir: Path,
-    n_members: int = 50,
+    n_members: int = 51,
     project_root: Path | None = None,
     beta_dir: Path | None = None,
     live_title_suffix: str = "",
@@ -1495,7 +1495,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--n-members",
         type=int,
-        default=50,
+        default=51,
         help="Number of ensemble members to use for the forecast.",
     )
     parser.add_argument(

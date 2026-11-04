@@ -6,7 +6,7 @@ prepare_training_data with API data, its own ensemble-rain request, clamps).
 The physics hybrid gets a continuous hourly history: rain from recent EA gauge
 files (download them first, see below), Farmoor flow from the local record
 topped up with the API, and the API differential. Both start at the same hour
-and see the same 50 ECMWF AIFS ensemble members.
+and see the same 51 ECMWF AIFS ensemble members.
 
 Setup (recent gauge rain, kept apart from the training CSVs):
     python src/flag_predictor/data/download_rainfall.py --min-date <~60 days ago> \
@@ -48,7 +48,7 @@ from flag_predictor.prediction.forecast import predict_ensemble  # noqa: E402
 MODELS_DIR = PROJECT_ROOT / 'models'
 OUT_DIR = PROJECT_ROOT / 'figures' / 'eval'
 HYBRID = ['hybrid_c1_ps'] + [f'hybrid_c1_ps_s{i}' for i in range(1, 5)]
-N_MEMBERS = 50
+N_MEMBERS = 51
 HORIZON = 240
 FLAG_ORDER = ['green', 'light_blue', 'dark_blue', 'amber', 'red']
 
