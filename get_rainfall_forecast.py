@@ -45,8 +45,8 @@ def main() -> None:
     parser.add_argument(
         "--n-members",
         type=int,
-        default=50,
-        help="Number of ensemble members to fetch (default 50).",
+        default=51,
+        help="Number of ensemble members to fetch (default 51: control + 50).",
     )
     parser.add_argument(
         "--forecast-days",

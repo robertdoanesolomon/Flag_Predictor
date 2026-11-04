@@ -30,10 +30,12 @@ sys.path.insert(0, str(ROOT / 'src'))
 
 from flag_predictor.prediction.step_layer import (  # noqa: E402
     DAY_END_H, DAY_START_H, JUMP_THRESHOLD, LEADS, LOCAL_TZ, LOCATIONS, SINCE_CAP_H, StepParams,
-    hazard_design, hourly_jumps, params_path,
+    hazard_design, hourly_jumps, params_path, size_features,
 )
 
 TRAIN_END = pd.Timestamp('2024-10-21', tz='UTC')
+TRAIN_FROM_YEAR = 2020     # 2019 is the partial first year of the 15-minute record; at the Isis it has
+                           # 6-12x the quiet-water jumps of any later year
 VAL_YEAR = 2023
 TEST = (pd.Timestamp('2024-11-01', tz='UTC'), pd.Timestamp('2026-01-10', tz='UTC'))
 HYBRID = ['hybrid_c1_ps'] + [f'hybrid_c1_ps_s{i}' for i in range(1, 5)]
@@ -106,7 +108,7 @@ def build_rows(location: str, levels: dict, data, period: str, stride: int) -> d
     cand = np.arange(SEQ_LEN, len(idx) - HORIZON - 1)
     tt = idx[cand]
     if period == 'train':
-        inp = (tt.year != VAL_YEAR) & (tt < TRAIN_END)
+        inp = (tt.year != VAL_YEAR) & (tt < TRAIN_END) & (tt.year >= TRAIN_FROM_YEAR)
     elif period == 'val':
         inp = tt.year == VAL_YEAR
     else:
@@ -121,7 +123,8 @@ def build_rows(location: str, levels: dict, data, period: str, stride: int) -> d
 
     h = np.arange(1, H_FIT + 1)
     lead_idx = np.array(LEADS)
-    cols = {k: [] for k in ('pend', 'trend', 'r24', 'su', 'sd', 'lh', 'dw', 'h', 'tu', 'td', 'ou', 'od', 'J', 'dD')}
+    cols = {k: [] for k in ('pend', 'trend', 'r24', 'su', 'sd', 'lh', 'dw', 'h', 'tu', 'td', 'ou', 'od', 'J', 'dD', 'yr')}
+    years = grid.year.to_numpy()
     for i, p0 in enumerate(gpos):
         d0 = D[p0]
         m = np.r_[d0, pred[i] + (d0 - data.diff[cand[i]])]          # forecast from the start, leads 0..96
@@ -139,7 +142,7 @@ def build_rows(location: str, levels: dict, data, period: str, stride: int) -> d
         n = len(hh)
         cols['tu'].append(np.full(n, trig[1][p0])); cols['td'].append(np.full(n, trig[-1][p0]))
         cols['ou'].append(np.full(n, own[1][p0])); cols['od'].append(np.full(n, own[-1][p0]))
-        cols['J'].append(J[p0 + hh]); cols['dD'].append(D[p0 + hh] - cur[ok])
+        cols['J'].append(J[p0 + hh]); cols['dD'].append(D[p0 + hh] - cur[ok]); cols['yr'].append(years[p0 + hh])
     return {k: np.concatenate(v) for k, v in cols.items()}
 
 
@@ -147,7 +150,13 @@ def design_for(r: dict, direction: str) -> np.ndarray:
     s = 1 if direction == 'up' else -1
     return hazard_design(np.maximum(s * r['pend'], 0), np.maximum(r['trend'], 0), np.maximum(-r['trend'], 0),
                          r['r24'], r['su'] if s > 0 else r['sd'], r['lh'], r['dw'], r['h'],
-                         r['tu'] if s > 0 else r['td'], r['ou'] if s > 0 else r['od'])
+                         r['tu'] if s > 0 else r['td'], r['ou'] if s > 0 else r['od'],
+                         calm=(np.abs(r['pend']).max(axis=1), np.abs(r['trend']), r['r24']))
+
+
+def size_design(r: dict, sel: np.ndarray, sign: int) -> np.ndarray:
+    return size_features(np.maximum(sign * r['pend'][sel], 0), np.maximum(sign * r['trend'][sel], 0),
+                         np.maximum(-sign * r['trend'][sel], 0), r['r24'][sel])
 
 
 def fit_location(location: str, levels: dict, verbose: bool = True) -> StepParams:
@@ -169,14 +178,24 @@ def fit_location(location: str, levels: dict, verbose: bool = True) -> StepParam
                 'log_loss': round(float(log_loss(yy, pp)), 4),
                 'log_loss_constant_rate': round(float(log_loss(yy, np.full(len(pp), y.mean()))), 4),
                 'auc': round(float(roc_auc_score(yy, pp)), 3)}
+        # Jump size: linear in the pending moves (floods: keepers move with the forecast), plus the
+        # 24 h trend and rain, so the intercept is a quiet-water jump of a few cm rather than a
+        # flood-sized one. Times a factor drawn from past jumps.
         sel = y == 1
-        pend = np.maximum(sign * tr['pend'][sel], 0)
         size = np.abs(tr['J'][sel])
-        lr = LinearRegression(positive=True).fit(pend, size)
-        fitted = np.maximum(lr.predict(pend), 0.005)
+        X = size_design(tr, sel, sign)
+        lr = LinearRegression(positive=True).fit(X, size)
+        fitted = np.maximum(lr.predict(X), 0.005)
         size_w[d], size_b[d] = lr.coef_, float(lr.intercept_)
         size_q[d] = np.quantile(np.clip(size / fitted, 0.1, 4.0), np.linspace(0, 1, 21))
         notes[f'jumps_{d}'] = int(sel.sum())
+        for p, rows in checks.items():
+            ss = sign * rows['J'] > 0
+            yy = np.abs(rows['J'][ss])
+            pq = np.maximum(lr.predict(size_design(rows, ss, sign)), 0.005)[:, None] * size_q[d][None, 1:-1]
+            e = yy[:, None] - pq
+            qs = np.linspace(0, 1, 21)[1:-1]
+            notes[f'size_{d}_{p}_pinball_cm'] = round(float(np.mean(np.maximum(qs * e, (qs - 1) * e))) * 100, 3)
     # Drift in hours without a jump: ridge (the pending moves are strongly correlated).
     no_jump = tr['J'] == 0
     day = (tr['lh'] >= DAY_START_H) & (tr['lh'] < DAY_END_H)
@@ -188,15 +207,15 @@ def fit_location(location: str, levels: dict, verbose: bool = True) -> StepParam
     params = StepParams(
         location=location, jump_threshold=JUMP_THRESHOLD[location], coef=coef, intercept=intercept,
         size_w=size_w, size_b=size_b, size_q=size_q, drift=drift,
-        fitted_on=f"hybrid forecasts from starts before {TRAIN_END:%Y-%m-%d} (15-minute record from 2019), without {VAL_YEAR}",
-        notes=notes)
+        fitted_on=f"hybrid forecasts from starts {TRAIN_FROM_YEAR} - {TRAIN_END:%Y-%m-%d}, without {VAL_YEAR}",
+        notes=notes, size_kind='linear_tr', hazard_calm=True)
     if verbose:
         print(f"{location}: {notes['training_rows']} rows; drift day {np.round(drift['day'], 3)} night {np.round(drift['night'], 3)}")
         for d in ('up', 'down'):
-            print(f"   size {d}: {size_b[d]:.3f} + {np.round(size_w[d], 3)} . pending, factor q10/50/90 "
+            print(f"   size {d}: {size_b[d]:.3f} + {np.round(size_w[d], 3)} . (pending, trend with/against, rain), factor q10/50/90 "
                   f"{np.round(np.interp([.1, .5, .9], np.linspace(0, 1, 21), size_q[d]), 2)}")
         for k, v in notes.items():
-            if k.startswith('hazard'):
+            if k.startswith(('hazard', 'size')):
                 print(f'   {k}: {v}')
     return params
 

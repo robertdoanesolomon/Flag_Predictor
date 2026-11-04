@@ -1,7 +1,7 @@
 """
 Model-error spread from the model's own past mistakes.
 
-The 50 forecast lines only carry rain-forecast uncertainty. Even with perfect
+The 51 forecast lines only carry rain-forecast uncertainty. Even with perfect
 rain the model is wrong, and early in the forecast (when the rain members
 barely disagree) that is most of the real uncertainty. This module adds it.
 

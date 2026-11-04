@@ -440,7 +440,7 @@ def forecast_ensemble(
     location: str,
     merged_df: pd.DataFrame,
     project_root: Path,
-    n_members: int = 50,
+    n_members: int = 51,
     models_dir: Optional[Path] = None,
 ) -> pd.DataFrame:
     """(241, members) hybrid-ensemble forecast from the last observed hour."""
@@ -477,7 +477,7 @@ def forecast_with_uncertainty(
     location: str,
     merged_df: pd.DataFrame,
     project_root: Path,
-    n_members: int = 50,
+    n_members: int = 51,
     models_dir: Optional[Path] = None,
     with_previous: bool = True,
     start_sd: float = 0.0,

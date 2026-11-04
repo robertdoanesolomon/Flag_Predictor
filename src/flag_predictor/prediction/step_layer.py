@@ -18,8 +18,14 @@ first three days:
   stretch or a neighbouring one (Isis / Godstow / Wallingford) jumped in the
   last three hours.
 * A jump's size comes from the same pending moves (keepers often overshoot),
-  times a factor drawn from past jumps; between jumps the level drifts by a
-  fitted share of the pending move.
+  plus the past 24 h trend and rain (size_kind 'linear_tr'), times a factor
+  drawn from past jumps; between jumps the level drifts by a fitted share of
+  the pending move. Jumps in quiet water are a few cm; the 10-15 cm ones belong
+  to a river already on the move. The older fit on pending moves alone
+  (size_kind 'linear') gave quiet water flood-sized jumps; a fit in log space
+  got quiet water right but lost the flood jumps' link to the pending move.
+* The hazard has a calm-water term (no pending move, trend or rain), so jumps
+  are rare in quiet water, as they are on the river (hazard_calm).
 * The hazard, sizes and drift were fitted against the hybrid's own forecasts on
   the training years (teacher forcing: each forecast hour starts from the level
   the river was really at), so the layer learns when jumps happen *given what the
@@ -72,7 +78,8 @@ def tod_features(local_hour, dow) -> np.ndarray:
     return np.stack(cols, axis=-1)
 
 
-def hazard_design(pending, trend_up, trend_down, rain24, since, local_hour, dow, lead, trigger, own) -> np.ndarray:
+def hazard_design(pending, trend_up, trend_down, rain24, since, local_hour, dow, lead, trigger, own,
+                  calm=None) -> np.ndarray:
     """Hazard inputs for one direction.
 
     pending   : (..., len(LEADS)) moves still to come in this direction (m, >= 0)
@@ -82,6 +89,7 @@ def hazard_design(pending, trend_up, trend_down, rain24, since, local_hour, dow,
     lead      : forecast hour (1, 2, ...)
     trigger   : 1 if a neighbouring stretch jumped this way in the 3 h before the forecast start
     own       : 1 if this stretch jumped this way in the 3 h before the forecast start
+    calm      : optional (|largest pending move either way|, |24 h trend|, rain24) for the calm terms
     """
     pending = np.asarray(pending, dtype=float)
     shape = pending.shape[:-1]
@@ -101,7 +109,31 @@ def hazard_design(pending, trend_up, trend_down, rain24, since, local_hour, dow,
         np.log1p(b(lead)) / np.log(73.0),
         b(trigger) * decay, b(own) * decay,
     ], axis=-1)
-    return np.concatenate([tod_features(lh, b(dow)), pending / 0.1, lp, extra], axis=-1)
+    out = np.concatenate([tod_features(lh, b(dow)), pending / 0.1, lp, extra], axis=-1)
+    if calm is not None:
+        out = np.concatenate([out, calm_features(*[b(v) for v in calm])], axis=-1)
+    return out
+
+
+def calm_features(abs_pending_max, abs_trend, rain24) -> np.ndarray:
+    """Calm-water terms: |24 h trend| on a log scale, and a 0..1 calm index (1 = no pending move, trend or rain)."""
+    a = np.asarray(abs_pending_max, dtype=float)
+    t = np.asarray(abs_trend, dtype=float)
+    r = np.clip(np.asarray(rain24, dtype=float), 0, None)
+    calm = np.exp(-a / 0.02) * np.exp(-t / 0.03) * np.exp(-r / 2.0)
+    return np.stack([np.log1p(t / 0.02), calm], axis=-1)
+
+
+def size_features(pending, trend_with, trend_against, rain24) -> np.ndarray:
+    """Inputs of the jump size (size_kind 'linear_tr'): pending moves this way (m), 24 h trend with /
+    against this way (m), and log rain over the past day / 10."""
+    pending = np.asarray(pending, dtype=float)
+    shape = pending.shape[:-1]
+
+    def b(v):
+        return np.broadcast_to(np.asarray(v, dtype=float), shape)
+    return np.concatenate([pending, np.stack([
+        b(trend_with), b(trend_against), np.log1p(np.clip(b(rain24), 0, None)) / 10], axis=-1)], axis=-1)
 
 
 def hourly_jumps(level: np.ndarray, thr: float) -> np.ndarray:
@@ -168,12 +200,25 @@ class StepParams:
     jump_threshold: float
     coef: Dict[str, np.ndarray]          # 'up' / 'down' hazard coefficients
     intercept: Dict[str, float]
-    size_w: Dict[str, np.ndarray]        # jump size = size_b + size_w . pending moves, times a factor
-    size_b: Dict[str, float]
+    size_w: Dict[str, np.ndarray]        # size = size_b + size_w . inputs, times a factor; inputs are the
+    size_b: Dict[str, float]             # pending moves ('linear') or size_features ('linear_tr')
     size_q: Dict[str, np.ndarray]        # quantiles (0..1 in 21 steps) of that factor in past jumps
     drift: Dict[str, np.ndarray]         # 'day' / 'night': hourly drift = drift . signed pending moves
     fitted_on: str = ''
     notes: Dict = field(default_factory=dict)
+    size_kind: str = 'linear'
+    hazard_calm: bool = False
+
+    def jump_size(self, direction: str, pend: np.ndarray, trend: np.ndarray, rain24: np.ndarray,
+                  u: np.ndarray) -> np.ndarray:
+        """Size (m, > 0) of a jump this way; pend (S, len(LEADS)) >= 0, trend signed (S,), u uniform (S,)."""
+        q = np.linspace(0, 1, len(self.size_q[direction]))
+        draw = np.interp(u, q, self.size_q[direction])
+        x = pend
+        if self.size_kind == 'linear_tr':
+            s = 1 if direction == 'up' else -1
+            x = size_features(pend, np.maximum(s * trend, 0), np.maximum(-s * trend, 0), rain24)
+        return np.maximum(x @ self.size_w[direction] + self.size_b[direction], 0.005) * draw
 
     def to_json(self) -> dict:
         lst = lambda a: [float(x) for x in np.ravel(a)]  # noqa: E731
@@ -186,6 +231,7 @@ class StepParams:
             'size_q': {k: lst(v) for k, v in self.size_q.items()},
             'drift': {k: lst(v) for k, v in self.drift.items()},
             'fitted_on': self.fitted_on, 'notes': self.notes,
+            'size_kind': self.size_kind, 'hazard_calm': self.hazard_calm,
         }
 
     def save(self, path: Path) -> None:
@@ -198,7 +244,8 @@ class StepParams:
         return cls(j['location'], float(j['jump_threshold']), arr(j['coef']),
                    {k: float(v) for k, v in j['intercept'].items()}, arr(j['size_w']),
                    {k: float(v) for k, v in j['size_b'].items()}, arr(j['size_q']), arr(j['drift']),
-                   j.get('fitted_on', ''), j.get('notes', {}))
+                   j.get('fitted_on', ''), j.get('notes', {}), j.get('size_kind', 'linear'),
+                   bool(j.get('hazard_calm', False)))
 
 
 def params_path(models_dir: Path, location: str) -> Path:
@@ -259,7 +306,6 @@ def simulate(params: StepParams, level_hist: np.ndarray, targets: np.ndarray, ra
     times = times.tz_localize('UTC') if times.tz is None else times
     local = times.tz_convert(LOCAL_TZ)
     lhour, ldow = local.hour.to_numpy(), local.dayofweek.to_numpy()
-    q = np.linspace(0, 1, len(params.size_q['up']))
     lead_idx = np.array(LEADS)
 
     path = np.empty((S, 25 + H))           # 24 h of history, t0, then the forecast hours
@@ -270,13 +316,13 @@ def simulate(params: StepParams, level_hist: np.ndarray, targets: np.ndarray, ra
         trend = prev - path[:, h - 1]                            # change over the 24 h to hour h-1
         rain24 = crain[:, 23 + h] - crain[:, h - 1]              # hours h-24..h-1
         p, size = {}, {}
+        calm = (np.abs(pending).max(axis=1), np.abs(trend), rain24) if params.hazard_calm else None
         for d, sign in (('up', 1), ('down', -1)):
             pend = np.maximum(sign * pending, 0)
             x = hazard_design(pend, np.maximum(trend, 0), np.maximum(-trend, 0), rain24, since[sign],
-                              lhour[h], ldow[h], h, trigger[sign], own[sign])
+                              lhour[h], ldow[h], h, trigger[sign], own[sign], calm=calm)
             p[d] = _sigmoid(x @ params.coef[d] + params.intercept[d])
-            base = np.maximum(pend @ params.size_w[d] + params.size_b[d], 0.005)
-            size[d] = base * np.interp(rng.random(S), q, params.size_q[d])
+            size[d] = params.jump_size(d, pend, trend, rain24, rng.random(S))
         u = rng.random(S)
         up = u < p['up']
         dn = ~up & (u < p['up'] + p['down'])
