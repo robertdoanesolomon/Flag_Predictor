@@ -1,6 +1,6 @@
 {
- "generated": "2026-11-03 13:01 UTC",
- "issued": "2026-11-02",
+ "generated": "2026-11-04 05:04 UTC",
+ "issued": "2026-11-03",
  "members": 33,
  "member_years": [
   1993,
@@ -38,19 +38,19 @@
   2025
  ],
  "state": {
-  "date": "2026-11-02",
-  "flow": 0.3,
-  "flow_7d": 1.49,
-  "normal": 8.2,
-  "pct_normal_7d": 16.0,
-  "pct_normal_90d": 32.0,
-  "wetter_years_90d": 27,
+  "date": "2026-11-03",
+  "flow": 0.64,
+  "flow_7d": 1.06,
+  "normal": 8.3,
+  "pct_normal_7d": 12.0,
+  "pct_normal_90d": 31.0,
+  "wetter_years_90d": 28,
   "n_years": 33,
-  "pct_normal_14d": 28.0,
+  "pct_normal_14d": 26.0,
   "wetter_years_14d": 23,
-  "wetter_years_7d": 26,
-  "score_7d": -1.464,
-  "score_90d": -1.111
+  "wetter_years_7d": 29,
+  "score_7d": -1.707,
+  "score_90d": -1.121
  },
  "lines": {
   "isis": [
@@ -87,23 +87,23 @@
     "end": "2026-12-05",
     "full_term_start": "2026-10-11",
     "days": 63,
-    "days_done": 30,
+    "days_done": 31,
     "tercile": {
-     "lower": 0.89,
+     "lower": 0.92,
      "higher": 0.02,
-     "usual": 0.09
+     "usual": 0.06
     },
     "lead": "during",
     "trust": 0.9,
     "flags": {
      "green": {
-      "so_far": 30,
+      "so_far": 31,
       "median": 63.0,
-      "p10": 59.0,
+      "p10": 61.1,
       "p90": 63.0,
-      "mean": 61.5,
+      "mean": 61.9,
       "clim_median": 60.0,
-      "clim_p10": 32.2,
+      "clim_p10": 33.2,
       "clim_p90": 63.0,
       "normal_mean": 49.1,
       "normal_median": 58.0,
@@ -115,8 +115,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 3.7,
-      "mean": 1.0,
+      "p90": 1.1,
+      "mean": 0.5,
       "clim_median": 1.0,
       "clim_p10": 0.0,
       "clim_p90": 7.8,
@@ -146,7 +146,7 @@
       "median": 0.0,
       "p10": 0.0,
       "p90": 0.0,
-      "mean": 0.4,
+      "mean": 0.5,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 21.0,
@@ -161,16 +161,6 @@
     "chance_red_week_normal": 0.24,
     "analogs": [
      {
-      "label": "Michaelmas 2003",
-      "pct_normal_90d": 31,
-      "days": {
-       "green": 63,
-       "blue": 0,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Michaelmas 2025",
       "pct_normal_90d": 31,
       "days": {
@@ -181,8 +171,18 @@
       }
      },
      {
+      "label": "Michaelmas 2003",
+      "pct_normal_90d": 31,
+      "days": {
+       "green": 63,
+       "blue": 0,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
       "label": "Michaelmas 2005",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 62,
        "blue": 1,
@@ -222,7 +222,7 @@
      },
      {
       "label": "Michaelmas 2018",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 63,
        "blue": 0,
@@ -230,12 +230,7 @@
        "red": 0
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.89,
-     "higher": 0.02,
-     "usual": 0.09
-    }
+    ]
    },
    {
     "term": "Christmas Vac",
@@ -247,22 +242,22 @@
     "days": 35,
     "days_done": 0,
     "tercile": {
-     "lower": 0.6,
-     "higher": 0.08,
-     "usual": 0.32
+     "lower": 0.62,
+     "higher": 0.07,
+     "usual": 0.31
     },
     "lead": "1-2 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 26.0,
-      "p10": 5.0,
+      "median": 26.4,
+      "p10": 7.0,
       "p90": 35.0,
-      "mean": 23.9,
+      "mean": 25.2,
       "clim_median": 14.0,
       "clim_p10": 0.0,
-      "clim_p90": 34.8,
+      "clim_p90": 34.0,
       "normal_mean": 15.5,
       "normal_median": 16.0,
       "normal_p10": 0.0,
@@ -271,12 +266,12 @@
      },
      "blue": {
       "so_far": 0,
-      "median": 4.5,
+      "median": 3.0,
       "p10": 0.0,
-      "p90": 11.0,
-      "mean": 4.7,
+      "p90": 10.1,
+      "mean": 4.2,
       "clim_median": 5.0,
-      "clim_p10": 0.0,
+      "clim_p10": 0.2,
       "clim_p90": 13.8,
       "normal_mean": 5.7,
       "normal_median": 5.0,
@@ -286,9 +281,9 @@
      },
      "amber": {
       "so_far": 0,
-      "median": 1.0,
+      "median": 0.0,
       "p10": 0.0,
-      "p90": 4.0,
+      "p90": 5.0,
       "mean": 1.5,
       "clim_median": 2.0,
       "clim_p10": 0.0,
@@ -303,8 +298,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 16.0,
-      "mean": 4.9,
+      "p90": 10.6,
+      "mean": 4.1,
       "clim_median": 10.0,
       "clim_p10": 0.0,
       "clim_p90": 22.8,
@@ -315,7 +310,7 @@
       "skill": 0.16
      }
     },
-    "chance_red_week": 0.33,
+    "chance_red_week": 0.29,
     "chance_red_week_normal": 0.58,
     "analogs": [
      {
@@ -350,7 +345,7 @@
      },
      {
       "label": "Christmas Vac 2018",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 20,
        "blue": 8,
@@ -360,7 +355,7 @@
      },
      {
       "label": "Christmas Vac 2005",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 32,
        "blue": 1,
@@ -388,12 +383,7 @@
        "red": 24
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.58,
-     "higher": 0.07,
-     "usual": 0.35
-    }
+    ]
    },
    {
     "term": "Hilary",
@@ -405,19 +395,19 @@
     "days": 63,
     "days_done": 0,
     "tercile": {
-     "lower": 0.57,
-     "higher": 0.13,
-     "usual": 0.3
+     "lower": 0.62,
+     "higher": 0.11,
+     "usual": 0.27
     },
     "lead": "2-3 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 41.8,
+      "median": 43.6,
       "p10": 5.0,
       "p90": 62.6,
-      "mean": 37.6,
+      "mean": 39.2,
       "clim_median": 22.0,
       "clim_p10": 0.4,
       "clim_p90": 54.8,
@@ -429,10 +419,10 @@
      },
      "blue": {
       "so_far": 0,
-      "median": 11.0,
+      "median": 10.0,
       "p10": 0.0,
-      "p90": 19.0,
-      "mean": 11.5,
+      "p90": 21.0,
+      "mean": 11.1,
       "clim_median": 15.0,
       "clim_p10": 2.0,
       "clim_p90": 27.0,
@@ -446,8 +436,8 @@
       "so_far": 0,
       "median": 2.0,
       "p10": 0.0,
-      "p90": 7.6,
-      "mean": 3.0,
+      "p90": 6.0,
+      "mean": 2.6,
       "clim_median": 4.0,
       "clim_p10": 0.2,
       "clim_p90": 7.8,
@@ -459,10 +449,10 @@
      },
      "red": {
       "so_far": 0,
-      "median": 5.1,
+      "median": 4.2,
       "p10": 0.0,
       "p90": 27.0,
-      "mean": 10.9,
+      "mean": 10.2,
       "clim_median": 17.0,
       "clim_p10": 0.0,
       "clim_p90": 46.8,
@@ -473,12 +463,12 @@
       "skill": 0.068
      }
     },
-    "chance_red_week": 0.47,
+    "chance_red_week": 0.42,
     "chance_red_week_normal": 0.64,
     "analogs": [
      {
       "label": "Hilary 2006",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 61,
        "blue": 2,
@@ -498,7 +488,7 @@
      },
      {
       "label": "Hilary 2019",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 54,
        "blue": 9,
@@ -546,12 +536,7 @@
        "red": 53
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.57,
-     "higher": 0.13,
-     "usual": 0.3
-    }
+    ]
    },
    {
     "term": "Easter Vac",
@@ -563,9 +548,9 @@
     "days": 35,
     "days_done": 0,
     "tercile": {
-     "lower": 0.37,
+     "lower": 0.38,
      "higher": 0.25,
-     "usual": 0.38
+     "usual": 0.37
     },
     "lead": "4+ months",
     "trust": 0.2,
@@ -575,7 +560,7 @@
       "median": 31.0,
       "p10": 7.0,
       "p90": 35.0,
-      "mean": 26.4,
+      "mean": 26.5,
       "clim_median": 29.0,
       "clim_p10": 7.0,
       "clim_p90": 35.0,
@@ -587,13 +572,13 @@
      },
      "blue": {
       "so_far": 0,
-      "median": 2.2,
+      "median": 2.0,
       "p10": 0.0,
-      "p90": 10.0,
-      "mean": 4.3,
+      "p90": 10.1,
+      "mean": 4.2,
       "clim_median": 3.0,
       "clim_p10": 0.0,
-      "clim_p90": 9.8,
+      "clim_p90": 10.0,
       "normal_mean": 4.6,
       "normal_median": 2.0,
       "normal_p10": 0.0,
@@ -620,7 +605,7 @@
       "median": 0.0,
       "p10": 0.0,
       "p90": 12.0,
-      "mean": 3.4,
+      "mean": 3.3,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 15.8,
@@ -635,22 +620,22 @@
     "chance_red_week_normal": 0.18,
     "analogs": [
      {
-      "label": "Easter Vac 2004",
-      "pct_normal_90d": 31,
-      "days": {
-       "green": 35,
-       "blue": 0,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Easter Vac 2026",
       "pct_normal_90d": 31,
       "days": {
        "green": 28,
        "blue": 6,
        "amber": 1,
+       "red": 0
+      }
+     },
+     {
+      "label": "Easter Vac 2004",
+      "pct_normal_90d": 31,
+      "days": {
+       "green": 35,
+       "blue": 0,
+       "amber": 0,
        "red": 0
       }
      },
@@ -676,7 +661,7 @@
      },
      {
       "label": "Easter Vac 2019",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 40,
        "blue": 2,
@@ -686,7 +671,7 @@
      },
      {
       "label": "Easter Vac 2006",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 31,
        "blue": 2,
@@ -704,12 +689,7 @@
        "red": 23
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.37,
-     "higher": 0.25,
-     "usual": 0.38
-    }
+    ]
    },
    {
     "term": "Trinity",
@@ -722,8 +702,8 @@
     "days_done": 0,
     "tercile": {
      "lower": 0.34,
-     "higher": 0.29,
-     "usual": 0.37
+     "higher": 0.28,
+     "usual": 0.38
     },
     "lead": "4+ months",
     "trust": 0.2,
@@ -733,7 +713,7 @@
       "median": 63.0,
       "p10": 44.0,
       "p90": 63.0,
-      "mean": 58.3,
+      "mean": 58.4,
       "clim_median": 63.0,
       "clim_p10": 44.0,
       "clim_p90": 63.0,
@@ -748,7 +728,7 @@
       "median": 0.0,
       "p10": 0.0,
       "p90": 10.4,
-      "mean": 3.1,
+      "mean": 3.0,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 10.8,
@@ -762,7 +742,7 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 1.4,
+      "p90": 2.0,
       "mean": 0.3,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -777,7 +757,7 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 4.2,
+      "p90": 4.1,
       "mean": 1.2,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -793,16 +773,6 @@
     "chance_red_week_normal": 0.06,
     "analogs": [
      {
-      "label": "Trinity 2004",
-      "pct_normal_90d": 31,
-      "days": {
-       "green": 60,
-       "blue": 3,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Trinity 2026",
       "pct_normal_90d": 31,
       "days": {
@@ -813,8 +783,18 @@
       }
      },
      {
+      "label": "Trinity 2004",
+      "pct_normal_90d": 31,
+      "days": {
+       "green": 60,
+       "blue": 3,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
       "label": "Trinity 2006",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 63,
        "blue": 0,
@@ -834,7 +814,7 @@
      },
      {
       "label": "Trinity 2019",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 63,
        "blue": 0,
@@ -862,12 +842,7 @@
        "red": 11
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.34,
-     "higher": 0.29,
-     "usual": 0.37
-    }
+    ]
    }
   ],
   "godstow": [
@@ -879,23 +854,23 @@
     "end": "2026-12-05",
     "full_term_start": "2026-10-11",
     "days": 63,
-    "days_done": 30,
+    "days_done": 31,
     "tercile": {
-     "lower": 0.89,
+     "lower": 0.92,
      "higher": 0.02,
-     "usual": 0.09
+     "usual": 0.06
     },
     "lead": "during",
     "trust": 0.9,
     "flags": {
      "green": {
-      "so_far": 30,
+      "so_far": 31,
       "median": 63.0,
       "p10": 63.0,
       "p90": 63.0,
       "mean": 62.3,
       "clim_median": 61.0,
-      "clim_p10": 32.8,
+      "clim_p10": 33.8,
       "clim_p90": 63.0,
       "normal_mean": 52.4,
       "normal_median": 61.0,
@@ -911,7 +886,7 @@
       "mean": 0.3,
       "clim_median": 2.0,
       "clim_p10": 0.0,
-      "clim_p90": 7.0,
+      "clim_p90": 6.8,
       "normal_mean": 4.8,
       "normal_median": 2.0,
       "normal_p10": 0.0,
@@ -923,7 +898,7 @@
       "median": 0.0,
       "p10": 0.0,
       "p90": 0.0,
-      "mean": 0.4,
+      "mean": 0.5,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 18.6,
@@ -938,15 +913,6 @@
     "chance_red_week_normal": 0.24,
     "analogs": [
      {
-      "label": "Michaelmas 2003",
-      "pct_normal_90d": 31,
-      "days": {
-       "green": 63,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Michaelmas 2025",
       "pct_normal_90d": 31,
       "days": {
@@ -956,8 +922,17 @@
       }
      },
      {
+      "label": "Michaelmas 2003",
+      "pct_normal_90d": 31,
+      "days": {
+       "green": 63,
+       "amber": 0,
+       "red": 0
+      }
+     },
+     {
       "label": "Michaelmas 2005",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 62,
        "amber": 1,
@@ -993,19 +968,14 @@
      },
      {
       "label": "Michaelmas 2018",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 63,
        "amber": 0,
        "red": 0
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.89,
-     "higher": 0.02,
-     "usual": 0.09
-    }
+    ]
    },
    {
     "term": "Christmas Vac",
@@ -1017,19 +987,19 @@
     "days": 35,
     "days_done": 0,
     "tercile": {
-     "lower": 0.6,
-     "higher": 0.08,
-     "usual": 0.32
+     "lower": 0.62,
+     "higher": 0.07,
+     "usual": 0.31
     },
     "lead": "1-2 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 27.0,
-      "p10": 11.7,
+      "median": 28.0,
+      "p10": 14.0,
       "p90": 35.0,
-      "mean": 26.0,
+      "mean": 27.0,
       "clim_median": 17.0,
       "clim_p10": 0.6,
       "clim_p90": 35.0,
@@ -1041,10 +1011,10 @@
      },
      "amber": {
       "so_far": 0,
-      "median": 3.4,
+      "median": 3.0,
       "p10": 0.0,
-      "p90": 10.0,
-      "mean": 4.7,
+      "p90": 11.0,
+      "mean": 4.4,
       "clim_median": 6.0,
       "clim_p10": 0.0,
       "clim_p90": 12.8,
@@ -1058,8 +1028,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 13.8,
-      "mean": 4.3,
+      "p90": 9.2,
+      "mean": 3.6,
       "clim_median": 9.0,
       "clim_p10": 0.0,
       "clim_p90": 20.6,
@@ -1070,7 +1040,7 @@
       "skill": 0.159
      }
     },
-    "chance_red_week": 0.32,
+    "chance_red_week": 0.21,
     "chance_red_week_normal": 0.58,
     "analogs": [
      {
@@ -1084,7 +1054,7 @@
      },
      {
       "label": "Christmas Vac 2005",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 32,
        "amber": 3,
@@ -1111,7 +1081,7 @@
      },
      {
       "label": "Christmas Vac 2018",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 28,
        "amber": 0,
@@ -1136,12 +1106,7 @@
        "red": 22
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.58,
-     "higher": 0.07,
-     "usual": 0.35
-    }
+    ]
    },
    {
     "term": "Hilary",
@@ -1153,19 +1118,19 @@
     "days": 63,
     "days_done": 0,
     "tercile": {
-     "lower": 0.57,
-     "higher": 0.13,
-     "usual": 0.3
+     "lower": 0.62,
+     "higher": 0.11,
+     "usual": 0.27
     },
     "lead": "2-3 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 47.0,
+      "median": 49.0,
       "p10": 13.0,
       "p90": 63.0,
-      "mean": 43.4,
+      "mean": 44.6,
       "clim_median": 34.0,
       "clim_p10": 6.2,
       "clim_p90": 58.6,
@@ -1177,25 +1142,25 @@
      },
      "amber": {
       "so_far": 0,
-      "median": 8.0,
+      "median": 7.0,
       "p10": 0.0,
-      "p90": 21.3,
-      "mean": 9.4,
+      "p90": 19.6,
+      "mean": 8.9,
       "clim_median": 12.0,
       "clim_p10": 2.4,
-      "clim_p90": 24.0,
+      "clim_p90": 23.8,
       "normal_mean": 13.0,
       "normal_median": 13.0,
       "normal_p10": 2.8,
-      "normal_p90": 23.8,
+      "normal_p90": 23.0,
       "skill": 0.09
      },
      "red": {
       "so_far": 0,
-      "median": 4.2,
+      "median": 3.1,
       "p10": 0.0,
       "p90": 26.0,
-      "mean": 10.2,
+      "mean": 9.4,
       "clim_median": 16.0,
       "clim_p10": 0.0,
       "clim_p90": 44.6,
@@ -1206,12 +1171,12 @@
       "skill": 0.06
      }
     },
-    "chance_red_week": 0.42,
+    "chance_red_week": 0.39,
     "chance_red_week_normal": 0.64,
     "analogs": [
      {
       "label": "Hilary 2006",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 63,
        "amber": 0,
@@ -1229,7 +1194,7 @@
      },
      {
       "label": "Hilary 2019",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 57,
        "amber": 6,
@@ -1249,8 +1214,8 @@
       "label": "Hilary 2004",
       "pct_normal_90d": 31,
       "days": {
-       "green": 40,
-       "amber": 12,
+       "green": 39,
+       "amber": 13,
        "red": 11
       }
      },
@@ -1272,12 +1237,7 @@
        "red": 52
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.57,
-     "higher": 0.13,
-     "usual": 0.3
-    }
+    ]
    },
    {
     "term": "Easter Vac",
@@ -1289,9 +1249,9 @@
     "days": 35,
     "days_done": 0,
     "tercile": {
-     "lower": 0.37,
+     "lower": 0.38,
      "higher": 0.25,
-     "usual": 0.38
+     "usual": 0.37
     },
     "lead": "4+ months",
     "trust": 0.2,
@@ -1299,13 +1259,13 @@
      "green": {
       "so_far": 0,
       "median": 32.0,
-      "p10": 10.2,
+      "p10": 13.2,
       "p90": 35.0,
-      "mean": 28.9,
+      "mean": 29.0,
       "clim_median": 32.0,
       "clim_p10": 11.2,
       "clim_p90": 35.0,
-      "normal_mean": 29.0,
+      "normal_mean": 28.9,
       "normal_median": 32.0,
       "normal_p10": 12.8,
       "normal_p90": 35.0,
@@ -1315,12 +1275,12 @@
       "so_far": 0,
       "median": 2.0,
       "p10": 0.0,
-      "p90": 9.2,
-      "mean": 3.1,
+      "p90": 8.6,
+      "mean": 3.0,
       "clim_median": 2.0,
       "clim_p10": 0.0,
       "clim_p90": 10.2,
-      "normal_mean": 3.1,
+      "normal_mean": 3.2,
       "normal_median": 2.0,
       "normal_p10": 0.0,
       "normal_p90": 8.8,
@@ -1346,20 +1306,20 @@
     "chance_red_week_normal": 0.15,
     "analogs": [
      {
-      "label": "Easter Vac 2004",
-      "pct_normal_90d": 31,
-      "days": {
-       "green": 35,
-       "amber": 0,
-       "red": 0
-      }
-     },
-     {
       "label": "Easter Vac 2026",
       "pct_normal_90d": 31,
       "days": {
        "green": 31,
        "amber": 4,
+       "red": 0
+      }
+     },
+     {
+      "label": "Easter Vac 2004",
+      "pct_normal_90d": 31,
+      "days": {
+       "green": 35,
+       "amber": 0,
        "red": 0
       }
      },
@@ -1383,7 +1343,7 @@
      },
      {
       "label": "Easter Vac 2019",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 42,
        "amber": 0,
@@ -1392,7 +1352,7 @@
      },
      {
       "label": "Easter Vac 2006",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 31,
        "amber": 2,
@@ -1408,12 +1368,7 @@
        "red": 23
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.37,
-     "higher": 0.25,
-     "usual": 0.38
-    }
+    ]
    },
    {
     "term": "Trinity",
@@ -1426,8 +1381,8 @@
     "days_done": 0,
     "tercile": {
      "lower": 0.34,
-     "higher": 0.29,
-     "usual": 0.37
+     "higher": 0.28,
+     "usual": 0.38
     },
     "lead": "4+ months",
     "trust": 0.2,
@@ -1435,7 +1390,7 @@
      "green": {
       "so_far": 0,
       "median": 63.0,
-      "p10": 51.9,
+      "p10": 52.2,
       "p90": 63.0,
       "mean": 60.3,
       "clim_median": 63.0,
@@ -1451,8 +1406,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 8.0,
-      "mean": 1.7,
+      "p90": 7.4,
+      "mean": 1.6,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 7.6,
@@ -1466,7 +1421,7 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 3.0,
+      "p90": 3.2,
       "mean": 1.0,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -1482,15 +1437,6 @@
     "chance_red_week_normal": 0.06,
     "analogs": [
      {
-      "label": "Trinity 2004",
-      "pct_normal_90d": 31,
-      "days": {
-       "green": 62,
-       "amber": 1,
-       "red": 0
-      }
-     },
-     {
       "label": "Trinity 2026",
       "pct_normal_90d": 31,
       "days": {
@@ -1500,8 +1446,17 @@
       }
      },
      {
+      "label": "Trinity 2004",
+      "pct_normal_90d": 31,
+      "days": {
+       "green": 62,
+       "amber": 1,
+       "red": 0
+      }
+     },
+     {
       "label": "Trinity 2006",
-      "pct_normal_90d": 30,
+      "pct_normal_90d": 33,
       "days": {
        "green": 63,
        "amber": 0,
@@ -1519,7 +1474,7 @@
      },
      {
       "label": "Trinity 2019",
-      "pct_normal_90d": 44,
+      "pct_normal_90d": 43,
       "days": {
        "green": 63,
        "amber": 0,
@@ -1544,12 +1499,7 @@
        "red": 8
       }
      }
-    ],
-    "tercile_river_only": {
-     "lower": 0.34,
-     "higher": 0.29,
-     "usual": 0.37
-    }
+    ]
    }
   ]
  },
@@ -1595,35 +1545,35 @@
    ],
    "chance": {
     "green": [
-     0.966,
-     0.942,
-     0.92,
-     0.861,
-     0.841,
-     0.841,
-     0.713,
-     0.545,
-     0.479,
-     0.524,
-     0.469,
-     0.51,
-     0.584,
-     0.513,
-     0.595,
-     0.589,
-     0.582,
-     0.598,
-     0.662,
-     0.762,
-     0.758,
-     0.784,
-     0.8,
-     0.852,
-     0.829,
-     0.87,
-     0.926,
-     0.976,
-     0.972,
+     0.955,
+     0.945,
+     0.914,
+     0.922,
+     0.88,
+     0.872,
+     0.751,
+     0.583,
+     0.52,
+     0.559,
+     0.483,
+     0.552,
+     0.611,
+     0.526,
+     0.606,
+     0.604,
+     0.587,
+     0.605,
+     0.67,
+     0.764,
+     0.763,
+     0.789,
+     0.801,
+     0.855,
+     0.831,
+     0.874,
+     0.927,
+     0.977,
+     0.973,
      0.958,
      0.971,
      0.978,
@@ -1634,34 +1584,34 @@
     ],
     "blue": [
      0.01,
-     0.038,
-     0.043,
-     0.085,
-     0.051,
-     0.054,
-     0.127,
-     0.183,
-     0.215,
-     0.172,
-     0.195,
-     0.218,
-     0.194,
-     0.188,
-     0.143,
-     0.201,
-     0.223,
-     0.223,
-     0.202,
-     0.132,
-     0.118,
-     0.081,
-     0.075,
-     0.11,
-     0.106,
-     0.084,
-     0.035,
-     0.024,
+     0.025,
+     0.042,
      0.028,
+     0.052,
+     0.039,
+     0.115,
+     0.198,
+     0.19,
+     0.147,
+     0.223,
+     0.211,
+     0.18,
+     0.184,
+     0.141,
+     0.186,
+     0.232,
+     0.219,
+     0.195,
+     0.132,
+     0.113,
+     0.08,
+     0.078,
+     0.108,
+     0.104,
+     0.081,
+     0.034,
+     0.023,
+     0.027,
      0.025,
      0.011,
      0.022,
@@ -1671,33 +1621,33 @@
      0.034
     ],
     "amber": [
-     0.001,
-     0.005,
+     0.002,
+     0.003,
      0.008,
-     0.014,
-     0.039,
-     0.026,
-     0.029,
-     0.079,
-     0.046,
+     0.012,
+     0.025,
+     0.033,
+     0.028,
+     0.083,
+     0.04,
      0.06,
-     0.094,
-     0.076,
-     0.034,
-     0.039,
+     0.084,
+     0.048,
+     0.027,
+     0.037,
      0.03,
      0.035,
-     0.043,
-     0.047,
-     0.033,
-     0.037,
-     0.016,
-     0.016,
      0.041,
-     0.008,
-     0.008,
+     0.045,
+     0.032,
+     0.037,
+     0.018,
+     0.013,
+     0.04,
+     0.007,
+     0.007,
      0.011,
-     0.015,
+     0.016,
      0.0,
      0.0,
      0.006,
@@ -1709,33 +1659,33 @@
      0.009
     ],
     "red": [
-     0.023,
-     0.015,
-     0.029,
-     0.04,
-     0.069,
-     0.079,
-     0.131,
-     0.193,
-     0.259,
-     0.244,
-     0.242,
-     0.196,
+     0.034,
+     0.026,
+     0.035,
+     0.038,
+     0.043,
+     0.056,
+     0.106,
+     0.136,
+     0.25,
+     0.234,
+     0.21,
      0.189,
-     0.26,
-     0.232,
+     0.182,
+     0.253,
+     0.223,
      0.175,
-     0.152,
-     0.132,
+     0.141,
+     0.131,
      0.103,
-     0.068,
-     0.109,
+     0.067,
+     0.106,
      0.119,
-     0.084,
+     0.081,
      0.03,
      0.058,
      0.035,
-     0.024,
+     0.023,
      0.0,
      0.0,
      0.011,
@@ -1753,7 +1703,7 @@
      0.727,
      0.641,
      0.662,
-     0.645,
+     0.641,
      0.532,
      0.446,
      0.316,
@@ -1768,7 +1718,7 @@
      0.459,
      0.558,
      0.628,
-     0.732,
+     0.727,
      0.736,
      0.771,
      0.784,
@@ -1791,7 +1741,7 @@
      0.126,
      0.143,
      0.087,
-     0.082,
+     0.087,
      0.177,
      0.195,
      0.195,
@@ -1806,7 +1756,7 @@
      0.268,
      0.234,
      0.208,
-     0.147,
+     0.152,
      0.13,
      0.082,
      0.078,
@@ -1943,35 +1893,35 @@
    ],
    "chance": {
     "green": [
-     0.974,
      0.962,
-     0.95,
-     0.937,
-     0.87,
-     0.871,
-     0.773,
-     0.626,
-     0.568,
-     0.595,
-     0.546,
-     0.597,
-     0.695,
+     0.958,
+     0.949,
+     0.941,
+     0.906,
+     0.894,
+     0.804,
+     0.651,
+     0.598,
      0.617,
-     0.686,
-     0.693,
-     0.697,
-     0.749,
-     0.78,
-     0.848,
-     0.83,
+     0.567,
+     0.628,
+     0.706,
+     0.626,
+     0.688,
+     0.708,
+     0.708,
+     0.757,
+     0.781,
+     0.849,
+     0.832,
      0.842,
-     0.83,
-     0.915,
-     0.882,
+     0.833,
+     0.919,
+     0.886,
      0.926,
      0.948,
-     0.991,
-     0.996,
+     0.992,
+     0.997,
      0.978,
      0.978,
      0.996,
@@ -1981,35 +1931,35 @@
      0.983
     ],
     "amber": [
-     0.006,
-     0.024,
-     0.024,
-     0.027,
-     0.071,
-     0.063,
-     0.099,
-     0.217,
-     0.181,
-     0.174,
+     0.008,
+     0.017,
+     0.018,
+     0.026,
+     0.051,
+     0.061,
+     0.096,
+     0.228,
+     0.197,
+     0.159,
      0.238,
-     0.216,
+     0.198,
      0.124,
-     0.134,
-     0.097,
-     0.143,
-     0.162,
-     0.137,
      0.141,
-     0.087,
-     0.067,
-     0.043,
-     0.099,
-     0.055,
-     0.07,
+     0.1,
+     0.132,
+     0.16,
+     0.13,
+     0.141,
+     0.089,
+     0.066,
+     0.042,
+     0.097,
+     0.052,
+     0.068,
      0.044,
      0.034,
-     0.009,
-     0.004,
+     0.008,
+     0.003,
      0.018,
      0.004,
      0.004,
@@ -2019,31 +1969,31 @@
      0.017
     ],
     "red": [
-     0.02,
-     0.014,
-     0.025,
-     0.036,
-     0.059,
-     0.066,
-     0.127,
-     0.157,
-     0.251,
-     0.231,
-     0.216,
-     0.188,
-     0.181,
-     0.249,
-     0.216,
-     0.165,
-     0.141,
-     0.114,
-     0.079,
-     0.065,
-     0.103,
-     0.115,
-     0.071,
      0.03,
-     0.048,
+     0.024,
+     0.033,
+     0.033,
+     0.042,
+     0.046,
+     0.1,
+     0.121,
+     0.204,
+     0.223,
+     0.195,
+     0.174,
+     0.171,
+     0.234,
+     0.212,
+     0.16,
+     0.132,
+     0.113,
+     0.078,
+     0.061,
+     0.102,
+     0.115,
+     0.07,
+     0.029,
+     0.047,
      0.03,
      0.018,
      0.0,
@@ -2073,11 +2023,11 @@
      0.368,
      0.481,
      0.498,
-     0.576,
-     0.584,
+     0.571,
+     0.589,
      0.602,
      0.727,
-     0.745,
+     0.74,
      0.827,
      0.814,
      0.831,
@@ -2111,11 +2061,11 @@
      0.264,
      0.255,
      0.165,
-     0.121,
-     0.203,
+     0.126,
+     0.199,
      0.173,
      0.139,
-     0.16,
+     0.165,
      0.1,
      0.074,
      0.039,
@@ -2179,14 +2129,14 @@
   "year": 2027,
   "first_day": "2027-02-24",
   "last_day": "2027-02-27",
-  "days_away": 114,
+  "days_away": 113,
   "chance": 0.312,
   "chance_state_only": 0.06,
   "chance_clim": 0.24,
   "chance_record": 0.312,
   "trust": 0.5,
   "chance_river_only": 0.15,
-  "flow_median": 22.8,
+  "flow_median": 22.2,
   "flow_p10": 8.6,
   "flow_p90": 51.8,
   "lead": "3-4 months",
@@ -2243,78 +2193,45 @@
  "ec46": [
   {
    "week": "2026-11-09",
-   "median": 20,
-   "p10": 0,
-   "p90": 38,
+   "median": 22,
+   "p10": 5,
+   "p90": 41,
    "normal": 16,
    "members": 51
   },
   {
    "week": "2026-11-16",
-   "median": 14,
-   "p10": 4,
-   "p90": 35,
+   "median": 19,
+   "p10": 1,
+   "p90": 37,
    "normal": 16,
    "members": 51
   },
   {
    "week": "2026-11-23",
-   "median": 26,
-   "p10": 3,
-   "p90": 42,
+   "median": 16,
+   "p10": 2,
+   "p90": 35,
    "normal": 16,
    "members": 51
   },
   {
    "week": "2026-11-30",
-   "median": 21,
-   "p10": 5,
-   "p90": 48,
+   "median": 17,
+   "p10": 1,
+   "p90": 37,
    "normal": 19,
    "members": 51
   },
   {
    "week": "2026-12-07",
-   "median": 18,
-   "p10": 3,
-   "p90": 40,
+   "median": 17,
+   "p10": 2,
+   "p90": 32,
    "normal": 19,
    "members": 51
   }
  ],
- "ec46_run": "2026-11-02",
- "forecast_weighting": {
-  "weeks": [
-   {
-    "from": "2026-11-03",
-    "forecast_mm": 3.5,
-    "normal_mm": 15.2,
-    "z": -0.99,
-    "skill": 0.6
-   },
-   {
-    "from": "2026-11-10",
-    "forecast_mm": 20.6,
-    "normal_mm": 10.0,
-    "z": 0.67,
-    "skill": 0.3
-   },
-   {
-    "from": "2026-11-17",
-    "forecast_mm": 18.1,
-    "normal_mm": 11.0,
-    "z": 0.26,
-    "skill": 0.15
-   }
-  ],
-  "effective_years": 23.8,
-  "flattened": 1.0,
-  "top_years": [
-   2006,
-   1995,
-   2003,
-   1993,
-   2020
-  ]
- }
+ "ec46_run": "2026-11-03",
+ "forecast_weighting": null
 }
