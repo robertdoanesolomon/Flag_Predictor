@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-05 13:30 UTC",
+ "generated": "2026-11-05 15:43 UTC",
  "issued": "2026-11-04",
  "members": 33,
  "member_years": [
@@ -99,7 +99,7 @@
      "green": {
       "so_far": 32,
       "median": 63.0,
-      "p10": 62.7,
+      "p10": 63.0,
       "p90": 63.0,
       "mean": 62.1,
       "clim_median": 60.0,
@@ -139,7 +139,7 @@
       "normal_median": 0.0,
       "normal_p10": 0.0,
       "normal_p90": 4.8,
-      "skill": 0.058
+      "skill": 0.059
      },
      "red": {
       "so_far": 0,
@@ -247,49 +247,49 @@
     "days": 35,
     "days_done": 0,
     "tercile": {
-     "lower": 0.67,
-     "higher": 0.07,
-     "usual": 0.26
+     "lower": 0.56,
+     "higher": 0.08,
+     "usual": 0.36
     },
     "lead": "1-2 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 25.8,
-      "p10": 8.8,
+      "median": 25.0,
+      "p10": 7.0,
       "p90": 35.0,
-      "mean": 25.2,
+      "mean": 23.8,
       "clim_median": 14.0,
       "clim_p10": 0.0,
-      "clim_p90": 34.8,
+      "clim_p90": 34.0,
       "normal_mean": 15.5,
       "normal_median": 16.0,
       "normal_p10": 0.0,
       "normal_p90": 33.8,
-      "skill": 0.19
+      "skill": 0.209
      },
      "blue": {
       "so_far": 0,
       "median": 3.0,
       "p10": 0.0,
-      "p90": 10.0,
-      "mean": 4.4,
+      "p90": 11.0,
+      "mean": 4.8,
       "clim_median": 5.0,
-      "clim_p10": 0.0,
+      "clim_p10": 0.2,
       "clim_p90": 13.8,
       "normal_mean": 5.7,
       "normal_median": 5.0,
       "normal_p10": 0.2,
       "normal_p90": 13.0,
-      "skill": -0.014
+      "skill": 0.003
      },
      "amber": {
       "so_far": 0,
-      "median": 0.9,
+      "median": 1.0,
       "p10": 0.0,
-      "p90": 5.0,
-      "mean": 1.5,
+      "p90": 4.0,
+      "mean": 1.4,
       "clim_median": 2.0,
       "clim_p10": 0.0,
       "clim_p90": 5.8,
@@ -297,14 +297,14 @@
       "normal_median": 1.0,
       "normal_p10": 0.0,
       "normal_p90": 5.8,
-      "skill": 0.057
+      "skill": 0.082
      },
      "red": {
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 12.3,
-      "mean": 3.9,
+      "p90": 15.7,
+      "mean": 5.0,
       "clim_median": 10.0,
       "clim_p10": 0.0,
       "clim_p90": 22.8,
@@ -312,10 +312,10 @@
       "normal_median": 9.0,
       "normal_p10": 0.0,
       "normal_p90": 23.6,
-      "skill": 0.16
+      "skill": 0.163
      }
     },
-    "chance_red_week": 0.26,
+    "chance_red_week": 0.32,
     "chance_red_week_normal": 0.58,
     "analogs": [
      {
@@ -390,9 +390,9 @@
      }
     ],
     "tercile_river_only": {
-     "lower": 0.67,
-     "higher": 0.07,
-     "usual": 0.26
+     "lower": 0.57,
+     "higher": 0.09,
+     "usual": 0.34
     }
    },
    {
@@ -405,19 +405,19 @@
     "days": 63,
     "days_done": 0,
     "tercile": {
-     "lower": 0.67,
-     "higher": 0.11,
-     "usual": 0.22
+     "lower": 0.52,
+     "higher": 0.13,
+     "usual": 0.35
     },
     "lead": "2-3 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 44.0,
+      "median": 40.0,
       "p10": 5.1,
-      "p90": 62.5,
-      "mean": 39.3,
+      "p90": 57.2,
+      "mean": 35.9,
       "clim_median": 22.0,
       "clim_p10": 0.4,
       "clim_p90": 54.8,
@@ -425,14 +425,14 @@
       "normal_median": 24.0,
       "normal_p10": 0.2,
       "normal_p90": 54.8,
-      "skill": 0.14
+      "skill": 0.165
      },
      "blue": {
       "so_far": 0,
-      "median": 10.0,
-      "p10": 0.0,
-      "p90": 21.4,
-      "mean": 11.1,
+      "median": 11.2,
+      "p10": 2.2,
+      "p90": 20.0,
+      "mean": 11.9,
       "clim_median": 15.0,
       "clim_p10": 2.0,
       "clim_p90": 27.0,
@@ -440,14 +440,14 @@
       "normal_median": 14.0,
       "normal_p10": 2.0,
       "normal_p90": 26.8,
-      "skill": 0.04
+      "skill": 0.017
      },
      "amber": {
       "so_far": 0,
-      "median": 2.0,
+      "median": 2.8,
       "p10": 0.0,
-      "p90": 6.0,
-      "mean": 2.4,
+      "p90": 6.4,
+      "mean": 2.8,
       "clim_median": 4.0,
       "clim_p10": 0.2,
       "clim_p90": 7.8,
@@ -455,14 +455,14 @@
       "normal_median": 4.0,
       "normal_p10": 0.2,
       "normal_p90": 8.0,
-      "skill": 0.046
+      "skill": 0.028
      },
      "red": {
       "so_far": 0,
-      "median": 5.3,
+      "median": 6.0,
       "p10": 0.0,
-      "p90": 27.0,
-      "mean": 10.2,
+      "p90": 36.6,
+      "mean": 12.3,
       "clim_median": 17.0,
       "clim_p10": 0.0,
       "clim_p90": 46.8,
@@ -470,10 +470,10 @@
       "normal_median": 17.0,
       "normal_p10": 0.0,
       "normal_p90": 46.8,
-      "skill": 0.068
+      "skill": 0.071
      }
     },
-    "chance_red_week": 0.42,
+    "chance_red_week": 0.47,
     "chance_red_week_normal": 0.64,
     "analogs": [
      {
@@ -548,9 +548,9 @@
      }
     ],
     "tercile_river_only": {
-     "lower": 0.67,
-     "higher": 0.11,
-     "usual": 0.22
+     "lower": 0.52,
+     "higher": 0.13,
+     "usual": 0.35
     }
    },
    {
@@ -563,9 +563,9 @@
     "days": 35,
     "days_done": 0,
     "tercile": {
-     "lower": 0.38,
-     "higher": 0.24,
-     "usual": 0.38
+     "lower": 0.35,
+     "higher": 0.25,
+     "usual": 0.4
     },
     "lead": "4+ months",
     "trust": 0.2,
@@ -575,7 +575,7 @@
       "median": 31.0,
       "p10": 7.0,
       "p90": 35.0,
-      "mean": 26.6,
+      "mean": 26.1,
       "clim_median": 29.0,
       "clim_p10": 7.0,
       "clim_p90": 35.0,
@@ -583,22 +583,22 @@
       "normal_median": 29.0,
       "normal_p10": 7.0,
       "normal_p90": 35.0,
-      "skill": 0.001
+      "skill": -0.002
      },
      "blue": {
       "so_far": 0,
       "median": 2.0,
       "p10": 0.0,
-      "p90": 10.1,
-      "mean": 4.2,
+      "p90": 10.4,
+      "mean": 4.4,
       "clim_median": 3.0,
       "clim_p10": 0.0,
-      "clim_p90": 9.8,
+      "clim_p90": 10.0,
       "normal_mean": 4.6,
       "normal_median": 2.0,
       "normal_p10": 0.0,
       "normal_p90": 10.6,
-      "skill": 0.002
+      "skill": -0.0
      },
      "amber": {
       "so_far": 0,
@@ -613,14 +613,14 @@
       "normal_median": 0.0,
       "normal_p10": 0.0,
       "normal_p90": 3.8,
-      "skill": 0.012
+      "skill": 0.007
      },
      "red": {
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 12.0,
-      "mean": 3.3,
+      "p90": 17.4,
+      "mean": 3.5,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 15.8,
@@ -628,10 +628,10 @@
       "normal_median": 0.0,
       "normal_p10": 0.0,
       "normal_p90": 17.0,
-      "skill": 0.002
+      "skill": 0.0
      }
     },
-    "chance_red_week": 0.18,
+    "chance_red_week": 0.19,
     "chance_red_week_normal": 0.18,
     "analogs": [
      {
@@ -706,9 +706,9 @@
      }
     ],
     "tercile_river_only": {
-     "lower": 0.38,
-     "higher": 0.24,
-     "usual": 0.38
+     "lower": 0.35,
+     "higher": 0.25,
+     "usual": 0.4
     }
    },
    {
@@ -722,8 +722,8 @@
     "days_done": 0,
     "tercile": {
      "lower": 0.34,
-     "higher": 0.28,
-     "usual": 0.38
+     "higher": 0.29,
+     "usual": 0.37
     },
     "lead": "4+ months",
     "trust": 0.2,
@@ -733,7 +733,7 @@
       "median": 63.0,
       "p10": 44.0,
       "p90": 63.0,
-      "mean": 58.4,
+      "mean": 58.2,
       "clim_median": 63.0,
       "clim_p10": 44.0,
       "clim_p90": 63.0,
@@ -747,8 +747,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 10.4,
-      "mean": 3.0,
+      "p90": 10.2,
+      "mean": 3.2,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 10.8,
@@ -762,8 +762,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 1.9,
-      "mean": 0.3,
+      "p90": 2.0,
+      "mean": 0.4,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 1.8,
@@ -771,7 +771,7 @@
       "normal_median": 0.0,
       "normal_p10": 0.0,
       "normal_p90": 1.8,
-      "skill": -0.005
+      "skill": -0.003
      },
      "red": {
       "so_far": 0,
@@ -865,8 +865,8 @@
     ],
     "tercile_river_only": {
      "lower": 0.34,
-     "higher": 0.28,
-     "usual": 0.38
+     "higher": 0.29,
+     "usual": 0.37
     }
    }
   ],
@@ -1017,19 +1017,19 @@
     "days": 35,
     "days_done": 0,
     "tercile": {
-     "lower": 0.67,
-     "higher": 0.07,
-     "usual": 0.26
+     "lower": 0.56,
+     "higher": 0.08,
+     "usual": 0.36
     },
     "lead": "1-2 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 28.0,
-      "p10": 14.5,
+      "median": 27.0,
+      "p10": 14.0,
       "p90": 35.0,
-      "mean": 27.1,
+      "mean": 26.1,
       "clim_median": 17.0,
       "clim_p10": 0.6,
       "clim_p90": 35.0,
@@ -1037,11 +1037,11 @@
       "normal_median": 18.0,
       "normal_p10": 0.6,
       "normal_p90": 34.8,
-      "skill": 0.191
+      "skill": 0.199
      },
      "amber": {
       "so_far": 0,
-      "median": 3.6,
+      "median": 4.0,
       "p10": 0.0,
       "p90": 11.0,
       "mean": 4.4,
@@ -1052,14 +1052,14 @@
       "normal_median": 6.0,
       "normal_p10": 0.0,
       "normal_p90": 10.8,
-      "skill": 0.011
+      "skill": 0.002
      },
      "red": {
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 9.0,
-      "mean": 3.5,
+      "p90": 13.0,
+      "mean": 4.5,
       "clim_median": 9.0,
       "clim_p10": 0.0,
       "clim_p90": 20.6,
@@ -1067,10 +1067,10 @@
       "normal_median": 9.0,
       "normal_p10": 0.0,
       "normal_p90": 21.6,
-      "skill": 0.159
+      "skill": 0.153
      }
     },
-    "chance_red_week": 0.21,
+    "chance_red_week": 0.28,
     "chance_red_week_normal": 0.58,
     "analogs": [
      {
@@ -1138,9 +1138,9 @@
      }
     ],
     "tercile_river_only": {
-     "lower": 0.67,
-     "higher": 0.07,
-     "usual": 0.26
+     "lower": 0.57,
+     "higher": 0.09,
+     "usual": 0.34
     }
    },
    {
@@ -1153,19 +1153,19 @@
     "days": 63,
     "days_done": 0,
     "tercile": {
-     "lower": 0.67,
-     "higher": 0.11,
-     "usual": 0.22
+     "lower": 0.52,
+     "higher": 0.13,
+     "usual": 0.35
     },
     "lead": "2-3 months",
     "trust": 0.8,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 48.1,
-      "p10": 13.0,
+      "median": 47.0,
+      "p10": 12.0,
       "p90": 63.0,
-      "mean": 44.7,
+      "mean": 42.5,
       "clim_median": 34.0,
       "clim_p10": 6.2,
       "clim_p90": 58.6,
@@ -1173,29 +1173,29 @@
       "normal_median": 33.0,
       "normal_p10": 6.2,
       "normal_p90": 58.6,
-      "skill": 0.124
+      "skill": 0.142
      },
      "amber": {
       "so_far": 0,
-      "median": 8.0,
+      "median": 9.0,
       "p10": 0.0,
-      "p90": 21.0,
-      "mean": 9.1,
+      "p90": 17.4,
+      "mean": 9.2,
       "clim_median": 12.0,
       "clim_p10": 2.4,
-      "clim_p90": 24.0,
+      "clim_p90": 23.8,
       "normal_mean": 13.0,
       "normal_median": 13.0,
       "normal_p10": 2.8,
-      "normal_p90": 23.8,
-      "skill": 0.09
+      "normal_p90": 23.0,
+      "skill": 0.077
      },
      "red": {
       "so_far": 0,
-      "median": 4.0,
+      "median": 5.0,
       "p10": 0.0,
-      "p90": 26.0,
-      "mean": 9.2,
+      "p90": 34.8,
+      "mean": 11.3,
       "clim_median": 16.0,
       "clim_p10": 0.0,
       "clim_p90": 44.6,
@@ -1203,10 +1203,10 @@
       "normal_median": 17.0,
       "normal_p10": 0.0,
       "normal_p90": 44.6,
-      "skill": 0.06
+      "skill": 0.058
      }
     },
-    "chance_red_week": 0.4,
+    "chance_red_week": 0.47,
     "chance_red_week_normal": 0.64,
     "analogs": [
      {
@@ -1249,8 +1249,8 @@
       "label": "Hilary 2004",
       "pct_normal_90d": 30,
       "days": {
-       "green": 40,
-       "amber": 12,
+       "green": 39,
+       "amber": 13,
        "red": 11
       }
      },
@@ -1274,9 +1274,9 @@
      }
     ],
     "tercile_river_only": {
-     "lower": 0.67,
-     "higher": 0.11,
-     "usual": 0.22
+     "lower": 0.52,
+     "higher": 0.13,
+     "usual": 0.35
     }
    },
    {
@@ -1289,49 +1289,49 @@
     "days": 35,
     "days_done": 0,
     "tercile": {
-     "lower": 0.38,
-     "higher": 0.24,
-     "usual": 0.38
+     "lower": 0.35,
+     "higher": 0.25,
+     "usual": 0.4
     },
     "lead": "4+ months",
     "trust": 0.2,
     "flags": {
      "green": {
       "so_far": 0,
-      "median": 32.2,
-      "p10": 10.0,
+      "median": 32.0,
+      "p10": 9.2,
       "p90": 35.0,
-      "mean": 29.0,
+      "mean": 28.8,
       "clim_median": 32.0,
       "clim_p10": 11.2,
       "clim_p90": 35.0,
-      "normal_mean": 29.0,
+      "normal_mean": 28.9,
       "normal_median": 32.0,
       "normal_p10": 12.8,
       "normal_p90": 35.0,
-      "skill": 0.003
+      "skill": 0.0
      },
      "amber": {
       "so_far": 0,
       "median": 2.0,
       "p10": 0.0,
       "p90": 11.0,
-      "mean": 3.0,
+      "mean": 3.1,
       "clim_median": 2.0,
       "clim_p10": 0.0,
       "clim_p90": 10.2,
-      "normal_mean": 3.1,
+      "normal_mean": 3.2,
       "normal_median": 2.0,
       "normal_p10": 0.0,
       "normal_p90": 8.8,
-      "skill": 0.007
+      "skill": 0.004
      },
      "red": {
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 10.8,
-      "mean": 3.0,
+      "p90": 13.8,
+      "mean": 3.1,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 13.4,
@@ -1339,7 +1339,7 @@
       "normal_median": 0.0,
       "normal_p10": 0.0,
       "normal_p90": 15.4,
-      "skill": 0.002
+      "skill": 0.0
      }
     },
     "chance_red_week": 0.13,
@@ -1410,9 +1410,9 @@
      }
     ],
     "tercile_river_only": {
-     "lower": 0.38,
-     "higher": 0.24,
-     "usual": 0.38
+     "lower": 0.35,
+     "higher": 0.25,
+     "usual": 0.4
     }
    },
    {
@@ -1426,8 +1426,8 @@
     "days_done": 0,
     "tercile": {
      "lower": 0.34,
-     "higher": 0.28,
-     "usual": 0.38
+     "higher": 0.29,
+     "usual": 0.37
     },
     "lead": "4+ months",
     "trust": 0.2,
@@ -1451,8 +1451,8 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 7.4,
-      "mean": 1.6,
+      "p90": 8.0,
+      "mean": 1.7,
       "clim_median": 0.0,
       "clim_p10": 0.0,
       "clim_p90": 7.6,
@@ -1466,7 +1466,7 @@
       "so_far": 0,
       "median": 0.0,
       "p10": 0.0,
-      "p90": 3.2,
+      "p90": 3.0,
       "mean": 1.0,
       "clim_median": 0.0,
       "clim_p10": 0.0,
@@ -1547,8 +1547,8 @@
     ],
     "tercile_river_only": {
      "lower": 0.34,
-     "higher": 0.28,
-     "usual": 0.38
+     "higher": 0.29,
+     "usual": 0.37
     }
    }
   ]
@@ -1599,7 +1599,7 @@
      0.949,
      0.928,
      0.928,
-     0.876,
+     0.875,
      0.878,
      0.755,
      0.584,
@@ -1614,7 +1614,7 @@
      0.589,
      0.675,
      0.673,
-     0.768,
+     0.765,
      0.765,
      0.79,
      0.801,
@@ -1637,7 +1637,7 @@
      0.028,
      0.033,
      0.025,
-     0.06,
+     0.061,
      0.039,
      0.117,
      0.207,
@@ -1652,7 +1652,7 @@
      0.229,
      0.197,
      0.193,
-     0.13,
+     0.133,
      0.112,
      0.079,
      0.08,
@@ -1753,7 +1753,7 @@
      0.727,
      0.641,
      0.662,
-     0.645,
+     0.641,
      0.532,
      0.446,
      0.316,
@@ -1768,7 +1768,7 @@
      0.459,
      0.558,
      0.628,
-     0.732,
+     0.727,
      0.736,
      0.771,
      0.784,
@@ -1791,7 +1791,7 @@
      0.126,
      0.143,
      0.087,
-     0.082,
+     0.087,
      0.177,
      0.195,
      0.195,
@@ -1806,7 +1806,7 @@
      0.268,
      0.234,
      0.208,
-     0.147,
+     0.152,
      0.13,
      0.082,
      0.078,
@@ -1957,11 +1957,11 @@
      0.638,
      0.706,
      0.628,
-     0.69,
-     0.708,
+     0.688,
+     0.71,
      0.706,
      0.803,
-     0.786,
+     0.783,
      0.851,
      0.832,
      0.844,
@@ -1995,11 +1995,11 @@
      0.191,
      0.127,
      0.139,
-     0.102,
-     0.139,
+     0.104,
+     0.136,
      0.165,
      0.117,
-     0.136,
+     0.139,
      0.087,
      0.068,
      0.041,
@@ -2073,11 +2073,11 @@
      0.368,
      0.481,
      0.498,
-     0.576,
-     0.584,
+     0.571,
+     0.589,
      0.602,
      0.727,
-     0.745,
+     0.74,
      0.827,
      0.814,
      0.831,
@@ -2111,11 +2111,11 @@
      0.264,
      0.255,
      0.165,
-     0.121,
-     0.203,
+     0.126,
+     0.199,
      0.173,
      0.139,
-     0.16,
+     0.165,
      0.1,
      0.074,
      0.039,
@@ -2190,7 +2190,7 @@
   "flow_p10": 8.6,
   "flow_p90": 51.8,
   "lead": "3-4 months",
-  "skill": 0.04,
+  "skill": 0.039,
   "chance_raw": 0.15,
   "too_early": true
  },
