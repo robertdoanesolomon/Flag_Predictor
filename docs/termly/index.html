@@ -69,6 +69,12 @@
     .scroll { overflow-x: auto; }
     footer { margin-top: 24px; text-align: center; color: var(--text-muted); font-size: 12.5px; line-height: 1.6; }
     @media (max-width: 560px) { th, td { padding: 7px 4px; font-size: 13px; } .panel { padding: 14px; } }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+    .chip { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-soft);
+      font: 600 12.5px Inter, sans-serif; color: var(--text-soft); cursor: pointer; }
+    .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    @media (prefers-color-scheme: dark) { .chip.active { color: #0b1815; } }
+    .chart.short { height: 220px; }
       .nudge { display: block; font-size: 0.85em; color: var(--text-muted); margin-top: 2px; }
 </style>
 </head>
@@ -94,6 +100,15 @@
   <section class="panel">
     <h2>Torpids</h2>
     <p id="torpids" style="margin:0"></p>
+    <div id="torpids-history" class="chart short" style="margin-top:10px"></div>
+    <p class="muted" id="torpids-history-note" style="margin:4px 0 0"></p>
+  </section>
+
+  <section class="panel">
+    <h2>How the odds have changed</h2>
+    <div class="chips" id="history-chips"></div>
+    <div id="history" class="chart"></div>
+    <p class="muted" id="history-note" style="margin:4px 0 0"></p>
   </section>
 
   <section class="panel">
@@ -116,7 +131,9 @@
     <h2>How it works</h2>
     <p style="margin:0">This uses only the river's own flow at Farmoor since 1993, with no weather forecast. A river that
       has been high or low tends to stay that way for weeks, because the ground and groundwater take time to fill or
-      drain. So we take today's flow and see how each of the last 33 years carried on from a similar starting point.
+      drain. So we take today's flow and see how each of the last 33 years carried on from a similar starting point. For
+      periods more than a few weeks off, "today's flow" means the last month rather than the last week, so a brief rise
+      after a day of rain doesn't swing the odds for a term that is still months away.
       That gives 33 possible futures, and the odds come from counting them. For the next few weeks, the years
       whose rain best matches ECMWF's three-week forecast count for more; this fades out for periods further off.
       The monthly seasonal forecast was tested this way and made it worse, so it is shown for information only. Each past year was forecast from the others to
@@ -234,13 +251,80 @@
       { displayModeBar: false, responsive: true });
   }
 
+  // ---- history: what the page said on each day (history.json, written by generate_termly.py)
+  const plotLayout = (extra) => {
+    const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const col = getComputedStyle(document.documentElement).getPropertyValue('--text-soft');
+    return Object.assign({ margin: { l: 40, r: 8, t: 30, b: 30 }, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { family: 'Inter, sans-serif', size: 12, color: col }, legend: { orientation: 'h', x: 0, y: 1.02, yanchor: 'bottom' },
+      xaxis: { type: 'date', tickformat: '%-d %b', gridcolor: 'rgba(0,0,0,0)' },
+      yaxis: { range: [0, 100], ticksuffix: '%', gridcolor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' } }, extra || {});
+  };
+  const cssv = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function rebuiltNote(rows, srcIdx) {
+    const live = rows.find((r) => r[srcIdx] === 'live');
+    if (!rows.some((r) => r[srcIdx] === 'rebuilt')) return '';
+    return live ? `Before ${d8(live[0])}: worked out afterwards from the river record, without the three-week weather forecast.`
+      : 'Worked out afterwards from the river record, without the three-week weather forecast.';
+  }
+  let histItem = null;
+  function renderHistory() {
+    const per = (H && H.periods) || {};
+    const labels = D.terms.isis.map((t) => t.label).filter((l) => per[l] && per[l].length > 1);
+    const box = document.getElementById('history');
+    if (!labels.length) { box.innerHTML = '<p class="muted">Not enough days recorded yet.</p>'; return; }
+    if (!labels.includes(histItem)) histItem = labels[0];
+    document.getElementById('history-chips').innerHTML = labels.map((l) =>
+      `<button class="chip${l === histItem ? ' active' : ''}" data-l="${l}">${l}</button>`).join('');
+    document.querySelectorAll('#history-chips .chip').forEach((b) => b.onclick = () => { histItem = b.dataset.l; renderHistory(); });
+    const rows = per[histItem], x = rows.map((r) => r[0]);
+    const tr = (i, name, c) => ({ type: 'scatter', mode: 'lines', x, y: rows.map((r) => Math.round(100 * r[i])), name,
+      stackgroup: 'odds', line: { width: 0.5, color: c }, fillcolor: c, hovertemplate: `${name.toLowerCase()} %{y}%<extra></extra>` });
+    const t = D.terms.isis.find((u) => u.label === histItem);
+    const shapes = t && t.start <= x[x.length - 1] && t.start >= x[0]
+      ? [{ type: 'line', x0: t.start, x1: t.start, y0: 0, y1: 100, line: { color: cssv('--text-muted'), width: 1, dash: 'dot' } }] : [];
+    Plotly.react('history', [tr(1, 'Lower', cssv('--lower')), tr(2, 'About usual', cssv('--usual')), tr(3, 'Higher', cssv('--higher'))],
+      plotLayout({ shapes, hovermode: 'x unified' }), { displayModeBar: false, responsive: true });
+    document.getElementById('history-note').textContent = `The odds for ${histItem} as the page gave them each day` +
+      (shapes.length ? ' (dotted line: when it started). ' : '. ') + rebuiltNote(rows, 4);
+  }
+  function renderTorpidsHistory() {
+    const t = D.torpids, box = document.getElementById('torpids-history');
+    const rows = t && H && H.torpids ? H.torpids[`Torpids ${t.year}`] : null;
+    const note = document.getElementById('torpids-history-note');
+    if (!rows || !rows.some((r) => !r[2])) {        // nothing but 'too early' so far: no chart yet
+      box.style.display = 'none';
+      note.textContent = rows ? 'A day-by-day chart of the chance appears here once the page gives one, about three months before.' : '';
+      return;
+    }
+    box.style.display = '';
+    const usual = V ? 1 - V.torpids_climatology : null;
+    const x = rows.map((r) => r[0]);
+    const y = (early) => rows.map((r) => (r[2] === early ? Math.round(100 * r[1]) : null));
+    const traces = [
+      { type: 'scatter', mode: 'lines', x, y: y(false), name: 'Goes ahead', line: { color: cssv('--accent-soft'), width: 2.5 },
+        hovertemplate: '%{y}%<extra></extra>', connectgaps: false },
+      { type: 'scatter', mode: 'lines', x, y: y(true), name: 'Too early to tell', line: { color: cssv('--text-muted'), width: 2, dash: 'dot' },
+        hovertemplate: 'too early: %{y}%<extra></extra>' },
+    ];
+    const shapes = usual != null ? [{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 100 * usual, y1: 100 * usual,
+      line: { color: cssv('--text-muted'), width: 1, dash: 'dash' } }] : [];
+    Plotly.react('torpids-history', traces.filter((tr) => tr.y.some((v) => v != null)),
+      plotLayout({ shapes, hovermode: 'x unified' }), { displayModeBar: false, responsive: true });
+    note.textContent = 'What the page said each day' +
+      (usual != null ? ` (dashed: usual, ${pct(usual)}). ` : '. ') + rebuiltNote(rows, 3);
+  }
+
+  let H = null;
   Promise.all([
     fetch('termly.json?t=' + Date.now()).then((r) => r.json()),
     fetch('verification.json?t=' + Date.now()).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-  ]).then(([d, v]) => {
-    D = d; V = v;
+    fetch('history.json?t=' + Date.now()).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  ]).then(([d, v, h]) => {
+    D = d; V = v; H = h;
     document.getElementById('issued').textContent = 'Updated ' + d8(D.issued);
     renderNow(); renderPeriods(); renderTorpids(); renderSeasonal(); renderEc46();
+    try { renderHistory(); renderTorpidsHistory(); } catch (e) { console.error(e); }
   }).catch(() => { document.getElementById('now').textContent = 'Could not load the forecast.'; });
 })();
 </script>

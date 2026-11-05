@@ -1241,3 +1241,48 @@ jumps were standing in for hour-scale spread the outcomes otherwise lack (the
 real river wanders > 5 cm in 28 % of quiet starts at Godstow, 45 % at
 Wallingford). Deployed parameters unchanged; the code reads both the old
 (`size_kind` 'linear') and new parameter files.
+
+## Long-range page: steadier odds for periods further off, and the odds over time (5 Nov 2026)
+
+**Why it moved.** From 14 Oct to 4 Nov the page's Hilary "lower" went 52 → 35 → 67% and Christmas Vac 41 → 35 → 67%.
+Almost none of that came from the EC46 weighting (river-only odds moved the same way). It came from the 7-day
+mean flow score. Farmoor was at 0.5 m3/s, rose to 6 m3/s after the late-October rain, then fell back to 0.02–1.3.
+At flows that low, a rise like that moves the 7-day score by a whole standard deviation (−1.3 → −0.2 → −1.7). The
+90-day score barely moved (−1.13 → −1.12).
+
+**Kalman filter / smoothing the odds.** `stability_termly.py` issues the outlook every day of every
+leave-one-year-out year (the other checks issue twice a month). Day-to-day changes in the log-odds are not
+negatively correlated from one day to the next (lag-1 correlation: during 0.37, up to 1 month 0.12, 1–3 months 0.01,
+3+ months 0.03). So a local-level Kalman filter fitted to them has gain 1: the daily moves are not noise around a
+steady value that a filter could average out. Smoothing at a fixed half-life only delays them, and it costs skill
+(h = 7 d: during 69.5 → 64.5%, Torpids last 5 weeks 14.4 → 9.5%).
+
+**Steadier inputs instead.** For each period, the 7-day mean is swapped for the 30-day mean as the start gets
+further off. The swap ramps across 14–45 days before the start (`SLOW_PREDICTORS`, `SLOW_RAMP`,
+`mix(..., slow=True)`). Daily hindcasts (RPS skill vs a usual year / mean daily change in lower + higher, points /
+sentence changes per 30 days):
+
+| | during | up to 1 month | 1–3 months | 3+ months |
+|---|---|---|---|---|
+| 7-day everywhere (before) | 69.5 / 2.6 / 2.1 | 23.8 / 2.1 / 2.2 | 12.5 / 2.1 / 2.5 | 3.8 / 0.9 / 0.5 |
+| 30-day everywhere | 66.2 / 2.1 / 1.6 | 22.3 / 1.3 / 1.4 | 13.9 / 1.4 / 1.6 | 3.0 / 0.5 / 0.3 |
+| ramp 14–45 d (now on the page) | 69.5 / 2.6 / 2.1 | 24.2 / 2.1 / 2.2 | 13.8 / 1.5 / 1.6 | 3.0 / 0.5 / 0.3 |
+| ramp + smoothing h = 7 d beyond 45 d | 69.5 / 2.6 / 2.1 | 24.2 / 2.1 / 2.2 | 13.5 / 1.1 / 1.1 | 2.7 / 0.2 / 0.1 |
+
+- **30-day vs 7-day, year bootstrap (90% range):**
+  - 1–3 months: +1.4 (+0.2 to +2.8);
+  - 3+ months: −0.8 (−1.3 to −0.4). The page says "no clear signal" there 96% of the time.
+- **Flag-day CRPS skill (`verify_termly.py`):** within ±0.7 points everywhere.
+- **Unchanged:** Torpids and the weekly flag chances still use the 7-day mean. Its Torpids calibration was fitted
+  with it, and Torpids moves only 0.4–0.9 points a day.
+- **This autumn, rebuilt:**
+  - Hilary: 7-day 0.64 (19 Oct) → 0.35 (28 Oct) → 0.67 (4 Nov); ramp 0.47 → 0.45 → 0.52.
+  - Christmas Vac (now about a month off, so mostly 7-day): 0.72 → 0.33 → 0.67 before; 0.53 → 0.42 → 0.57 now.
+
+**Odds over time.** Each run of `generate_termly.py` adds the Isis odds and the Torpids chance it published to
+`data/termly/outlook_history.csv` (`source = live`), and writes `docs/termly/history.json` for the page.
+`backfill_termly_history.py` filled 1 Sep – 4 Nov 2026 with the new method from the river record as it stood
+each day, without EC46 (`source = rebuilt`, labelled on the page).
+- **Periods:** a stacked lower/usual/higher area chart, one period at a time.
+- **Torpids:** a line of the chance it goes ahead, against the record. It is hidden while the page still says
+  "too early to tell".

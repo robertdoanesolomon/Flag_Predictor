@@ -104,7 +104,7 @@ for Y in range(T.FIRST_YEAR, LAST + 1):
                     if name == 'syn' and yw is None:
                         continue
                     ens.year_w = yw
-                    samples, wts = T.mix(ens, lead)
+                    samples, wts = T.mix(ens, lead, slow=True)
                     pm = (samples[:, sel].sum(1) + past.sum()) / (sel.sum() + len(past))
                     pr = np.array([np.sum(wts * (pm < lo_t)), 0, np.sum(wts * (pm > hi_t))])
                     pr[1] = 1 - pr[0] - pr[2]

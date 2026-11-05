@@ -70,11 +70,11 @@ def main() -> None:
                     continue
                 s = max(w0, t0 + pd.Timedelta(days=1))
                 obs_q = q.loc[s - pd.Timedelta(days=1):w1].to_numpy()
-                samples, wts = T.mix(ens, max(0, (w0 - t0).days))
+                samples, wts = T.mix(ens, max(0, (w0 - t0).days), slow=True)
                 for loc in ('isis', 'godstow'):
                     obs = T.days_at_flags(obs_q[1:], pd.date_range(s, w1), s, w1, loc, prev_flow=obs_q[0])[0]
                     fx = T.days_at_flags(samples, ens.days, s, w1, loc, prev_flow=prev)
-                    cl = fx[len(ens.members):]
+                    cl = fx[len(ens.members):len(ens.members) + len(ens.climatology)]
                     for k, flag in enumerate(T.NAMES[loc]):
                         rows.append({'Y': Y, 'kind': kind, 'period': period, 'loc': loc, 'flag': flag,
                                      'lead': bucket((w0 - t0).days), 'obs': int(obs[k]),
