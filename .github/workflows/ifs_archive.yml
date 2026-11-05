@@ -28,7 +28,7 @@ jobs:
       - name: Fetch
         continue-on-error: true
         timeout-minutes: 100
-        run: python fetch_ifs_archive.py --start "${{ inputs.start || '2023-01-01' }}" --end "${{ inputs.end || '2026-01-31' }}"
+        run: python fetch_ifs_archive.py --start "${{ inputs.start || '2024-03-01' }}" --end "${{ inputs.end || '2026-01-31' }}"
       - name: Commit
         if: always()
         run: |

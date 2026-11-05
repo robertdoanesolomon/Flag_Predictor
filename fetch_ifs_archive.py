@@ -30,7 +30,7 @@ URL = 'https://previous-runs-api.open-meteo.com/v1/forecast'
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument('--start', default='2024-10-01')
+    ap.add_argument('--start', default='2024-03-01')
     ap.add_argument('--end', default='2026-01-31')
     ap.add_argument('--model', default='ecmwf_ifs025')
     a = ap.parse_args()
@@ -45,26 +45,29 @@ def main() -> int:
             continue
         m1 = min(m0 + pd.offsets.MonthEnd(0), pd.Timestamp(a.end))
         frames = []
-        for name in names:                       # one station per call keeps each call small
-            for attempt in range(4):
-                try:
-                    r = requests.get(URL, timeout=120, params={
-                        'latitude': stations[name]['latitude'], 'longitude': stations[name]['longitude'],
-                        'hourly': ','.join(hourly), 'models': a.model, 'start_date': f'{m0:%Y-%m-%d}',
-                        'end_date': f'{m1:%Y-%m-%d}', 'timezone': 'GMT'})
-                    js = r.json()
-                    if js.get('error'):
-                        raise RuntimeError(js.get('reason'))
-                    h = js['hourly']
-                    frames.append(pd.DataFrame({'time': h['time'], 'station': name, 'day0': h['precipitation'],
-                                                **{f'day{n}': h[f'precipitation_previous_day{n}'] for n in range(1, 8)}}))
-                    break
-                except Exception as e:           # noqa: BLE001
-                    print(f'  {m0:%Y-%m} {name}: {e} (attempt {attempt + 1})', flush=True)
-                    time.sleep(20 * (attempt + 1))
-            time.sleep(1.0)
+        for attempt in range(4):                 # all stations in one call; one call per month
+            try:
+                r = requests.get(URL, timeout=90, params={
+                    'latitude': ','.join(str(stations[n]['latitude']) for n in names),
+                    'longitude': ','.join(str(stations[n]['longitude']) for n in names),
+                    'hourly': ','.join(hourly), 'models': a.model, 'start_date': f'{m0:%Y-%m-%d}',
+                    'end_date': f'{m1:%Y-%m-%d}', 'timezone': 'GMT'})
+                js = r.json()
+                if isinstance(js, dict) and js.get('error'):
+                    raise RuntimeError(js.get('reason'))
+                js = js if isinstance(js, list) else [js]
+                frames = [pd.DataFrame({'time': j['hourly']['time'], 'station': n, 'day0': j['hourly']['precipitation'],
+                                        **{f'day{k}': j['hourly'][f'precipitation_previous_day{k}'] for k in range(1, 8)}})
+                          for n, j in zip(names, js)]
+                break
+            except Exception as e:               # noqa: BLE001
+                print(f'  {m0:%Y-%m}: {e} (attempt {attempt + 1})', flush=True)
+                time.sleep(15 * (attempt + 1))
         if len(frames) == len(names):
             df = pd.concat(frames)
+            if df.drop(columns=['time', 'station']).notna().mean().max() < 0.05:
+                print(f'{m0:%Y-%m}: no forecasts archived for this month (the archive starts later), skipped', flush=True)
+                continue
             df.to_csv(target, index=False)
             cover = df.drop(columns=['time', 'station']).notna().mean().round(2).to_dict()
             print(f'{target.name}: {len(df)} rows; share with data {cover}', flush=True)
