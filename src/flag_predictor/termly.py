@@ -37,6 +37,14 @@ LINES = {'isis': (23.0, 34.5, 39.5), 'godstow': (28.0, 41.5)}
 NAMES = {'isis': ('green', 'blue', 'amber', 'red'), 'godstow': ('green', 'amber', 'red')}
 TORPIDS_FLOW = 42.0
 PREDICTORS = (7, 90)          # mean normal score of flow over the last 7 and 90 days
+# For periods further off, the 7-day mean is swapped for the 30-day mean, ramping across 14-45 days before the
+# period starts. A week's flow jumps with every small rise after rain (at low flows a rise from 0.5 to 5 m3/s
+# moves its score by a whole standard deviation), which a term two months off barely feels. Daily
+# leave-one-year-out hindcasts (stability_termly.py): lower/usual/higher skill 1-3 months ahead 12.5 -> 13.8%,
+# its day-to-day change 2.1 -> 1.5 points and changes of sentence 2.5 -> 1.6 a month; unchanged inside 14 days;
+# 3+ months 3.8 -> 3.0%. Torpids and the weekly flag chances keep the 7-day mean.
+SLOW_PREDICTORS = (30, 90)
+SLOW_RAMP = (14, 45)          # days before the period starts: all 7-day before the first, all 30-day after the second
 POOL_DAYS = 15                # start dates within this many days of today's date pooled in the fit
 POOL_STEP = 3
 FIRST_YEAR = 1993             # first academic year (Sep - Aug) with a full record before and after
@@ -229,6 +237,7 @@ class Ensemble:
     years: list                     # the academic year each member's weather comes from
     state: dict                     # today's normal scores, mean over the last 7 and 90 days
     year_w: Optional[np.ndarray] = None   # weight of each year from the weather forecasts (sums to 1); None = equal
+    members_slow: Optional[np.ndarray] = None   # the same years conditioned on SLOW_PREDICTORS (see mix)
 
 
 class Outlook:
@@ -241,10 +250,13 @@ class Outlook:
     through that date's distribution, keeps every member inside what the river has done at that time
     of year, and lets a very dry catchment wet up as fast as the past years did."""
 
-    def __init__(self, q: pd.Series, exclude: int | None = None, predictors=PREDICTORS, window: int = 15):
+    def __init__(self, q: pd.Series, exclude: int | None = None, predictors=PREDICTORS, window: int = 15,
+                 slow_predictors=SLOW_PREDICTORS):
         self.q = q
         self.exclude = exclude
         self.predictors = tuple(predictors)
+        self.slow_predictors = tuple(slow_predictors) if slow_predictors else None
+        windows = tuple(dict.fromkeys(self.predictors + (self.slow_predictors or ())))
         lq = np.log(q.clip(lower=MIN_FLOW))
         v = lq.to_numpy()
         acad = np.where(lq.index.month >= 9, lq.index.year, lq.index.year - 1)
@@ -260,7 +272,9 @@ class Outlook:
             rank = 0.5 * (np.searchsorted(s_, v[m], 'left') + np.searchsorted(s_, v[m], 'right'))
             z[m] = _ndtri(np.clip((rank + 0.5) / (len(s_) + 1), 1e-3, 1 - 1e-3))
         self.z = pd.Series(z, lq.index)
-        self.x = pd.DataFrame({w: self.z.rolling(w, min_periods=int(0.8 * w)).mean() for w in self.predictors})
+        self.x = pd.DataFrame({w: self.z.rolling(w, min_periods=int(0.8 * w)).mean() for w in windows})
+        self._cols = [list(windows).index(w) for w in self.predictors]
+        self._cols_slow = [list(windows).index(w) for w in self.slow_predictors] if self.slow_predictors else None
         self._t_first = lq.index[0]
         self._a = z
         self._x = self.x.to_numpy()
@@ -282,7 +296,7 @@ class Outlook:
 
     def _state(self, t: pd.Timestamp) -> np.ndarray:
         i = self._pos(t)
-        return self._x[i] if 0 <= i < len(self._x) else np.full(len(self.predictors), np.nan)
+        return self._x[i] if 0 <= i < len(self._x) else np.full(self._x.shape[1], np.nan)
 
     def _path(self, t: pd.Timestamp) -> np.ndarray | None:
         i = self._pos(t) + 1
@@ -324,16 +338,23 @@ class Outlook:
                 own.append(dd == 0)
                 yrs.append(y)
         X, R, own = np.array(X), np.array(R), np.array(own)
-        C = np.linalg.lstsq(X, R, rcond=None)[0]                       # (n_predictors, HORIZON)
-        cond = x_now @ C + (R - X @ C)[own]
+
+        def conditioned(cols):
+            C = np.linalg.lstsq(X[:, cols], R, rcond=None)[0]           # (n_predictors, HORIZON)
+            return x_now[cols] @ C + (R - X[:, cols] @ C)[own]
+        cond = conditioned(self._cols)
+        slow = conditioned(self._cols_slow) if self._cols_slow is not None else None
         clim = R[own]
         if trend:
             shift = trend * (acad0 - np.array([y for y, o in zip(yrs, own) if o]))[:, None]
             cond, clim = cond + shift, clim + shift
+            slow = slow + shift if slow is not None else None
         days = pd.date_range(t0 + pd.Timedelta(days=1), periods=HORIZON)
+        windows = list(self.x.columns)
         return Ensemble(t0=t0, days=days, members=self.to_flow(cond, days), climatology=self.to_flow(clim, days),
                         years=[y for y, o in zip(yrs, own) if o],
-                        state={f'{w}d': round(float(v), 3) for w, v in zip(self.predictors, x_now)})
+                        state={f'{w}d': round(float(v), 3) for w, v in zip(windows, x_now)},
+                        members_slow=self.to_flow(slow, days) if slow is not None else None)
 
 
 def _ndtr(x):
@@ -355,14 +376,27 @@ def blend_weight(lead_days: float) -> float:
     return BLEND[-1][1]
 
 
-def mix(ens: 'Ensemble', lead_days: float) -> tuple[np.ndarray, np.ndarray]:
-    """(samples, weights): the conditioned and climatology members together, weighted for this lead."""
+def slow_share(lead_days: float) -> float:
+    """How much of the conditioned part comes from the members conditioned on SLOW_PREDICTORS (see there)."""
+    a, b = SLOW_RAMP
+    return float(np.clip((lead_days - a) / (b - a), 0, 1))
+
+
+def mix(ens: 'Ensemble', lead_days: float, slow: bool = False) -> tuple[np.ndarray, np.ndarray]:
+    """(samples, weights): the conditioned and climatology members together, weighted for this lead.
+    The first len(members) samples are the conditioned members and the next len(climatology) the climatology;
+    with ``slow`` (the period outlooks), the members conditioned on SLOW_PREDICTORS follow, taking over from
+    the first set with the lead (slow_share)."""
     w = blend_weight(lead_days)
     n, m = len(ens.members), len(ens.climatology)
     yw = np.full(n, 1 / n)
     if ens.year_w is not None:      # the forecast weights cover three weeks: fade them out for periods further off
         a = float(np.clip(1 - (lead_days - 21) / 49, 0, 1))
         yw = a * ens.year_w + (1 - a) * yw
+    if slow and ens.members_slow is not None:
+        s = slow_share(lead_days)
+        return (np.concatenate([ens.members, ens.climatology, ens.members_slow]),
+                np.r_[(1 - s) * w * yw, (1 - w) * yw, s * w * yw])
     return (np.concatenate([ens.members, ens.climatology]), np.r_[w * yw, (1 - w) * yw])
 
 

@@ -11,6 +11,11 @@ and for Torpids. The skill figures shown next to each number come from docs/term
     python generate_termly.py              # fetch the latest flow, then forecast
     python generate_termly.py --no-fetch   # use the stored record
     python generate_termly.py --date 2025-11-01 --no-fetch   # as if issued on that day (for checks)
+    python generate_termly.py --date 2026-10-01 --no-fetch --rebuild   # only add that day to the history,
+                                           # river only (no weather forecasts); see backfill_termly_history.py
+
+Each run also records the odds it published in data/termly/outlook_history.csv (one row per period and day,
+the last run of the day kept) and writes docs/termly/history.json, which the page plots.
 """
 from __future__ import annotations
 
@@ -32,6 +37,8 @@ from flag_predictor import termly as T  # noqa: E402
 
 OUT = ROOT / 'docs' / 'termly' / 'termly.json'
 VERIFY = ROOT / 'docs' / 'termly' / 'verification.json'
+HISTORY = ROOT / 'data' / 'termly' / 'outlook_history.csv'
+HISTORY_JSON = ROOT / 'docs' / 'termly' / 'history.json'
 WEEKS = 36
 N_ANALOGS = 7
 
@@ -69,7 +76,7 @@ def term_summary(q: pd.Series, ens: T.Ensemble, term: str, acad: int, loc: str, 
         r = rebuilt_all.reindex(days)
         f = a.where(a.notna(), r)
         so_far = np.array([(f == n).sum() for n in names])
-    samples, wts = T.mix(ens, max(0, (w0 - t0).days))
+    samples, wts = T.mix(ens, max(0, (w0 - t0).days), slow=True)
     nc = len(ens.members)
     if w1 > t0:
         s = max(w0, t0 + pd.Timedelta(days=1))
@@ -78,7 +85,7 @@ def term_summary(q: pd.Series, ens: T.Ensemble, term: str, acad: int, loc: str, 
     else:
         rest = np.zeros((len(samples), len(names)), int)
     tot = so_far + rest
-    tot_c = tot[nc:]
+    tot_c = tot[nc:nc + len(ens.climatology)]
     # an average year: the whole term, rebuilt from flow, every year on record
     normal = []
     for y in range(T.FIRST_YEAR, acad):
@@ -157,10 +164,39 @@ def weekly(ens: T.Ensemble, loc: str, prev: float, weeks: int = WEEKS) -> dict:
     return out
 
 
+def record_history(report: dict, source: str) -> None:
+    """Add the day's published odds (Isis periods, Torpids) to the history and rewrite the page's copy.
+    ``source``: 'live' (what the page showed) or 'rebuilt' (worked out afterwards from the river record alone)."""
+    day = report['issued']
+    rows = [{'issued': day, 'item': t['label'], 'kind': 'period', 'lower': t['tercile']['lower'],
+             'usual': t['tercile']['usual'], 'higher': t['tercile']['higher'], 'source': source}
+            for t in report['terms']['isis']]
+    tp = report.get('torpids')
+    if tp:
+        rows.append({'issued': day, 'item': f"Torpids {tp['year']}", 'kind': 'torpids', 'go': round(1 - tp['chance'], 3),
+                     'too_early': bool(tp.get('too_early', False)), 'source': source})
+    new = pd.DataFrame(rows)
+    old = pd.read_csv(HISTORY) if HISTORY.exists() else pd.DataFrame(columns=new.columns)
+    if source == 'rebuilt' and len(old):        # never overwrite what the page actually showed
+        new = new[~new.set_index(['issued', 'item']).index.isin(old[old.source == 'live'].set_index(['issued', 'item']).index)]
+    h = pd.concat([old, new]).drop_duplicates(['issued', 'item'], keep='last').sort_values(['issued', 'item'])
+    HISTORY.parent.mkdir(parents=True, exist_ok=True)
+    h.to_csv(HISTORY, index=False)
+    out = {'periods': {}, 'torpids': {}}
+    for (item, kind), g in h.groupby(['item', 'kind'], sort=False):
+        if kind == 'period':
+            out['periods'][item] = [[r.issued, r.lower, r.usual, r.higher, r.source] for r in g.itertuples()]
+        else:
+            out['torpids'][item] = [[r.issued, r.go, bool(r.too_early), r.source] for r in g.itertuples()]
+    HISTORY_JSON.write_text(json.dumps(out, separators=(',', ':')))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--no-fetch', action='store_true')
     ap.add_argument('--date', default=None)
+    ap.add_argument('--rebuild', action='store_true', help='river only, no weather forecasts; only add the day '
+                    'to the history (data/termly/outlook_history.csv), leave the page as it is')
     args = ap.parse_args()
     q = T.load_flow(ROOT) if args.no_fetch else T.update_flow(ROOT)
     t0 = pd.Timestamp(args.date) if args.date else q.dropna().index.max()
@@ -171,6 +207,8 @@ def main() -> None:
     # weather forecasts: weight the member years by how well their rain fits EC46's next three weeks
     fetched, weighting = None, None
     try:
+        if args.rebuild:
+            raise RuntimeError('rebuilding the history: river only')
         fetched = T.ec46_fetch()
         yw, weighting = T.forecast_year_weights(ens, ROOT, *fetched)
         if T.EC46_WEIGHTING:
@@ -264,6 +302,11 @@ def main() -> None:
         else:
             torpids['chance'] = round(1 - T.calibrate_torpids(ROOT, 1 - torpids['chance'], tb), 2)
 
+    if args.rebuild:
+        record_history({'issued': f'{t0:%Y-%m-%d}', 'terms': out_terms, 'torpids': torpids}, 'rebuilt')
+        print(f'{t0:%Y-%m-%d}: added to {HISTORY.name} (rebuilt, river only)')
+        return
+
     # ECMWF's seasonal run changes once a month: if the fetch fails, keep the last one
     seasonal = []
     for attempt in range(3):
@@ -291,6 +334,8 @@ def main() -> None:
               'forecast_weighting': weighting}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=1))
+    if args.date is None:
+        record_history(report, 'live')
     print(f'Termly outlook from {t0:%Y-%m-%d}: Farmoor {state["flow"]} m3/s, {state["pct_normal_7d"]:.0f}% of normal '
           f'(7 days), {state["pct_normal_90d"]:.0f}% (90 days)')
     for t in out_terms['isis']:
