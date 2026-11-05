@@ -1286,3 +1286,62 @@ each day, without EC46 (`source = rebuilt`, labelled on the page).
 - **Periods:** a stacked lower/usual/higher area chart, one period at a time.
 - **Torpids:** a line of the chance it goes ahead, against the record. It is hidden while the page still says
   "too early to tell".
+
+## Rises: height and timing, with the rain that fell and the rain that was forecast (branch rise-timing-magnitude, 5 Nov 2026)
+
+**Rain forecasts.** `fetch_ifs_archive.py` (workflow `ifs_archive.yml`) collects, for every rain station, what ECMWF IFS
+0.25° forecast 0–7 days ahead (Open-Meteo Previous Runs API), Mar 2024 – Jan 2026 (`data/verification/ifs_runs/`).
+2023 isn't in that archive. This is the first backtest of the 10-day model with the rain that was actually forecast;
+earlier ones used the rain that fell, with synthetic perturbations as a stand-in.
+
+**Rise backtest (`rise_backtest.py`).**
+- **Starts:** daily at 00 UTC, over 2023 and Nov 2024 – Jan 2026 (neither used for training).
+- **Rises:** every observed peak at least 0.12 m above the lowest point in the 5 days before it. That gives 17 at
+  Isis, 25 at Godstow and 24 at Wallingford.
+- **What's scored,** for each forecast issued 6 h – 7 days before a peak:
+  - the height of its highest point within 3 days of the peak;
+  - when that highest point comes;
+  - when the forecast first gets halfway up the rise.
+
+**Deployed hybrid, test window.** Errors are height bias / mean height error / peak-time error / halfway-time error.
+
+| | rain that fell | IFS forecast rain |
+|---|---|---|
+| Isis | −2.9 / 9.8 cm / 23 h / 14 h | −6.0 / 10.0 cm / 24 h / 12 h |
+| Godstow | +0.4 / 7.9 cm / 19 h / 7 h | −1.7 / 9.6 cm / 20 h / 6 h |
+| Wallingford | +0.4 / 10.7 cm / 18 h / 8 h | −0.4 / 12.9 cm / 18 h / 9 h |
+
+- **Overall error with IFS rain:** +30% at Isis and Godstow, +31% at Wallingford (4–7 days: +25%).
+- **Rise timing** is good: the halfway point is within a few hours.
+- **Peak timing errors** mostly come from flat tops. The real river stays high for days after the weirs are drawn;
+  the forecast is one smooth hump and comes down too soon.
+
+**Tried, no gain on held-out data:**
+- **Re-routing the forecast's response to future rain** (`D' = B + g·K_γ*(D − B)`, B = the hybrid with no rain
+  ahead; gain, delay and spread fitted on one period, scored on the other). The fitted gain came out < 1 and
+  unstable between periods. With big rain ahead the forecast is already too high on average. The peak shortfall is
+  shape (too smooth), and a convolution can only smooth more.
+- **Correcting the IFS rain through the frozen hybrid** (`r' = a(1 + b·day)·r^p`, fitted on river error, split
+  Nov 2024 – May 2025 / Jun 2025 – Jan 2026). The two halves wanted opposite corrections: wet winter ×1.04, dry
+  2025 ×0.53. Cross-fitted it was worse at every location (Isis 0.038 → 0.048 m).
+- **Carrying the last rise's shortfall into the next** (rises ≤ 60 days apart): ρ = +0.07, p = 0.63.
+  - What does go with a shortfall: rain over the week before (ρ = +0.34, p = 0.01, 57 rises). The model under-reacts
+    after a wet week, which is the gap the soil-moisture inputs aim at.
+- **Peak term in training** (`peak_weight`): |highest forecast − highest observed| in each 72 h window, so a rise's
+  height counts even when its timing is a few hours out. Three seeds each against three retrained controls
+  (`hybrid_ctl`, `hybrid_pk03`, `hybrid_pk1`).
+  - It cuts the peak shortfall a little (Isis 2023 −1.2 → −0.3 cm; Godstow 2023 −4.8 → −3.7 cm). Peak timing improves
+    by 1–4 h.
+  - Height error per rise is mixed. Overall error rises 3–9% (Godstow test 0.044 → 0.048 m). With IFS rain it is
+    worse everywhere.
+  - **Not adopted.** Left in `physics_train.py`, off by default.
+
+**What did help, with forecast rain:** the soil-moisture + upstream-gauge model already on preview (`hybrid_sr`).
+- **Test window with IFS rain,** overall error: Godstow 0.058 → 0.056 m, Wallingford 0.073 → 0.067 m (4–7 days
+  0.072 → 0.063).
+- **Rise heights:** Godstow 9.6 → 9.1 cm, Wallingford 12.9 → 12.2 cm.
+- **With the rain that fell in 2023** it's slightly worse (Godstow 0.047 → 0.049 m).
+- **Isis (`hybrid_srh`):** no better on rises.
+
+Table: `figures/eval/rise_backtest_summary.csv`. Plots: `figures/eval/rise_ifs_vs_observed_rain.png`,
+`figures/eval/before_after_isis.png`.

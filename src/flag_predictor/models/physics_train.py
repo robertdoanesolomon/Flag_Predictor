@@ -63,6 +63,10 @@ DEFAULTS = {
     'station_weights': False,
     'rating_smooth_weight': 1e-3,
     'flow_aux_weight': 0.0,
+    # Peak term (rise_backtest.py): |highest forecast - highest observed| in each 72 h window (stride 24 h),
+    # so a rise's height counts even when its timing is a few hours out. 0 = off.
+    'peak_weight': 0.0,
+    'peak_window': 72,
     # Exponential moving average of weights (0 = off); validation and the
     # saved model use the averaged weights, which damps epoch-to-epoch noise.
     'ema_decay': 0.0,
@@ -209,6 +213,17 @@ def compute_loss(model, family: str, b: Dict, cfg: Dict, hw: torch.Tensor, train
             mono = F.relu(pred - pred_more).mean(1).mean()
             loss = loss + cfg['mono_weight'] * mono
             parts['mono'] = mono.detach()
+    if cfg.get('peak_weight', 0) > 0:
+        win = int(cfg.get('peak_window', 72))
+        ok = b['y_ok'].float()
+        y_f = torch.where(b['y_ok'], b['y'], pred.detach())     # gaps take the forecast: no pull either way
+        pk_p = F.max_pool1d(pred[:, None], win, stride=24)[:, 0]
+        pk_o = F.max_pool1d(y_f[:, None], win, stride=24)[:, 0]
+        cover = F.avg_pool1d(ok[:, None], win, stride=24)[:, 0]
+        wv = (cover > 0.8).float() * torch.where(b['winter'], cfg['winter_weight'], 1.0)[:, None]
+        peak = ((pk_p - pk_o).abs() * wv).sum() / wv.sum().clamp(min=1)
+        loss = loss + cfg['peak_weight'] * peak
+        parts['peak'] = peak.detach()
     if q is not None:
         m = b['flow_ok'].float()
         z_obs = torch.log(b['flow'] / M3S_PER_MM_H + model.q_floor)

@@ -95,3 +95,6 @@ data/recent_rainfall/
 data/hourly/
 data/era5/
 logs/
+!figures/eval/rise_*.png
+!figures/eval/rise_backtest_summary.csv
+!figures/eval/before_after_*.png
