@@ -8,6 +8,8 @@ on:
     inputs:
       start: {description: 'first month (YYYY-MM-DD)', default: '2024-10-01'}
       end: {description: 'last day (YYYY-MM-DD)', default: '2026-01-31'}
+  push:                    # or change this file on a branch (runs with the defaults)
+    paths: ['data/verification/ifs_runs/request.txt']
 
 jobs:
   fetch:
@@ -26,7 +28,7 @@ jobs:
       - name: Fetch
         continue-on-error: true
         timeout-minutes: 100
-        run: python fetch_ifs_archive.py --start "${{ inputs.start }}" --end "${{ inputs.end }}"
+        run: python fetch_ifs_archive.py --start "${{ inputs.start || '2023-01-01' }}" --end "${{ inputs.end || '2026-01-31' }}"
       - name: Commit
         if: always()
         run: |
