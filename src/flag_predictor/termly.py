@@ -588,6 +588,20 @@ def ec46_rain(root: Path, timeout: int = 60, fetched=None) -> list[dict]:
 # 3-5 weeks 18 -> 22%; worse beyond five weeks, so not used then).
 TORPIDS_RAIN_COEF = (0.38, 0.82, 1.29)
 TORPIDS_RAIN_DAYS = 35
+# Faded in rather than switched on: from TORPIDS_RAIN_DAYS before Torpids the page's chance moves smoothly from the
+# river-only chance (with its bias correction) to the rain-adjusted one, all of it from TORPIDS_RAIN_FULL days before
+# (log-odds blend, torpids_rain_blend). Daily leave-one-year-out hindcasts with both corrections refitted each
+# year (Brier skill vs the record): last 5 weeks 19.4% (switched on at 5 weeks) -> 21.2%; 3-5 weeks 3.5 -> 7.5%,
+# last week 41.7% either way; biggest one-day change 27 -> 16 points. Starting the fade earlier (6+ weeks) was
+# worse: before about 4 weeks the rain so far says less than the river does.
+TORPIDS_RAIN_FULL = 7
+
+
+def torpids_rain_blend(p_river: float, p_rain: float, days_before: int) -> float:
+    """Chance of a cancellation-level river: the log-odds of the river-only chance faded into the rain-adjusted one."""
+    w = float(np.clip((TORPIDS_RAIN_DAYS - days_before) / (TORPIDS_RAIN_DAYS - TORPIDS_RAIN_FULL), 0, 1))
+    lg = lambda p: np.log(np.clip(p, 0.005, 0.995) / (1 - np.clip(p, 0.005, 0.995)))  # noqa: E731
+    return float(1 / (1 + np.exp(-((1 - w) * lg(p_river) + w * lg(p_rain)))))
 
 
 def rain_since_jan1(root: Path, t0: pd.Timestamp, timeout: int = 60) -> Optional[pd.Series]:
