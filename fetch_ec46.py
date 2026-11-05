@@ -21,7 +21,11 @@ ROOT = Path(__file__).resolve().parent
 RAW = ROOT / 'data' / 'ec46' / 'raw'
 LOG = ROOT / 'data' / 'ec46' / 'log.txt'
 STEPS = [str(h) for h in range(0, 1105, 24)]                # daily accumulations to day 46
-BUDGET_MIN = 300
+BUDGET_MIN = 230             # no new request after this; one can take an hour, and the step is stopped at 320 min
+# The S2S archive only holds ECMWF re-forecasts on a two-week cycle: a Thursday and the Monday after, every other
+# week (found by trial: 2025-11-03, 2026-02-05/09, 02-19/23, 03-05/09, 03-19/23 exist; the Mondays and Thursdays
+# in between return MarsNoDataError after queueing). This Thursday is one of them.
+CYCLE_THURSDAY = dt.date(2026, 2, 5)
 
 
 def request(date: dt.date, kind, years: int = 20) -> dict:
@@ -35,13 +39,21 @@ def request(date: dt.date, kind, years: int = 20) -> dict:
 
 
 def model_dates(start: dt.date, end: dt.date):
-    """Mondays and Thursdays from October to March (the months that matter), newest first."""
+    """The re-forecast dates the archive holds (CYCLE_THURSDAY) from October to March, newest first."""
     d, out = start, []
     while d <= end:
-        if d.weekday() in (0, 3) and d.month in (10, 11, 12, 1, 2, 3):
+        k = (d - CYCLE_THURSDAY).days % 14
+        if (k == 0 or k == 4) and d.month in (10, 11, 12, 1, 2, 3):
             out.append(d)
         d += dt.timedelta(days=1)
     return out[::-1]
+
+
+def no_data_dates() -> set:
+    """Dates MARS has already said it has no data for (from the log): not asked again."""
+    if not LOG.exists():
+        return set()
+    return {ln.split('.grib')[0] for ln in LOG.read_text().splitlines() if 'MarsNoDataError' in ln}
 
 
 def main() -> int:
@@ -64,7 +76,10 @@ def main() -> int:
         c = cdsapi.Client(url='https://ecds.ecmwf.int/api', key=os.environ['CDSAPI_KEY'], quiet=True, progress=False)
         dates = [dt.date(2025, 11, 3)] if a.probe else list(model_dates(dt.date.fromisoformat(a.start), dt.date.fromisoformat(a.end)))
         t_start = time.time()
+        skip = set() if a.probe else no_data_dates()
         for d in dates:
+            if f'{d:%Y-%m-%d}' in skip:
+                continue
             target = RAW / f'{d:%Y-%m-%d}.grib'
             if target.exists() or (RAW / f'{d:%Y-%m-%d}_cf.grib').exists() and a.probe:
                 continue

@@ -33,6 +33,7 @@ jobs:
       - run: pip install "cdsapi>=0.7.4"
       - name: Download
         continue-on-error: true
+        timeout-minutes: 320     # stop here, not at the job limit, so the files already fetched still get committed
         run: |
           if head -c 5 data/ec46/request.txt | grep -q probe; then python fetch_ec46.py --probe; else python fetch_ec46.py; fi
       - name: Commit
