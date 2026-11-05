@@ -297,10 +297,13 @@ def main() -> None:
         adj, info = T.torpids_rain_adjust(ROOT, torpids['chance'], t0, race[0])
         if T.calibration_group_torpids(tb) in cal.get('torpids_record_only', []) and ver.get('torpids_climatology') is not None:
             torpids['chance'], torpids['too_early'] = ver['torpids_climatology'], True
-        elif info:
-            torpids['chance'], torpids['rain_since_jan1'] = round(adj, 2), info
         else:
-            torpids['chance'] = round(1 - T.calibrate_torpids(ROOT, 1 - torpids['chance'], tb), 2)
+            river = 1 - T.calibrate_torpids(ROOT, 1 - torpids['chance'], tb)
+            if info:                    # faded in over the last weeks (termly.torpids_rain_blend)
+                info['chance_river_only_calibrated'] = round(river, 2)
+                torpids['chance'], torpids['rain_since_jan1'] = round(T.torpids_rain_blend(river, adj, tb), 2), info
+            else:
+                torpids['chance'] = round(river, 2)
 
     if args.rebuild:
         record_history({'issued': f'{t0:%Y-%m-%d}', 'terms': out_terms, 'torpids': torpids}, 'rebuilt')
