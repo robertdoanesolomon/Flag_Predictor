@@ -83,3 +83,7 @@ ukmo_hc_10: ok (system 604, 24 years, 179 s)
 ukmo_hc_11: ok (system 604, 24 years, 178 s)
 ukmo_hc_12: ok (system 604, 24 years, 121 s)
 done: 12 ok, 0 failed; files now: 48
+--- 2026-11-06 15:24 UTC (latest)
+1 requests to make
+ecmwf_s51_fc_2026_11: ok (system 51, 1 years, 267 s)
+done: 1 ok, 0 failed; files now: 49
