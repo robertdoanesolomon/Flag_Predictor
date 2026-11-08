@@ -13,6 +13,9 @@ Written by generate_all_location_figures.py on every CI run:
 * ``docs/archive/index.json`` – the list of slots, for the history slider.
 * ``docs/archive/now.json`` – for the latest observation at each location,
   what every archived forecast from the last 10 days said it would be.
+* ``docs/archive/trial/issues/<slot>.json`` (+ ``trial/index.json``) – the same, for the trial model
+  on the preview page (only the locations it runs for), so it can be scored live against the main
+  model on the same slots. Its observations are the shared ``observed.json``.
 * ``data/forecast_archive/<slot>.npz`` – the raw ensemble inputs (mean-station
   hourly rain per member, per location), so the model can later be
   backtested and recalibrated on real forecast rain rather than observed rain.
@@ -28,6 +31,8 @@ import numpy as np
 import pandas as pd
 
 SLOT_HOURS = 6
+TRIAL_SUBDIR = 'trial'
+TRIAL_PREFIX = 'hybrid_s'   # trial variants (hybrid_sr, hybrid_srh, hybrid_su); see hybrid_live.VARIANTS
 NOW_LOOKBACK_DAYS = 10
 ARCHIVE_VERSION = 1
 
@@ -271,15 +276,18 @@ def write_raw_inputs(raw_dir: Path, slot: str, member_rain: Dict[str, pd.DataFra
 
 
 def fill_gaps_from_git(docs_dir: Path, repo_root: Path, now: Optional[pd.Timestamp] = None,
-                       max_days: int = 30, default_model: str = 'hybrid_c1_ps') -> list:
+                       max_days: int = 30, default_model: str = 'hybrid_c1_ps', trial: bool = False) -> list:
     """Archive slots missed since the last archived one, from the git history of forecast_data.json.
 
     Every CI run commits docs/forecast_data.json, so after an outage of the
     archive (or before this code was merged) the forecasts are still in git.
     In a shallow clone (CI) it first fetches the history since the last archived slot.
+    With trial=True it fills docs/archive/trial from docs/preview/forecast_data.json instead, keeping
+    only the locations that ran a trial model.
     """
     import subprocess
-    archive_dir = Path(docs_dir) / 'archive'
+    archive_dir = Path(docs_dir) / 'archive' / (TRIAL_SUBDIR if trial else '')
+    bundle_path = 'docs/preview/forecast_data.json' if trial else 'docs/forecast_data.json'
     index = _load_json(archive_dir / 'index.json', {}).get('issues', [])
     now = pd.Timestamp.utcnow() if now is None else pd.Timestamp(now)
     now = now.tz_convert('UTC').tz_localize(None) if now.tzinfo else now
@@ -295,7 +303,7 @@ def fill_gaps_from_git(docs_dir: Path, repo_root: Path, now: Optional[pd.Timesta
         subprocess.run(['git', 'fetch', '--quiet', f'--shallow-since={since.isoformat()}Z', 'origin', 'main'],
                        cwd=repo_root, capture_output=True, text=True, timeout=300)
     log = subprocess.run(['git', 'log', '--format=%H %cI', f'--since={since.isoformat()}Z', '--reverse',
-                          '--', 'docs/forecast_data.json'], cwd=repo_root, capture_output=True, text=True, check=True)
+                          '--', bundle_path], cwd=repo_root, capture_output=True, text=True, check=True)
     first_in_slot = {}
     for line in log.stdout.split('\n'):
         if not line.strip():
@@ -307,7 +315,7 @@ def fill_gaps_from_git(docs_dir: Path, repo_root: Path, now: Optional[pd.Timesta
         if slot >= slot_id(now) or (archive_dir / 'issues' / f'{slot}.json').exists():
             continue
         try:
-            raw = subprocess.run(['git', 'show', f'{sha}:docs/forecast_data.json'], cwd=repo_root,
+            raw = subprocess.run(['git', 'show', f'{sha}:{bundle_path}'], cwd=repo_root,
                                  capture_output=True, text=True, check=True).stdout
             bundle = json.loads(raw)
         except Exception:
@@ -316,8 +324,15 @@ def fill_gaps_from_git(docs_dir: Path, repo_root: Path, now: Optional[pd.Timesta
         for p in payloads.values():
             p.setdefault('model', default_model)
         issued = pd.Timestamp(bundle.get('generated_at', slot))
-        merge_observed(archive_dir, payloads)
-        if write_issue(archive_dir, slot, payloads, f'{default_model} (from git history)', issued):
+        if trial:
+            payloads = trial_payloads(payloads)
+            if not payloads:
+                continue
+            label = '+'.join(sorted({p['model'] for p in payloads.values()})) + ' (from git history)'
+        else:
+            merge_observed(archive_dir, payloads)
+            label = f'{default_model} (from git history)'
+        if write_issue(archive_dir, slot, payloads, label, issued):
             written.append(slot)
     if written:
         rebuild_index(archive_dir)
@@ -341,3 +356,23 @@ def update_archive(docs_dir: Path, payloads: Dict[str, dict], model: str,
     rebuild_index(archive_dir)
     build_now(archive_dir, observed, estimated=estimated)
     return {'slot': slot, 'wrote_issue': wrote, 'raw': str(raw) if raw else None}
+
+
+def trial_payloads(payloads: Dict[str, dict]) -> Dict[str, dict]:
+    """The locations of a preview bundle that ran a trial model (the rest show the main model)."""
+    return {loc: p for loc, p in payloads.items() if str(p.get('model', '')).startswith(TRIAL_PREFIX)}
+
+
+def update_trial_archive(docs_dir: Path, payloads: Dict[str, dict], now: Optional[pd.Timestamp] = None) -> dict:
+    """Add the preview page's trial-model forecasts to docs/archive/trial (same slots as the main archive)."""
+    archive_dir = Path(docs_dir) / 'archive' / TRIAL_SUBDIR
+    now = pd.Timestamp.utcnow() if now is None else pd.Timestamp(now)
+    payloads = trial_payloads(payloads)
+    slot = slot_id(now)
+    wrote = False
+    if payloads:
+        model = '+'.join(sorted({p['model'] for p in payloads.values()}))
+        wrote = write_issue(archive_dir, slot, payloads, model, now)
+    if (archive_dir / 'issues').exists():
+        rebuild_index(archive_dir)
+    return {'slot': slot, 'wrote_issue': wrote, 'locations': sorted(payloads)}
