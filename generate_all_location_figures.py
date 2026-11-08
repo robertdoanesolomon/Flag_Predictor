@@ -1615,6 +1615,25 @@ def archive_forecasts(output_dir: Path, payloads: dict) -> None:
         traceback.print_exc()
 
 
+def archive_trial_forecasts(output_dir: Path) -> None:
+    """Add the preview page's trial-model forecasts to docs/archive/trial, to score them live
+    against the main model. Never stops the forecast from publishing."""
+    try:
+        from flag_predictor.prediction.archive import fill_gaps_from_git, update_trial_archive
+
+        try:
+            filled = fill_gaps_from_git(output_dir, PROJECT_ROOT, trial=True)
+            if filled:
+                print(f"  Trial archive: filled {len(filled)} slot(s) from git history: {filled[0]} .. {filled[-1]}")
+        except Exception as exc:
+            print(f"  Trial archive: could not fill gaps from git history ({exc})")
+        result = update_trial_archive(output_dir, dict(PREVIEW_ONLY_PAYLOADS))
+        print(f"✓ Trial archive updated: {result}")
+    except Exception:
+        print("\n[WARNING] Trial archive update failed:")
+        traceback.print_exc()
+
+
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
 
@@ -1707,6 +1726,8 @@ def main(argv: list[str] | None = None) -> None:
             archive_forecasts(output_dir, main_payloads)
         if preview_dir is not None:
             write_preview(output_dir, preview_dir, locations_to_process)
+            if not args.no_archive:
+                archive_trial_forecasts(output_dir)
     else:
         write_forecast_bundle(output_dir, all_payloads, failed_locations)
         if beta_dir is not None:

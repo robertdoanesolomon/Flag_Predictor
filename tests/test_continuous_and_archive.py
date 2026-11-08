@@ -186,6 +186,26 @@ class ArchiveTests(unittest.TestCase):
             np.testing.assert_allclose(z['isis_rain_cmm'] / 100, rain.to_numpy().T, atol=0.006)
 
 
+    def test_trial_archive(self):
+        with tempfile.TemporaryDirectory() as d:
+            docs = Path(d) / 'docs'
+            main = self.payload('2026-10-15 12:00', 0.1)
+            trial = dict(self.payload('2026-10-15 12:00', 0.1), model='hybrid_srh')
+            r = archive.update_trial_archive(docs, {'isis': main, 'godstow': trial},
+                                             now=pd.Timestamp('2026-10-15 12:30', tz='UTC'))
+            self.assertTrue(r['wrote_issue'])
+            self.assertEqual(r['locations'], ['godstow'])          # only locations running a trial model
+            issue = json.loads((docs / 'archive' / 'trial' / 'issues' / '2026-10-15T12.json').read_text())
+            self.assertEqual(issue['model'], 'hybrid_srh')
+            self.assertEqual(list(issue['locations']), ['godstow'])
+            index = json.loads((docs / 'archive' / 'trial' / 'index.json').read_text())
+            self.assertEqual([e['slot'] for e in index['issues']], ['2026-10-15T12'])
+            self.assertFalse((docs / 'archive' / 'index.json').exists())   # main archive untouched
+            # No trial locations: nothing written.
+            r2 = archive.update_trial_archive(docs, {'isis': main}, now=pd.Timestamp('2026-10-15 18:30', tz='UTC'))
+            self.assertFalse(r2['wrote_issue'])
+
+
 class ArchiveGapFillTests(unittest.TestCase):
     def test_fill_gaps_from_git(self):
         import os

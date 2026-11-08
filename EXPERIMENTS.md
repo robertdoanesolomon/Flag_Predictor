@@ -1049,6 +1049,13 @@ first day and largest with heavy rain ahead; the first 24 h are a fraction of a 
 Shown on the preview page only (`--preview-model hybrid_sr`) for Godstow and Wallingford; the
 Isis (no hybrid_sr copies) keeps the deployed model there too.
 
+Live trial archive (8 Nov 2026): the preview page's trial forecasts are archived per slot in
+`docs/archive/trial/` (backfilled from the git history of `docs/preview/forecast_data.json` back to
+21 Oct: 11 slots hybrid_sr, then hybrid_srh), and `verification_report.py` scores them against the main
+model on the same slots (`live.trial`). First 74 issues (21 Oct - 8 Nov, dry, real forecast rain), mean
+error trial / main: Godstow 25-72 h 0.021 / 0.020, 73-168 h 0.032 / 0.030 m (trial ~5 % worse);
+Wallingford 25-72 h 0.044 / 0.045, 73-168 h 0.067 / 0.068 m (~2-3 % better). Promote only after a wet spell.
+
 ## King's Mill offline: the Botanic Gardens gauge stands in (Oct 2026)
 
 The Isis differential is 0.71 (Osney tail - Iffley head - 2.14) + 0.29 (King's Mill tail - Iffley head - 0.73).
