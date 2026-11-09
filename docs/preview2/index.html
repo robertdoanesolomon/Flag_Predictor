@@ -1,0 +1,3091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b3d2e">
+  <meta name="description" content="A forecast of OURCs flag colours and river height differentials on the Oxford Thames (Isis, Godstow and Wallingford stretches).">
+  <title>Flag Predictor</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="346b17d1-de0e-46d3-ae12-be38907f1ef9"></script>
+
+  <meta name="google-site-verification" content="zdfcbFi-jZZqdHwitUN7Ps0sn9My9fXcUsWWDg7jQ2E">
+  <meta name="google-site-verification" content="MybyQJHBAntG6FSQYn9Og9RMMzh-BPw7TNFV2O4slt4">
+
+  <style>
+    :root {
+      --bg: #f1f2f4;
+      --bg-grad-top: #eceef1;
+      --bg-grad-bottom: #f4f5f7;
+      --surface: #ffffff;
+      --surface-soft: #f8faf9;
+      --border: #d9e3df;
+      --border-strong: #b8c8c1;
+      --text: #122a23;
+      --text-soft: #4a6058;
+      --text-muted: #6b8079;
+      --accent: #0b3d2e;
+      --accent-soft: #1c6b53;
+      --accent-glow: rgba(28, 107, 83, 0.18);
+      --warning: #b35900;
+      --danger: #c2261c;
+      --shadow-sm: 0 1px 2px rgba(15, 30, 25, 0.06), 0 1px 1px rgba(15, 30, 25, 0.04);
+      --shadow-md: 0 6px 18px rgba(15, 30, 25, 0.08), 0 2px 4px rgba(15, 30, 25, 0.04);
+      --shadow-lg: 0 18px 40px rgba(15, 30, 25, 0.12), 0 4px 10px rgba(15, 30, 25, 0.06);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+
+      --flag-green: #008001;
+      --flag-light-blue: #02bfff;
+      --flag-dark-blue: #000080;
+      --flag-amber: #ffa503;
+      --flag-red: #ff0000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1614;
+        --bg-grad-top: #0b1815;
+        --bg-grad-bottom: #11201c;
+        --surface: #16221f;
+        --surface-soft: #1a2825;
+        --border: #233530;
+        --border-strong: #2f4640;
+        --text: #e7efeb;
+        --text-soft: #b2c5be;
+        --text-muted: #7d958c;
+        --accent: #4ec39a;
+        --accent-soft: #62d4ad;
+        --accent-glow: rgba(78, 195, 154, 0.22);
+        --warning: #f0a85a;
+        --danger: #ff5d50;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+        --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, var(--bg-grad-top) 0%, var(--bg-grad-bottom) 100%);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--accent-soft); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px 80px 24px;
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-bottom: max(56px, env(safe-area-inset-bottom));
+    }
+
+    /* ---------- HERO ---------- */
+    .hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .hero-text h1 {
+      margin: 0 0 6px 0;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .hero-text h1 .accent { color: var(--accent-soft); }
+    .hero-text p {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 16px;
+      max-width: 720px;
+      line-height: 1.5;
+    }
+    .hero-sub {
+      margin-top: 14px !important;
+      font-size: 18px !important;
+      font-weight: 700 !important;
+      color: var(--text) !important;
+      letter-spacing: -0.01em;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      box-shadow: var(--shadow-sm);
+      font-size: 13px;
+      color: var(--text-soft);
+      font-weight: 500;
+    }
+    .status-pill .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #2ecc71;
+      box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.18);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.16); }
+      50%      { box-shadow: 0 0 0 8px rgba(46, 204, 113, 0.0); }
+    }
+    .status-pill.stale .dot {
+      background: var(--warning);
+      box-shadow: 0 0 0 4px rgba(179, 89, 0, 0.18);
+    }
+
+    /* ---------- TOP CURRENT FLAG CARDS ---------- */
+    .current-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 880px) { .current-cards { grid-template-columns: 1fr; } }
+
+    .flag-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .flag-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border-strong);
+    }
+    .flag-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow-md);
+    }
+    .flag-card .bg-flag {
+      position: absolute;
+      inset: 0;
+      opacity: 0.10;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .flag-card .bg-flag::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--flag-bg, transparent);
+    }
+    .flag-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 1;
+    }
+    .flag-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .flag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: var(--flag-bg, #ddd);
+      color: var(--flag-text, #000);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    }
+    .flag-badge.no-flag {
+      background: var(--surface-soft);
+      color: var(--text-soft);
+      border: 1px dashed var(--border-strong);
+      box-shadow: none;
+    }
+    .flag-value {
+      z-index: 1;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 44px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-top: 12px;
+    }
+    .flag-value small {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-left: 6px;
+      font-weight: 500;
+    }
+    .flag-card-footer {
+      z-index: 1;
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    .flag-card-footer .peak {
+      font-weight: 600;
+      color: var(--text-soft);
+    }
+
+    /* ---------- TABS ---------- */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      box-shadow: var(--shadow-sm);
+      width: fit-content;
+      margin: 0 auto 24px auto;
+    }
+    .tab {
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-soft);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: background 0.15s ease, color 0.15s ease;
+      font-family: inherit;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+    @media (prefers-color-scheme: dark) {
+      .tab.active { background: var(--accent); color: #0b1815; }
+    }
+
+    /* ---------- PANELS ---------- */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .panel h2 {
+      margin: 0 0 4px 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    /* Primary narrative — design B: soft frame (surface-soft, border-strong, radius-lg) */
+    .forecast-callout {
+      margin: 8px 0 18px 0;
+      padding: 15px 18px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      box-shadow: none !important;
+      filter: none;
+    }
+    .forecast-callout .summary-line {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(0.98rem, 2.2vw, 1.18rem);
+      font-weight: 600;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+    }
+    .forecast-callout .summary-line strong {
+      color: var(--accent);
+      font-weight: 800;
+    }
+    /* Preview page: official flag tile + forecast cards (above the summary sentence). */
+    .flag-head {
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr);
+      gap: 16px;
+      margin: 10px 0 14px 0;
+    }
+    .fc-card.fc-compact { padding-top: 8px; padding-bottom: 8px; }
+    .fc-compact-text { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); }
+    .flag-head.no-tile { grid-template-columns: minmax(0, 1fr); }
+    .flag-tile-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .flag-tile {
+      box-sizing: border-box;
+      min-height: 150px;
+      padding: 16px 18px;
+      border-radius: var(--radius-md);
+      background: var(--flag-bg, #ccc);
+      color: var(--flag-text, #fff);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .flag-tile-icon { width: 26px; height: 30px; }
+    .flag-tile-name { font-size: 36px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+    .flag-tile-meta { font-size: 13px; line-height: 1.45; color: var(--text-soft); }
+    .fc-cards { display: flex; flex-direction: column; gap: 10px; }
+    .fc-card {
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+    }
+    .fc-card.warn { background: #fff4e3; border-color: #f0c27a; }
+    .fc-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+    .fc-label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-soft); }
+    .fc-label .fc-value { text-transform: none; letter-spacing: 0.02em; }
+    .fc-chips { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); }
+    .fc-chip { display: inline-block; width: 14px; height: 14px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15); }
+    .fc-main { margin-top: 6px; font-size: clamp(0.95rem, 2vw, 1.02rem); font-weight: 700; color: var(--text); line-height: 1.35; }
+    .fc-sub { margin-top: 3px; font-size: 0.88rem; color: var(--text-soft); line-height: 1.45; }
+    @media (max-width: 640px) {
+      .flag-head { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+      .flag-tile { min-height: 0; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; padding: 14px 16px; }
+      .flag-tile-name { font-size: 30px; }
+    }
+    @media (prefers-color-scheme: dark) {
+      .flag-tile { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); }
+      .fc-card.warn { background: rgba(240, 168, 90, 0.12); border-color: rgba(240, 168, 90, 0.5); }
+      .fc-chip { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+    }
+    /* Preview page (docs/preview/, same file): blocks shown on one page only. */
+    .only-preview { display: none; }
+    body.preview .only-preview { display: block; }
+    body.preview .only-main { display: none; }
+    .only-preview-inline { display: none; }
+    body.preview .only-preview-inline { display: inline; }
+    body.preview .only-main-inline { display: none; }
+    .preview-banner {
+      margin: 0 0 14px 0;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border-strong);
+      background: var(--surface-soft);
+      color: var(--text-soft);
+      font-size: 0.92rem;
+    }
+    body:not(.on-preview-page) details.preview-banner { display: none; }
+    .only-preview-page { display: none; }
+    body.on-preview-page .only-preview-page { display: inline; }
+    .lr-card { display: block; margin: 20px 0 14px 0; padding: 12px 14px; border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); text-decoration: none; }
+    .lr-card[hidden] { display: none; }
+    .lr-card:hover { border-color: var(--accent-soft); }
+    .lr-title { margin: 0; font-size: 1rem; font-weight: 700; }
+    .lr-more { font-size: 0.86rem; font-weight: 600; color: var(--accent-soft); white-space: nowrap; }
+    .lr-lines { margin: 6px 0 0 0; padding: 0; list-style: none; font-size: 0.92rem; color: var(--text-soft); line-height: 1.5; }
+    .lr-lines b { color: var(--text); font-weight: 600; }
+    .alerts-card {
+      margin: 20px 0 14px 0;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+    }
+    body.preview .alerts-card { display: block; }
+    .alerts-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+    .alerts-head h2 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--text); }
+    .alerts-status { font-size: 0.86rem; font-weight: 600; color: var(--accent-soft); }
+    .alerts-help { margin: 6px 0 10px 0; font-size: 0.9rem; color: var(--text-soft); line-height: 1.45; }
+    .alerts-card [hidden] { display: none !important; }
+    .alerts-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+    .alerts-river { display: inline-flex; align-items: center; gap: 6px; font-size: 0.95rem; color: var(--text); min-height: 44px; cursor: pointer; }
+    .alerts-river input { width: 20px; height: 20px; accent-color: var(--accent-soft); }
+    .alerts-btn {
+      min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--accent);
+      background: var(--accent); color: #fff; font: inherit; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+    }
+    .alerts-privacy { margin: 10px 0 0 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+    .alerts-btn.secondary { background: transparent; color: var(--accent-soft); border-color: var(--border-strong); }
+    .alerts-btn:disabled { opacity: 0.6; cursor: default; }
+    @media (prefers-color-scheme: dark) { .alerts-btn:not(.secondary) { color: #0b1815; } }
+    .preview-banner summary { cursor: pointer; line-height: 1.5; }
+    .preview-banner summary strong { color: var(--text); }
+    .preview-banner ul { margin: 8px 0 2px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; line-height: 1.45; }
+    .preview-banner li strong { color: var(--text); font-weight: 600; }
+    .flag-card .official-mini { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+    .panel .sub {
+      margin: 0 0 18px 0;
+      color: var(--text-muted);
+      font-size: 13.5px;
+    }
+    .panel .meta {
+      margin: 4px 0 18px 0;
+      color: var(--text-soft);
+      font-size: 16px;
+      font-weight: 500;
+      border-left: 3px solid var(--border-strong);
+      padding-left: 10px;
+    }
+    .panel .meta strong {
+      font-size: 1.07em;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .panel .stale-warning {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 165, 3, 0.12);
+      color: var(--warning);
+      border: 1px solid rgba(255, 165, 3, 0.3);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .stand-in-note { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ---------- STATS GRID ---------- */
+    details.under-hood { margin: 8px 0 22px; }
+    details.under-hood > summary { cursor: pointer; font-weight: 700; font-size: 1.02rem; padding: 6px 0; }
+    .under-hood-intro { font-size: 0.9rem; color: var(--text-soft); line-height: 1.5; margin: 6px 0 12px; }
+    .state-note { margin-top: 4px; font-size: 12px; line-height: 1.4; color: var(--text-soft); }
+    .state-plot { min-height: 300px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    /* Stats sit after charts, before page-level “About” */
+    .stats-grid.stats-grid--below-charts {
+      margin-top: 22px;
+      margin-bottom: 0;
+    }
+    .stat {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+    .stat .label {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .stat .value {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .stat .value small {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-left: 4px;
+    }
+    .stat .value.placeholder { color: var(--text-muted); font-weight: 500; }
+
+    /* ---------- CHART CONTAINERS ---------- */
+    .chart-block { position: relative; }
+    .chart-block + .chart-block { margin-top: 18px; }
+    .chart-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-soft);
+      margin: 0 0 8px 0;
+    }
+    .plot {
+      width: 100%;
+      min-height: 460px;
+    }
+    .plot.prob { min-height: 240px; }
+
+    .pane { display: none; }
+    .pane.active { display: block; }
+
+    /* ---------- ABOUT / FOOTER ---------- */
+    details.about {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    details.about summary {
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      list-style: none;
+      color: var(--text);
+    }
+    details.about summary::-webkit-details-marker { display: none; }
+    details.about summary::after {
+      content: "▾";
+      float: right;
+      transition: transform 0.2s ease;
+      color: var(--text-muted);
+    }
+    details.about[open] summary::after { transform: rotate(180deg); }
+    details.about .about-body {
+      margin-top: 14px;
+      color: var(--text-soft);
+      line-height: 1.6;
+      font-size: 14.5px;
+    }
+    details.about .about-body h3 {
+      font-size: 14px;
+      margin: 16px 0 4px 0;
+      color: var(--text);
+    }
+    .footer-times { margin-top: 6px; }
+    .footer {
+      margin-top: 32px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12.5px;
+    }
+
+    /* ---------- PLOTLY MODEBAR ---------- */
+    /* Use explicit colours — CSS variables don't resolve in Plotly's modebar context */
+    .modebar-container {
+      top: 1px !important;
+      right: 8px !important;
+    }
+    .modebar-group {
+      display: flex !important;
+      align-items: center !important;
+      background: #ffffff !important;
+      border: 1.5px solid #c5d5cf !important;
+      border-radius: 8px !important;
+      padding: 4px 5px !important;
+      box-shadow: 0 2px 6px rgba(15,40,30,0.10) !important;
+      margin-left: 4px !important;
+    }
+    .modebar-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 28px !important;
+      height: 28px !important;
+      padding: 0 !important;
+      border-radius: 6px !important;
+      color: #3d5c52 !important;
+      opacity: 1 !important;
+      transition: background 0.15s ease, color 0.15s ease !important;
+    }
+    .modebar-btn svg {
+      vertical-align: middle !important;
+      transform: translateY(-2px) !important;
+    }
+    .modebar-btn path {
+      fill: #3d5c52 !important;
+    }
+    .modebar-btn:hover {
+      background: #e8f0ed !important;
+      color: #0b3d2e !important;
+    }
+    .modebar-btn:hover path {
+      fill: #0b3d2e !important;
+    }
+    .modebar-btn[data-title="Reset axes"],
+    .modebar-btn[data-title="Reset Axes"] {
+      background: #daf0e8 !important;
+      color: #1c6b53 !important;
+    }
+    .modebar-btn[data-title="Reset axes"] path,
+    .modebar-btn[data-title="Reset Axes"] path {
+      fill: #1c6b53 !important;
+    }
+    .modebar-btn[data-title="Reset axes"]:hover,
+    .modebar-btn[data-title="Reset Axes"]:hover {
+      background: #1c6b53 !important;
+      color: #fff !important;
+    }
+    .modebar-btn[data-title="Reset axes"]:hover path,
+    .modebar-btn[data-title="Reset Axes"]:hover path {
+      fill: #fff !important;
+    }
+    @media (prefers-color-scheme: dark) {
+      .modebar-group {
+        background: #1a2825 !important;
+        border-color: #2f4640 !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.35) !important;
+      }
+      .modebar-btn { color: #b2c5be !important; }
+      .modebar-btn path { fill: #b2c5be !important; }
+      .modebar-btn:hover { background: #233530 !important; color: #e7efeb !important; }
+      .modebar-btn:hover path { fill: #e7efeb !important; }
+      .modebar-btn[data-title="Reset axes"],
+      .modebar-btn[data-title="Reset Axes"] {
+        background: rgba(78,195,154,0.18) !important;
+        color: #4ec39a !important;
+      }
+      .modebar-btn[data-title="Reset axes"] path,
+      .modebar-btn[data-title="Reset Axes"] path { fill: #4ec39a !important; }
+      .modebar-btn[data-title="Reset axes"]:hover,
+      .modebar-btn[data-title="Reset Axes"]:hover {
+        background: #4ec39a !important;
+        color: #0b1815 !important;
+      }
+      .modebar-btn[data-title="Reset axes"]:hover path,
+      .modebar-btn[data-title="Reset Axes"]:hover path { fill: #0b1815 !important; }
+    }
+
+    /* ---------- LOADING / ERROR ---------- */
+    .loading, .error {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-soft);
+    }
+    .loading .spinner {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      margin: 0 auto 16px auto;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error {
+      color: var(--danger);
+    }
+
+    /* ---------- CHART LEGEND BOX ---------- */
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 18px 22px;
+      padding: 10px 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin: 0 0 12px 0;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+    .chart-legend .item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      background: transparent;
+      border: none;
+      padding: 4px 6px;
+      margin: 0;
+      border-radius: 6px;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      transition: background 0.15s ease, opacity 0.15s ease;
+    }
+    .chart-legend .item:hover {
+      background: var(--surface);
+    }
+    .chart-legend .item.inactive {
+      opacity: 0.35;
+    }
+    .chart-legend .item.inactive .swatch {
+      filter: grayscale(1);
+    }
+    .chart-legend .swatch {
+      display: inline-block;
+      flex: none;
+    }
+    .chart-legend .line {
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+    }
+    .chart-legend .line-dashed {
+      width: 24px;
+      height: 0;
+      border-top: 2.5px dashed #e0524d;
+    }
+    .chart-legend .line-thin {
+      width: 24px;
+      height: 1.5px;
+      opacity: 0.6;
+    }
+    .chart-legend .square {
+      width: 14px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    /* Non-interactive legend (e.g. flag probability) — same shell as .chart-legend */
+    .chart-legend-static {
+      cursor: default;
+    }
+    .chart-legend-static .legend-static-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 6px;
+      margin: 0;
+      font: inherit;
+      color: inherit;
+    }
+
+    /* ---------- MOBILE / NARROW ---------- */
+    @media (max-width: 720px) {
+      .page { padding-top: 20px; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+      .hero {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .hero-text h1 {
+        font-size: clamp(24px, 7vw, 36px);
+        line-height: 1.08;
+      }
+      .hero-text p { font-size: 15px; }
+      .hero-sub { margin-top: 10px !important; font-size: 16px !important; }
+      .status-pill {
+        justify-content: center;
+        align-self: stretch;
+        text-align: center;
+        flex-wrap: wrap;
+        font-size: 12.5px;
+      }
+      .tabs {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        border-radius: 12px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4px;
+        padding: 4px;
+      }
+      .tab {
+        min-width: 0;
+        padding: 10px 8px;
+        font-size: 13px;
+        white-space: normal;
+        line-height: 1.25;
+        text-align: center;
+      }
+      .panel { padding: 16px 14px; }
+      .panel h2 { flex-wrap: wrap; font-size: 19px; gap: 8px; }
+      .panel .meta {
+        font-size: 15px;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+      .panel .summary-line {
+        font-size: 15px;
+        word-break: break-word;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .stat .value { font-size: 20px; }
+      .flag-card-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .flag-card-footer .peak {
+        word-break: break-word;
+      }
+      .chart-legend {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+      .chart-legend .item {
+        white-space: normal;
+        justify-content: flex-start;
+        text-align: left;
+      }
+      .chart-legend-static .legend-static-item {
+        white-space: normal;
+        justify-content: flex-start;
+        text-align: left;
+      }
+      .chart-title { font-size: 14px; }
+      .plot { min-height: 320px; }
+      .plot.prob { min-height: 200px; }
+      details.about { padding: 16px 14px; }
+    }
+
+    /* Very small phones: give charts a touch more breathing room vertically */
+    @media (max-width: 380px) {
+      .flag-value { font-size: 38px; }
+      .flag-value small { font-size: 13px; }
+      .tab { font-size: 12px; padding: 10px 4px; }
+    }
+    /* ---------- FORECAST HISTORY ---------- */
+    .history-block {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+    .history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .history-head .chart-title { margin: 0; }
+    .seg {
+      display: inline-flex;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+    }
+    .seg-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--text-soft);
+      font: 600 13px/1 'Inter', sans-serif;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .seg-btn.active { background: var(--accent); color: #fff; }
+    @media (prefers-color-scheme: dark) { .seg-btn.active { color: #0b1815; } }
+    .history-controls {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0 4px;
+    }
+    .history-controls input[type=range] { width: 100%; accent-color: var(--accent-soft); min-height: 32px; }
+    .history-step {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      font: 700 16px/1 'Inter', sans-serif;
+      cursor: pointer;
+    }
+    .history-step:disabled { opacity: 0.4; cursor: default; }
+    .history-label {
+      font-size: 14px;
+      color: var(--text-soft);
+      margin: 2px 0 8px;
+    }
+    .history-label strong { color: var(--text); }
+    .history-score {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      font-size: 14px;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+    }
+    .history-score strong { color: var(--text); font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .history-note { font-size: 13px; color: var(--text-muted); margin: 8px 0 0; line-height: 1.5; }
+    /* Fixed height, matched by historyLayout's layout.height: a chart first drawn in a hidden
+       pane otherwise comes out at Plotly's default 450 px and spills over the caption below. */
+    .plot.hist { min-height: 0; height: 360px; }
+    .history-empty { font-size: 14px; color: var(--text-muted); padding: 18px 0; }
+    @media (max-width: 720px) {
+      .plot.hist { height: 300px; }
+      .seg-btn { padding: 8px 11px; font-size: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <header class="hero">
+      <div class="hero-text">
+        <h1>Flag&nbsp;Predictor</h1>
+        <p>A 10-day forecast of the river height differential and OURCs flags on the Isis, Godstow and
+        Wallingford stretches of the Thames, updated every 15 minutes. Experimental.</p>
+        <details class="preview-banner only-preview" open>
+          <summary><strong>Preview:</strong> what is new here. <a href="../">The main forecast is here.</a></summary>
+          <ul>
+            <li id="trial-model-note" hidden><strong>Trial model</strong> (<span id="trial-model-where"></span>): the forecast
+            here also uses measured soil moisture (COSMOS-UK, Chimney Meadows) and how high nine upstream gauges are
+            (Windrush, Evenlode, Coln, the Thames at Cricklade and Hannington Bridge, Cherwell, Ray, Thame, Ock). The main page keeps the current model
+            until this one has proved itself.</li>
+            <li id="shared-model-note" hidden><strong>Trial model: one catchment for all three stretches.</strong> The main page
+            models each stretch separately, so neighbouring stretches can disagree about how wet the same ground is. Here one
+            model covers the whole catchment, split into the upper Thames, the Cherwell and the Ock/Thame, each with its own rain
+            gauges; Godstow drains the upper Thames, the Isis adds the Cherwell, Wallingford adds the Ock and Thame. The main page
+            keeps the current model until this one has proved itself.</li>
+            <li><strong>Under the hood</strong>: below each chart, the model's water stores (soil, fast, medium and
+            groundwater paths, the river) now and over the next 10 days.</li>
+          </ul>
+        </details>
+      </div>
+      <div id="status-pill" class="status-pill" aria-live="polite">
+        <span class="dot"></span>
+        <span id="status-text">Loading latest forecast…</span>
+      </div>
+    </header>
+
+    <div id="content">
+      <div class="loading">
+        <div class="spinner"></div>
+        <div>Fetching the latest forecast…</div>
+      </div>
+    </div>
+
+    <a class="lr-card" href="termly/"><h2 class="lr-title">Long-range river forecast <span class="lr-more">(click here)</span></h2></a>
+
+    <section class="alerts-card only-preview" id="alerts-card" aria-labelledby="alerts-title">
+      <div class="alerts-head">
+        <h2 id="alerts-title">Flag alerts on your phone</h2>
+        <span class="alerts-status" id="alerts-status"></span>
+      </div>
+      <p class="alerts-help" id="alerts-help">A notification within a minute of the official flag changing, and when a change is likely today or by tomorrow (60% or more for going up; 70% at the Isis and 80% at Godstow for coming down), with a follow-up if that change then drops below 10%.</p>
+      <div class="alerts-controls" id="alerts-controls">
+        <label class="alerts-river"><input type="checkbox" value="isis" checked> Isis</label>
+        <label class="alerts-river"><input type="checkbox" value="godstow" checked> Godstow</label>
+        <button type="button" class="alerts-btn" id="alerts-on">Turn on alerts</button>
+        <button type="button" class="alerts-btn secondary" id="alerts-off" hidden>Turn off</button>
+      </div>
+      <p class="alerts-privacy">Alerts store only an anonymous push address for this device and the stretches you choose. Turn off deletes it.</p>
+    </section>
+    <details class="about">
+      <summary>About these forecasts</summary>
+      <div class="about-body">
+        <h3>Reading the page</h3>
+        The big tile is the official OURCs flag, from
+        <a href="https://ourcs.co.uk/information/flags/" target="_blank" rel="noopener">ourcs.co.uk</a>. The cards give
+        the chance it changes today or by the end of tomorrow, and where the differential is heading. In the chart, the
+        black line is the measured differential; each thin purple line is one possible future from a different rain
+        forecast, the bold line is their average, and the shading is the likely range (rain and model error together;
+        outer 80%, inner 50%). The chart below it gives the chance of each band over the next 10 days.
+
+        <h3>The flag and the differential</h3>
+        The coloured bands are ranges of the differential that roughly match the flags, but OURCs sets the flag by hand,
+        so the two agree only about 80&ndash;87% of the time. Flags go up within an hour or two of the differential
+        crossing a line, come down later once it is clearly below, and almost only change between 8am and 8pm; the flag
+        card's chances come from a model fitted to the OURCs flag history. For the first three days the forecast moves in
+        held levels and daytime jumps, as lock keepers adjust the weirs, rather than a smooth line. Black (Isis) is
+        forecast from the Iffley Lock level (Black from about 0.42&nbsp;m, back to Red below 0.22&nbsp;m), and its card
+        appears only when Black is close.
+
+        <h3>How good is it?</h3>
+        Treat it as <strong>experimental</strong>. Checked on years it was not trained on, cards saying 80% or more came
+        true about 9 times in 10, and 60&ndash;80% about 6 to 7 times in 10. Under each chart you can compare any recent
+        forecast with what the river then did. The model cannot rise without rain, but it can overshoot after heavy rain
+        and still misses some weir changes. The summary sentence is written automatically from the average forecast.
+
+        <h3>Data and updates</h3>
+        River levels and rain from the Environment Agency; rain forecasts from ECMWF AIFS (51 members) via Open-Meteo.
+        The model is a physics-based rainfall&ndash;runoff model whose starting state is set by a small neural network,
+        averaged over five trained copies. It runs every 15 minutes, from the newest gauge readings. If a stretch's gauges go offline, its differential is estimated from
+        the neighbouring stretch (the Isis from Godstow, and the other way round) until they are back, with a wider
+        likely range; after five days offline the estimate is marked low confidence. With both offline, the forecast is
+        marked stale. Write-ups are on the
+        <a href="https://robertdoanesolomon.substack.com" target="_blank" rel="noopener">substack</a>; bug reports and
+        ideas are welcome on
+        <a href="https://github.com/robertdoanesolomon/Flag_Predictor" target="_blank" rel="noopener">GitHub</a>.
+      </div>
+    </details>
+
+    <div class="footer">
+      Built by Rob Doane-Solomon — data from the Environment Agency &amp; Open-Meteo · model: physics hybrid, 5 trained copies × 51 rain members ·
+      <span class="only-main-inline"><a href="termly/">long-range river forecast</a> · <a href="preview/">preview of new features</a>.</span>
+      <span class="only-preview-inline"><a href="../termly/">long-range river forecast</a> · </span>
+      <span class="only-preview-inline"><span class="only-preview-page"><a href="../">main forecast</a> · </span>official flags from <a href="https://ourcs.co.uk/information/flags/" target="_blank" rel="noopener">OURCs</a>.</span>
+      <div class="footer-times" id="footer-times"></div>
+    </div>
+  </div>
+
+  <script>
+  /* =====================================================================
+     Flag Predictor — interactive frontend
+     ===================================================================== */
+
+  /** The newer features (flag tile and cards, jump forecast, alerts) are on for the main page too
+      since October 2026; PREVIEW stays as their switch. docs/preview/ is the same file, kept so
+      apps installed from there keep working; only it (and docs/preview2/, a second trial page) shows the
+      "what is new" summary. */
+  const ON_PREVIEW_PAGE = /\/preview2?(\/|\/index\.html)?$/.test(window.location.pathname)
+    || new URLSearchParams(window.location.search).has('preview');
+  const PREVIEW = true;
+  document.body.classList.add('preview');
+  if (ON_PREVIEW_PAGE) document.body.classList.add('on-preview-page');
+  // Installable (manifest, icons, service worker) with flag alerts.
+  if (PREVIEW) {
+    const addHead = (tag, attrs) => { const el = document.createElement(tag); Object.assign(el, attrs); document.head.appendChild(el); };
+    addHead('link', { rel: 'manifest', href: 'manifest.webmanifest' });
+    addHead('link', { rel: 'apple-touch-icon', href: 'icons/apple-touch-icon.png' });
+    addHead('meta', { name: 'theme-color', content: '#0b3d2e' });
+    addHead('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
+    addHead('meta', { name: 'apple-mobile-web-app-title', content: 'Flag Predictor' });
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch((e) => console.warn('service worker', e));
+    window.addEventListener('DOMContentLoaded', setupAlerts);
+    window.addEventListener('DOMContentLoaded', startLiveFlags);
+  }
+  // The "what is new" summary starts folded on phones, where it would fill the first screen.
+  if (ON_PREVIEW_PAGE && window.matchMedia && window.matchMedia('(max-width: 720px)').matches) {
+    const pb = document.querySelector('details.preview-banner');
+    if (pb) pb.open = false;
+  }
+  const ARCHIVE_BASE = ON_PREVIEW_PAGE ? '../archive/' : 'archive/';
+  const BAND_WORD = PREVIEW ? 'flag band' : 'flag';
+
+  const FLAG_COLORS = {
+    green: '#008001',
+    light_blue: '#02bfff',
+    dark_blue: '#000080',
+    amber: '#ffa503',
+    red: '#ff0000',
+    black: '#111111',
+    grey: '#9e9e9e'
+  };
+  const STRETCH_NAMES = { isis: 'Isis', godstow: 'Godstow', wallingford: 'Wallingford' };
+  /** "0.52 m", or "about 0.52 m" while it is estimated from the neighbouring stretch. */
+  function diffText(loc) {
+    return `${loc.estimated ? 'about ' : ''}${fmtDiff(loc.current.differential)} m`;
+  }
+  const FLAG_LABELS = {
+    green: 'Green',
+    light_blue: 'Light Blue',
+    dark_blue: 'Dark Blue',
+    amber: 'Amber',
+    red: 'Red',
+    black: 'Black',
+    grey: 'Grey'
+  };
+  const LOCATION_LABELS = {
+    isis: 'Isis',
+    godstow: 'Godstow',
+    wallingford: 'Wallingford'
+  };
+
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const BAR_WIDTH_MS = 0.8 * ONE_DAY_MS;
+  /** All calendar labels shown to viewers are in UK (London) time — matches BST/GMT transitions. */
+  const TZ_UK = 'Europe/London';
+
+  /** P90−P10 spread (m) at last horizon: [very certain, fairly certain, uncertain] upper bounds. */
+  const CERTAINTY_THRESHOLDS = {
+    isis:        [0.04, 0.12, 0.30],
+    godstow:     [0.05, 0.15, 0.35],
+    wallingford: [0.10, 0.25, 0.50],
+  };
+
+  /** Pick a readable text colour (black/white) for a given hex background. */
+  function readableTextColor(hex) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.6 ? '#0b1d18' : '#ffffff';
+  }
+
+  function fmtDiff(v, digits = 2) {
+    if (v === null || v === undefined || Number.isNaN(v)) return '—';
+    return (Math.round(v * Math.pow(10, digits)) / Math.pow(10, digits)).toFixed(digits);
+  }
+  function fmtMm(v) {
+    if (v === null || v === undefined || Number.isNaN(v)) return '—';
+    return v.toFixed(1);
+  }
+  // Payload timestamps are UTC but carry no offset; JS would read them as local time
+  // (an hour early during BST). Treat any offset-less date-time string as UTC.
+  /** The forecasts work in whole hours (the 15:00 hour holds the latest reading in it, e.g.
+      15:30): show the time of that reading when it falls in that hour, else the hour. */
+  function readingAt(loc, hourIso) {
+    const r = loc && loc.latest_reading ? parseUtc(loc.latest_reading) : null;
+    const h = parseUtc(hourIso);
+    return r && r >= h && r - h < 3600 * 1000 ? loc.latest_reading : hourIso;
+  }
+  function parseUtc(iso) {
+    if (typeof iso === 'string' && iso.includes('T') && !/(Z|[+-]\d\d:?\d\d)$/i.test(iso)) {
+      return new Date(iso + 'Z');
+    }
+    return new Date(iso);
+  }
+  /* The charts run on UK clock time. Plotly has no time zones, so every x value is given as the UK
+     wall-clock time ('YYYY-MM-DDTHH:MM:SS'); the payload's times are UTC. */
+  const UK_PARTS = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit',
+    day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+  function ukWall(x) {
+    const d = x instanceof Date ? x : parseUtc(x);
+    const p = {};
+    UK_PARTS.formatToParts(d).forEach((o) => { p[o.type] = o.value; });
+    return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}`;
+  }
+  /** The forecast runs in whole hours from the hour that holds the latest reading (13:00 for a 13:15
+      reading); its first point is that reading. Start it at the reading's own time. */
+  function forecastOffsetMs(loc) {
+    if (!loc || loc.estimated || !loc.latest_reading || !loc.forecast_start) return 0;
+    const d = parseUtc(loc.latest_reading) - parseUtc(loc.forecast_start);
+    return d >= 0 && d < 3600 * 1000 ? d : 0;
+  }
+  function fcTimes(loc, times) {
+    const off = forecastOffsetMs(loc);
+    return (times || []).map((t) => ukWall(new Date(parseUtc(t).getTime() + off)));
+  }
+  /** 'YYYY-MM-DD' plus n days (calendar arithmetic, no time zone). */
+  function addDays(ymd, n) {
+    const [y, m, d] = ymd.slice(0, 10).split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+  }
+  function relativeTime(iso) {
+    const t = parseUtc(iso);
+    const diffMs = Date.now() - t.getTime();
+    const min = Math.round(diffMs / 60000);
+    if (min < 1) return 'just now';
+    if (min < 60) return `${min} min ago`;
+    const hr = Math.round(min / 60);
+    if (hr < 24) return `${hr} hr ago`;
+    const day = Math.round(hr / 24);
+    return `${day} day${day === 1 ? '' : 's'} ago`;
+  }
+  /**
+   * Peak ensemble-mean value within the visible forecast window
+   * (i.e. up to the last day with a full rainfall forecast).
+   * Falls back gracefully if the payload is missing pieces.
+   */
+  function computePeak(loc) {
+    const times = loc.ensemble && loc.ensemble.times;
+    const mean = loc.ensemble && loc.ensemble.mean;
+    if (!times || !times.length || !mean || !mean.length) {
+      return { value: null, time: null };
+    }
+    let cutoff = null;
+    if (loc.rainfall_forecast && loc.rainfall_forecast.dates && loc.rainfall_forecast.dates.length) {
+      const last = parseUtc(loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1]);
+      last.setUTCHours(24, 0, 0, 0);
+      cutoff = last.getTime();
+    }
+    let bestIdx = -1, bestVal = -Infinity;
+    for (let i = 0; i < times.length; i++) {
+      if (cutoff !== null && parseUtc(times[i]).getTime() > cutoff) break;
+      const v = mean[i];
+      if (v !== null && !Number.isNaN(v) && v > bestVal) {
+        bestVal = v;
+        bestIdx = i;
+      }
+    }
+    if (bestIdx < 0) return { value: null, time: null };
+    return { value: bestVal, time: times[bestIdx] };
+  }
+
+  function fmtShortDate(iso) {
+    const d = parseUtc(iso);
+    const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: TZ_UK });
+    const day = d.toLocaleDateString('en-GB', { day: 'numeric', timeZone: TZ_UK });
+    const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: TZ_UK });
+    return `${weekday} ${day} ${month}`;
+  }
+  function fmtShortDateTime(iso) {
+    const d = parseUtc(iso);
+    const time = d.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: TZ_UK
+    });
+    return `${time}, ${fmtShortDate(iso)}`;
+  }
+
+  /**
+   * Produce a natural-language summary from first-forecast value, detecting
+   * the peak, trough and end value, and appending a certainty qualifier.
+   * Uses the FIRST ensemble mean value as the baseline to avoid the
+   * common "jump" artefact at t=0 in the observations.
+   */
+  function summariseForecastV1(loc) {
+    const times = loc.ensemble && loc.ensemble.times;
+    const mean  = loc.ensemble && loc.ensemble.mean;
+    const p10   = loc.ensemble && loc.ensemble.p10;
+    const p90   = loc.ensemble && loc.ensemble.p90;
+    if (!times || times.length < 2 || !mean || mean.length < 2) return null;
+
+    // Visible window cut-off.
+    let cutoff = null;
+    if (loc.rainfall_forecast && loc.rainfall_forecast.dates && loc.rainfall_forecast.dates.length) {
+      const last = loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1];
+      const pts = last.slice(0, 10).split('-').map(Number);
+      cutoff = Date.UTC(pts[0], pts[1] - 1, pts[2] + 1, 0, 0, 0, 0);
+    }
+
+    // Forecast span in calendar days uses the rainfall-window length (usually ~240 hourly points),
+    // not only the last valid ensemble-mean timestep — avoids "9 days" when trailing NaNs shrink endIdx.
+    let cutoffCount = 0;
+    for (let i = 0; i < times.length; i++) {
+      if (cutoff !== null && parseUtc(times[i]).getTime() > cutoff) break;
+      cutoffCount++;
+    }
+    const horizonHours = Math.max(1, cutoffCount - 1);
+    const spanDaysPhrase = Math.max(1, Math.ceil(horizonHours / 24));
+
+    // Collect valid indices in window.
+    const idxs = [];
+    for (let i = 0; i < times.length; i++) {
+      if (cutoff !== null && parseUtc(times[i]).getTime() > cutoff) break;
+      if (mean[i] !== null && !Number.isNaN(mean[i])) idxs.push(i);
+    }
+    if (idxs.length < 3) return null;
+
+    const startIdx = idxs[0];
+    const endIdx   = idxs[idxs.length - 1];
+    const startVal = mean[startIdx];   // first forecast value — avoids t=0 jump
+    const endVal   = mean[endIdx];
+    const startT   = parseUtc(times[startIdx]);
+    const endT     = parseUtc(times[endIdx]);
+
+    // Find global peak and trough.
+    let peakIdx = startIdx, troughIdx = startIdx;
+    for (const i of idxs) {
+      if (mean[i] > mean[peakIdx]) peakIdx = i;
+      if (mean[i] < mean[troughIdx]) troughIdx = i;
+    }
+    const peakVal    = mean[peakIdx];
+    const troughVal  = mean[troughIdx];
+    const msDay = ONE_DAY_MS;
+    const daysToPeak   = Math.max(1, Math.ceil((parseUtc(times[peakIdx]) - startT) / msDay));
+    const daysToTrough = Math.max(1, Math.ceil((parseUtc(times[troughIdx]) - startT) / msDay));
+    const peakRise   = peakVal - startVal;
+    const troughDrop = startVal - troughVal;
+    const netDelta   = endVal - startVal;
+
+    // Certainty: P90-P10 spread at the last visible point (location-specific cutoffs, metres).
+    const locKey = (loc.key || 'isis').toLowerCase();
+    const [c1, c2, c3] = CERTAINTY_THRESHOLDS[locKey] || CERTAINTY_THRESHOLDS.isis;
+
+    let certainty = '';
+    if (p10 && p90 && p10[endIdx] != null && p90[endIdx] != null) {
+      const spread = (p90[endIdx] || 0) - (p10[endIdx] || 0);
+      if      (spread < c1) certainty = ', and the forecast is <strong>very certain</strong>';
+      else if (spread < c2) certainty = ', and the forecast is <strong>fairly certain</strong>';
+      else if (spread < c3) certainty = ', but the forecast is <strong>uncertain</strong>';
+      else                    certainty = ', but the forecast is <strong>very uncertain</strong>';
+    }
+
+    // Magnitude adjective: returns '' (significant), 'slightly', or 'sharply'.
+    function adj(delta) {
+      const a = Math.abs(delta);
+      if (a < 0.03) return null;       // not significant
+      if (a < 0.08) return 'slightly';
+      if (a < 0.20) return '';
+      return 'sharply';
+    }
+    function ds(d) { return `${d} day${d === 1 ? '' : 's'}`; }
+    function verb(delta, word1, word2) {
+      const a = adj(delta);
+      if (a === null) return null;
+      return a ? `${word1} ${a}` : word1;
+    }
+
+    // Significance thresholds — movement must exceed this to be "notable".
+    const SIG = 0.04;
+    const hasPeak   = peakRise   > SIG && peakIdx   !== endIdx && peakIdx   !== startIdx;
+    const hasTrough = troughDrop > SIG && troughIdx !== endIdx && troughIdx !== startIdx;
+
+    let dir;
+
+    if (hasPeak && hasTrough) {
+      if (peakIdx < troughIdx) {
+        // Rise then fall.
+        const rV = verb(peakRise, 'rise', null) || 'rise';
+        const fV = verb(-(troughDrop), 'fall', null) || 'fall back';
+        dir = `<strong>${rV} over the next ${ds(daysToPeak)}</strong>, then <strong>${fV}</strong>`;
+      } else {
+        // Fall then rise.
+        const dV = verb(-troughDrop, 'drop', null) || 'drop';
+        const rV = verb(peakRise - troughDrop, 'rise', null) || 'rise';
+        dir = `<strong>${dV} over the next ${ds(daysToTrough)}</strong>, then <strong>${rV}</strong>`;
+      }
+    } else if (hasPeak) {
+      const rV = verb(peakRise, 'rise', null) || 'rise';
+      const afterEnd = Math.abs(endVal - peakVal) < SIG ? 'stay elevated' : 'fall back';
+      dir = `<strong>${rV} over the next ${ds(daysToPeak)}</strong>, then ${afterEnd}`;
+    } else if (hasTrough) {
+      const dV = verb(-troughDrop, 'drop', null) || 'drop';
+      const afterEnd = Math.abs(endVal - troughVal) < SIG ? 'stay low' : 'rise slightly';
+      dir = `<strong>${dV} over the next ${ds(daysToTrough)}</strong>, then ${afterEnd}`;
+    } else {
+      const a = Math.abs(netDelta);
+      let v;
+      if (a < SIG)         v = 'stay roughly the same';
+      else if (netDelta>0) v = verb(netDelta, 'rise', null) || 'rise';
+      else                 v = verb(netDelta, 'drop', null) || 'drop';
+      dir = `<strong>${v} over the next ${ds(spanDaysPhrase)}</strong>`;
+    }
+
+    return `The differential is forecast to ${dir}${certainty}.`;
+  }
+
+
+  /*
+   * Summary sentence version. 2 = physics-model version (starts from the latest
+   * observation; certainty includes the model's own error). Set to 1 to go back
+   * to the original sentence (summariseForecastV1, unchanged), and swap the
+   * "How reliable is the summary sentence?" text back (old text kept in a comment).
+   */
+  const SUMMARY_VERSION = 1;
+
+  /*
+   * V2 settings, per location (metres).
+   *  sig/slight/sharp: a move counts if > sig; "slightly" up to slight; "sharply" above sharp.
+   *  levels/modelErr: the model's own 10-day error (P10-P90 width, from the
+   *    Nov 2024 - Jan 2026 backtest) when the river is below levels[0], between
+   *    levels[0] and levels[1], or above levels[1].
+   *  certainty: total-spread upper bounds for very certain / fairly certain / uncertain.
+   */
+  const SUMMARY_V2 = {
+    isis:        { sig: 0.04, slight: 0.08, sharp: 0.20, levels: [0.10, 0.35], modelErr: [0.05, 0.25, 0.15], certainty: [0.10, 0.20, 0.35] },
+    godstow:     { sig: 0.05, slight: 0.10, sharp: 0.25, levels: [0.15, 0.45], modelErr: [0.10, 0.40, 0.20], certainty: [0.15, 0.30, 0.50] },
+    wallingford: { sig: 0.08, slight: 0.16, sharp: 0.40, levels: [0.20, 0.70], modelErr: [0.08, 0.50, 0.40], certainty: [0.15, 0.35, 0.60] },
+  };
+
+  function summariseForecastV2(loc) {
+    const times = loc.ensemble && loc.ensemble.times;
+    const mean  = loc.ensemble && loc.ensemble.mean;
+    const p10   = loc.ensemble && loc.ensemble.p10;
+    const p90   = loc.ensemble && loc.ensemble.p90;
+    if (!times || times.length < 2 || !mean || mean.length < 2) return null;
+    const cfg = SUMMARY_V2[(loc.key || 'isis').toLowerCase()] || SUMMARY_V2.isis;
+
+    // Visible window: up to the end of the rainfall forecast.
+    let cutoff = null;
+    if (loc.rainfall_forecast && loc.rainfall_forecast.dates && loc.rainfall_forecast.dates.length) {
+      const last = loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1];
+      const pts = last.slice(0, 10).split('-').map(Number);
+      cutoff = Date.UTC(pts[0], pts[1] - 1, pts[2] + 1, 0, 0, 0, 0);
+    }
+    const idxs = [];
+    for (let i = 0; i < times.length; i++) {
+      if (cutoff !== null && parseUtc(times[i]).getTime() > cutoff) break;
+      if (mean[i] !== null && !Number.isNaN(mean[i])) idxs.push(i);
+    }
+    if (idxs.length < 3) return null;
+
+    const startIdx = idxs[0];
+    const endIdx   = idxs[idxs.length - 1];
+    // The physics model starts exactly at the latest reading, so use it as the baseline.
+    const observed = loc.current && typeof loc.current.differential === 'number' ? loc.current.differential : null;
+    const startVal = observed !== null ? observed : mean[startIdx];
+    const endVal   = mean[endIdx];
+    const startT   = parseUtc(times[startIdx]);
+    const horizonDays = Math.max(1, Math.ceil((parseUtc(times[endIdx]) - startT) / ONE_DAY_MS));
+
+    let peakIdx = startIdx, troughIdx = startIdx;
+    for (const i of idxs) {
+      if (mean[i] > mean[peakIdx]) peakIdx = i;
+      if (mean[i] < mean[troughIdx]) troughIdx = i;
+    }
+    const peakRise   = mean[peakIdx] - startVal;
+    const troughDrop = startVal - mean[troughIdx];
+    const daysTo = (i) => Math.max(1, Math.ceil((parseUtc(times[i]) - startT) / ONE_DAY_MS));
+
+    // Certainty: rain-ensemble spread at the end, combined with the model's own error.
+    let certainty = '';
+    if (p10 && p90 && p10[endIdx] != null && p90[endIdx] != null) {
+      const rainSpread = Math.max(0, p90[endIdx] - p10[endIdx]);
+      // Use the highest level the forecast reaches: a big rise from a low start is
+      // exactly when the model has been least reliable.
+      const level = Math.max(startVal, mean[peakIdx]);
+      const modelErr = level < cfg.levels[0] ? cfg.modelErr[0]
+                     : level < cfg.levels[1] ? cfg.modelErr[1] : cfg.modelErr[2];
+      const total = Math.sqrt(rainSpread * rainSpread + modelErr * modelErr);
+      const [c1, c2, c3] = cfg.certainty;
+      if      (total < c1) certainty = ', and the forecast is <strong>very certain</strong>';
+      else if (total < c2) certainty = ', and the forecast is <strong>fairly certain</strong>';
+      else if (total < c3) certainty = ', but the forecast is <strong>uncertain</strong>';
+      else                 certainty = ', but the forecast is <strong>very uncertain</strong>';
+    }
+
+    function word(delta, base) {
+      const a = Math.abs(delta);
+      if (a <= cfg.slight) return `${base} slightly`;
+      if (a > cfg.sharp)   return `${base} sharply`;
+      return base;
+    }
+    const ds = (d) => `${d} day${d === 1 ? '' : 's'}`;
+    const SIG = cfg.sig;
+    const hasPeak   = peakRise   > SIG && peakIdx   !== endIdx;
+    const hasTrough = troughDrop > SIG && troughIdx !== endIdx;
+
+    let dir;
+    if (hasPeak && hasTrough) {
+      if (peakIdx < troughIdx) {
+        dir = `<strong>${word(peakRise, 'rise')} over the next ${ds(daysTo(peakIdx))}</strong>, then <strong>fall back</strong>`;
+      } else {
+        dir = `<strong>${word(troughDrop, 'drop')} over the next ${ds(daysTo(troughIdx))}</strong>, then <strong>rise</strong>`;
+      }
+    } else if (hasPeak) {
+      const after = Math.abs(endVal - mean[peakIdx]) < SIG ? 'stay high' : 'fall back';
+      dir = `<strong>${word(peakRise, 'rise')} over the next ${ds(daysTo(peakIdx))}</strong>, then ${after}`;
+    } else if (hasTrough) {
+      const after = Math.abs(endVal - mean[troughIdx]) < SIG ? 'stay low' : 'rise slightly';
+      dir = `<strong>${word(troughDrop, 'drop')} over the next ${ds(daysTo(troughIdx))}</strong>, then ${after}`;
+    } else {
+      const net = endVal - startVal;
+      const v = Math.abs(net) <= SIG ? 'stay roughly the same' : word(net, net > 0 ? 'rise' : 'drop');
+      dir = `<strong>${v} over the next ${ds(horizonDays)}</strong>`;
+    }
+    return `The differential is forecast to ${dir}${certainty}.`;
+  }
+
+  function summariseForecast(loc) {
+    return SUMMARY_VERSION === 1 ? summariseForecastV1(loc) : summariseForecastV2(loc);
+  }
+
+  /*
+   * Flag-change cards (above the summary sentence), preview page only. Two cards:
+   *  - the official OURCs flag: a model of when the flag officer changes it
+   *    (it follows the bands with lags, and comes down later than it goes up);
+   *  - the differential: which band the forecast outcomes (after the lock-keeper
+   *    step layer) are in.
+   * A change counts when it holds for 3 hours.
+   */
+  const OUTLOOK_LEVELS = [[0.9, 'Very likely'], [0.7, 'Likely'], [0.4, 'Possible'], [0.2, 'Small chance']];
+  function outlookWord(p) {
+    const r = Math.round(p * 20) / 20;           // same rounding as the percentage shown
+    for (const [lo, w] of OUTLOOK_LEVELS) if (r >= lo - 1e-9) return w;
+    return null;
+  }
+  function outlookPct(p) {
+    if (p >= 0.95) return 'over 95%';
+    if (p < 0.05) return 'under 5%';
+    return `${Math.round(p * 20) * 5}%`;
+  }
+  function partOfDayUK(iso) {
+    const h = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone: TZ_UK }).format(new Date(iso)));
+    if (h >= 6 && h < 9) return 'early morning';
+    if (h >= 9 && h < 12) return 'mid-morning';
+    if (h >= 12 && h < 15) return 'early afternoon';
+    if (h >= 15 && h < 18) return 'late afternoon';
+    if (h >= 18 && h < 22) return 'in the evening';
+    return 'overnight';
+  }
+  function asUtcIso(iso) {
+    return iso && !/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso + 'Z' : iso;
+  }
+  /**
+   * One forecast card: {main, sub, now, tomorrow: [flag keys], strength}.
+   * kind 'flag' (official OURCs flag: "down to Amber") or 'diff' (the differential: "down into Amber").
+   */
+  function outlookCard(o, kind, loc) {
+    if (!o || !o.windows || !o.windows.tomorrow) return null;
+    const today = o.windows.today || { up: 0, down: 0 };
+    const tom = o.windows.tomorrow;
+    const cands = ['up', 'down']
+      .filter((d) => o[d])
+      .map((d) => ({ dir: d, pToday: today[d] || 0, pTom: tom[d] || 0, info: o[d] }))
+      .sort((a, b) => b.pTom - a.pTom);
+    const cur = o.current_flag;
+    const curName = FLAG_LABELS[cur] || cur;
+    const to = kind === 'diff' ? 'into' : 'to';
+    if (!cands.length) {
+      return { main: kind === 'diff' ? `Likely to stay in ${curName} today and tomorrow` : `Likely to stay ${curName} today and tomorrow`,
+               sub: '', now: cur, tomorrow: [cur], strength: 0 };
+    }
+    const best = cands[0];
+    const nextKey = best.info.flag;
+    const name = FLAG_LABELS[nextKey] || nextKey;
+    const wordToday = outlookWord(best.pToday);
+    const wordTom = outlookWord(best.pTom);
+    const tomorrow = best.pTom >= 0.5 ? [nextKey] : best.pTom >= 0.2 ? [cur, nextKey] : [cur];
+    if (!wordToday && !wordTom) {
+      const bits = cands.map((c) => `${c.dir === 'up' ? 'Up' : 'Down'} ${to} ${FLAG_LABELS[c.info.flag] || c.info.flag} by the end of tomorrow: ${outlookPct(c.pTom)}`);
+      return { main: kind === 'diff' ? `Likely to stay in ${curName} today and tomorrow` : `Likely to stay ${curName} today and tomorrow`,
+               sub: `${bits.join('. ')}.`, now: cur, tomorrow, strength: 0 };
+    }
+    const lead = (w) => (w === 'Possible' ? 'Possibly' : w === 'Small chance' ? 'Small chance:' : w);
+    // Going up can skip a flag: name the destination only when 75%+ of the outcomes that change agree.
+    const split = Object.entries(best.info.split || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    const splitTotal = split.reduce((t, [, v]) => t + v, 0);
+    const unclear = split.length > 1 && split[0][1] / splitTotal < 0.75;
+    const splitText = unclear ? split.filter(([, v]) => v >= 0.05).map(([k, v]) => `${FLAG_LABELS[k] || k} ${outlookPct(v)}`).join(', ') + '.' : '';
+    const whenIso = best.info.when && best.info.when.median_time;
+    const ukDate = (d) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ_UK, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+    const startIso = asUtcIso(loc.forecast_start);
+    const whenDay = whenIso && startIso ? (ukDate(new Date(whenIso)) === ukDate(new Date(startIso)) ? ' today' : ' tomorrow') : '';
+    const parts = [];
+    let main, p;
+    // Lead with today only when most of the chance is today (same word); else with tomorrow.
+    const dest = unclear ? '' : ` ${to} ${name}`;
+    if (wordToday && wordToday === wordTom) {
+      p = best.pToday;
+      main = `${lead(wordToday)} ${best.dir}${dest} today (${outlookPct(best.pToday)})`;
+      if (best.pTom - best.pToday >= 0.1) parts.push(`By the end of tomorrow: ${outlookPct(best.pTom)}.`);
+    } else {
+      p = best.pTom;
+      main = `${lead(wordTom)} ${best.dir}${dest} by tomorrow (${outlookPct(best.pTom)})`;
+      parts.push(`Today: ${outlookPct(best.pToday)}.`);
+    }
+    if (splitText) parts.unshift(splitText);
+    if (whenIso) parts.push(`${p < 0.7 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.`);
+    const tomChips = unclear ? [cur, ...split.slice(0, 2).map(([k]) => k)] : tomorrow;
+    return { main, sub: parts.join(' '), now: cur, tomorrow: tomChips, strength: p };
+  }
+  function chipHtml(key) {
+    return `<span class="fc-chip" style="background:${FLAG_COLORS[key] || 'var(--border-strong)'}" title="${FLAG_LABELS[key] || key}"></span>`;
+  }
+  function cardHtml(label, c, warn) {
+    const names = (ks) => ks.map((k) => FLAG_LABELS[k] || k).join(' or ');
+    const chips = c.now
+      ? `<span class="fc-chips" aria-label="Now ${names([c.now])}; tomorrow ${names(c.tomorrow)}">Now ${chipHtml(c.now)} <span aria-hidden="true">&rarr;</span> tomorrow ${c.tomorrow.map(chipHtml).join('')}</span>`
+      : '';
+    return `<div class="fc-card${warn ? ' warn' : ''}">
+        <div class="fc-head"><span class="fc-label">${label}</span>${chips}</div>
+        <div class="fc-main">${c.main}</div>${c.sub ? `<div class="fc-sub">${c.sub}</div>` : ''}</div>`;
+  }
+  /**
+   * Black flag card (Isis), from the Iffley Lock level forecast; null unless Black is close:
+   * Black now (by the Iffley rule or the official flag), a 10%+ chance by the end of tomorrow,
+   * or Iffley within 6 cm of the line.
+   */
+  function blackCard(b, off, loc) {
+    if (!b || !b.windows) return null;
+    const pT = b.windows.today || 0, pM = b.windows.tomorrow || 0;
+    const isBlack = b.black_now || (off && off.flag === 'black');
+    const near = !isBlack && b.level_m >= b.up_m - 0.06;
+    if (!isBlack && pM < 0.1 && !near) return null;
+    const ukDate = (d) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ_UK, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+    const startIso = asUtcIso(loc.forecast_start);
+    const whenIso = b.when && b.when.median_time;
+    const whenDay = whenIso && startIso ? (ukDate(new Date(whenIso)) === ukDate(new Date(startIso)) ? ' today' : ' tomorrow') : '';
+    const when = whenIso ? ` ${pM < 0.7 ? 'If so, likely' : 'Likely'} ${partOfDayUK(whenIso)}${whenDay}.` : '';
+    const lead = (w) => (w === 'Possible' ? 'Possibly' : w === 'Small chance' ? 'Small chance:' : w);
+    const wT = outlookWord(pT), wM = outlookWord(pM);
+    let main;
+    if (isBlack) {
+      if (!wM) main = 'Likely to stay Black today and tomorrow';
+      else if (wT && wT === wM) main = `${lead(wT)} back to Red today (${outlookPct(pT)})`;
+      else main = `${lead(wM)} back to Red by tomorrow (${outlookPct(pM)})`;
+      return { main, sub: `Black usually comes down once Iffley Lock drops below about ${b.down_m.toFixed(2)} m.${wM ? ` Today: ${outlookPct(pT)}.` : ''}${when}`,
+               now: 'black', tomorrow: pM >= 0.5 ? ['red'] : pM >= 0.2 ? ['black', 'red'] : ['black'], strength: pM };
+    }
+    const now = off && FLAG_COLORS[off.flag] ? off.flag : 'red';
+    if (!wM) main = `Unlikely to go Black by tomorrow (${outlookPct(pM)})`;
+    else if (wT && wT === wM) main = `${lead(wT)} Black today (${outlookPct(pT)})`;
+    else main = `${lead(wM)} Black by tomorrow (${outlookPct(pM)})`;
+    return { main, sub: `The flag usually goes Black once Iffley Lock reaches about ${b.up_m.toFixed(2)} m.${wM ? ` Today: ${outlookPct(pT)}.` : ''}${when}`,
+             now, tomorrow: pM >= 0.5 ? ['black'] : pM >= 0.2 ? [now, 'black'] : [now], strength: pM };
+  }
+  /** Preview page: the official flag as a big tile, with an official-flag card and a differential card beside it. */
+  // The official flags now, polled every 10 s from the alerts Worker (GET /flags), so the big
+  // tile changes within seconds of OURCs, not with the next forecast run.
+  const LIVE_FLAGS = {};
+  const LIVE_FLAGS_EVERY_MS = 10000;
+  // Same flag, set at the same moment? (the Worker and the forecast write the time differently)
+  const sameFlag = (a, b) => a.flag === b.flag && Date.parse(a.set_at || 0) === Date.parse(b.set_at || 0);
+  function officialFlag(loc) {
+    const off = loc.official_flag;
+    const live = LIVE_FLAGS[loc.key];
+    if (!off || !live || sameFlag(live, off)) return off;
+    // A change since the forecast ran: the sync note compared the river with the old flag.
+    return { ...off, flag: live.flag, label: live.label, set_at: live.set_at, sync: undefined };
+  }
+  /** The last line of the page: when this forecast was published and each official flag was set. */
+  function updateFooterTimes(bundle) {
+    const el = document.getElementById('footer-times');
+    if (!el || !bundle) return;
+    const parts = [`Forecast published ${fmtShortDateTime(bundle.generated_at)}`];
+    for (const key of bundle.location_order) {
+      const off = bundle.locations[key] && officialFlag(bundle.locations[key]);
+      if (off && off.set_at) parts.push(`${STRETCH_NAMES[key] || key} flag set ${fmtShortDateTime(off.set_at)}`);
+    }
+    el.textContent = parts.join(' · ');
+  }
+  async function startLiveFlags() {
+    let worker = null;
+    try { const r = await fetch('push_config.json', { cache: 'no-store' }); if (r.ok) worker = (await r.json()).worker; } catch (e) {}
+    if (!worker) return;
+    let busy = false;
+    const poll = async () => {
+      const bundle = window.__forecastBundle;
+      if (busy || document.hidden || !bundle) return;
+      busy = true;
+      try {
+        const r = await fetch(`${worker}/flags`, { cache: 'no-store' });
+        if (!r.ok) return;
+        const now = await r.json();
+        for (const key of bundle.location_order) {
+          const loc = bundle.locations[key];
+          const st = now[key];
+          if (!st || !loc || !loc.official_flag || !FLAG_COLORS[st.flag]) continue;
+          const prev = LIVE_FLAGS[key] || loc.official_flag;
+          LIVE_FLAGS[key] = st;
+          if (sameFlag(prev, st)) continue;
+          const head = document.querySelector(`#pane-${key} .flag-head`);
+          if (head) head.outerHTML = renderFlagOutlookHtml(loc);
+          updateFooterTimes(bundle);
+        }
+      } catch (e) { /* offline or the Worker is busy: try again next time */ }
+      finally { busy = false; }
+    };
+    setInterval(poll, LIVE_FLAGS_EVERY_MS);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+    poll();
+  }
+  function renderFlagOutlookHtml(loc) {
+    if (!PREVIEW) return '';
+    const off = officialFlag(loc);
+    // A stale forecast (gauges offline) starts in the past: its "today / tomorrow" would be wrong
+    // and the differential would be compared with the flag flying now, so show neither.
+    const stale = !!loc.stale || !!(off && off.forecast_stale);
+    const cards = [];
+    if (stale) {
+      const lastAt = loc.latest_reading || loc.last_sensor_update;
+      const last = lastAt ? ` since ${fmtShortDateTime(lastAt)}` : '';
+      cards.push(cardHtml('Forecast', { main: 'No flag-change forecast',
+        sub: `The river gauges for this stretch have not reported${last}. It comes back with the next update after they do.` }, false));
+    } else {
+      const est = loc.estimated;
+      if (est && est.hours >= 4) {   // a short gap is just drawn dotted
+        const here = STRETCH_NAMES[loc.key] || loc.display_name || '';
+        const from = STRETCH_NAMES[est.from] || est.from;
+        const days = est.hours >= 48 ? `${Math.round(est.hours / 24)} days` : `${est.hours} hours`;
+        cards.push(cardHtml('Gauges offline', {
+          main: est.confident ? `Estimated from ${from}` : `Estimated from ${from}: low confidence`,
+          sub: est.confident
+            ? `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). More uncertainty than usual.`
+            : est.hours <= 240
+              ? `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). Less reliable than usual; notifications still sent, marked as estimated.`
+              : `No ${here} reading since ${fmtShortDateTime(est.last_reading)} (${days}). Notifications stopped; treat this as a rough guide.` }, true));
+      }
+      let offCard = outlookCard(loc.official_outlook, 'flag', loc);
+      // The flag changed after this forecast ran (live tile): its outlook started from the old flag,
+      // so say what happened instead.
+      if (off && loc.official_flag && off !== loc.official_flag && off.flag !== loc.official_flag.flag) {
+        offCard = {
+          main: `Changed to ${off.label}${off.set_at ? ` at ${fmtShortDateTime(off.set_at).split(',')[0]}` : ''}`,
+          sub: 'The chances from here update with the next forecast, within 15 minutes.',
+          now: off.flag, tomorrow: [off.flag], strength: 0,
+        };
+      }
+      const diffCard = outlookCard(loc.flag_outlook, 'diff', loc);
+      const sy = off && off.sync;
+      const outOfSync = !!(sy && sy.in_sync === false && off.flag !== 'grey');
+      if (offCard) {
+        if (outOfSync) {
+          const bandName = FLAG_LABELS[sy.band] || sy.band;
+          const hrs = sy.hours_out_of_sync;
+          const since = hrs === null || hrs === undefined ? '' : hrs >= 48 ? ` for ${Math.round(hrs / 24)} days` : hrs >= 2 ? ` for ${hrs} hours` : '';
+          offCard.sub += `${offCard.sub ? ' ' : ''}The differential has been in ${bandName}${since}; ` + (sy.band_above_flag
+            ? 'flags usually go up within an hour or two once the river is past the line, in daylight.'
+            : 'flags come down a few daylight hours after the river is clearly below the line.');
+        }
+        cards.push(cardHtml('Official flag', offCard, outOfSync));
+      }
+      const gist = (c) => c && c.main.replace(/ (in|into) /g, ' ').replace(/\s*\(\d+%\)/, '');
+      if (diffCard && offCard && !outOfSync && gist(diffCard) === gist(offCard)) {
+        const band = FLAG_LABELS[loc.flag_outlook.current_flag] || loc.current.flag_label;
+        cards.push(`<div class="fc-card fc-compact"><div class="fc-head"><span class="fc-label">Differential &middot; <span class="fc-value">${diffText(loc)}</span></span><span class="fc-compact-text">${chipHtml(loc.flag_outlook.current_flag)} ${band} band &middot; same outlook as the flag</span></div></div>`);
+      } else if (diffCard) cards.push(cardHtml(`Differential &middot; <span class="fc-value">${diffText(loc)}</span>`, diffCard, false));
+      const blk = blackCard(loc.black, off, loc);
+      if (blk && offCard && off.flag === 'red' && offCard.strength === 0 && blk.strength >= 0.2) {
+        cards[0] = cardHtml('Official flag', { ...offCard, main: 'No change expected, other than to Black' }, outOfSync);
+      }
+      if (blk) cards.push(cardHtml(`Black flag &middot; <span class="fc-value">Iffley ${loc.black.level_m.toFixed(2)} m</span>`, blk, false));
+    }
+    let tile = '';
+    if (off) {
+      const bg = FLAG_COLORS[off.flag] || '#cccccc';
+      const fg = readableTextColor(bg);
+      const setAt = off.set_at ? `<br>set ${fmtShortDateTime(off.set_at)}` : '';
+      tile = `<div class="flag-tile-wrap">
+          <div class="flag-tile" style="--flag-bg:${bg}; --flag-text:${fg};">
+            <svg class="flag-tile-icon" viewBox="0 0 34 40" aria-hidden="true"><path d="M4 2v36" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"></path><path d="M6 4h24l-5 8 5 8H6z" fill="currentColor" fill-opacity="0.9"></path></svg>
+            <span class="flag-tile-name">${off.label}</span>
+          </div>
+        </div>`;
+    }
+    let html = '';
+    if (tile || cards.length) {
+      html += `<div class="flag-head${tile ? '' : ' no-tile'}" role="status">${tile}${cards.length ? `<div class="fc-cards">${cards.join('')}</div>` : ''}</div>`;
+    }
+    return html;
+  }
+
+  /** Detect a dark theme and return Plotly template + grid colours. */
+  /* ---- Under the hood (preview page): the hybrid model's stores now and ahead ---- */
+  const STATE_PANELS = [
+    ['soil', 'Soil wetness', '%'],
+    ['quick', 'Fast runoff store', 'mm'],
+    ['medium', 'Medium store', 'mm'],
+    ['slow', 'Groundwater store', 'mm'],
+    ['channel', 'River channel', 'mm'],
+    ['flow', 'River flow', 'm³/s'],
+  ];
+  function stateNote(name, ms) {
+    const p = ms.params || {};
+    const h = (x) => x >= 48 ? `${Math.round(x / 24)} days` : `${Math.round(x)} h`;
+    switch (name) {
+      case 'soil': return 'How full the soil is. Wetter soil sends more of the rain to the river.' +
+        (ms.subcatchments ? ' ' + Object.entries(ms.subcatchments).map(([k, v]) =>
+          `${({upper: 'Upper Thames', cherwell: 'Cherwell', lower: 'Ock and Thame'})[k] || k} ${Math.round(v)}%`).join(', ') + '.' : '') +
+        (ms.measured_soil ? ` Measured at ${ms.measured_soil.site}: ${ms.measured_soil.value.toFixed(1)}% water by volume (${ms.measured_soil.source}; a different scale).` : '');
+      case 'quick': return p.k_quick ? `Water on its way fast (surface, drains). Half gone in ~${h(p.k_quick * 0.69)}.` : '';
+      case 'medium': return p.k_medium ? `Water draining through the soil, over ~${h(3 * p.k_medium)}.` : '';
+      case 'slow': return p.k_slow ? `Groundwater feeding the river slowly. Half gone in ~${h(p.k_slow * 0.69)}.` : '';
+      case 'channel': return 'Water in the river itself, upstream of the gauges.';
+      case 'flow': return ms.farmoor_flow
+        ? `What the model thinks is flowing. The Farmoor gauge last measured ${ms.farmoor_flow.value < 10 ? ms.farmoor_flow.value.toFixed(1) : ms.farmoor_flow.value.toFixed(0)} m³/s, at ${fmtShortDateTime(ms.farmoor_flow.time)}` +
+          (parseUtc(ms.times[0]) - parseUtc(ms.farmoor_flow.time) > 24 * 3600 * 1000 ? ' (the EA publishes it a few days late).' : '.')
+        : 'What the model thinks is flowing past.';
+    }
+    return '';
+  }
+  function renderModelStateHtml(key, loc) {
+    const ms = loc.model_state;
+    const fmt = (v, u) => u === '%' ? `${Math.round(v)}<small>%</small>` : `${v >= 100 ? v.toFixed(0) : v.toFixed(1)}<small>${u === 'm³/s' ? ' m³/s' : 'mm'}</small>`;
+    const tiles = STATE_PANELS.map(([n, label, u]) => `
+        <div class="stat">
+          <div class="label">${label}</div>
+          <div class="value">${fmt(ms.now[n], u)}</div>
+          <div class="state-note">${stateNote(n, ms)}</div>
+        </div>`).join('');
+    return `
+      <details class="under-hood" open>
+        <summary>Under the hood: what the model thinks the river is doing</summary>
+        <p class="under-hood-intro">The model treats the catchment as connected stores of water: rain wets the soil, the share that runs off
+          splits between a fast, a medium and a slow (groundwater) path, and all three feed the river. Its stores now, worked out from
+          the last few weeks of rain and river levels (mm of water over the whole catchment):</p>
+        <div class="stats-grid">${tiles}</div>
+        <p class="under-hood-intro">How they change over the next 10 days (line: average of the rain forecasts; shading: 10th to 90th percentile):</p>
+        <div id="state-plot-${key}" class="plot state-plot"></div>
+      </details>`;
+  }
+  function plotModelState(key, loc) {
+    const el = document.getElementById(`state-plot-${key}`);
+    if (!el || !loc.model_state || typeof Plotly === 'undefined') return;
+    const ms = loc.model_state, T = themeColors();
+    const msTimes = fcTimes(loc, ms.times);
+    const compact = window.matchMedia('(max-width: 720px)').matches;
+    const cols = compact ? 1 : 2, rows = Math.ceil(STATE_PANELS.length / cols);
+    const traces = [], annotations = [];
+    STATE_PANELS.forEach(([n, label, u], i) => {
+      const ax = i === 0 ? '' : String(i + 1);
+      const s = ms.series[n];
+      traces.push({ x: msTimes, y: s.p90, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { width: 0 }, hoverinfo: 'skip', showlegend: false });
+      traces.push({ x: msTimes, y: s.p10, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { width: 0 }, fill: 'tonexty',
+                    fillcolor: T.bandOuter, hoverinfo: 'skip', showlegend: false });
+      traces.push({ x: msTimes, y: s.mean, xaxis: `x${ax}`, yaxis: `y${ax}`, mode: 'lines', line: { color: T.meanLine, width: 2 },
+                    showlegend: false, hovertemplate: `<b>%{x|%a %d %b %H:%M}</b><br>%{y:.1f} ${u}<extra>${label}</extra>` });
+      annotations.push({ text: `<b>${label}</b> (${u})`, xref: `x${ax} domain`, yref: `y${ax} domain`, x: 0, y: 1.18,
+                         xanchor: 'left', showarrow: false, font: { size: 12, color: T.font } });
+    });
+    const layout = {
+      grid: { rows, columns: cols, pattern: 'independent', ygap: 0.42, xgap: 0.12 },
+      height: rows * 150 + 30, margin: { l: 44, r: 12, t: 26, b: 28 },
+      paper_bgcolor: T.paper, plot_bgcolor: T.plot, font: { family: 'Inter, sans-serif', size: 11, color: T.font },
+      annotations, hovermode: 'x unified',
+    };
+    STATE_PANELS.forEach((_, i) => {
+      const ax = i === 0 ? '' : String(i + 1);
+      layout[`xaxis${ax}`] = { gridcolor: T.grid, linecolor: T.axis, tickformat: '%d %b', nticks: 6 };
+      layout[`yaxis${ax}`] = { gridcolor: T.grid, linecolor: T.axis, rangemode: 'tozero', nticks: 4 };
+    });
+    Plotly.newPlot(el, traces, layout, { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false });
+  }
+
+  function themeColors() {
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return {
+      paper: 'rgba(0,0,0,0)',
+      plot: 'rgba(0,0,0,0)',
+      font: dark ? '#dde7e2' : '#1a2925',
+      grid: dark ? 'rgba(255,255,255,0.07)' : 'rgba(15,40,30,0.08)',
+      axis: dark ? 'rgba(255,255,255,0.5)' : 'rgba(15,40,30,0.5)',
+      historicalLine: dark ? '#e7efeb' : '#0b1d18',
+      ensembleLine: PREVIEW
+        ? (dark ? 'rgba(190,140,240,0.30)' : 'rgba(138,57,208,0.22)')
+        : (dark ? 'rgba(120,180,220,0.45)' : 'rgba(70,130,180,0.45)'),
+      meanLine: '#8a39d0',
+      nowLine: '#e0524d',
+      rainHist: dark ? 'rgba(160,160,160,0.55)' : 'rgba(110,110,110,0.45)',
+      rainForecast: dark ? 'rgba(110,160,240,0.65)' : 'rgba(100,149,237,0.6)',
+      rainError: dark ? 'rgba(220,220,220,0.7)' : 'rgba(40,55,100,0.7)',
+      bandOuter: dark ? 'rgba(176,120,232,0.28)' : 'rgba(118,46,186,0.22)',
+      bandInner: dark ? 'rgba(176,120,232,0.40)' : 'rgba(118,46,186,0.34)',
+      rainBand: dark ? 'rgba(120,180,220,0.22)' : 'rgba(70,130,180,0.18)'
+    };
+  }
+
+  /** True on narrow screens: tighter Plotly margins + smaller typography. */
+  function isCompactChartLayout() {
+    return typeof window.matchMedia !== 'undefined' && window.matchMedia('(max-width: 720px)').matches;
+  }
+
+  /* ----------------------- RENDER ---------------------------- */
+
+  function renderCurrentCards(bundle) {
+    const order = bundle.location_order;
+    const html = order.map(key => {
+      const loc = bundle.locations[key];
+      const cur = loc.current;
+      const isWallingford = key === 'wallingford';
+      const bg = cur.flag_color;
+      const fg = readableTextColor(bg);
+      const flagHtml = isWallingford
+        ? `<span class="flag-badge no-flag">No flag</span>`
+        : `<span class="flag-badge" style="--flag-bg:${bg}; --flag-text:${fg};">${PREVIEW ? `Differential: ${cur.flag_label}` : `${cur.flag_label} flag`}</span>`;
+      const off = PREVIEW && loc.official_flag ? loc.official_flag : null;
+      const offHtml = off ? `<div class="official-mini">Official OURCs flag: <strong>${off.label}</strong></div>` : '';
+      const peakInfo = computePeak(loc);
+      const peak = fmtDiff(peakInfo.value);
+      const peakDate = peakInfo.time ? fmtShortDate(peakInfo.time) : '—';
+      return `
+        <button class="flag-card" data-location="${key}" aria-label="Switch to ${LOCATION_LABELS[key]} detail">
+          <div class="bg-flag" style="--flag-bg:${bg};"></div>
+          <div class="flag-card-header">
+            <div class="flag-card-title">${LOCATION_LABELS[key]}</div>
+            ${flagHtml}
+          </div>
+          <div class="flag-value">${fmtDiff(cur.differential)}<small>m differential</small></div>
+          ${offHtml}
+          <div class="flag-card-footer">
+            <span>${relativeTime(loc.latest_reading || cur.timestamp)}</span>
+            <span class="peak">Est. 10-day peak: ${peak} m · ${peakDate}</span>
+          </div>
+        </button>
+      `;
+    }).join('');
+    return `<div class="current-cards">${html}</div>`;
+  }
+
+  /** Same visual box as the main chart legend, without toggles — for flag probability swatches. */
+  function renderProbLegendHtml(key) {
+    const order = key === 'godstow'
+      ? ['green', 'amber', 'red']
+      : ['green', 'light_blue', 'dark_blue', 'amber', 'red'];
+    const rows = order.map(fk => `
+      <div class="legend-static-item">
+        <span class="swatch square" style="background:${FLAG_COLORS[fk]};opacity:0.85;"></span>
+        ${FLAG_LABELS[fk]}
+      </div>
+    `).join('');
+    return `<div class="chart-legend chart-legend-static" aria-label="Flag colours in probability chart">${rows}</div>`;
+  }
+
+  function renderTabs(bundle, activeKey) {
+    const tabs = bundle.location_order.map(k => {
+      const cls = k === activeKey ? 'tab active' : 'tab';
+      return `<button class="${cls}" data-location="${k}">${LOCATION_LABELS[k]}</button>`;
+    }).join('');
+    return `<div class="tabs" role="tablist">${tabs}</div>`;
+  }
+
+  function renderPanels(bundle) {
+    return bundle.location_order.map((key, i) => {
+      const loc = bundle.locations[key];
+      const isWallingford = key === 'wallingford';
+      const stale = loc.stale
+        ? `<span class="stale-warning">Stale forecast — sensor offline</span>`
+        : loc.estimated && loc.estimated.hours >= 4
+          ? `<span class="stale-warning">Gauges offline — estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}</span>`
+          : loc.gauge_stand_in
+            ? `<span class="stand-in-note">${loc.gauge_stand_in.gauge} gauge offline${loc.gauge_stand_in.since ? ` since ${fmtShortDateTime(loc.gauge_stand_in.since)}` : ''}; using the ${loc.gauge_stand_in.stand_in} gauge instead</span>`
+            : '';
+
+
+      const probPlotHtml = isWallingford ? '' : `
+        <div class="chart-block">
+          <h3 class="chart-title">${PREVIEW ? 'Chance the differential is in each band' : 'Forecast flag probability'}${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
+          ${renderProbLegendHtml(key)}
+          <div id="prob-${key}" class="plot prob"></div>
+        </div>`;
+
+      const peakInfo = computePeak(loc);
+
+      return `
+        <section class="pane ${i === 0 ? 'active' : ''}" id="pane-${key}" role="tabpanel">
+          <div class="panel">
+            <h2>
+              ${loc.display_name}
+              ${stale}
+            </h2>
+            ${renderFlagOutlookHtml(loc)}
+            ${(() => {
+              const s = summariseForecast(loc);
+              return s
+                ? `<div class="forecast-callout" role="status" aria-live="polite"><p class="summary-line">${s}</p></div>`
+                : '';
+            })()}
+            <p class="meta">Latest river reading <strong>${fmtShortDateTime(loc.latest_reading || loc.forecast_start)}</strong></p>
+
+            <div class="chart-block">
+              <div class="chart-legend" data-plot="plot-${key}">
+                <button type="button" class="item" data-target="Historical Differential"><span class="swatch line" style="background:#0b1d18;"></span>Historical Differential</button>
+                ${loc.estimated || (loc.gauge_stand_in && loc.gauge_stand_in.times && loc.gauge_stand_in.times.length) ? `<button type="button" class="item" data-target="${EST_LABEL}"><span class="swatch line" style="background:repeating-linear-gradient(90deg,#0b1d18 0 3px,transparent 3px 6px);"></span>${EST_LABEL}</button>` : ''}
+                <button type="button" class="item" data-target="Ensemble Predictions"><span class="swatch line-thin" style="background:${PREVIEW ? 'rgba(138,57,208,0.55)' : '#4682b4'};"></span>Ensemble Predictions (n=${loc.n_members})</button>
+                <button type="button" class="item" data-target="Ensemble Mean"><span class="swatch line" style="background:#8a39d0;"></span>Ensemble Mean</button>
+                ${loc.ensemble && loc.ensemble.total ? `<button type="button" class="item" data-target="Likely range"><span class="swatch square" style="background:rgba(118,46,186,0.45);"></span>Likely range (rain + model error)</button>` : ''}
+                <button type="button" class="item" data-target="Historical Rainfall"><span class="swatch square" style="background:#999;opacity:0.5;"></span>Historical Rainfall</button>
+                <button type="button" class="item" data-target="Forecast Rainfall"><span class="swatch square" style="background:#6495ed;opacity:0.6;"></span>Forecast Rainfall (mean &plusmn; P10&ndash;P90)</button>
+              </div>
+              <div id="plot-${key}" class="plot"></div>
+            </div>
+
+            ${probPlotHtml}
+
+            <div class="stats-grid stats-grid--below-charts">
+              <div class="stat">
+                <div class="label">Estimated 10-day peak</div>
+                <div class="value" style="font-size:16px;">${fmtDiff(peakInfo.value)}m <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;">on ${peakInfo.time ? fmtShortDate(peakInfo.time) : '—'}</small></div>
+              </div>
+              ${loc.summary.today_rain_mm != null ? `<div class="stat">
+                <div class="label">Rain so far today</div>
+                <div class="value">${fmtMm(loc.summary.today_rain_mm)}<small>mm</small></div>
+              </div>` : ''}
+              <div class="stat">
+                <div class="label">Rain last 7 d (incl. so far today)</div>
+                <div class="value">${fmtMm(loc.summary.last_7d_rain_mm)}<small>mm</small></div>
+              </div>
+              <div class="stat">
+                <div class="label">Rain next 7 d</div>
+                <div class="value">${fmtMm(loc.summary.next_7d_rain_mm ?? loc.summary.next_3d_rain_mm)}<small>mm</small>${loc.summary.next_7d_rain_p10_mm != null && loc.summary.next_7d_rain_p90_mm != null ? ` <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;" title="10th to 90th percentile of the rain forecasts">(${fmtMm(loc.summary.next_7d_rain_p10_mm)}–${fmtMm(loc.summary.next_7d_rain_p90_mm)})</small>` : ''}</div>
+              </div>
+            </div>
+
+            ${ON_PREVIEW_PAGE && loc.model_state ? renderModelStateHtml(key, loc) : ''}
+
+            ${renderHistoryBlockHtml(key)}
+          </div>
+        </section>
+      `;
+    }).join('');
+  }
+
+  /* ----------------------- PLOTLY ---------------------------- */
+
+  function buildMainTraces(loc, T) {
+    const traces = [];
+    // Measured differential: every 15-minute reading when the payload has them, else hourly.
+    const h15 = loc.historical_15min;
+    const dots = new Map();                     // estimated points (gauge offline), by UTC ms
+    let tHist = [], yHist = [];
+    if (h15 && h15.times && h15.times.length) {
+      const standInFrom = h15.stand_in_from ? parseUtc(h15.stand_in_from).getTime() : Infinity;
+      let lastSolid = null;
+      h15.times.forEach((iso, k) => {
+        const ms = parseUtc(iso).getTime(), v = h15.differential[k];
+        if (ms < standInFrom) { tHist.push(ukWall(iso)); yHist.push(v); lastSolid = [ms, v]; }
+        else { if (!dots.size && lastSolid) dots.set(lastSolid[0], lastSolid[1]); dots.set(ms, v); }
+      });
+      const lastMs = parseUtc(h15.times[h15.times.length - 1]).getTime();
+      const lastV = h15.differential[h15.differential.length - 1];
+      let after = false;
+      [loc.gauge_stand_in, loc.estimated].forEach((part) => {
+        if (part && part.times) part.times.forEach((iso, k) => {
+          const ms = parseUtc(iso).getTime(), v = part.values[k];
+          if (ms > lastMs && v !== null && v !== undefined) { dots.set(ms, v); after = true; }
+        });
+      });
+      if (after && !dots.has(lastMs)) dots.set(lastMs, lastV);
+    } else {
+      tHist = loc.historical.times.map(ukWall);
+      yHist = loc.historical.differential;
+      [loc.gauge_stand_in, loc.estimated].forEach((part) => {
+        if (part && part.times) part.times.forEach((iso, k) => {
+          if (part.values[k] !== null && part.values[k] !== undefined) dots.set(parseUtc(iso).getTime(), part.values[k]);
+        });
+      });
+    }
+    const firstDot = dots.size ? Math.min(...dots.keys()) : null;
+    loc.__tHistStart = [tHist[0], firstDot !== null ? ukWall(new Date(firstDot)) : undefined]
+      .filter(Boolean).sort()[0];
+    const tEns = fcTimes(loc, loc.ensemble.times);
+    const ensMean = loc.ensemble.mean;
+
+    // Historical rainfall bars (right axis).
+    if (loc.rainfall_historical.dates.length) {
+      traces.push({
+        type: 'bar',
+        x: loc.rainfall_historical.dates.map(ukNoon),
+        y: loc.rainfall_historical.values,
+        name: 'Historical Rainfall',
+        marker: { color: T.rainHist, line: { width: 0 } },
+        opacity: 0.85,
+        width: BAR_WIDTH_MS,
+        yaxis: 'y2',
+        hovertemplate: '<b>%{x|%a %-d %b}</b><br>%{y:.1f} mm<extra>Past rain</extra>'
+      });
+    }
+
+    // Forecast rainfall bars with error whiskers.
+    if (loc.rainfall_forecast.dates.length) {
+      const dates = loc.rainfall_forecast.dates.map(ukNoon);
+      const mean = loc.rainfall_forecast.mean;
+      const p10 = loc.rainfall_forecast.p10;
+      const p90 = loc.rainfall_forecast.p90;
+      const errLo = mean.map((m, i) => Math.max(0, m - p10[i]));
+      const errHi = mean.map((m, i) => Math.max(0, p90[i] - m));
+      traces.push({
+        type: 'bar',
+        x: dates,
+        y: mean,
+        name: 'Forecast Rainfall (mean ± P10–P90)',
+        marker: { color: T.rainForecast, line: { width: 0 } },
+        opacity: 0.85,
+        width: BAR_WIDTH_MS,
+        yaxis: 'y2',
+        error_y: {
+          type: 'data',
+          symmetric: false,
+          arrayminus: errLo,
+          array: errHi,
+          color: T.rainError,
+          thickness: 1.4,
+          width: 4
+        },
+        hovertemplate: '<b>%{x|%a %-d %b}</b><br>Mean %{y:.1f} mm<br>P10–P90 spread shown<extra>Forecast rain</extra>'
+      });
+    }
+
+    // Likely range: rain-forecast spread combined with the model's own past
+    // errors (10-90% outer, 25-75% inner). Drawn under the spaghetti.
+    const total = loc.ensemble.total;
+    if (total && total.p10 && total.p90) {
+      const band = (lo, hi, fill, label) => {
+        traces.push({
+          type: 'scatter', mode: 'lines', x: tEns, y: lo,
+          line: { width: 0 }, hoverinfo: 'skip', name: `Likely range ${label} lower`, showlegend: false
+        });
+        traces.push({
+          type: 'scatter', mode: 'lines', x: tEns, y: hi, fill: 'tonexty', fillcolor: fill,
+          line: { width: 0 }, name: `Likely range ${label}`, hoverinfo: 'skip'
+        });
+      };
+      band(total.p10, total.p90, T.bandOuter, '10–90%');
+      if (total.p25 && total.p75) band(total.p25, total.p75, T.bandInner, '25–75%');
+    }
+
+    // Ensemble spaghetti — flatten all members into one trace separated by
+    // `null` gaps. This is much faster than 50 individual traces.
+    const spaghettiX = [];
+    const spaghettiY = [];
+    loc.ensemble.members.forEach((member, i) => {
+      if (i > 0) { spaghettiX.push(null); spaghettiY.push(null); }
+      for (let j = 0; j < tEns.length; j++) {
+        spaghettiX.push(tEns[j]);
+        spaghettiY.push(member[j]);
+      }
+    });
+    traces.push({
+      type: 'scattergl',
+      mode: 'lines',
+      x: spaghettiX,
+      y: spaghettiY,
+      line: { color: T.ensembleLine, width: 1 },
+      opacity: 0.7,
+      name: `Ensemble Predictions (n=${loc.ensemble.members.length})`,
+      hoverinfo: 'skip',
+      connectgaps: false
+    });
+
+    // Ensemble mean.
+    traces.push({
+      type: 'scatter',
+      mode: 'lines',
+      x: tEns,
+      y: ensMean,
+      line: { color: T.meanLine, width: 3.5 },
+      name: 'Ensemble Mean',
+      hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>%{y:.2f} m<extra>Mean</extra>'
+    });
+
+    // Historical line (drawn last so it sits on top).
+    traces.push({
+      type: 'scatter',
+      mode: 'lines',
+      x: tHist,
+      y: yHist,
+      line: { color: T.historicalLine, width: 3 },
+      name: 'Historical Differential',
+      hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>%{y:.2f} m<extra>Observed</extra>'
+    });
+    // Any gauge offline (estimated from the neighbouring stretch, or a stand-in gauge): one dotted
+    // line, joined to the last measured point, however the hours were estimated.
+    if (dots.size) {
+      const ms = [...dots.keys()].sort((a, b) => a - b);
+      traces.push({
+        type: 'scatter',
+        mode: 'lines',
+        x: ms.map((m) => ukWall(new Date(m))),
+        y: ms.map((m) => dots.get(m)),
+        line: { color: T.historicalLine, width: 2, dash: 'dot' },
+        name: EST_LABEL,
+        hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>about %{y:.2f} m<extra>${EST_LABEL}</extra>`
+      });
+    }
+
+    return traces;
+  }
+
+  const EST_LABEL = 'Estimated differential (gauge offline)';
+
+  /** A rain bar's position: midday (UK clock) of its UK calendar day. */
+  function ukNoon(iso) { return `${iso.slice(0, 10)}T12:00:00`; }
+
+  function addHalfDay(iso) {
+    // Source ISO strings (no trailing Z) get parsed as LOCAL time by JS.
+    // Build a noon-UTC timestamp from the date's calendar components so
+    // every bar sits at the same UTC instant regardless of viewer timezone.
+    const parts = iso.slice(0, 10).split('-').map(Number);
+    return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0)).toISOString();
+  }
+
+  function buildFlagBandShapes(loc, key) {
+    if (key === 'wallingford') return [];
+    const t = loc.thresholds;
+    const yMin = -0.1;
+    const yMax = 4;
+    const order = key === 'godstow'
+      ? ['green', 'amber', 'red']
+      : ['green', 'light_blue', 'dark_blue', 'amber', 'red'];
+    const shapes = [];
+    order.forEach(k => {
+      const [lo, hi] = t[k];
+      shapes.push({
+        type: 'rect',
+        xref: 'paper', x0: 0, x1: 1,
+        yref: 'y',
+        y0: Math.max(lo, yMin),
+        y1: Math.min(isFinite(hi) ? hi : yMax, yMax),
+        fillcolor: FLAG_COLORS[k],
+        opacity: 0.08,
+        line: { width: 0 },
+        layer: 'below'
+      });
+    });
+    return shapes;
+  }
+
+  function buildMainLayout(loc, key, T) {
+    // Use actual wall-clock time for the "Now" marker (not the forecast
+    // start, which can lag the current minute by up to an hour).
+    const forecastStart = ukWall(new Date());
+    const shapes = buildFlagBandShapes(loc, key);
+    // Vertical "Now" line.
+    shapes.push({
+      type: 'line',
+      x0: forecastStart, x1: forecastStart,
+      yref: 'paper', y0: 0, y1: 1,
+      line: { color: T.nowLine, width: 2, dash: 'dash' }
+    });
+
+    // Determine y range from observations + ensemble (mean and members).
+    const reduceMax = (acc, v) => (v !== null && !Number.isNaN(v) && v > acc) ? v : acc;
+    let dataMax = loc.historical.differential.reduce(reduceMax, -Infinity);
+    dataMax = loc.ensemble.mean.reduce(reduceMax, dataMax);
+    dataMax = loc.ensemble.p90.reduce(reduceMax, dataMax);
+    if (loc.ensemble.total && loc.ensemble.total.p90) dataMax = loc.ensemble.total.p90.reduce(reduceMax, dataMax);
+    if (!isFinite(dataMax)) dataMax = 1;
+    const flagMax = key === 'godstow' ? 1.2 : (key === 'isis' ? 0.8 : 3.0);
+    const yMax = Math.max(dataMax + 0.15, flagMax);
+
+    // X range (UK clock) = the first measured point to the midnight after the last rain-forecast day.
+    const xStart = loc.__tHistStart || fcTimes(loc, loc.ensemble.times)[0];
+    const lastForecastDate = loc.rainfall_forecast.dates.length
+      ? loc.rainfall_forecast.dates[loc.rainfall_forecast.dates.length - 1]
+      : ukWall(loc.ensemble.times[loc.ensemble.times.length - 1]);
+    const xEndIso = `${addDays(lastForecastDate, 1)}T00:00:00`;
+
+    // Ticks at midday (UK clock) of each day, as the rain bars.
+    const compact = isCompactChartLayout();
+    const tickVals = [];
+    const tickTexts = [];
+    let day = xStart.slice(0, 10);
+    if (`${day}T12:00:00` < xStart) day = addDays(day, 1);
+    for (; `${day}T12:00:00` < xEndIso; day = addDays(day, 1)) {
+      const d = new Date(`${day}T12:00:00Z`);          // a calendar day: label it without a time zone
+      const dayDisplay = d.toLocaleDateString('en-GB', { day: 'numeric', timeZone: 'UTC' });
+      tickVals.push(`${day}T12:00:00`);
+      if (compact) {
+        tickTexts.push(dayDisplay);
+      } else {
+        const weekday = d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
+        const month = d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
+        tickTexts.push(`<b>${weekday} ${dayDisplay}</b><br>${month}`);
+      }
+    }
+
+    const xAxisShared = {
+      type: 'date',
+      range: [xStart, xEndIso],
+      tickmode: 'array',
+      tickvals: tickVals,
+      ticktext: tickTexts,
+      tickfont: { size: compact ? 10 : 12, color: T.font },
+      gridcolor: T.grid,
+      linecolor: T.axis,
+      ticks: 'outside',
+      ticklen: compact ? 3 : 4,
+      zeroline: false,
+      // Single-line weekday+day on mobile usually fits without rotation.
+      ...(compact ? { tickangle: 0 } : {})
+    };
+    // Stash on the loc payload so the prob plot can use the same settings.
+    loc.__xAxisShared = xAxisShared;
+    loc.__xStart = xStart;
+    loc.__xEnd = xEndIso;
+
+    return {
+      paper_bgcolor: T.paper,
+      plot_bgcolor: T.plot,
+      font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
+      margin: compact
+        ? { l: 42, r: 40, t: 16, b: 72 }
+        : { l: 60, r: 70, t: 28, b: 56 },
+      showlegend: false,
+      hovermode: 'x unified',
+      hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' }, bordercolor: 'rgba(255,255,255,0.2)' },
+      dragmode: false,
+      shapes,
+      barmode: 'overlay',
+      bargap: 0.0,
+      xaxis: {
+        ...xAxisShared,
+        showspikes: true,
+        spikemode: 'across',
+        spikecolor: T.axis,
+        spikethickness: 1,
+        fixedrange: true
+      },
+      yaxis: {
+        title: { text: 'Height differential (m)', font: { size: compact ? 11 : 13, color: T.font } },
+        range: [key === 'godstow' ? -0.05 : -0.1, yMax],
+        gridcolor: T.grid,
+        linecolor: T.axis,
+        zeroline: false,
+        tickfont: { color: T.font },
+        fixedrange: true
+      },
+      yaxis2: {
+        title: { text: 'Rainfall (mm/day)', font: { size: compact ? 10 : 13, color: T.rainForecast } },
+        overlaying: 'y',
+        side: 'right',
+        rangemode: 'tozero',
+        showgrid: false,
+        linecolor: T.axis,
+        tickfont: { color: T.rainForecast },
+        fixedrange: true
+      },
+      annotations: [
+        {
+          x: forecastStart, xref: 'x',
+          y: 1, yref: 'paper',
+          text: 'Now',
+          showarrow: false,
+          font: { color: T.nowLine, size: compact ? 9 : 11, weight: 700 },
+          bgcolor: 'rgba(255,255,255,0)',
+          xanchor: 'left', yanchor: 'top',
+          xshift: 4
+        }
+      ]
+    };
+  }
+
+  function buildProbTracesAndLayout(loc, key, T) {
+    if (key === 'wallingford') return null;
+    const order = key === 'godstow'
+      ? ['green', 'amber', 'red']
+      : ['green', 'light_blue', 'dark_blue', 'amber', 'red'];
+    const x = fcTimes(loc, loc.flag_probability.times);
+    const traces = order.map(k => ({
+      type: 'scatter',
+      mode: 'lines',
+      x,
+      y: loc.flag_probability.probabilities[k],
+      name: FLAG_LABELS[k],
+      stackgroup: 'one',
+      fillcolor: FLAG_COLORS[k],
+      line: { color: FLAG_COLORS[k], width: 0.5 },
+      opacity: 0.85,
+      hovertemplate: '<b>%{x|%a %d %b %H:%M}</b><br>' + FLAG_LABELS[k] + ': %{y:.0%}<extra></extra>'
+    }));
+    // Reuse the EXACT x-axis range and tick alignment from the main chart
+    // (set on loc.__xAxisShared by buildMainLayout). Same margins too, so
+    // the daily columns line up perfectly beneath the chart above.
+    const sharedX = loc.__xAxisShared || {};
+    const compact = isCompactChartLayout();
+    const layout = {
+      paper_bgcolor: T.paper,
+      plot_bgcolor: T.plot,
+      font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
+      showlegend: false,
+      margin: compact
+        ? { l: 42, r: 40, t: 16, b: 72 }
+        : { l: 60, r: 70, t: 16, b: 56 },
+      hovermode: 'x unified',
+      hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' } },
+      dragmode: false,
+      shapes: [{
+        type: 'line',
+        x0: ukWall(new Date()), x1: ukWall(new Date()),
+        yref: 'paper', y0: 0, y1: 1,
+        line: { color: T.nowLine, width: 2, dash: 'dash' }
+      }],
+      xaxis: {
+        ...sharedX,
+        showspikes: false,
+        fixedrange: true
+      },
+      yaxis: {
+        title: { text: PREVIEW ? 'Chance' : 'Flag probability', font: { size: compact ? 11 : 13, color: T.font } },
+        range: [0, 1],
+        tickformat: '.0%',
+        gridcolor: T.grid,
+        linecolor: T.axis,
+        zeroline: false,
+        tickfont: { color: T.font },
+        fixedrange: true
+      }
+    };
+    return { traces, layout };
+  }
+
+  function plotLocation(key, loc) {
+    if (typeof Plotly === 'undefined') {
+      console.error('Plotly not loaded yet');
+      const el = document.getElementById(`plot-${key}`);
+      if (el) el.innerHTML = '<div class="error">Plotly failed to load. Check your network / ad-blocker.</div>';
+      return;
+    }
+    const T = themeColors();
+    try {
+      const mainTraces = buildMainTraces(loc, T);
+      const mainLayout = buildMainLayout(loc, key, T);
+      Plotly.newPlot(`plot-${key}`, mainTraces, mainLayout, {
+        displayModeBar: false,
+        displaylogo: false,
+        responsive: true,
+        scrollZoom: false,
+        doubleClick: false
+      });
+    } catch (err) {
+      console.error(`main plot failed for ${key}`, err);
+      const el = document.getElementById(`plot-${key}`);
+      if (el) el.innerHTML = `<div class="error">Chart failed: ${err.message}</div>`;
+    }
+
+    if (key !== 'wallingford') {
+      try {
+        const prob = buildProbTracesAndLayout(loc, key, T);
+        Plotly.newPlot(`prob-${key}`, prob.traces, prob.layout, {
+          displayModeBar: false,
+          responsive: true,
+          scrollZoom: false,
+          doubleClick: false
+        });
+      } catch (err) {
+        console.error(`prob plot failed for ${key}`, err);
+        const el = document.getElementById(`prob-${key}`);
+        if (el) el.innerHTML = `<div class="error">Probability chart failed: ${err.message}</div>`;
+      }
+    }
+  }
+
+  /* ----------------------- FORECAST HISTORY ---------------------------- */
+  /*
+   * Data written by CI (src/flag_predictor/prediction/archive.py):
+   *   archive/index.json        list of archived forecasts (one per 6-hour slot)
+   *   archive/issues/<slot>.json   each forecast's mean and bands per location
+   *   archive/observed.json     hourly observed differential since archiving began
+   *   archive/now.json          what each recent forecast said about the latest reading
+   */
+  const HISTORY = { loading: null, index: null, observed: null, estimated: null, now: null, issues: new Map(), view: {}, pos: {} };
+  const HOUR_MS = 3600 * 1000;
+
+  function renderHistoryBlockHtml(key) {
+    return `
+      <div class="history-block" id="history-${key}" data-location="${key}">
+        <div class="history-head">
+          <h3 class="chart-title">How have earlier forecasts done?</h3>
+          <div class="seg" role="group" aria-label="History view">
+            <button type="button" class="seg-btn active" data-view="past" aria-pressed="true">Past forecast</button>
+            <button type="button" class="seg-btn" data-view="now" aria-pressed="false">Forecasts of now</button>
+          </div>
+        </div>
+        <div class="history-past">
+          <div class="history-controls">
+            <button type="button" class="history-step" data-step="-1" aria-label="Earlier forecast">&#8249;</button>
+            <input type="range" class="history-range" min="0" max="0" step="1" value="0" aria-label="Choose an earlier forecast">
+            <button type="button" class="history-step" data-step="1" aria-label="Later forecast">&#8250;</button>
+          </div>
+        </div>
+        <div class="history-label" aria-live="polite"></div>
+        <div class="history-score"></div>
+        <div id="hist-plot-${key}" class="plot hist"><div class="history-empty">Loading forecast history…</div></div>
+        <p class="history-note"></p>
+      </div>`;
+  }
+
+  function isoNaive(ms) { return ukWall(new Date(ms)); }   // a chart x value (UK clock time)
+
+  function loadHistory() {
+    if (HISTORY.loading) return HISTORY.loading;
+    const get = (p) => fetch(p, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+    HISTORY.loading = Promise.all([get(ARCHIVE_BASE + 'index.json'), get(ARCHIVE_BASE + 'observed.json'), get(ARCHIVE_BASE + 'now.json'),
+      get(ARCHIVE_BASE + 'estimated.json')])
+      .then(([index, observed, now, estimated]) => { HISTORY.index = index; HISTORY.observed = observed; HISTORY.now = now; HISTORY.estimated = estimated; });
+    return HISTORY.loading;
+  }
+
+  function fetchIssue(slot) {
+    if (!HISTORY.issues.has(slot)) {
+      HISTORY.issues.set(slot, fetch(`${ARCHIVE_BASE}issues/${slot}.json`).then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      }));
+    }
+    return HISTORY.issues.get(slot);
+  }
+
+  /** Observed series for a location as {t: [ms], y: [m]}: archive plus the latest payload. */
+  // What the river did: real readings (the archive's hourly record, then this run's 15-minute readings) and,
+  // where a gauge was offline, the estimated differential (est = true; drawn dotted). Sorted by time.
+  function observedFor(key, loc) {
+    const pts = new Map();                      // ms -> [value, estimated]
+    const decode = (enc, est) => {
+      if (!enc || !enc.values) return;
+      const start = parseUtc(enc.start).getTime(), step = (enc.step_h || 1) * HOUR_MS;
+      enc.values.forEach((v, i) => { if (v !== null && (!est || !pts.has(start + i * step))) pts.set(start + i * step, [v, est]); });
+    };
+    decode(HISTORY.observed && HISTORY.observed[key], false);
+    const h15 = loc && loc.historical_15min;
+    if (h15 && h15.times && h15.times.length) {
+      const standInFrom = h15.stand_in_from ? parseUtc(h15.stand_in_from).getTime() : Infinity;
+      h15.times.forEach((iso, i) => {
+        const ms = parseUtc(iso).getTime(), v = h15.differential[i];
+        if (v !== null && v !== undefined) pts.set(ms, [v, ms >= standInFrom]);
+      });
+    } else if (loc && loc.historical) {
+      loc.historical.times.forEach((iso, i) => {
+        const v = loc.historical.differential[i];
+        if (v !== null) pts.set(parseUtc(iso).getTime(), [v, false]);
+      });
+    }
+    // estimates only where there is no real reading in that hour
+    const realHours = new Set([...pts].filter(([, p]) => !p[1]).map(([ms]) => Math.floor(ms / HOUR_MS)));
+    const addEst = (ms, v) => { if (v !== null && v !== undefined && !realHours.has(Math.floor(ms / HOUR_MS)) && !pts.has(ms)) pts.set(ms, [v, true]); };
+    const est = HISTORY.estimated && HISTORY.estimated[key];
+    if (est && est.values) {
+      const start = parseUtc(est.start).getTime(), step = (est.step_h || 1) * HOUR_MS;
+      est.values.forEach((v, i) => addEst(start + i * step, v));
+    }
+    [loc && loc.gauge_stand_in, loc && loc.estimated].forEach((part) => {
+      if (part && part.times) part.times.forEach((iso, k) => addEst(parseUtc(iso).getTime(), part.values[k]));
+    });
+    const t = [...pts.keys()].sort((x, y) => x - y);
+    return { t, y: t.map(ms => pts.get(ms)[0]), est: t.map(ms => pts.get(ms)[1]) };
+  }
+
+  function flagOf(value, thresholds, key) {
+    if (key === 'wallingford' || value === null || value === undefined) return null;
+    for (const k of Object.keys(thresholds)) {
+      const [lo, hi] = thresholds[k];
+      if (value >= lo && value < hi) return k;
+    }
+    return null;
+  }
+
+  function historyIssues(key) {
+    const list = (HISTORY.index && HISTORY.index.issues) || [];
+    return list.filter(e => e.t0 && e.t0[key]);
+  }
+
+  function setupHistory(key, loc) {
+    const block = document.getElementById(`history-${key}`);
+    if (!block) return;
+    const issues = historyIssues(key);
+    if (!issues.length) {
+      showEmpty(`hist-plot-${key}`, 'No archived forecasts yet — they are saved every 6 hours, so check back soon.');
+      block.querySelector('.history-past').hidden = true;
+      return;
+    }
+    const range = block.querySelector('.history-range');
+    range.max = String(issues.length - 1);
+    // Default: the forecast issued about three days before the latest reading.
+    if (HISTORY.pos[key] === undefined) {
+      const obs = observedFor(key, loc);
+      const target = (obs.t.length ? obs.t[obs.t.length - 1] : Date.now()) - 72 * HOUR_MS;
+      let best = issues.length - 1, bestD = Infinity;
+      issues.forEach((e, i) => {
+        const d = Math.abs(parseUtc(e.t0[key]).getTime() - target);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      HISTORY.pos[key] = best;
+    }
+    range.value = String(HISTORY.pos[key]);
+    if (!HISTORY.view[key]) HISTORY.view[key] = 'past';
+
+    if (!block.__wired) {
+      block.__wired = true;
+      range.addEventListener('input', () => { HISTORY.pos[key] = Number(range.value); drawHistory(key); });
+      block.querySelectorAll('.history-step').forEach(btn => btn.addEventListener('click', () => {
+        const n = historyIssues(key).length;
+        HISTORY.pos[key] = Math.min(n - 1, Math.max(0, HISTORY.pos[key] + Number(btn.dataset.step)));
+        range.value = String(HISTORY.pos[key]);
+        drawHistory(key);
+      }));
+      block.querySelectorAll('.seg-btn').forEach(btn => btn.addEventListener('click', () => {
+        HISTORY.view[key] = btn.dataset.view;
+        block.querySelectorAll('.seg-btn').forEach(b => {
+          const on = b === btn;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        drawHistory(key);
+      }));
+    }
+    drawHistory(key);
+  }
+
+  function showEmpty(plotId, message) {
+    const el = document.getElementById(plotId);
+    if (!el) return;
+    if (el.data && typeof Plotly !== 'undefined') Plotly.purge(el);
+    el.innerHTML = `<div class="history-empty">${message}</div>`;
+  }
+
+  function clearPlaceholder(plotId) {
+    const el = document.getElementById(plotId);
+    if (el && !el.data) el.innerHTML = '';
+  }
+
+  function drawHistory(key) {
+    const block = document.getElementById(`history-${key}`);
+    const bundle = window.__forecastBundle;
+    if (!block || !bundle || !HISTORY.index) return;
+    const loc = bundle.locations[key];
+    const view = HISTORY.view[key] || 'past';
+    block.querySelector('.history-past').hidden = view !== 'past';
+    const issues = historyIssues(key);
+    block.querySelectorAll('.history-step').forEach(btn => {
+      const next = HISTORY.pos[key] + Number(btn.dataset.step);
+      btn.disabled = next < 0 || next > issues.length - 1;
+    });
+    if (view === 'now') { drawNowView(key, loc, block); return; }
+    const entry = issues[HISTORY.pos[key]];
+    if (!entry) return;
+    fetchIssue(entry.slot)
+      .then(issue => drawPastView(key, loc, block, issue))
+      .catch(err => {
+        showEmpty(`hist-plot-${key}`, `Couldn't load that forecast (${err.message}).`);
+      });
+  }
+
+  function historyLayout(loc, key, T, xRange, yValues, extraShapes, yTitle) {
+    const compact = isCompactChartLayout();
+    const reduceMax = (acc, v) => (v !== null && v !== undefined && !Number.isNaN(v) && v > acc) ? v : acc;
+    const dataMax = yValues.reduce(reduceMax, -Infinity);
+    const flagMax = key === 'godstow' ? 1.2 : (key === 'isis' ? 0.8 : 3.0);
+    const yMax = Math.max(isFinite(dataMax) ? dataMax + 0.1 : 0.5, Math.min(flagMax, (isFinite(dataMax) ? dataMax : 0) + 0.4));
+    return {
+      height: compact ? 300 : 360,          // = the .plot.hist box (CSS)
+      paper_bgcolor: T.paper,
+      plot_bgcolor: T.plot,
+      font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
+      margin: compact ? { l: 42, r: 14, t: 12, b: 48 } : { l: 60, r: 24, t: 16, b: 48 },
+      showlegend: false,
+      hovermode: 'closest',
+      hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' } },
+      dragmode: false,
+      shapes: buildFlagBandShapes(loc, key).concat(extraShapes || []),
+      xaxis: {
+        type: 'date', range: xRange, gridcolor: T.grid, linecolor: T.axis,
+        tickfont: { color: T.font, size: compact ? 10 : 12 }, tickformat: '%-d %b', fixedrange: true
+      },
+      yaxis: {
+        title: { text: yTitle, font: { size: compact ? 11 : 13, color: T.font } },
+        range: [key === 'godstow' ? -0.05 : -0.1, yMax],
+        gridcolor: T.grid, linecolor: T.axis, zeroline: false, tickfont: { color: T.font }, fixedrange: true
+      }
+    };
+  }
+
+  function drawPastView(key, loc, block, issue) {
+    const v = issue.locations[key];
+    const plotId = `hist-plot-${key}`;
+    if (!v) return;
+    const T = themeColors();
+    const t0 = parseUtc(v.t0).getTime();
+    const times = v.mean.map((_, i) => isoNaive(t0 + i * HOUR_MS));
+    const hasTotal = !!(v.total_p10 && v.total_p90);
+    const lo = hasTotal ? v.total_p10 : v.p10;
+    const hi = hasTotal ? v.total_p90 : v.p90;
+    const obs = observedFor(key, loc);
+    const obsX = [], obsY = [], estX = [], estY = [];
+    const obsAt = new Map(), estAt = new Set();
+    const idx = obs.t.map((ms, i) => i).filter(i => obs.t[i] >= t0 - 48 * HOUR_MS);
+    idx.forEach((i, j) => {
+      const x = isoNaive(obs.t[i]), y = obs.y[i], e = obs.est[i];
+      obsX.push(x); obsY.push(e ? null : y);
+      // the dotted line also takes the real readings either side of it, so the two lines join
+      const touches = e || (j > 0 && obs.est[idx[j - 1]]) || (j < idx.length - 1 && obs.est[idx[j + 1]]);
+      estX.push(x); estY.push(touches ? y : null);
+    });
+    obs.t.forEach((ms, i) => {
+      if (ms >= t0 && (ms - t0) % HOUR_MS === 0) {
+        const h = (ms - t0) / HOUR_MS;
+        obsAt.set(h, obs.y[i]);
+        if (obs.est[i]) estAt.add(h);
+      }
+    });
+
+    const traces = [
+      { type: 'scatter', mode: 'lines', x: times, y: lo, line: { width: 0 }, hoverinfo: 'skip', name: 'lo' },
+      { type: 'scatter', mode: 'lines', x: times, y: hi, fill: 'tonexty', line: { width: 0 },
+        fillcolor: (hasTotal || PREVIEW) ? T.bandOuter : T.rainBand, hoverinfo: 'skip', name: 'hi' },
+      { type: 'scatter', mode: 'lines', x: times, y: v.mean, line: { color: T.meanLine, width: 3 },
+        name: 'Forecast', hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>Forecast %{y:.2f} m<extra></extra>' },
+      { type: 'scatter', mode: 'lines', x: obsX, y: obsY, line: { color: T.historicalLine, width: 2.5 },
+        name: 'Observed', hovertemplate: '<b>%{x|%H:%M %a %d %b}</b><br>Observed %{y:.2f} m<extra></extra>' },
+      { type: 'scatter', mode: 'lines', x: estX, y: estY, line: { color: T.historicalLine, width: 2.5, dash: 'dot' },
+        name: EST_LABEL, hovertemplate: `<b>%{x|%H:%M %a %d %b}</b><br>about %{y:.2f} m<extra>${EST_LABEL}</extra>` }
+    ];
+    const issuedIso = isoNaive(t0);
+    const nowIso = isoNaive(Date.now());
+    const shapes = [
+      { type: 'line', x0: issuedIso, x1: issuedIso, yref: 'paper', y0: 0, y1: 1, line: { color: T.axis, width: 1.5, dash: 'dot' } },
+      { type: 'line', x0: nowIso, x1: nowIso, yref: 'paper', y0: 0, y1: 1, line: { color: T.nowLine, width: 2, dash: 'dash' } }
+    ];
+    const layout = historyLayout(loc, key, T, [isoNaive(t0 - 48 * HOUR_MS), isoNaive(t0 + 240 * HOUR_MS)],
+      [...obsY, ...estY, ...v.mean, ...hi].filter(x => x !== null), shapes, 'Height differential (m)');
+    layout.margin.b = 32;                       // no x-axis title in this view
+    layout.annotations = [
+      { x: issuedIso, xref: 'x', y: 1, yref: 'paper', text: 'Issued', showarrow: false, xanchor: 'left', yanchor: 'top', xshift: 4,
+        font: { size: 11, color: T.font } },
+      { x: nowIso, xref: 'x', y: 1, yref: 'paper', text: 'Now', showarrow: false, xanchor: 'left', yanchor: 'top', xshift: 4,
+        font: { size: 11, color: T.nowLine } }
+    ];
+    clearPlaceholder(plotId);
+    Plotly.react(plotId, traces, layout, { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false });
+
+    // Scores over the hours observed so far.
+    let n = 0, absErr = 0, inBand = 0, flagN = 0, flagRight = 0;
+    for (let h = 1; h < v.mean.length; h++) {
+      const o = obsAt.get(h);
+      if (o === undefined || v.mean[h] === null) continue;
+      n++;
+      absErr += Math.abs(v.mean[h] - o);
+      if (lo[h] !== null && hi[h] !== null && o >= lo[h] && o <= hi[h]) inBand++;
+      const fo = flagOf(o, loc.thresholds, key);
+      const ff = flagOf(v.mean[h], loc.thresholds, key);
+      if (fo !== null && ff !== null) { flagN++; if (fo === ff) flagRight++; }
+    }
+    const ago = relativeTime(v.t0);
+    block.querySelector('.history-label').innerHTML =
+      `Forecast from <strong>${fmtShortDateTime(v.t0)}</strong> · ${ago}`;
+    const bandName = hasTotal ? 'likely range' : 'rain spread';
+    const nEst = [...estAt].filter(h => h >= 1 && h < v.mean.length).length;
+    block.querySelector('.history-score').innerHTML = n
+      ? `<span><strong>${n}</strong> h observed since${nEst ? ` (${nEst} estimated, gauge offline)` : ''}</span>` +
+        `<span>typical error <strong>${(absErr / n).toFixed(2)} m</strong></span>` +
+        (flagN ? `<span>right ${BAND_WORD} <strong>${Math.round(100 * flagRight / flagN)}%</strong> of hours</span>` : '') +
+        (hasTotal ? `<span>within the likely range <strong>${Math.round(100 * inBand / n)}%</strong> of hours</span>` : '')
+      : '<span>No readings since this forecast yet.</span>';
+    block.querySelector('.history-note').innerHTML = PREVIEW
+      ? 'Shaded: its likely range. Black: actual differential (dotted: estimated, gauge offline).'
+      : hasTotal
+      ? 'Purple line: what the forecast said (ensemble mean). Shaded: its likely range, combining the rain-forecast spread with the model\'s own past errors. Black: actual differential (dotted: estimated, gauge offline).'
+      : 'Purple line: what the forecast said (ensemble mean). Blue shading: the spread from the rain forecast alone (this forecast was archived before the model-error range was added). Black: actual differential.';
+  }
+
+  function drawNowView(key, loc, block) {
+    const plotId = `hist-plot-${key}`;
+    const data = HISTORY.now && HISTORY.now.locations && HISTORY.now.locations[key];
+    if (!data || !data.forecasts || !data.forecasts.length) {
+      showEmpty(plotId, 'Not enough archived forecasts yet.');
+      block.querySelector('.history-label').innerHTML = '';
+      block.querySelector('.history-score').innerHTML = '';
+      return;
+    }
+    const T = themeColors();
+    const rows = data.forecasts.slice().sort((a, b) => parseUtc(a.t0) - parseUtc(b.t0));
+    const target = parseUtc(data.target).getTime();
+    const x = rows.map(r => isoNaive(parseUtc(r.t0).getTime()));
+    const y = rows.map(r => r.mean);
+    const useTotal = rows.some(r => r.total_p10 !== undefined);
+    const lo = rows.map(r => (r.total_p10 !== undefined ? r.total_p10 : r.p10));
+    const hi = rows.map(r => (r.total_p90 !== undefined ? r.total_p90 : r.p90));
+    const custom = rows.map((r, i) => [(r.lead_h / 24).toFixed(1), lo[i], hi[i]]);
+    const traces = [{
+      type: 'scatter', mode: 'markers', x, y,
+      marker: { color: T.meanLine, size: 8, line: { color: T.paper === 'rgba(0,0,0,0)' ? '#fff' : T.paper, width: 1 } },
+      error_y: { type: 'data', symmetric: false, array: y.map((m, i) => Math.max(0, hi[i] - m)),
+                 arrayminus: y.map((m, i) => Math.max(0, m - lo[i])), color: T.meanLine, thickness: 1.2, width: 0 },
+      customdata: custom,
+      hovertemplate: 'Issued <b>%{x|%H:%M %a %d %b}</b> (%{customdata[0]} days ahead)<br>' +
+        'Forecast %{y:.2f} m (%{customdata[1]:.2f} to %{customdata[2]:.2f})<extra></extra>'
+    }];
+    const targetIso = isoNaive(target);
+    const xStart = isoNaive(target - 10.5 * 24 * HOUR_MS);
+    const shapes = [
+      { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: data.observed, y1: data.observed,
+        line: { color: T.historicalLine, width: 2, dash: data.estimated ? 'dot' : 'dash' } },
+      { type: 'line', x0: targetIso, x1: targetIso, yref: 'paper', y0: 0, y1: 1, line: { color: T.nowLine, width: 2, dash: 'dash' } }
+    ];
+    const layout = historyLayout(loc, key, T, [xStart, isoNaive(target + 12 * HOUR_MS)], [...hi, data.observed], shapes,
+      'Forecast for the latest reading (m)');
+    layout.xaxis.title = { text: 'When the forecast was issued', font: { size: 12, color: T.font } };
+    layout.annotations = [{
+      xref: 'paper', x: 0.01, y: data.observed, yref: 'y', yanchor: 'bottom', xanchor: 'left', showarrow: false,
+      text: data.estimated ? `Estimated ${fmtDiff(data.observed)} m (gauge offline)` : `Observed ${fmtDiff(data.observed)} m`, font: { size: 11, color: T.font },
+      bgcolor: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(22,34,31,0.85)' : 'rgba(255,255,255,0.85)'
+    }];
+    clearPlaceholder(plotId);
+    Plotly.react(plotId, traces, layout, { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false });
+
+    const errs = (fromH, toH) => {
+      const e = rows.filter(r => r.lead_h >= fromH && r.lead_h < toH).map(r => Math.abs(r.mean - data.observed));
+      return e.length ? (e.reduce((a, b) => a + b, 0) / e.length).toFixed(2) : null;
+    };
+    const flagNow = flagOf(data.observed, loc.thresholds, key);
+    const flagHits = rows.filter(r => flagOf(r.mean, loc.thresholds, key) === flagNow).length;
+    block.querySelector('.history-label').innerHTML =
+      `What each forecast from the last 10 days said the differential would be at the latest ${data.estimated ? 'estimate (gauge offline)' : 'reading'}, <strong>${fmtShortDateTime(data.estimated ? data.target : readingAt(loc, data.target))}</strong>`;
+    const e1 = errs(0, 48), e2 = errs(48, 120), e3 = errs(120, 260);
+    block.querySelector('.history-score').innerHTML =
+      (e1 !== null ? `<span>issued 0–2 days before: off by <strong>${e1} m</strong></span>` : '') +
+      (e2 !== null ? `<span>2–5 days before: <strong>${e2} m</strong></span>` : '') +
+      (e3 !== null ? `<span>5–10 days before: <strong>${e3} m</strong></span>` : '') +
+      (flagNow !== null ? `<span>right ${BAND_WORD} in <strong>${flagHits} of ${rows.length}</strong></span>` : '') +
+      (() => {
+        const withRange = rows.filter(r => r.total_p10 !== undefined && r.total_p90 !== undefined);
+        const inside = withRange.filter(r => data.observed >= r.total_p10 && data.observed <= r.total_p90).length;
+        return withRange.length ? `<span>within the likely range in <strong>${inside} of ${withRange.length}</strong></span>` : '';
+      })();
+    block.querySelector('.history-note').innerHTML = PREVIEW
+      ? 'Dots: what each forecast said. Bars: its likely range. Dashed: what the river read.'
+      : `Each dot is one archived forecast (saved every 6 hours); the bar is its ${useTotal ? 'likely range' : 'rain-forecast spread'}` +
+      (useTotal && rows.some(r => r.total_p10 === undefined) ? ' (rain spread only for forecasts saved before the likely range was added)' : '') + '. ' +
+      'The dashed line is what the river actually read. Forecasts closer to the right were issued nearer the time.';
+  }
+
+  function initHistory(bundle) {
+    loadHistory().then(() => {
+      bundle.location_order.forEach(k => {
+        try { setupHistory(k, bundle.locations[k]); } catch (err) { console.error('history failed', k, err); }
+      });
+    });
+  }
+
+  /* ----------------------- FLAG ALERTS (preview) ---------------------------- */
+
+  /** Turn the "Flag alerts" card on: subscribe this device for Web Push via the alerts Worker. */
+  async function setupAlerts() {
+    const card = document.getElementById('alerts-card');
+    if (!card) return;
+    const status = document.getElementById('alerts-status');
+    const help = document.getElementById('alerts-help');
+    const controls = document.getElementById('alerts-controls');
+    const onBtn = document.getElementById('alerts-on');
+    const offBtn = document.getElementById('alerts-off');
+    const boxes = [...card.querySelectorAll('.alerts-river input')];
+    const rivers = () => boxes.filter((b) => b.checked).map((b) => b.value);
+    const STORE = 'flag-alert-rivers';
+    const save = (v) => { try { v ? localStorage.setItem(STORE, JSON.stringify(v)) : localStorage.removeItem(STORE); } catch (e) {} };
+    const saved = () => { try { return JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) { return null; } };
+    const names = { isis: 'Isis', godstow: 'Godstow' };
+    const setStatus = (t) => { status.textContent = t || ''; };
+    const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      controls.hidden = true;
+      help.innerHTML = ios && !standalone
+        ? 'On iPhone, alerts work from the home-screen app: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>, open Flag Predictor from your home screen, and turn alerts on there.'
+        : 'This browser cannot receive alerts. Try Chrome or Safari on your phone, added to the home screen.';
+      return;
+    }
+    let cfg = null;
+    try { const r = await fetch('push_config.json', { cache: 'no-store' }); if (r.ok) cfg = await r.json(); } catch (e) {}
+    if (!cfg || !cfg.worker || !cfg.vapid_public) {
+      controls.hidden = true;
+      setStatus('Coming soon');
+      return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const keyBytes = (b64) => {
+      const s = atob(b64.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - b64.length % 4) % 4));
+      return Uint8Array.from(s, (c) => c.charCodeAt(0));
+    };
+    const post = (path, body) => fetch(cfg.worker + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const show = (sub) => {
+      const on = !!sub && Notification.permission === 'granted';
+      const rv = on ? (saved() || ['isis', 'godstow']) : null;
+      if (rv) boxes.forEach((b) => { b.checked = rv.includes(b.value); });
+      setStatus(on ? `On for ${rv.map((r) => names[r]).join(' and ')}` : '');
+      onBtn.textContent = on ? 'Update' : 'Turn on alerts';
+      offBtn.hidden = !on;
+    };
+    show(await reg.pushManager.getSubscription());
+
+    onBtn.addEventListener('click', async () => {
+      const rv = rivers();
+      if (!rv.length) { setStatus('Tick at least one stretch'); return; }
+      onBtn.disabled = true;
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') { setStatus('Notifications are blocked in your settings'); return; }
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(cfg.vapid_public) });
+        const r = await post('/subscribe', { subscription: sub.toJSON(), rivers: rv });
+        if (!r.ok) throw new Error('signup ' + r.status);
+        save(rv);
+        show(sub);
+      } catch (e) {
+        console.warn('alerts', e);
+        setStatus('Could not turn alerts on; try again');
+      } finally { onBtn.disabled = false; }
+    });
+    offBtn.addEventListener('click', async () => {
+      offBtn.disabled = true;
+      try {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) { await post('/unsubscribe', { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); }
+        save(null);
+        show(null);
+        setStatus('Off');
+      } finally { offBtn.disabled = false; }
+    });
+  }
+
+  /* ----------------------- WIRE-UP ---------------------------- */
+
+  function setActiveTab(key) {
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.location === key);
+    });
+    document.querySelectorAll('.pane').forEach(p => {
+      p.classList.toggle('active', p.id === `pane-${key}`);
+    });
+    // Trigger a Plotly resize since the plot was hidden on first render.
+    requestAnimationFrame(() => {
+      const plot = document.getElementById(`plot-${key}`);
+      if (plot && plot.data) Plotly.Plots.resize(plot);
+      const prob = document.getElementById(`prob-${key}`);
+      if (prob && prob.data) Plotly.Plots.resize(prob);
+      const hist = document.getElementById(`hist-plot-${key}`);
+      if (hist && hist.data) Plotly.Plots.resize(hist);
+      const st = document.getElementById(`state-plot-${key}`);
+      if (st && st.data) Plotly.Plots.resize(st);
+    });
+  }
+
+  function renderAll(bundle) {
+    const root = document.getElementById('content');
+    const activeTab = document.querySelector('.tab.active');
+    const keep = activeTab && bundle.location_order.includes(activeTab.dataset.location) ? activeTab.dataset.location : null;
+    const firstKey = bundle.location_order[0];
+    root.innerHTML = `
+      ${renderTabs(bundle, firstKey)}
+      ${renderPanels(bundle)}
+    `;
+
+    // Status pill uses bundle.generated_at = when CI finished writing forecast_data.json
+    // (not per-location EA gauge freshness — see stale / last_sensor_update on each pane).
+    const pill = document.getElementById('status-pill');
+    const text = document.getElementById('status-text');
+    const anyStale = Object.values(bundle.locations).some(l => l.stale);
+    if (anyStale) pill.classList.add('stale');
+    else pill.classList.remove('stale');
+    const base = `Updated ${relativeTime(bundle.generated_at)}`;
+    text.textContent = anyStale ? `${base} · some sensors offline` : base;
+
+    // Plot every location.
+    bundle.location_order.forEach(k => plotLocation(k, bundle.locations[k]));
+    if (ON_PREVIEW_PAGE) bundle.location_order.forEach(k => plotModelState(k, bundle.locations[k]));
+    window.__forecastBundle = bundle;
+    updateFooterTimes(bundle);
+    const TRIAL_MODELS = ['hybrid_sr', 'hybrid_su', 'hybrid_srh'];
+    const trialWhere = bundle.location_order.filter((k) => TRIAL_MODELS.includes((bundle.locations[k] || {}).model))
+      .map((k) => STRETCH_NAMES[k] || k);
+    const sharedOn = bundle.location_order.some((k) => (bundle.locations[k] || {}).model === 'hybrid_shared');
+    const sharedNote = document.getElementById('shared-model-note');
+    if (sharedNote) sharedNote.hidden = !(ON_PREVIEW_PAGE && sharedOn);
+    const trialNote = document.getElementById('trial-model-note');
+    if (trialNote) {
+      trialNote.hidden = !(ON_PREVIEW_PAGE && trialWhere.length);
+      const w = document.getElementById('trial-model-where');
+      if (w) w.textContent = trialWhere.join(' and ');
+    }
+    initHistory(bundle);
+    if (keep && keep !== firstKey) setActiveTab(keep);
+
+    // Wire legend-toggle interactivity (matches Plotly's "click to hide" behaviour).
+    document.querySelectorAll('.chart-legend[data-plot]').forEach(legend => {
+      const plotId = legend.dataset.plot;
+      legend.querySelectorAll('button.item').forEach(item => {
+        item.addEventListener('click', () => {
+          const target = item.dataset.target;
+          const plotEl = document.getElementById(plotId);
+          if (!plotEl || !plotEl.data) return;
+          // Find all trace indices whose name starts with the target string.
+          const indices = [];
+          const newVisible = [];
+          plotEl.data.forEach((trace, idx) => {
+            if (trace.name && trace.name.indexOf(target) === 0) {
+              const currentlyVisible = trace.visible !== 'legendonly' && trace.visible !== false;
+              indices.push(idx);
+              newVisible.push(currentlyVisible ? 'legendonly' : true);
+            }
+          });
+          if (!indices.length) return;
+          Plotly.restyle(plotEl, { visible: newVisible }, indices);
+          item.classList.toggle('inactive');
+        });
+      });
+    });
+
+    // Wire interactivity.
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => setActiveTab(t.dataset.location));
+    });
+
+    window.__forecastBundle = bundle;
+
+    /** One-shot: resize Plotly after layout changes / orientation; re-plot crossing 720px or dark mode. */
+    if (!window.__forecastResponsiveWired) {
+      window.__forecastResponsiveWired = true;
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          const b = window.__forecastBundle;
+          if (!b || typeof Plotly === 'undefined') return;
+          b.location_order.forEach(k => {
+            const plot = document.getElementById(`plot-${k}`);
+            if (plot && plot.layout) Plotly.Plots.resize(plot);
+            const prob = document.getElementById(`prob-${k}`);
+            if (prob && prob.layout) Plotly.Plots.resize(prob);
+            const hist = document.getElementById(`hist-plot-${k}`);
+            if (hist && hist.layout) Plotly.Plots.resize(hist);
+          });
+        }, 140);
+      });
+      const replotForecast = () => {
+        const b = window.__forecastBundle;
+        if (!b || typeof Plotly === 'undefined') return;
+        b.location_order.forEach(k => { plotLocation(k, b.locations[k]); drawHistory(k); });
+      };
+      const mqCompact = window.matchMedia('(max-width: 720px)');
+      if (mqCompact.addEventListener) mqCompact.addEventListener('change', replotForecast);
+      else if (mqCompact.addListener) mqCompact.addListener(replotForecast);
+      if (window.matchMedia) {
+        const mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+        if (mqDark.addEventListener) mqDark.addEventListener('change', replotForecast);
+        else if (mqDark.addListener) mqDark.addListener(replotForecast);
+      }
+    }
+  }
+
+  function renderError(message, details) {
+    const root = document.getElementById('content');
+    const stack = details ? `<pre style="text-align:left;white-space:pre-wrap;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;background:var(--surface-soft);border:1px solid var(--border);padding:12px;border-radius:8px;margin:16px auto;max-width:900px;color:var(--text-soft);">${details}</pre>` : '';
+    root.innerHTML = `<div class="error"><strong>Forecast unavailable.</strong><br>${message}${stack}</div>`;
+    const pill = document.getElementById('status-pill');
+    pill.classList.add('stale');
+    document.getElementById('status-text').textContent = 'Forecast unavailable';
+  }
+
+  function safeRenderAll(bundle) {
+    try {
+      renderAll(bundle);
+    } catch (err) {
+      console.error('renderAll failed', err);
+      renderError(
+        "The data loaded but the page failed to render. Details below — please share these:",
+        (err && (err.stack || err.message)) ? String(err.stack || err.message) : String(err)
+      );
+    }
+  }
+
+  // A new forecast is published every 15 minutes. While the page is open (and when a home-screen app
+  // is resumed), check every 2 minutes and redraw in place when there is a newer one, keeping the tab
+  // and scroll position.
+  let LOADED_GEN = null;
+  const CHECK_EVERY_MS = 2 * 60 * 1000;
+  function checkForNewForecast() {
+    if (document.hidden) return;
+    fetch('forecast_data.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(b => {
+        if (!b || !b.generated_at || b.generated_at === LOADED_GEN) return;
+        const y = window.scrollY;
+        LOADED_GEN = b.generated_at;
+        safeRenderAll(b);
+        window.scrollTo(0, y);
+      })
+      .catch(() => {});
+  }
+  setInterval(checkForNewForecast, CHECK_EVERY_MS);
+  document.addEventListener('visibilitychange', checkForNewForecast);
+
+  // Load the forecast JSON written by generate_all_location_figures.py.
+  fetch('forecast_data.json', { cache: 'no-store' })
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
+      return r.json();
+    })
+    .then((bundle) => { LOADED_GEN = bundle && bundle.generated_at; safeRenderAll(bundle); })
+    .catch(err => {
+      console.error('forecast load failed', err);
+      renderError(
+        "Couldn't load <code>forecast_data.json</code>.",
+        (err && (err.stack || err.message)) ? String(err.stack || err.message) : String(err)
+      );
+    });
+  </script>
+<script data-goatcounter="https://robertds413.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -200,7 +200,48 @@ def live() -> dict:
             res['inside'].append(r(ins.astype(float).mean(), 3) if len(ins) else None)
             res['n'].append(int(len(s)))
         out[loc] = res
+    for d in sorted(Path(ROOT / 'docs' / 'archive').glob('trial*')):
+        if (d / 'issues').is_dir():
+            out[d.name] = live_trial(obs, bins, d.name)    # 'trial' (/preview), 'trial_preview2' (/preview2)
     print('live archive done', flush=True)
+    return out
+
+
+def live_trial(obs: dict, bins: list, subdir: str = 'trial') -> dict:
+    """A trial page's model (docs/archive/<subdir>) against the main model on the same slots and
+    locations, real forecast rain. Error of the ensemble mean by lead."""
+    out = {}
+    rows = []
+    for f in sorted(glob.glob(str(ROOT / 'docs' / 'archive' / subdir / 'issues' / '*.json'))):
+        main_f = ROOT / 'docs' / 'archive' / 'issues' / Path(f).name
+        if not main_f.exists():
+            continue
+        tri, main = json.loads(Path(f).read_text()), json.loads(main_f.read_text())
+        for loc, T in tri['locations'].items():
+            M = main['locations'].get(loc)
+            if not M or M['t0'] != T['t0'] or loc not in obs:
+                continue
+            n = min(len(T['mean']), len(M['mean']))
+            y = obs[loc].reindex(pd.date_range(pd.Timestamp(T['t0']), periods=n, freq='1h')).to_numpy()
+            tm = np.array([np.nan if v is None else v for v in T['mean'][:n]], float)
+            mm = np.array([np.nan if v is None else v for v in M['mean'][:n]], float)
+            for h in range(1, n):
+                if np.isfinite(y[h]) and np.isfinite(tm[h]) and np.isfinite(mm[h]):
+                    rows.append((loc, tri['slot'], h, abs(tm[h] - y[h]), abs(mm[h] - y[h])))
+    df = pd.DataFrame(rows, columns=['loc', 'slot', 'h', 'trial', 'main'])
+    for loc in sorted(df['loc'].unique()) if len(df) else []:
+        g = df[df['loc'] == loc]
+        res = {'issues': int(g.slot.nunique()), 'first': g.slot.min(), 'last': g.slot.max(),
+               'mae_trial': [], 'mae_main': [], 'n': []}
+        for a, b in bins:
+            s_ = g[(g.h >= a) & (g.h <= b)]
+            res['mae_trial'].append(r(s_.trial.mean()))
+            res['mae_main'].append(r(s_.main.mean()))
+            res['n'].append(int(len(s_)))
+        out[loc] = res
+        print(f'  live {subdir} {loc}: {res["issues"]} issues; mean error trial / main by lead: '
+              + ', '.join(f'{lb} {t}/{m}' for lb, t, m in zip([f'{a}-{b} h' for a, b in bins], res['mae_trial'], res['mae_main'])),
+              flush=True)
     return out
 
 

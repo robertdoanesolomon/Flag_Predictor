@@ -1,0 +1,4 @@
+{
+ "worker": "https://flagpredictor-alerts.flagpredictor.workers.dev",
+ "vapid_public": "BI9VD825Cp0sotVjgF17W-IGpVvfpkd7ryWd1PHluvCuK-_Hx8HOpcXyr97_g0RYzVaKkh6OCo7Ma8DrPRVWW30"
+}
