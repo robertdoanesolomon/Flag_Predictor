@@ -200,17 +200,19 @@ def live() -> dict:
             res['inside'].append(r(ins.astype(float).mean(), 3) if len(ins) else None)
             res['n'].append(int(len(s)))
         out[loc] = res
-    out['trial'] = live_trial(obs, bins)
+    for d in sorted(Path(ROOT / 'docs' / 'archive').glob('trial*')):
+        if (d / 'issues').is_dir():
+            out[d.name] = live_trial(obs, bins, d.name)    # 'trial' (/preview), 'trial_preview2' (/preview2)
     print('live archive done', flush=True)
     return out
 
 
-def live_trial(obs: dict, bins: list) -> dict:
-    """Trial model (docs/archive/trial, preview page) against the main model on the same slots and
+def live_trial(obs: dict, bins: list, subdir: str = 'trial') -> dict:
+    """A trial page's model (docs/archive/<subdir>) against the main model on the same slots and
     locations, real forecast rain. Error of the ensemble mean by lead."""
     out = {}
     rows = []
-    for f in sorted(glob.glob(str(ROOT / 'docs' / 'archive' / 'trial' / 'issues' / '*.json'))):
+    for f in sorted(glob.glob(str(ROOT / 'docs' / 'archive' / subdir / 'issues' / '*.json'))):
         main_f = ROOT / 'docs' / 'archive' / 'issues' / Path(f).name
         if not main_f.exists():
             continue
@@ -237,7 +239,7 @@ def live_trial(obs: dict, bins: list) -> dict:
             res['mae_main'].append(r(s_.main.mean()))
             res['n'].append(int(len(s_)))
         out[loc] = res
-        print(f'  live trial {loc}: {res["issues"]} issues; mean error trial / main by lead: '
+        print(f'  live {subdir} {loc}: {res["issues"]} issues; mean error trial / main by lead: '
               + ', '.join(f'{lb} {t}/{m}' for lb, t, m in zip([f'{a}-{b} h' for a, b in bins], res['mae_trial'], res['mae_main'])),
               flush=True)
     return out

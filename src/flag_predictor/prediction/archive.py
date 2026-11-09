@@ -14,7 +14,7 @@ Written by generate_all_location_figures.py on every CI run:
 * ``docs/archive/now.json`` – for the latest observation at each location,
   what every archived forecast from the last 10 days said it would be.
 * ``docs/archive/trial/issues/<slot>.json`` (+ ``trial/index.json``) – the same, for the trial model
-  on the preview page (only the locations it runs for), so it can be scored live against the main
+  on the preview page (``trial_preview2/`` for the second trial page) (only the locations it runs for), so it can be scored live against the main
   model on the same slots. Its observations are the shared ``observed.json``.
 * ``data/forecast_archive/<slot>.npz`` – the raw ensemble inputs (mean-station
   hourly rain per member, per location), so the model can later be
@@ -276,7 +276,8 @@ def write_raw_inputs(raw_dir: Path, slot: str, member_rain: Dict[str, pd.DataFra
 
 
 def fill_gaps_from_git(docs_dir: Path, repo_root: Path, now: Optional[pd.Timestamp] = None,
-                       max_days: int = 30, default_model: str = 'hybrid_c1_ps', trial: bool = False) -> list:
+                       max_days: int = 30, default_model: str = 'hybrid_c1_ps', trial: bool = False,
+                       trial_subdir: str = TRIAL_SUBDIR, bundle_path: Optional[str] = None) -> list:
     """Archive slots missed since the last archived one, from the git history of forecast_data.json.
 
     Every CI run commits docs/forecast_data.json, so after an outage of the
@@ -286,8 +287,8 @@ def fill_gaps_from_git(docs_dir: Path, repo_root: Path, now: Optional[pd.Timesta
     only the locations that ran a trial model.
     """
     import subprocess
-    archive_dir = Path(docs_dir) / 'archive' / (TRIAL_SUBDIR if trial else '')
-    bundle_path = 'docs/preview/forecast_data.json' if trial else 'docs/forecast_data.json'
+    archive_dir = Path(docs_dir) / 'archive' / (trial_subdir if trial else '')
+    bundle_path = bundle_path or ('docs/preview/forecast_data.json' if trial else 'docs/forecast_data.json')
     index = _load_json(archive_dir / 'index.json', {}).get('issues', [])
     now = pd.Timestamp.utcnow() if now is None else pd.Timestamp(now)
     now = now.tz_convert('UTC').tz_localize(None) if now.tzinfo else now
@@ -363,9 +364,11 @@ def trial_payloads(payloads: Dict[str, dict]) -> Dict[str, dict]:
     return {loc: p for loc, p in payloads.items() if str(p.get('model', '')).startswith(TRIAL_PREFIX)}
 
 
-def update_trial_archive(docs_dir: Path, payloads: Dict[str, dict], now: Optional[pd.Timestamp] = None) -> dict:
-    """Add the preview page's trial-model forecasts to docs/archive/trial (same slots as the main archive)."""
-    archive_dir = Path(docs_dir) / 'archive' / TRIAL_SUBDIR
+def update_trial_archive(docs_dir: Path, payloads: Dict[str, dict], now: Optional[pd.Timestamp] = None,
+                         subdir: str = TRIAL_SUBDIR) -> dict:
+    """Add a trial page's model forecasts to docs/archive/<subdir> (same slots as the main archive):
+    'trial' for /preview, 'trial_preview2' for /preview2."""
+    archive_dir = Path(docs_dir) / 'archive' / subdir
     now = pd.Timestamp.utcnow() if now is None else pd.Timestamp(now)
     payloads = trial_payloads(payloads)
     slot = slot_id(now)

@@ -201,6 +201,12 @@ class ArchiveTests(unittest.TestCase):
             index = json.loads((docs / 'archive' / 'trial' / 'index.json').read_text())
             self.assertEqual([e['slot'] for e in index['issues']], ['2026-10-15T12'])
             self.assertFalse((docs / 'archive' / 'index.json').exists())   # main archive untouched
+            # A second trial page keeps its own archive.
+            r3 = archive.update_trial_archive(docs, {'godstow': dict(trial, model='hybrid_shared')},
+                                              now=pd.Timestamp('2026-10-15 12:40', tz='UTC'), subdir='trial_preview2')
+            self.assertTrue(r3['wrote_issue'])
+            two = json.loads((docs / 'archive' / 'trial_preview2' / 'issues' / '2026-10-15T12.json').read_text())
+            self.assertEqual(two['model'], 'hybrid_shared')
             # No trial locations: nothing written.
             r2 = archive.update_trial_archive(docs, {'isis': main}, now=pd.Timestamp('2026-10-15 18:30', tz='UTC'))
             self.assertFalse(r2['wrote_issue'])

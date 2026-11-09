@@ -1350,8 +1350,9 @@ forecasts rebuilt from its error libraries), five copies against five. Mean erro
 **Reading.** Sharing the catchment does what it was meant to: the stretches stop disagreeing about
 the ground, and the first rises after a dry spell (where the per-stretch Isis model was most wrong)
 are much better at all three stretches. It costs some everyday accuracy at Godstow and especially
-Wallingford, mostly beyond 3 days and in wet winters. **On the preview page only** (replacing
-`hybrid_srh`, whose 74 live issues stay in `docs/archive/trial/`); the trial archive scores it live
-against the main model. Model-error libraries: `models/error_library_hybrid_shared_<loc>.npz` (same
+Wallingford, mostly beyond 3 days and in wet winters. **On a second trial page, `/preview2`, only**
+(`--preview2-dir docs/preview2 --preview2-model hybrid_shared`); `/preview` keeps `hybrid_srh` and the
+main page is unchanged. Its live forecasts go to `docs/archive/trial_preview2/` (`/preview`'s stay in
+`docs/archive/trial/`), and `verification_report.py` scores both against the main model. Model-error libraries: `models/error_library_hybrid_shared_<loc>.npz` (same
 starts and descriptors as the deployed libraries, the deployed per-lead inflation). Open: Wallingford
 in the joint fit; whether the soil-moisture / upstream-gauge inputs of `hybrid_srh` help it.

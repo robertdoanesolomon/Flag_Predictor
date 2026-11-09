@@ -1053,8 +1053,9 @@
 
   /** The newer features (flag tile and cards, jump forecast, alerts) are on for the main page too
       since October 2026; PREVIEW stays as their switch. docs/preview/ is the same file, kept so
-      apps installed from there keep working; only it shows the "what is new" summary. */
-  const ON_PREVIEW_PAGE = /\/preview(\/|\/index\.html)?$/.test(window.location.pathname)
+      apps installed from there keep working; only it (and docs/preview2/, a second trial page) shows the
+      "what is new" summary. */
+  const ON_PREVIEW_PAGE = /\/preview2?(\/|\/index\.html)?$/.test(window.location.pathname)
     || new URLSearchParams(window.location.search).has('preview');
   const PREVIEW = true;
   document.body.classList.add('preview');

@@ -1134,6 +1134,10 @@ PREVIEW_MODEL: str | None = None
 # Trial-model runs that need every stretch's main forecast first (the shared catchment model).
 DEFERRED_TRIALS: list = []
 PREVIEW_ONLY_PAYLOADS: dict = {}
+# Trial pages: /preview (--preview-model) and /preview2 (--preview2-model). Each shows the main page's
+# preview payloads with its trial model's forecast where that model runs, and has its own live archive
+# (docs/archive/<archive>/, scored against the main model by verification_report.py).
+TRIAL_PAGES: list = []
 
 
 def uk_daily(x):
@@ -1447,42 +1451,47 @@ def generate_spaghetti_figure(
                     print(f"\n[WARNING] Preview payload failed for '{location}':")
                     traceback.print_exc()
             from flag_predictor.prediction.hybrid_live import is_joint, variant_available
-            if preview_dir is not None and PREVIEW_MODEL and variant_available(PREVIEW_MODEL, location):
-              def run_trial(location=location, hybrid_df=hybrid_df, nowcast=nowcast, config=config,
-                            flag_thresholds=flag_thresholds):
-                try:
-                    print(f"\n[preview model] {PREVIEW_MODEL} for {location.upper()}")
-                    trial = forecast_with_uncertainty(location, hybrid_df, project_root, n_members=n_members,
-                                                      start_sd=nowcast["sd"] if nowcast else 0.0,
-                                                      variant=PREVIEW_MODEL)
-                    if trial.stepped_members is None:
-                        raise RuntimeError("no stepped forecast")
-                    PREVIEW_ONLY_PAYLOADS[location] = render_location_outputs(
-                        location=location,
-                        output_dir=preview_dir,
-                        merged_df=hybrid_df,
-                        ensemble_predictions=trial.stepped_members,
-                        rainfall_forecast=rain_forecast(n_members),
-                        config=config,
-                        flag_thresholds=flag_thresholds,
-                        title_suffix=" (preview)",
-                        total_samples=trial.stepped_total,
-                        model_name=trial.model_name,
-                        model_note=trial.note,
-                        make_figures=False,
-                        flag_outlook=trial.flag_outlook,
-                        extra=preview_extras(location, trial),
-                    )
-                    mark_estimated(PREVIEW_ONLY_PAYLOADS[location], nowcast)
-                except Exception:
-                    print(f"\n[WARNING] Preview model {PREVIEW_MODEL} failed for '{location}'; "
-                          "the preview shows the deployed model there:")
-                    traceback.print_exc()
-              # The shared catchment model needs every stretch's live frame: run it after the loop.
-              if is_joint(PREVIEW_MODEL):
-                  DEFERRED_TRIALS.append(run_trial)
-              else:
-                  run_trial()
+            for page in TRIAL_PAGES:
+                if not variant_available(page["model"], location):
+                    continue
+
+                def run_trial(page=page, location=location, hybrid_df=hybrid_df, nowcast=nowcast, config=config,
+                              flag_thresholds=flag_thresholds):
+                    model = page["model"]
+                    try:
+                        print(f"\n[preview model] {model} for {location.upper()} ({page['dir'].name})")
+                        trial = forecast_with_uncertainty(location, hybrid_df, project_root, n_members=n_members,
+                                                          start_sd=nowcast["sd"] if nowcast else 0.0,
+                                                          variant=model)
+                        if trial.stepped_members is None:
+                            raise RuntimeError("no stepped forecast")
+                        page["payloads"][location] = render_location_outputs(
+                            location=location,
+                            output_dir=page["dir"],
+                            merged_df=hybrid_df,
+                            ensemble_predictions=trial.stepped_members,
+                            rainfall_forecast=rain_forecast(n_members),
+                            config=config,
+                            flag_thresholds=flag_thresholds,
+                            title_suffix=" (preview)",
+                            total_samples=trial.stepped_total,
+                            model_name=trial.model_name,
+                            model_note=trial.note,
+                            make_figures=False,
+                            flag_outlook=trial.flag_outlook,
+                            extra=preview_extras(location, trial),
+                        )
+                        mark_estimated(page["payloads"][location], nowcast)
+                    except Exception:
+                        print(f"\n[WARNING] Preview model {model} failed for '{location}'; "
+                              f"{page['dir'].name} shows the deployed model there:")
+                        traceback.print_exc()
+
+                # The shared catchment model needs every stretch's live frame: run it after the loop.
+                if is_joint(page["model"]):
+                    DEFERRED_TRIALS.append(run_trial)
+                else:
+                    run_trial()
         except Exception:
             print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
             traceback.print_exc()
@@ -1537,6 +1546,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="A trial model (hybrid_live.VARIANTS, e.g. hybrid_su) for the preview page only.",
     )
     parser.add_argument(
+        "--preview2-dir",
+        default=None,
+        help="With --primary hybrid: a second trial page (e.g. docs/preview2) for --preview2-model.",
+    )
+    parser.add_argument(
+        "--preview2-model",
+        default=None,
+        help="A trial model (hybrid_live.VARIANTS) for the second trial page only.",
+    )
+    parser.add_argument(
         "--preview-dir",
         default=None,
         help=(
@@ -1580,11 +1599,11 @@ def write_forecast_bundle(output_dir: Path, payloads: dict, failed_locations: li
         print(f"\n✓ Interactive JSON payload saved to: {json_path}")
 
 
-def write_preview(output_dir: Path, preview_dir: Path, locations: list) -> None:
+def write_preview(output_dir: Path, preview_dir: Path, locations: list, only_payloads: dict | None = None) -> None:
     """Preview page: same page as the main one (it switches its preview features on from its
     path), its own forecast_data.json. Never affects the main page."""
     try:
-        payloads = {**PREVIEW_PAYLOADS, **PREVIEW_ONLY_PAYLOADS}
+        payloads = {**PREVIEW_PAYLOADS, **(PREVIEW_ONLY_PAYLOADS if only_payloads is None else only_payloads)}
         failed = [loc for loc in locations if loc not in payloads]
         write_forecast_bundle(preview_dir, payloads, failed)
         page = output_dir / "index.html"
@@ -1624,19 +1643,23 @@ def archive_forecasts(output_dir: Path, payloads: dict) -> None:
         traceback.print_exc()
 
 
-def archive_trial_forecasts(output_dir: Path) -> None:
-    """Add the preview page's trial-model forecasts to docs/archive/trial, to score them live
-    against the main model. Never stops the forecast from publishing."""
+def archive_trial_forecasts(output_dir: Path, page: dict | None = None) -> None:
+    """Add a trial page's model forecasts to docs/archive/<page archive> (docs/archive/trial for /preview),
+    to score them live against the main model. Never stops the forecast from publishing."""
+    page = page or {"payloads": PREVIEW_ONLY_PAYLOADS, "archive": "trial", "dir": output_dir / "preview"}
     try:
         from flag_predictor.prediction.archive import fill_gaps_from_git, update_trial_archive
 
+        bundle = f"docs/{page['dir'].name}/forecast_data.json"
         try:
-            filled = fill_gaps_from_git(output_dir, PROJECT_ROOT, trial=True)
+            filled = fill_gaps_from_git(output_dir, PROJECT_ROOT, trial=True, trial_subdir=page["archive"],
+                                        bundle_path=bundle)
             if filled:
-                print(f"  Trial archive: filled {len(filled)} slot(s) from git history: {filled[0]} .. {filled[-1]}")
+                print(f"  Trial archive ({page['archive']}): filled {len(filled)} slot(s) from git history: "
+                      f"{filled[0]} .. {filled[-1]}")
         except Exception as exc:
             print(f"  Trial archive: could not fill gaps from git history ({exc})")
-        result = update_trial_archive(output_dir, dict(PREVIEW_ONLY_PAYLOADS))
+        result = update_trial_archive(output_dir, dict(page["payloads"]), subdir=page["archive"])
         print(f"✓ Trial archive updated: {result}")
     except Exception:
         print("\n[WARNING] Trial archive update failed:")
@@ -1672,6 +1695,14 @@ def main(argv: list[str] | None = None) -> None:
     global PREVIEW_MODEL
     PREVIEW_MODEL = args.preview_model or os.environ.get("FLAG_PREDICTOR_PREVIEW_MODEL") or None
     preview_dir = _resolve(args.preview_dir) if hybrid_primary else None
+    preview2_dir = _resolve(args.preview2_dir) if hybrid_primary else None
+    TRIAL_PAGES.clear()
+    if preview_dir is not None and PREVIEW_MODEL:
+        TRIAL_PAGES.append({"model": PREVIEW_MODEL, "dir": preview_dir, "payloads": PREVIEW_ONLY_PAYLOADS,
+                            "archive": "trial"})
+    if preview2_dir is not None and args.preview2_model:
+        TRIAL_PAGES.append({"model": args.preview2_model, "dir": preview2_dir, "payloads": {},
+                            "archive": "trial_preview2"})
     # The September LSTM (the old /old page) runs only when asked for with --old-dir (off since
     # 20 Oct 2026: it took ~3 min a run); without --primary hybrid it is the main forecast.
     run_september = (not hybrid_primary) or bool(args.old_dir)
@@ -1739,8 +1770,11 @@ def main(argv: list[str] | None = None) -> None:
             archive_forecasts(output_dir, main_payloads)
         if preview_dir is not None:
             write_preview(output_dir, preview_dir, locations_to_process)
+        for page in TRIAL_PAGES:
+            if page["dir"] != preview_dir:
+                write_preview(output_dir, page["dir"], locations_to_process, page["payloads"])
             if not args.no_archive:
-                archive_trial_forecasts(output_dir)
+                archive_trial_forecasts(output_dir, page)
     else:
         write_forecast_bundle(output_dir, all_payloads, failed_locations)
         if beta_dir is not None:
