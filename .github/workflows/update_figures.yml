@@ -140,7 +140,7 @@ jobs:
           GEN_RC=0
           generate_once() {
             local rc=0
-            python generate_all_location_figures.py --primary hybrid --output-dir docs --preview-dir docs/preview --preview-model hybrid_srh || rc=$?
+            python generate_all_location_figures.py --primary hybrid --output-dir docs --preview-dir docs/preview --preview-model hybrid_shared || rc=$?
             # The long-range forecast (docs/termly) once a day, here as well as in its own scheduled
             # workflow: GitHub's schedules can be skipped, the external 15-minute timer is reliable.
             if python -c "import json,datetime,sys; d=json.load(open('docs/termly/termly.json')); sys.exit(0 if d['generated'][:10]!=datetime.datetime.utcnow().strftime('%Y-%m-%d') and datetime.datetime.utcnow().hour>=5 else 1)"; then

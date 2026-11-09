@@ -1293,3 +1293,65 @@ each day, without EC46 (`source = rebuilt`, labelled on the page).
 - **Periods:** a stacked lower/usual/higher area chart, one period at a time.
 - **Torpids:** a line of the chance it goes ahead, against the record. It is hidden while the page still says
   "too early to tell".
+
+# November 2026: one shared catchment model for all three stretches (`hybrid_shared`)
+
+**Why.** The deployed hybrid is trained per stretch, and each copy infers its own soil wetness
+from its own last 100 h. On 9 Nov 2026 the Isis and Godstow models put the same ground at 26 % and
+47 % wet, so with ~35 mm forecast Godstow rose 22 cm over 10 days and the Isis 6 cm, a gap at the
+95th percentile of the backtest. On the real river, when Godstow is at 0.15-0.21 the Isis is at or
+below 0 only 5 % of the time; on 9 Nov 2025 (almost the same start) the deployed model forecast the
+Isis's 7-day rise at +0.19 m against +0.41 m observed.
+
+**Model** (`src/flag_predictor/models/shared_catchment.py`, `train_shared_catchment.py`). One
+rainfall-runoff model with three sub-catchments, each with its own gauges and its own soil, quick
+and three-cascade medium stores, shared by every stretch:
+
+| sub-catchment | gauges | feeds |
+|---|---|---|
+| upper | Worsham, Osney, Bourton, St John's, Swindon, Eynsham, Chipping Norton, Rapsgate, Stowell Park, Shorncote | Godstow, Isis, Wallingford |
+| cherwell | Grimsbury, Bicester, Byfield | Isis, Wallingford |
+| lower | Aylesbury, Abingdon, Stanford, Wheatley, Cleeve, Benson | Wallingford |
+
+Bicester and Byfield (full records, also in the live API and forecast) are new; the deployed models
+used Grimsbury only. Fast runoff reaches each stretch through learned non-negative contributions
+(started from catchment areas); each stretch keeps its own groundwater store, channel store and
+rating curve, and its channel is pinned to its own reading, so every forecast still starts at the
+observed differential. Same guarantees as before (no rise without water, more rain never lowers any
+stretch, Godstow ignores Cherwell and Ock/Thame rain; `tests/test_shared_catchment.py`). One LSTM
+encoder (hidden 96) reads 196 inputs: Godstow's 90 features, the Isis's and Wallingford's 44
+differential features each, 15 sub-catchment rain sums, and per-stretch availability flags (a
+stretch with no data is masked, not dropped). Joint loss over the three stretches (Wallingford
+weighted 0.7), EMA of weights (0.995). Godstow and the Isis peak late in training and Wallingford
+early, so two checkpoints are kept from the same run: one picked on Godstow + Isis (so the two
+Oxford stretches always share one model and one catchment state), one on Wallingford.
+
+**Backtest** (`compare_shared.py`, `figures/eval/shared_catchment_compare.json`): the deployed
+model's own starts (every 6 h, 2023 and Nov 2024 - Jan 2026, the rain that fell; the deployed
+forecasts rebuilt from its error libraries), five copies against five. Mean error over 10 days (m):
+
+| | 2023 | test window | autumn 2025 first storms (20 Oct - 15 Dec) |
+|---|---|---|---|
+| Godstow | 0.0481 → 0.0523 (+9 %) | 0.0432 → 0.0461 (+7 %) | 0.0691 → 0.0672 (−3 %) |
+| Isis | 0.0468 → 0.0480 (+3 %) | 0.0298 → 0.0295 (−1 %) | 0.0492 → 0.0388 (−21 %) |
+| Wallingford | 0.0661 → 0.0754 (+14 %) | 0.0585 → 0.0621 (+6 %) | 0.1077 → 0.0893 (−17 %) |
+
+* First 24 h: level or better at Godstow and the Isis (Isis test 0.0125 → 0.0119), slightly worse at Wallingford.
+* Godstow-minus-Isis rise (consistency between the stretches), mean error of the forecast gap:
+  3 days 0.0336 → 0.0290, 7 days 0.0468 → 0.0383, 10 days 0.0552 → 0.0450 m.
+* 9-11 Nov 2025 (13 starts), 7-day rise observed / deployed / shared: Godstow 0.58 / 0.39 / 0.60,
+  Isis 0.41 / 0.19 / 0.38, Wallingford 0.77 / 0.77 / 0.67 m.
+* Rises of 0.12 m+ within 7 days: peak height bias Godstow −3.0 → −5.6 cm, Isis −2.6 → −4.7,
+  Wallingford +2.9 → −1.9 cm. Big wet-winter rises from mid-level can come out too low
+  (1 Jan 2025: Godstow peak 0.74 vs 1.03 deployed vs 1.10 observed; `figures/eval/shared_catchment_examples.png`).
+* 2023 validation of single copies: Oxford checkpoints Godstow 0.052-0.055, Isis 0.049-0.052
+  (deployed copies 0.050-0.053 / 0.049-0.052); Wallingford 0.078-0.084 (deployed 0.072-0.076).
+
+**Reading.** Sharing the catchment does what it was meant to: the stretches stop disagreeing about
+the ground, and the first rises after a dry spell (where the per-stretch Isis model was most wrong)
+are much better at all three stretches. It costs some everyday accuracy at Godstow and especially
+Wallingford, mostly beyond 3 days and in wet winters. **On the preview page only** (replacing
+`hybrid_srh`, whose 74 live issues stay in `docs/archive/trial/`); the trial archive scores it live
+against the main model. Model-error libraries: `models/error_library_hybrid_shared_<loc>.npz` (same
+starts and descriptors as the deployed libraries, the deployed per-lead inflation). Open: Wallingford
+in the joint fit; whether the soil-moisture / upstream-gauge inputs of `hybrid_srh` help it.

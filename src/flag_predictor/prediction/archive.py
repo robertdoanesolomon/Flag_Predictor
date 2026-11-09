@@ -32,7 +32,7 @@ import pandas as pd
 
 SLOT_HOURS = 6
 TRIAL_SUBDIR = 'trial'
-TRIAL_PREFIX = 'hybrid_s'   # trial variants (hybrid_sr, hybrid_srh, hybrid_su); see hybrid_live.VARIANTS
+TRIAL_PREFIX = 'hybrid_s'   # trial variants (hybrid_sr, hybrid_srh, hybrid_su, hybrid_shared); see hybrid_live.VARIANTS
 NOW_LOOKBACK_DAYS = 10
 ARCHIVE_VERSION = 1
 

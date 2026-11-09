@@ -1131,6 +1131,8 @@ PREVIEW_PAYLOADS: dict = {}
 # --preview-model: a trial model (hybrid_live.VARIANTS) shown on the preview page only; the main
 # page keeps PREVIEW_PAYLOADS from the deployed model.
 PREVIEW_MODEL: str | None = None
+# Trial-model runs that need every stretch's main forecast first (the shared catchment model).
+DEFERRED_TRIALS: list = []
 PREVIEW_ONLY_PAYLOADS: dict = {}
 
 
@@ -1444,8 +1446,10 @@ def generate_spaghetti_figure(
                 except Exception:
                     print(f"\n[WARNING] Preview payload failed for '{location}':")
                     traceback.print_exc()
-            from flag_predictor.prediction.hybrid_live import variant_available
+            from flag_predictor.prediction.hybrid_live import is_joint, variant_available
             if preview_dir is not None and PREVIEW_MODEL and variant_available(PREVIEW_MODEL, location):
+              def run_trial(location=location, hybrid_df=hybrid_df, nowcast=nowcast, config=config,
+                            flag_thresholds=flag_thresholds):
                 try:
                     print(f"\n[preview model] {PREVIEW_MODEL} for {location.upper()}")
                     trial = forecast_with_uncertainty(location, hybrid_df, project_root, n_members=n_members,
@@ -1474,6 +1478,11 @@ def generate_spaghetti_figure(
                     print(f"\n[WARNING] Preview model {PREVIEW_MODEL} failed for '{location}'; "
                           "the preview shows the deployed model there:")
                     traceback.print_exc()
+              # The shared catchment model needs every stretch's live frame: run it after the loop.
+              if is_joint(PREVIEW_MODEL):
+                  DEFERRED_TRIALS.append(run_trial)
+              else:
+                  run_trial()
         except Exception:
             print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
             traceback.print_exc()
@@ -1704,6 +1713,10 @@ def main(argv: list[str] | None = None) -> None:
             all_payloads[location] = payload
         if beta_payload is not None:
             beta_payloads[location] = beta_payload
+
+    for trial in DEFERRED_TRIALS:
+        trial()
+    DEFERRED_TRIALS.clear()
 
     if hybrid_primary:
         # Main page: the hybrid, falling back to a fresh September forecast

@@ -959,6 +959,11 @@
             here also uses measured soil moisture (COSMOS-UK, Chimney Meadows) and how high nine upstream gauges are
             (Windrush, Evenlode, Coln, the Thames at Cricklade and Hannington Bridge, Cherwell, Ray, Thame, Ock). The main page keeps the current model
             until this one has proved itself.</li>
+            <li id="shared-model-note" hidden><strong>Trial model: one catchment for all three stretches.</strong> The main page
+            models each stretch separately, so neighbouring stretches can disagree about how wet the same ground is. Here one
+            model covers the whole catchment, split into the upper Thames, the Cherwell and the Ock/Thame, each with its own rain
+            gauges; Godstow drains the upper Thames, the Isis adds the Cherwell, Wallingford adds the Ock and Thame. The main page
+            keeps the current model until this one has proved itself.</li>
             <li><strong>Under the hood</strong>: below each chart, the model's water stores (soil, fast, medium and
             groundwater paths, the river) now and over the next 10 days.</li>
           </ul>
@@ -1762,6 +1767,8 @@
     const h = (x) => x >= 48 ? `${Math.round(x / 24)} days` : `${Math.round(x)} h`;
     switch (name) {
       case 'soil': return 'How full the soil is. Wetter soil sends more of the rain to the river.' +
+        (ms.subcatchments ? ' ' + Object.entries(ms.subcatchments).map(([k, v]) =>
+          `${({upper: 'Upper Thames', cherwell: 'Cherwell', lower: 'Ock and Thame'})[k] || k} ${Math.round(v)}%`).join(', ') + '.' : '') +
         (ms.measured_soil ? ` Measured at ${ms.measured_soil.site}: ${ms.measured_soil.value.toFixed(1)}% water by volume (${ms.measured_soil.source}; a different scale).` : '');
       case 'quick': return p.k_quick ? `Water on its way fast (surface, drains). Half gone in ~${h(p.k_quick * 0.69)}.` : '';
       case 'medium': return p.k_medium ? `Water draining through the soil, over ~${h(3 * p.k_medium)}.` : '';
@@ -2942,6 +2949,9 @@
     const TRIAL_MODELS = ['hybrid_sr', 'hybrid_su', 'hybrid_srh'];
     const trialWhere = bundle.location_order.filter((k) => TRIAL_MODELS.includes((bundle.locations[k] || {}).model))
       .map((k) => STRETCH_NAMES[k] || k);
+    const sharedOn = bundle.location_order.some((k) => (bundle.locations[k] || {}).model === 'hybrid_shared');
+    const sharedNote = document.getElementById('shared-model-note');
+    if (sharedNote) sharedNote.hidden = !(ON_PREVIEW_PAGE && sharedOn);
     const trialNote = document.getElementById('trial-model-note');
     if (trialNote) {
       trialNote.hidden = !(ON_PREVIEW_PAGE && trialWhere.length);

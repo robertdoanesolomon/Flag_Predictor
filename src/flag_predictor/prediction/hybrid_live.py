@@ -49,6 +49,9 @@ VARIANTS: dict = {
     # + Hannington Bridge. Not the Isis by default: no better there than the deployed model (Oct 2026).
     'hybrid_srh': {'names': ['hybrid_srh'] + [f'hybrid_srh_s{i}' for i in range(1, 5)],
                    'locations': ['godstow', 'wallingford']},
+    # One catchment model for all three stretches (models/shared_catchment.py, prediction/shared_live.py).
+    # Needs every stretch's live frame, so generate_all_location_figures runs it after the main forecasts.
+    'hybrid_shared': {'names': ['hybrid_shared'] + [f'hybrid_shared_s{i}' for i in range(1, 5)], 'joint': True},
 }
 
 
@@ -57,7 +60,18 @@ def variant_available(variant: str, location: str, models_dir: Optional[Path] = 
     v = VARIANTS.get(variant)
     if v and v.get('locations') and location not in v['locations']:
         return False
+    if v and v.get('joint'):
+        return any((models_dir / f'shared_{n}.pt').exists() for n in v['names'])
     return bool(v) and any((models_dir / f'redesign_{n}_{location}.pt').exists() for n in v['names'])
+
+
+def is_joint(variant: Optional[str]) -> bool:
+    return bool(variant) and bool(VARIANTS.get(variant, {}).get('joint'))
+
+
+def register_frame(location: str, frame: pd.DataFrame) -> None:
+    """Keep each stretch's live frame for the shared catchment model (which needs all three)."""
+    _cache.setdefault('frames', {})[location] = frame
 
 
 def variant_extra(variant: str, index: pd.DatetimeIndex, project_root: Path) -> pd.DataFrame:
@@ -491,6 +505,9 @@ def forecast_with_uncertainty(
     """
     models_dir = models_dir or (project_root / 'models')
     frame = live_frame(location, merged_df, project_root)
+    if is_joint(variant):
+        return _joint_forecast(location, frame, project_root, n_members, models_dir, start_sd, variant)
+    register_frame(location, frame)
     t0 = frame.index[-1]
     forecast = _to_utc(rain_forecast(n_members))
     fut_idx = pd.date_range(t0 + pd.Timedelta(hours=1), periods=HORIZON, freq='1h')
@@ -582,6 +599,44 @@ def forecast_with_uncertainty(
                         level_hist=frame['differential'].loc[:t0].to_numpy()[-49:],
                         rain_hist=frame[[g for g in gauges if g in frame.columns]].clip(lower=0).mean(axis=1)
                         .fillna(0.0).loc[:t0].to_numpy()[-72:])
+
+
+def _joint_forecast(location: str, frame: pd.DataFrame, project_root: Path, n_members: int, models_dir: Path,
+                    start_sd: float, variant: str) -> LiveForecast:
+    """forecast_with_uncertainty for the shared catchment model (errors propagate, as for other trials)."""
+    from . import shared_live
+    forecast = _to_utc(rain_forecast(n_members))
+    members_df, rain_df, state, phys, names = shared_live.forecast(
+        location, frame, _cache.get('frames', {}), forecast, n_members, project_root, models_dir,
+        VARIANTS[variant]['names'])
+    print(f"  [{variant}] {len(names)} trained copies; stretches seen: {sorted(_cache.get('frames', {}))}")
+    try:
+        total = model_error_samples(location, frame, members_df, rain_df, models_dir, tag=variant)
+    except Exception as exc:
+        print(f"  [model error] failed ({exc}); showing rain spread only")
+        total = None
+    if start_sd > 0:
+        base = total if total is not None else members_df.to_numpy().T
+        rng = np.random.default_rng(1)
+        total = base + rng.normal(0.0, start_sd, size=(base.shape[0], 1))
+    stepped = (None, None, None, None)
+    if STEP_LAYER:
+        try:
+            stepped = step_forecast(location, frame, members_df, rain_df, total, models_dir)
+        except Exception as exc:
+            print(f"  [step layer] failed ({type(exc).__name__}: {exc}); no stepped copy")
+    try:
+        model_state = shared_live.state_payload(location, members_df.index, state, phys)
+    except Exception as exc:
+        print(f"  [model state] skipped ({type(exc).__name__}: {exc})")
+        model_state = None
+    gauges = [g for g in TRAINING_GAUGES[location] if g in frame.columns]
+    t0 = frame.index[-1]
+    return LiveForecast(members=members_df, member_rain=rain_df, total_samples=total, model_name=variant,
+                        model_state=model_state, stepped_members=stepped[0], stepped_total=stepped[1],
+                        flag_outlook=stepped[2], step_triggers=stepped[3],
+                        level_hist=frame['differential'].loc[:t0].to_numpy()[-49:],
+                        rain_hist=frame[gauges].clip(lower=0).mean(axis=1).fillna(0.0).loc[:t0].to_numpy()[-72:])
 
 
 STATE_NAMES = ('soil', 'quick', 'medium', 'slow', 'channel')
