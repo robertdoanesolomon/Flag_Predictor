@@ -1,5 +1,5 @@
-"""Farmoor flow fallbacks (16 Nov 2026): saved series when both EA feeds fail, carry-forward up to
-FLOW_MAX_AGE_H, and the previous forecast held (marked stale) beyond it."""
+"""Farmoor flow fallbacks (16 Nov 2026): saved series when both EA feeds fail, the gauge's gaps estimated
+from the differentials, and the previous forecast held (marked stale) when neither is available."""
 
 import json
 import sys
@@ -16,35 +16,58 @@ sys.path.insert(0, str(ROOT))
 from flag_predictor.data import api  # noqa: E402
 from flag_predictor.prediction import hybrid_live as hl  # noqa: E402
 
+MODELS = ROOT / 'models'
 
-def _merged(last_flow_h_before_t0: float, t0='2026-11-16 10:00'):
+
+@pytest.fixture(autouse=True)
+def _no_network(monkeypatch):
+    monkeypatch.setattr(hl, '_all_differentials', lambda: {})
+
+
+def _merged(gap_h: float, rise: float = 0.0, t0='2026-11-16 10:00'):
+    """60 days at a steady 4 m3/s and differential 0.1, the differential rising by ``rise`` over the
+    last ``gap_h`` hours, during which the flow gauge is silent."""
     t0 = pd.Timestamp(t0, tz='UTC')
     idx = pd.date_range(t0 - pd.Timedelta(days=60), t0, freq='1h')
-    flow = pd.Series(np.linspace(3.0, 4.0, len(idx)), index=idx)
-    flow[idx > t0 - pd.Timedelta(hours=last_flow_h_before_t0)] = np.nan
-    return pd.DataFrame({'differential': 0.0, 'flow_m3s_Farmoor': flow}, index=idx)
+    in_gap = idx > t0 - pd.Timedelta(hours=gap_h)
+    d = pd.Series(0.1, index=idx)
+    d[in_gap] = 0.1 + np.linspace(0, rise, in_gap.sum())
+    flow = pd.Series(4.0, index=idx)
+    flow[in_gap] = np.nan
+    return pd.DataFrame({'differential': d, 'flow_m3s_Farmoor': flow}, index=idx)
 
 
 def test_fresh_flow_unchanged():
     m = _merged(0)
-    f = hl._live_flow(m, m.index)
-    assert f.notna().all() and f.iloc[-1] == pytest.approx(4.0)
+    f, since = hl._live_flow(m, m.index, 'godstow', MODELS)
+    assert since is None and (f == 4.0).all()
 
 
-def test_flow_carried_forward_within_limit():
-    m = _merged(20)
-    f = hl._live_flow(m, m.index)
-    last = m['flow_m3s_Farmoor'].dropna().iloc[-1]
+def test_short_gap_forward_filled():
+    m = _merged(4, rise=0.3)
+    f, since = hl._live_flow(m, m.index, 'godstow', MODELS)
+    assert since is None and (f == 4.0).all()
+
+
+def test_long_gap_estimated_from_differential():
+    m = _merged(72, rise=0.4)       # Godstow 0.1 -> 0.5: well into the rising part of the map
+    f, since = hl._live_flow(m, m.index, 'godstow', MODELS)
+    assert since == m['flow_m3s_Farmoor'].last_valid_index()
     assert f.notna().all()
-    assert (f.iloc[-20:] == last).all()
+    assert f.iloc[-1] > 8.0          # follows the rise
+    assert f.loc[since:].is_monotonic_increasing
+    # A flat differential gives back (about) the last reading.
+    f, _ = hl._live_flow(_merged(72), m.index, 'godstow', MODELS)
+    assert f.iloc[-1] == pytest.approx(4.0)
 
 
-def test_flow_too_old_raises():
-    m = _merged(hl.FLOW_MAX_AGE_H + 2)
+def test_no_flow_and_no_differential_raises():
+    m = _merged(72)
+    m.loc[m.index > m.index[-1] - pd.Timedelta(hours=40), 'differential'] = np.nan
     with pytest.raises(hl.FlowUnavailable):
-        hl._live_flow(m, m.index)
+        hl._live_flow(m, m.index, 'godstow', MODELS)
     with pytest.raises(hl.FlowUnavailable):
-        hl._live_flow(m.drop(columns='flow_m3s_Farmoor'), m.index)
+        hl._live_flow(m.drop(columns='flow_m3s_Farmoor'), m.index, 'godstow', MODELS)
 
 
 def test_both_feeds_fail_uses_saved(tmp_path, monkeypatch):

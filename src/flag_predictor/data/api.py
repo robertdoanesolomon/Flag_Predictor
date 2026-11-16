@@ -391,7 +391,7 @@ _FLOW_CACHE_TTL = pd.Timedelta(minutes=10)
 
 # The last good Farmoor flow (hourly means, naive UTC), saved by every successful fetch and committed
 # with the forecast. If both EA feeds fail, fetch_flow_data returns this instead, and the hybrid
-# carries its last value forward for up to hybrid_live.FLOW_MAX_AGE_H hours.
+# estimates the hours since from the differentials (hybrid_live.estimate_flow).
 RECENT_FLOW_FILE = Path(__file__).resolve().parents[3] / 'data' / 'live' / 'farmoor_flow_recent.csv'
 RECENT_FLOW_DAYS = 60
 

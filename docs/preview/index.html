@@ -1790,7 +1790,9 @@
       case 'channel': return 'Water in the river itself, upstream of the gauges.';
       case 'flow': return ms.farmoor_flow
         ? `What the model thinks is flowing. The Farmoor gauge last measured ${ms.farmoor_flow.value < 10 ? ms.farmoor_flow.value.toFixed(1) : ms.farmoor_flow.value.toFixed(0)} m³/s, at ${fmtShortDateTime(ms.farmoor_flow.time)}` +
-          (parseUtc(ms.times[0]) - parseUtc(ms.farmoor_flow.time) > 24 * 3600 * 1000 ? ' (the EA publishes it a few days late).' : '.')
+          (ms.farmoor_flow_estimate
+            ? `; it is offline, so the model was given ${ms.farmoor_flow_estimate.value.toFixed(1)} m³/s, estimated from the river differentials.`
+            : parseUtc(ms.times[0]) - parseUtc(ms.farmoor_flow.time) > 24 * 3600 * 1000 ? ' (the EA publishes it a few days late).' : '.')
         : 'What the model thinks is flowing past.';
     }
     return '';
@@ -1945,6 +1947,8 @@
         ? `<span class="stale-warning">Stale forecast — sensor offline</span>`
         : loc.estimated && loc.estimated.hours >= 4
           ? `<span class="stale-warning">Gauges offline — estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}</span>`
+          : loc.model_state && loc.model_state.farmoor_flow_estimate
+            ? `<span class="stand-in-note">Farmoor flow gauge offline since ${fmtShortDateTime(loc.model_state.farmoor_flow_estimate.since)}; flow estimated from the river differentials</span>`
           : loc.gauge_stand_in
             ? `<span class="stand-in-note">${loc.gauge_stand_in.gauge} gauge offline${loc.gauge_stand_in.since ? ` since ${fmtShortDateTime(loc.gauge_stand_in.since)}` : ''}; using the ${loc.gauge_stand_in.stand_in} gauge instead</span>`
             : '';

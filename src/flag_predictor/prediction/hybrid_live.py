@@ -408,32 +408,96 @@ def _neighbour_differential(location: str, grid: pd.DatetimeIndex) -> Optional[p
 
 
 class FlowUnavailable(RuntimeError):
-    """No Farmoor flow within FLOW_MAX_AGE_H of the forecast start: the hybrid is not run, and the page
-    keeps the previous forecast, marked stale (generate_all_location_figures)."""
+    """Neither Farmoor flow nor any stretch's differential to estimate it from: the hybrid is not run,
+    and the page keeps the previous forecast, marked stale (generate_all_location_figures)."""
 
 
-# Without recent Farmoor flow the hybrid's encoder starts from near-saturated soil (~72% wet against
-# ~45% with flow, 16 Nov 2026) and over-forecasts every rise. Flow at Farmoor changes slowly, so up
-# to this many hours the last reading is carried forward; beyond it the forecast is held instead.
-FLOW_MAX_AGE_H = 24
+# Without Farmoor flow the hybrid's encoder starts from near-saturated soil (~72% wet against ~45%
+# with flow, 16 Nov 2026) and over-forecasts every rise. So while the gauge is offline the flow is
+# estimated from the differentials (estimate_flow); short gaps (EA delay) are forward-filled.
+FLOW_FFILL_H = 6
+FLOW_MAP_FILE = 'flow_from_differential.json'     # fit_flow_from_differential.py
+FLOW_DIFF_SMOOTH_H = 24                           # the map is fitted on daily means
 
 
-def _live_flow(merged: pd.DataFrame, grid: pd.DatetimeIndex) -> pd.Series:
-    """Hourly Farmoor flow on the grid: short gaps forward-filled (6 h), and the last reading carried
-    to t0 if it is at most FLOW_MAX_AGE_H old. Raises FlowUnavailable otherwise."""
+def _flow_maps(models_dir: Path) -> Dict[str, tuple]:
+    if 'flow_maps' not in _cache:
+        import json
+        raw = json.loads((Path(models_dir) / FLOW_MAP_FILE).read_text())
+        _cache['flow_maps'] = {k: (np.asarray(v['differential']), np.asarray(v['log_flow'])) for k, v in raw.items()}
+    return _cache['flow_maps']
+
+
+def estimate_flow(flow: pd.Series, diffs: Dict[str, pd.Series], maps: Dict[str, tuple]) -> pd.Series:
+    """Fill each gap in hourly Farmoor flow from the differentials.
+
+    Anchored to the last real reading before the gap: Q(t) = Q(a) * exp(mean over stretches of
+    f(D(t)) - f(D(a))), with D the trailing 24 h mean differential and f the fitted map from
+    differential to log flow. Stretches without a differential at both a and t are left out; hours
+    with none stay NaN. Before the first real reading nothing is filled.
+    """
+    out = flow.copy()
+    valid = flow.notna()
+    if not valid.any():
+        return out
+    lf = {}
+    for loc, d in diffs.items():
+        if loc not in maps or d is None:
+            continue
+        dbar = d.reindex(flow.index).rolling(FLOW_DIFF_SMOOTH_H, min_periods=6).mean()
+        x, y = maps[loc]
+        lf[loc] = pd.Series(np.where(dbar.notna(), np.interp(dbar.fillna(0.0), x, y), np.nan), index=flow.index)
+    if not lf:
+        return out
+    lf = pd.DataFrame(lf)
+    anchor_t = pd.Series(np.where(valid, np.arange(len(flow)), np.nan), index=flow.index).ffill()
+    gap = ~valid & anchor_t.notna()
+    if not gap.any():
+        return out
+    pos = anchor_t[gap].astype(int).to_numpy()
+    q_a = flow.to_numpy()[pos]
+    change = lf[gap].to_numpy() - lf.to_numpy()[pos]          # NaN where a stretch lacks D at a or t
+    with np.errstate(invalid='ignore'):
+        mean_change = np.nanmean(np.where(np.isfinite(change), change, np.nan), axis=1)
+    out[gap] = q_a * np.exp(mean_change)
+    return out
+
+
+def _live_flow(merged: pd.DataFrame, grid: pd.DatetimeIndex, location: str,
+               models_dir: Optional[Path] = None) -> tuple:
+    """(hourly Farmoor flow on the grid, last real reading time or None if none needed estimating).
+
+    Gaps up to FLOW_FFILL_H hours are forward-filled; longer ones are estimated from the
+    differentials (estimate_flow). Raises FlowUnavailable if t0 still has no flow.
+    """
+    models_dir = Path(models_dir) if models_dir else Path(__file__).resolve().parents[3] / 'models'
     t0 = grid[-1]
-    flow = (merged['flow_m3s_Farmoor'].reindex(grid) if 'flow_m3s_Farmoor' in merged
-            else pd.Series(np.nan, index=grid))
-    last = flow.last_valid_index()
-    if last is None or t0 - last > pd.Timedelta(hours=FLOW_MAX_AGE_H):
+    raw = (merged['flow_m3s_Farmoor'].reindex(grid) if 'flow_m3s_Farmoor' in merged
+           else pd.Series(np.nan, index=grid))
+    last = raw.last_valid_index()
+    flow = raw.ffill(limit=FLOW_FFILL_H)
+    if flow.isna().any() and last is not None:
+        diffs = {location: merged['differential'].reindex(grid)}
+        try:
+            for loc, ser in _all_differentials().items():
+                if loc != location and ser is not None and len(ser):
+                    diffs[loc] = ser.resample('1h').mean().reindex(grid)
+        except Exception as exc:
+            print(f"  [flow] other stretches' differentials unavailable ({exc})")
+        try:
+            est = estimate_flow(raw, diffs, _flow_maps(models_dir))
+            # Forward-filled hours keep the reading; only the longer gaps take the estimate.
+            flow = flow.combine_first(est)
+        except Exception as exc:
+            print(f"  [flow] estimate from the differentials failed ({type(exc).__name__}: {exc})")
+    if pd.isna(flow.iloc[-1]):
         since = f'since {last}' if last is not None else 'in the last 60 days'
-        raise FlowUnavailable(f'no Farmoor flow {since} (limit {FLOW_MAX_AGE_H} h)')
-    if t0 - last > pd.Timedelta(hours=6):
-        print(f"  [flow] last Farmoor flow {last} ({(t0 - last) / pd.Timedelta(hours=1):.0f} h ago); "
-              f"carried forward")
-    flow = flow.ffill(limit=6)
-    flow.loc[last:] = flow.loc[last:].ffill()
-    return flow
+        raise FlowUnavailable(f'no Farmoor flow {since}, and no differential to estimate it from')
+    estimated_since = last if (last is not None and t0 - last > pd.Timedelta(hours=FLOW_FFILL_H)) else None
+    if estimated_since is not None:
+        print(f"  [flow] Farmoor gauge silent since {last}; flow estimated from the differentials "
+              f"({flow.iloc[-1]:.1f} m³/s now)")
+    return flow, estimated_since
 
 
 def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd.DataFrame:
@@ -445,13 +509,14 @@ def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd
     csv = _gauge_csv_rain(project_root).reindex(index=grid, columns=gauges)
     api = _api_rain()
     rain = api.reindex(index=grid, columns=gauges).combine_first(csv) if len(api) else csv
-    flow = _live_flow(merged, grid)
+    flow, flow_estimated_since = _live_flow(merged, grid, location, project_root / 'models')
     diff = merged['differential'].reindex(grid)
     back = _hours_since_outage(diff)
     if back is not None and back <= OUTAGE_BRIDGE_FOR_H:
         diff = fill_outage(diff, _neighbour_differential(location, grid), OUTAGE_NEIGHBOUR[location][1])
     frame = pd.concat([diff.rename('differential'), rain], axis=1)
     frame['flow_m3s_Farmoor'] = flow
+    frame.attrs['flow_estimated_since'] = flow_estimated_since
     missing = rain.isna().all(axis=1).loc[t0 - pd.Timedelta(days=35):].mean()
     if missing > 0.05:
         print(f"  [beta] warning: {missing:.0%} of the last 35 days have no gauge rain")
@@ -710,6 +775,12 @@ def model_state_payload(location: str, names: List[str], models_dir: Path, index
     if len(f):
         out['farmoor_flow'] = {'value': round(float(f.iloc[-1]), 1),
                                'time': f.index[-1].tz_convert('UTC').tz_localize(None).isoformat()}
+    est_since = frame.attrs.get('flow_estimated_since')
+    if est_since is not None and 'flow_m3s_Farmoor' in frame:
+        # The gauge is silent: what the model was given instead (estimate_flow).
+        out['farmoor_flow_estimate'] = {
+            'value': round(float(frame['flow_m3s_Farmoor'].iloc[-1]), 1),
+            'since': pd.Timestamp(est_since).tz_convert('UTC').tz_localize(None).isoformat()}
     print(f"  [model state] soil {now['soil']:.0f}% wet; stores quick {now['quick']:.1f}, medium "
           f"{now['medium']:.1f}, slow {now['slow']:.1f}, channel {now['channel']:.1f} mm; flow {now['flow']:.1f} m³/s")
     return out
