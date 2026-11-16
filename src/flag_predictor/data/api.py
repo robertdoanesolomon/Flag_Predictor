@@ -362,7 +362,8 @@ def _fetch_live_farmoor_flow(verbose: bool = True, days: int = 28) -> pd.DataFra
     """Farmoor flow from the EA flood-monitoring API (raw, near real time), last ``days`` days."""
     try:
         since = (pd.Timestamp.utcnow() - pd.Timedelta(days=days)).strftime('%Y-%m-%dT%H:%M:%SZ')
-        r = requests.get(LIVE_FLOW_URL, params={'since': since, '_sorted': '', '_limit': 10000}, timeout=60)
+        r = _requests_session_with_retries().get(
+            LIVE_FLOW_URL, params={'since': since, '_sorted': '', '_limit': 10000}, timeout=60)
         r.raise_for_status()
         items = r.json().get('items', [])
         s = pd.Series({pd.Timestamp(i['dateTime']): i.get('value') for i in items if 'dateTime' in i}, dtype=object)
@@ -379,49 +380,64 @@ def _fetch_live_farmoor_flow(verbose: bool = True, days: int = 28) -> pd.DataFra
         return pd.DataFrame()
 
 
-def fetch_flow_data(verbose: bool = True, min_days_back: int = 90) -> pd.DataFrame:
-    """
-    Fetch recent Farmoor flow data from Hydrology API.
-    
-    Same pattern as rainfall: returns DataFrame with flow_m3s_Farmoor column,
-    timestamp index. Used for training and forecasting to get recent flow
-    (API data overrides historical CSV for overlapping dates).
-    
-    Hydrology API returns oldest-first by default, so we use min-date to fetch
-    only recent data (last min_days_back days).
-    
-    Args:
-        verbose: Whether to print progress
-        min_days_back: Fetch data from this many days ago to present (default 90)
-        
-    Returns:
-        DataFrame with flow_m3s_Farmoor column, or empty DataFrame on error
-    """
-    if verbose:
-        print("Fetching flow data...")
-    
+# One Farmoor flow fetch per run: every stretch and the page then use the same series. Before
+# this each stretch fetched separately, so one failed request could drop Farmoor flow from one
+# stretch's model while the others (and the page) still had it (16 Nov 2026). Only a non-empty
+# result is kept, so a failure is retried on the next call.
+_FLOW_CACHE: Dict[int, Tuple[pd.Timestamp, pd.DataFrame]] = {}
+_FLOW_CACHE_TTL = pd.Timedelta(minutes=10)
+
+
+def _fetch_qualified_farmoor_flow(verbose: bool, min_days_back: int) -> pd.DataFrame:
+    """Farmoor flow from the Hydrology API (qualified, published days late)."""
     try:
         min_date = (pd.Timestamp.utcnow() - pd.Timedelta(days=min_days_back)).strftime('%Y-%m-%d')
         url = f"{FLOW_API_BASE}?_limit=20000&min-date={min_date}"
-        response = requests.get(url, timeout=60)
+        response = _requests_session_with_retries().get(url, timeout=60)
         response.raise_for_status()
-        df = _process_flow_api_response(response.json(), column_name='flow_m3s_Farmoor')
-        # The qualified (checked) series is published days late; the flood-monitoring feed has the
-        # same gauge's raw 15-min flow within the hour (identical where both exist). Fill the
-        # recent hours from it.
-        live = _fetch_live_farmoor_flow(verbose=verbose)
-        if not live.empty:
-            if not df.empty and df.index.tz is None:   # the qualified series comes back naive (UTC)
-                live.index = live.index.tz_localize(None)
-            df = df.combine_first(live) if not df.empty else live
-        if not df.empty and verbose:
-            print(f"  ✓ Farmoor flow: {len(df)} records")
-            print(f"  Date range: {df.index.min()} to {df.index.max()}")
-        return df
+        return _process_flow_api_response(response.json(), column_name='flow_m3s_Farmoor')
     except Exception as e:
         if verbose:
-            print(f"  ✗ Farmoor flow: {e}")
+            print(f"  ✗ Farmoor flow (qualified): {e}")
         return pd.DataFrame()
+
+
+def fetch_flow_data(verbose: bool = True, min_days_back: int = 90) -> pd.DataFrame:
+    """
+    Recent Farmoor flow: the Hydrology API's qualified series, with the recent hours from the
+    flood-monitoring live feed (the same gauge, published within the hour).
+
+    The two feeds are fetched independently, so either one failing still leaves the other.
+    The result is cached per process for a few minutes (see _FLOW_CACHE).
+
+    Args:
+        verbose: Whether to print progress
+        min_days_back: Fetch data from this many days ago to present (default 90)
+
+    Returns:
+        DataFrame with flow_m3s_Farmoor column, or empty DataFrame if both feeds failed
+    """
+    now = pd.Timestamp.utcnow()
+    hit = _FLOW_CACHE.get(min_days_back)
+    if hit is not None and now - hit[0] < _FLOW_CACHE_TTL:
+        return hit[1].copy()
+    if verbose:
+        print("Fetching flow data...")
+    df = _fetch_qualified_farmoor_flow(verbose, min_days_back)
+    live = _fetch_live_farmoor_flow(verbose=verbose)
+    if not live.empty:
+        if not df.empty and df.index.tz is None:   # the qualified series comes back naive (UTC)
+            live.index = live.index.tz_localize(None)
+        df = df.combine_first(live) if not df.empty else live
+    if df.empty:
+        if verbose:
+            print("  ✗ Farmoor flow: both EA feeds failed")
+        return pd.DataFrame()
+    if verbose:
+        print(f"  ✓ Farmoor flow: {len(df)} records")
+        print(f"  Date range: {df.index.min()} to {df.index.max()}")
+    _FLOW_CACHE[min_days_back] = (now, df)
+    return df.copy()
 
 
 def fetch_all_api_data(
