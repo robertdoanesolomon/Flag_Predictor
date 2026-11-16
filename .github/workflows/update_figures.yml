@@ -167,6 +167,8 @@ jobs:
             git add docs/
             if [ -d data/forecast_archive ]; then git add data/forecast_archive/; fi
             if [ -d data/termly ]; then git add data/termly/; fi
+            # The last good Farmoor flow, used if both EA feeds fail next run (data/api.py).
+            if [ -d data/live ]; then git add data/live/; fi
             if git diff --cached --quiet; then
               echo "No changes under docs/ or data/forecast_archive/"
               return 1

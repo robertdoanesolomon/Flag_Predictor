@@ -1133,6 +1133,9 @@ PREVIEW_PAYLOADS: dict = {}
 PREVIEW_MODEL: str | None = None
 # Trial-model runs that need every stretch's main forecast first (the shared catchment model).
 DEFERRED_TRIALS: list = []
+# Why the hybrid did not run for a location this run ({location: (kind, detail)}); the page then keeps
+# the previous forecast, marked stale with a "held" note (write_forecast_bundle).
+HELD_REASONS: dict = {}
 PREVIEW_ONLY_PAYLOADS: dict = {}
 # Trial pages: /preview (--preview-model) and /preview2 (--preview2-model). Each shows the main page's
 # preview payloads with its trial model's forecast where that model runs, and has its own live archive
@@ -1492,9 +1495,15 @@ def generate_spaghetti_figure(
                     DEFERRED_TRIALS.append(run_trial)
                 else:
                     run_trial()
-        except Exception:
-            print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
-            traceback.print_exc()
+        except Exception as exc:
+            from flag_predictor.prediction.hybrid_live import FlowUnavailable
+            if isinstance(exc, FlowUnavailable):
+                HELD_REASONS[location] = ("flow", str(exc))
+                print(f"\n[WARNING] Forecast held for '{location}': {exc}")
+            else:
+                HELD_REASONS[location] = ("error", f"{type(exc).__name__}: {exc}"[:300])
+                print(f"\n[WARNING] Beta (physics hybrid) forecast failed for '{location}':")
+                traceback.print_exc()
     return payload, beta_payload
 
 
@@ -1577,14 +1586,26 @@ def write_forecast_bundle(output_dir: Path, payloads: dict, failed_locations: li
 
     # Keep the previous payload for failed locations so the interactive page
     # still shows them (with their older forecast) instead of dropping the tab.
+    # A reused payload is marked stale (no flag cards, no alerts) with a "held" note saying why and
+    # since when; a payload held again keeps its original "since".
     if failed_locations and json_path.exists():
         try:
             with open(json_path) as f:
-                previous_locations = json.load(f).get("locations", {})
+                previous = json.load(f)
+            previous_locations = previous.get("locations", {})
             for location in failed_locations:
                 if location not in payloads and location in previous_locations:
-                    payloads[location] = previous_locations[location]
-                    print(f"  Reusing previous forecast payload for '{location}' in {output_dir}")
+                    held_payload = dict(previous_locations[location])
+                    kind, detail = HELD_REASONS.get(location, ("error", "forecast failed"))
+                    old_held = held_payload.get("held") or {}
+                    held_payload["stale"] = True
+                    held_payload["held"] = {
+                        "kind": kind,
+                        "detail": detail,
+                        "since": old_held.get("since") or previous.get("generated_at"),
+                    }
+                    payloads[location] = held_payload
+                    print(f"  Reusing previous forecast payload for '{location}' in {output_dir} (held: {kind})")
         except Exception as exc:
             print(f"  Could not reuse previous forecast_data.json: {exc}")
 
@@ -1763,7 +1784,10 @@ def main(argv: list[str] | None = None) -> None:
             elif loc in all_payloads:
                 print(f"  [primary] hybrid missing for '{loc}'; main page shows the September forecast")
                 main_payloads[loc] = all_payloads[loc]
-        write_forecast_bundle(output_dir, main_payloads, failed_locations)
+        # A location with no forecast this run keeps its previous one, marked stale; it is
+        # not archived as a new forecast (write_forecast_bundle gets a copy).
+        held = [loc for loc in locations_to_process if loc not in main_payloads and loc not in failed_locations]
+        write_forecast_bundle(output_dir, dict(main_payloads), failed_locations + held)
         if run_september:
             write_forecast_bundle(september_dir, dict(all_payloads), failed_locations)
         if not args.no_archive:

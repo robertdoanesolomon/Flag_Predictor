@@ -407,6 +407,35 @@ def _neighbour_differential(location: str, grid: pd.DatetimeIndex) -> Optional[p
     return ser.resample('1h').mean().reindex(grid)
 
 
+class FlowUnavailable(RuntimeError):
+    """No Farmoor flow within FLOW_MAX_AGE_H of the forecast start: the hybrid is not run, and the page
+    keeps the previous forecast, marked stale (generate_all_location_figures)."""
+
+
+# Without recent Farmoor flow the hybrid's encoder starts from near-saturated soil (~72% wet against
+# ~45% with flow, 16 Nov 2026) and over-forecasts every rise. Flow at Farmoor changes slowly, so up
+# to this many hours the last reading is carried forward; beyond it the forecast is held instead.
+FLOW_MAX_AGE_H = 24
+
+
+def _live_flow(merged: pd.DataFrame, grid: pd.DatetimeIndex) -> pd.Series:
+    """Hourly Farmoor flow on the grid: short gaps forward-filled (6 h), and the last reading carried
+    to t0 if it is at most FLOW_MAX_AGE_H old. Raises FlowUnavailable otherwise."""
+    t0 = grid[-1]
+    flow = (merged['flow_m3s_Farmoor'].reindex(grid) if 'flow_m3s_Farmoor' in merged
+            else pd.Series(np.nan, index=grid))
+    last = flow.last_valid_index()
+    if last is None or t0 - last > pd.Timedelta(hours=FLOW_MAX_AGE_H):
+        since = f'since {last}' if last is not None else 'in the last 60 days'
+        raise FlowUnavailable(f'no Farmoor flow {since} (limit {FLOW_MAX_AGE_H} h)')
+    if t0 - last > pd.Timedelta(hours=6):
+        print(f"  [flow] last Farmoor flow {last} ({(t0 - last) / pd.Timedelta(hours=1):.0f} h ago); "
+              f"carried forward")
+    flow = flow.ffill(limit=6)
+    flow.loc[last:] = flow.loc[last:].ffill()
+    return flow
+
+
 def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd.DataFrame:
     """Continuous hourly history ending at the production frame's last hour."""
     merged = _to_utc(merged_df)
@@ -416,7 +445,7 @@ def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd
     csv = _gauge_csv_rain(project_root).reindex(index=grid, columns=gauges)
     api = _api_rain()
     rain = api.reindex(index=grid, columns=gauges).combine_first(csv) if len(api) else csv
-    flow = merged['flow_m3s_Farmoor'].reindex(grid).ffill(limit=6) if 'flow_m3s_Farmoor' in merged else np.nan
+    flow = _live_flow(merged, grid)
     diff = merged['differential'].reindex(grid)
     back = _hours_since_outage(diff)
     if back is not None and back <= OUTAGE_BRIDGE_FOR_H:

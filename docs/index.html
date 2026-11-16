@@ -1673,6 +1673,17 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
     poll();
   }
+  // A held forecast (generate_all_location_figures.write_forecast_bundle): this run could not
+  // forecast the stretch, so the page keeps the last one it made.
+  function heldText(loc) {
+    const h = loc.held || {};
+    const since = h.since ? ` from ${fmtShortDateTime(h.since)}` : '';
+    const why = h.kind === 'flow'
+      ? 'The Environment Agency has not published the Farmoor flow the model needs for over a day'
+      : 'The latest forecast run failed for this stretch';
+    return `${why}, so this is the forecast${since}. It comes back with the next update after that is fixed.`;
+  }
+
   function renderFlagOutlookHtml(loc) {
     if (!PREVIEW) return '';
     const off = officialFlag(loc);
@@ -1680,7 +1691,9 @@
     // and the differential would be compared with the flag flying now, so show neither.
     const stale = !!loc.stale || !!(off && off.forecast_stale);
     const cards = [];
-    if (stale) {
+    if (stale && loc.held) {
+      cards.push(cardHtml('Forecast', { main: 'No flag-change forecast', sub: heldText(loc) }, false));
+    } else if (stale) {
       const lastAt = loc.latest_reading || loc.last_sensor_update;
       const last = lastAt ? ` since ${fmtShortDateTime(lastAt)}` : '';
       cards.push(cardHtml('Forecast', { main: 'No flag-change forecast',
@@ -1926,7 +1939,9 @@
     return bundle.location_order.map((key, i) => {
       const loc = bundle.locations[key];
       const isWallingford = key === 'wallingford';
-      const stale = loc.stale
+      const stale = loc.stale && loc.held
+        ? `<span class="stale-warning">${loc.held.kind === 'flow' ? 'Forecast held — Farmoor flow unavailable' : 'Forecast held — last run failed'}${loc.held.since ? ` (forecast from ${fmtShortDateTime(loc.held.since)})` : ''}</span>`
+        : loc.stale
         ? `<span class="stale-warning">Stale forecast — sensor offline</span>`
         : loc.estimated && loc.estimated.hours >= 4
           ? `<span class="stale-warning">Gauges offline — estimated from ${STRETCH_NAMES[loc.estimated.from] || loc.estimated.from}</span>`

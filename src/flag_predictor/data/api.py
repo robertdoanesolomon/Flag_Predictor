@@ -6,6 +6,8 @@ Functions for fetching real-time data from:
 - Open-Meteo API (rainfall forecasts)
 """
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import requests
@@ -387,6 +389,45 @@ def _fetch_live_farmoor_flow(verbose: bool = True, days: int = 28) -> pd.DataFra
 _FLOW_CACHE: Dict[int, Tuple[pd.Timestamp, pd.DataFrame]] = {}
 _FLOW_CACHE_TTL = pd.Timedelta(minutes=10)
 
+# The last good Farmoor flow (hourly means, naive UTC), saved by every successful fetch and committed
+# with the forecast. If both EA feeds fail, fetch_flow_data returns this instead, and the hybrid
+# carries its last value forward for up to hybrid_live.FLOW_MAX_AGE_H hours.
+RECENT_FLOW_FILE = Path(__file__).resolve().parents[3] / 'data' / 'live' / 'farmoor_flow_recent.csv'
+RECENT_FLOW_DAYS = 60
+
+
+def _naive_utc(index: pd.DatetimeIndex) -> pd.DatetimeIndex:
+    return index.tz_convert('UTC').tz_localize(None) if index.tz is not None else index
+
+
+def _save_recent_flow(df: pd.DataFrame, path: Path = None) -> None:
+    """Keep the last RECENT_FLOW_DAYS of hourly Farmoor flow on disk (never fails the fetch)."""
+    path = path or RECENT_FLOW_FILE
+    try:
+        s = df['flow_m3s_Farmoor'].dropna()
+        s.index = _naive_utc(pd.DatetimeIndex(s.index))
+        s = s.resample('1h').mean().dropna()
+        s = s.loc[s.index[-1] - pd.Timedelta(days=RECENT_FLOW_DAYS):].round(3)
+        if path.exists():
+            old = pd.read_csv(path, index_col=0, parse_dates=True)['flow_m3s_Farmoor']
+            if len(old) and old.index[-1] >= s.index[-1]:
+                return   # nothing newer; don't rewrite (no needless commit)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        s.rename_axis('time').to_frame('flow_m3s_Farmoor').to_csv(path)
+    except Exception as e:
+        print(f"  ✗ Could not save recent Farmoor flow: {e}")
+
+
+def _load_recent_flow(path: Path = None) -> pd.DataFrame:
+    path = path or RECENT_FLOW_FILE
+    try:
+        df = pd.read_csv(path, index_col=0, parse_dates=True)[['flow_m3s_Farmoor']]
+        df.index = _naive_utc(pd.DatetimeIndex(df.index))
+        df.attrs['source'] = 'saved'
+        return df
+    except Exception:
+        return pd.DataFrame()
+
 
 def _fetch_qualified_farmoor_flow(verbose: bool, min_days_back: int) -> pd.DataFrame:
     """Farmoor flow from the Hydrology API (qualified, published days late)."""
@@ -430,9 +471,13 @@ def fetch_flow_data(verbose: bool = True, min_days_back: int = 90) -> pd.DataFra
             live.index = live.index.tz_localize(None)
         df = df.combine_first(live) if not df.empty else live
     if df.empty:
+        # Not cached, so the next call tries the EA again.
+        saved = _load_recent_flow()
         if verbose:
-            print("  ✗ Farmoor flow: both EA feeds failed")
-        return pd.DataFrame()
+            print("  ✗ Farmoor flow: both EA feeds failed; "
+                  + (f"using the saved series to {saved.index[-1]}" if len(saved) else "no saved series either"))
+        return saved
+    _save_recent_flow(df)
     if verbose:
         print(f"  ✓ Farmoor flow: {len(df)} records")
         print(f"  Date range: {df.index.min()} to {df.index.max()}")
