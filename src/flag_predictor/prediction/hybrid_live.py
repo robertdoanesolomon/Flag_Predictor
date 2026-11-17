@@ -26,6 +26,7 @@ import numpy as np
 import pandas as pd
 
 from ..data.api import fetch_rainfall_data, get_rainfall_forecast_ensemble
+from ..data.gauge_qc import COORDS as GAUGE_COORDS, clean_rain
 from ..data.loader import load_historical_rainfall
 from ..models.candidates import ensemble_predictor
 from ..models.physics_models import M3S_PER_MM_H
@@ -286,14 +287,45 @@ def nowcast_error_sd(location: str, hours: float, level: float) -> float:
     return float(sd * (p['mid_factor'] if lo <= level < hi else 1.0))
 
 
-def recent_gauge_rain(stations: List[str]) -> Optional[pd.Series]:
-    """Hourly mean rain (mm) over these gauges from the EA API, UTC-naive index, or None.
-    For the page's rain history while a stretch's river gauges are offline."""
+def checked_rain(grid: pd.DatetimeIndex, project_root: Optional[Path] = None) -> pd.DataFrame:
+    """Hourly rain at every gauge on ``grid`` (UTC): EA API readings on top of the gauge CSVs, with
+    faulty gauges blanked and every gap filled from the nearest reporting gauges (data/gauge_qc.py).
+    All 19 gauges go into the check, so gauges the model doesn't use still serve as neighbours.
+    The check's findings are in ``.attrs['gauge_check']``."""
+    key = ('checked', grid[0], grid[-1], len(grid))
+    if key not in _cache:
+        gauges = list(GAUGE_COORDS)
+        api = _api_rain()
+        rain = api.reindex(index=grid, columns=gauges) if len(api) else pd.DataFrame(index=grid, columns=gauges, dtype=float)
+        if project_root is not None:
+            rain = rain.combine_first(_gauge_csv_rain(project_root).reindex(index=grid, columns=gauges))
+        verbose = not any(isinstance(k, tuple) and k[0] == 'checked' for k in _cache)
+        clean, report = clean_rain(rain.astype(float), verbose=verbose)
+        clean.attrs['gauge_check'] = report
+        _cache[key] = clean
+    return _cache[key]
+
+
+def gauge_check_report() -> Dict[str, dict]:
+    """Findings of the latest gauge check this run (gauge -> details), for the page."""
+    for k in reversed(list(_cache)):
+        if isinstance(k, tuple) and k[0] == 'checked':
+            return _cache[k].attrs.get('gauge_check', {})
+    return {}
+
+
+def recent_gauge_rain(stations: List[str], hours: int = 24 * 10) -> Optional[pd.Series]:
+    """Hourly mean rain (mm) over these gauges, checked and gap-filled (checked_rain), up to the
+    current hour, UTC-naive index, or None. For the page's rain history."""
     api = _api_rain()
-    cols = [c for c in stations if c in api.columns]
+    if not len(api):
+        return None
+    end = pd.Timestamp.now('UTC').floor('1h')
+    clean = checked_rain(pd.date_range(end - pd.Timedelta(hours=hours), end, freq='1h'))
+    cols = [c for c in stations if c in clean.columns]
     if not cols:
         return None
-    out = api[cols].clip(lower=0).mean(axis=1)
+    out = clean[cols].clip(lower=0).mean(axis=1)
     out.index = out.index.tz_convert('UTC').tz_localize(None)
     return out
 
@@ -506,9 +538,8 @@ def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd
     t0 = merged.index[-1]
     grid = pd.date_range(t0 - pd.Timedelta(days=HISTORY_DAYS), t0, freq='1h')
     gauges = TRAINING_GAUGES[location]
-    csv = _gauge_csv_rain(project_root).reindex(index=grid, columns=gauges)
-    api = _api_rain()
-    rain = api.reindex(index=grid, columns=gauges).combine_first(csv) if len(api) else csv
+    checked = checked_rain(grid, project_root)
+    rain = checked[gauges]
     flow, flow_estimated_since = _live_flow(merged, grid, location, project_root / 'models')
     diff = merged['differential'].reindex(grid)
     back = _hours_since_outage(diff)
@@ -517,6 +548,7 @@ def live_frame(location: str, merged_df: pd.DataFrame, project_root: Path) -> pd
     frame = pd.concat([diff.rename('differential'), rain], axis=1)
     frame['flow_m3s_Farmoor'] = flow
     frame.attrs['flow_estimated_since'] = flow_estimated_since
+    frame.attrs['gauge_check'] = checked.attrs.get('gauge_check', {})
     missing = rain.isna().all(axis=1).loc[t0 - pd.Timedelta(days=35):].mean()
     if missing > 0.05:
         print(f"  [beta] warning: {missing:.0%} of the last 35 days have no gauge rain")

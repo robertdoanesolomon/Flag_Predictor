@@ -682,7 +682,13 @@ def render_location_outputs(
     """
     if make_figures is None:
         make_figures = MAKE_FIGURES
-    station_names_list = get_location_station_names(location)
+    # The page's rain (history bars, totals, forecast bars) averages the gauges the forecast model
+    # uses, so the page shows the rain the model sees.
+    try:
+        from flag_predictor.prediction.hybrid_live import TRAINING_GAUGES
+        station_names_list = list(TRAINING_GAUGES[location.lower()])
+    except Exception:
+        station_names_list = get_location_station_names(location)
 
     # ------------------------------------------------------------------
     # STEP 5: Visualisation (spaghetti + rainfall bars)
@@ -787,13 +793,12 @@ def render_location_outputs(
         now_naive = pd.Timestamp.now('UTC').tz_localize(None).floor('1h')
         grid = pd.date_range(_ensure_timezone_naive(pd.DatetimeIndex([history_start]))[0], now_naive, freq='1h')
         hr = hr.groupby(hr.index.floor('1h')).sum(min_count=1).reindex(grid)
-        gaps = int(hr.isna().sum())
-        if gaps:
-            from flag_predictor.prediction.hybrid_live import recent_gauge_rain
-            more = recent_gauge_rain(rainfall_cols)
-            if more is not None:
-                hr = hr.fillna(more.groupby(more.index.floor('1h')).sum(min_count=1).reindex(grid))
-            print(f"  Rain: {gaps - int(hr.isna().sum())} of {gaps} hours without a river reading filled from the EA rain gauges")
+        # The model's gauges straight from the EA, with faulty gauges replaced and late ones filled
+        # from their neighbours (hybrid_live.checked_rain); the frame's own rain only where that has none.
+        from flag_predictor.prediction.hybrid_live import recent_gauge_rain
+        more = recent_gauge_rain(station_names_list, hours=len(grid) + 24)
+        if more is not None:
+            hr = more.groupby(more.index.floor('1h')).sum(min_count=1).reindex(grid).combine_first(hr)
         historical_rainfall_hourly = hr
     except Exception as exc:
         print(f"  [rain] could not fill the rain history ({type(exc).__name__}: {exc})")
@@ -1120,6 +1125,15 @@ def render_location_outputs(
     if merged_df.attrs.get("gauge_stand_in"):
         payload["gauge_stand_in"] = dict(merged_df.attrs["gauge_stand_in"])
         split_stand_in_line(payload)
+    # Rain gauges the check found faulty now (hybrid_live.checked_rain): a note under the rain totals.
+    try:
+        from flag_predictor.prediction.hybrid_live import gauge_check_report
+        faulty = {g: r for g, r in gauge_check_report().items() if r.get("faulty_now") and g in station_names_list}
+        if faulty:
+            payload["rain_gauges_faulty"] = [{"gauge": g, "caught": r.get("caught"), "since": r.get("since")}
+                                             for g, r in sorted(faulty.items())]
+    except Exception as exc:
+        print(f"  [gauge check] no report for the page ({exc})")
     add_15min_history(payload, merged_df.attrs.get("diff_15min"), config)
     return payload
 

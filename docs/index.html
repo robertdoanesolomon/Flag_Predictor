@@ -482,6 +482,7 @@
       text-transform: uppercase;
     }
     .stand-in-note { font-size: 0.8rem; color: var(--text-muted); }
+    .rain-gauge-note { margin: 8px 0 18px; }
 
     /* ---------- STATS GRID ---------- */
     details.under-hood { margin: 8px 0 22px; }
@@ -1797,6 +1798,17 @@
     }
     return '';
   }
+  // Rain gauges the forecast's gauge check found faulty (blocked funnel etc.): their neighbours stand in.
+  const GAUGE_NAMES = { St: "St John's", Chipping: 'Chipping Norton', Osney: 'Osney Lock', Stowell: 'Stowell Park' };
+  function rainGaugeNote(loc) {
+    const f = loc.rain_gauges_faulty;
+    if (!f || !f.length) return '';
+    const names = f.map((g) => GAUGE_NAMES[g.gauge] || g.gauge);
+    const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+    const one = f.length === 1 && f[0].caught != null ? ` (it caught ${Math.round(100 * f[0].caught)}% of the rain at the gauges around it)` : '';
+    return `<p class="stand-in-note rain-gauge-note">${list} rain ${f.length > 1 ? 'gauges look' : 'gauge looks'} faulty${one}: the forecast and these totals use the nearest gauges in ${f.length > 1 ? 'their' : 'its'} place.</p>`;
+  }
+
   function renderModelStateHtml(key, loc) {
     const ms = loc.model_state;
     const fmt = (v, u) => u === '%' ? `${Math.round(v)}<small>%</small>` : `${v >= 100 ? v.toFixed(0) : v.toFixed(1)}<small>${u === 'm³/s' ? ' m³/s' : 'mm'}</small>`;
@@ -2030,6 +2042,7 @@
                 <div class="value">${fmtMm(loc.summary.next_7d_rain_mm ?? loc.summary.next_3d_rain_mm)}<small>mm</small>${loc.summary.next_7d_rain_p10_mm != null && loc.summary.next_7d_rain_p90_mm != null ? ` <small style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:#6b8079;" title="10th to 90th percentile of the rain forecasts">(${fmtMm(loc.summary.next_7d_rain_p10_mm)}–${fmtMm(loc.summary.next_7d_rain_p90_mm)})</small>` : ''}</div>
               </div>
             </div>
+            ${rainGaugeNote(loc)}
 
             ${ON_PREVIEW_PAGE && loc.model_state ? renderModelStateHtml(key, loc) : ''}
 
