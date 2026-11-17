@@ -1847,7 +1847,25 @@
       layout[`xaxis${ax}`] = { gridcolor: T.grid, linecolor: T.axis, tickformat: '%d %b', nticks: 6 };
       layout[`yaxis${ax}`] = { gridcolor: T.grid, linecolor: T.axis, rangemode: 'tozero', nticks: 4 };
     });
-    Plotly.newPlot(el, traces, layout, { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false });
+    Plotly.newPlot(el, traces, layout, ZOOM_CONFIG);
+  }
+
+  // All charts zoom like the long-range page: drag a box to zoom, double-click to go back.
+  const ZOOM_CONFIG = { displayModeBar: false, displaylogo: false, responsive: true, scrollZoom: false, doubleClick: 'reset' };
+  // Keep the flag chart and the chance chart beneath it on the same dates when either is zoomed.
+  function linkXZoom(idA, idB) {
+    const a = document.getElementById(idA), b = document.getElementById(idB);
+    if (!a || !b || !a.on || !b.on) return;
+    let busy = false;
+    const pass = (from, to) => from.on('plotly_relayout', (ev) => {
+      if (busy || !to.data) return;
+      const upd = {};
+      Object.keys(ev).forEach((k) => { if (k.startsWith('xaxis.')) upd[k] = ev[k]; });
+      if (!Object.keys(upd).length) return;
+      busy = true;
+      Promise.resolve(Plotly.relayout(to, upd)).finally(() => { busy = false; });
+    });
+    pass(a, b); pass(b, a);
   }
 
   function themeColors() {
@@ -2306,7 +2324,7 @@
       showlegend: false,
       hovermode: 'x unified',
       hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' }, bordercolor: 'rgba(255,255,255,0.2)' },
-      dragmode: false,
+      dragmode: 'zoom',
       shapes,
       barmode: 'overlay',
       bargap: 0.0,
@@ -2315,8 +2333,7 @@
         showspikes: true,
         spikemode: 'across',
         spikecolor: T.axis,
-        spikethickness: 1,
-        fixedrange: true
+        spikethickness: 1
       },
       yaxis: {
         title: { text: 'Height differential (m)', font: { size: compact ? 11 : 13, color: T.font } },
@@ -2324,8 +2341,7 @@
         gridcolor: T.grid,
         linecolor: T.axis,
         zeroline: false,
-        tickfont: { color: T.font },
-        fixedrange: true
+        tickfont: { color: T.font }
       },
       yaxis2: {
         title: { text: 'Rainfall (mm/day)', font: { size: compact ? 10 : 13, color: T.rainForecast } },
@@ -2334,8 +2350,7 @@
         rangemode: 'tozero',
         showgrid: false,
         linecolor: T.axis,
-        tickfont: { color: T.rainForecast },
-        fixedrange: true
+        tickfont: { color: T.rainForecast }
       },
       annotations: [
         {
@@ -2385,7 +2400,7 @@
         : { l: 60, r: 70, t: 16, b: 56 },
       hovermode: 'x unified',
       hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' } },
-      dragmode: false,
+      dragmode: 'zoom',
       shapes: [{
         type: 'line',
         x0: ukWall(new Date()), x1: ukWall(new Date()),
@@ -2394,8 +2409,7 @@
       }],
       xaxis: {
         ...sharedX,
-        showspikes: false,
-        fixedrange: true
+        showspikes: false
       },
       yaxis: {
         title: { text: PREVIEW ? 'Chance' : 'Flag probability', font: { size: compact ? 11 : 13, color: T.font } },
@@ -2404,8 +2418,7 @@
         gridcolor: T.grid,
         linecolor: T.axis,
         zeroline: false,
-        tickfont: { color: T.font },
-        fixedrange: true
+        tickfont: { color: T.font }
       }
     };
     return { traces, layout };
@@ -2422,13 +2435,7 @@
     try {
       const mainTraces = buildMainTraces(loc, T);
       const mainLayout = buildMainLayout(loc, key, T);
-      Plotly.newPlot(`plot-${key}`, mainTraces, mainLayout, {
-        displayModeBar: false,
-        displaylogo: false,
-        responsive: true,
-        scrollZoom: false,
-        doubleClick: false
-      });
+      Plotly.newPlot(`plot-${key}`, mainTraces, mainLayout, ZOOM_CONFIG);
     } catch (err) {
       console.error(`main plot failed for ${key}`, err);
       const el = document.getElementById(`plot-${key}`);
@@ -2438,17 +2445,13 @@
     if (key !== 'wallingford') {
       try {
         const prob = buildProbTracesAndLayout(loc, key, T);
-        Plotly.newPlot(`prob-${key}`, prob.traces, prob.layout, {
-          displayModeBar: false,
-          responsive: true,
-          scrollZoom: false,
-          doubleClick: false
-        });
+        Plotly.newPlot(`prob-${key}`, prob.traces, prob.layout, ZOOM_CONFIG);
       } catch (err) {
         console.error(`prob plot failed for ${key}`, err);
         const el = document.getElementById(`prob-${key}`);
         if (el) el.innerHTML = `<div class="error">Probability chart failed: ${err.message}</div>`;
       }
+      linkXZoom(`plot-${key}`, `prob-${key}`);
     }
   }
 
@@ -2657,16 +2660,16 @@
       showlegend: false,
       hovermode: 'closest',
       hoverlabel: { bgcolor: 'rgba(20,30,28,0.92)', font: { color: '#fff' } },
-      dragmode: false,
+      dragmode: 'zoom',
       shapes: buildFlagBandShapes(loc, key).concat(extraShapes || []),
       xaxis: {
         type: 'date', range: xRange, gridcolor: T.grid, linecolor: T.axis,
-        tickfont: { color: T.font, size: compact ? 10 : 12 }, tickformat: '%-d %b', fixedrange: true
+        tickfont: { color: T.font, size: compact ? 10 : 12 }, tickformat: '%-d %b'
       },
       yaxis: {
         title: { text: yTitle, font: { size: compact ? 11 : 13, color: T.font } },
         range: [key === 'godstow' ? -0.05 : -0.1, yMax],
-        gridcolor: T.grid, linecolor: T.axis, zeroline: false, tickfont: { color: T.font }, fixedrange: true
+        gridcolor: T.grid, linecolor: T.axis, zeroline: false, tickfont: { color: T.font }
       }
     };
   }
@@ -2727,7 +2730,7 @@
         font: { size: 11, color: T.nowLine } }
     ];
     clearPlaceholder(plotId);
-    Plotly.react(plotId, traces, layout, { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false });
+    Plotly.react(plotId, traces, layout, ZOOM_CONFIG);
 
     // Scores over the hours observed so far.
     let n = 0, absErr = 0, inBand = 0, flagN = 0, flagRight = 0;
@@ -2802,7 +2805,7 @@
       bgcolor: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(22,34,31,0.85)' : 'rgba(255,255,255,0.85)'
     }];
     clearPlaceholder(plotId);
-    Plotly.react(plotId, traces, layout, { displayModeBar: false, responsive: true, scrollZoom: false, doubleClick: false });
+    Plotly.react(plotId, traces, layout, ZOOM_CONFIG);
 
     const errs = (fromH, toH) => {
       const e = rows.filter(r => r.lead_h >= fromH && r.lead_h < toH).map(r => Math.abs(r.mean - data.observed));
