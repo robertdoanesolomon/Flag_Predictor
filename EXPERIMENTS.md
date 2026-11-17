@@ -1356,3 +1356,29 @@ main page is unchanged. Its live forecasts go to `docs/archive/trial_preview2/` 
 `docs/archive/trial/`), and `verification_report.py` scores both against the main model. Model-error libraries: `models/error_library_hybrid_shared_<loc>.npz` (same
 starts and descriptors as the deployed libraries, the deployed per-lead inflation). Open: Wallingford
 in the joint fit; whether the soil-moisture / upstream-gauge inputs of `hybrid_srh` help it.
+
+## Faulty rain gauge check (17 Nov 2026)
+
+**Why.** Stanford's funnel blocked (0.4 mm on 17 Nov while St John's had 22 mm and Abingdon 10 mm;
+low since 15 Nov). The encoder sums rain over its gauges with gaps as zero, so a blocked or late gauge
+reads as a dry patch. The page's rain also averaged a different gauge set (13 for the Isis) from the
+model's 17, so its totals didn't show what the model saw.
+
+**Check** (`src/flag_predictor/data/gauge_qc.py`, live in `hybrid_live.checked_rain`). Each gauge against
+the median of its 4 nearest gauges (scaled by its long-run ratio to them), over the most recent days
+they call wet (>= 1 mm) adding up to 15 mm, counting only hours the gauge reported (so late gauges
+aren't faulty). Faulty if it caught < 30 % and 3 of the 4 each had > 3x its total. Faulty days (and the
+under-caught wet days just before) are blanked; every blank hour, faulty or not yet reported, is filled
+with the mean of the nearest reporting gauges x the ratio. All 19 gauges are checked, so Bicester and
+Byfield serve as neighbours.
+
+**Backtest** (`backtest_gauge_qc.py`, EA qualified daily rain 2015-2026): 1.5 % of gauge-days flagged,
+92 runs (median 8 days), 41 % of flagged days later marked Suspect/Missing/Estimated by the EA (11 %
+of all days). Clear catches: Benson Mar-Jun 2024, Stanford Dec 2023, Oct-Nov and Dec 2024, Bourton
+May-Jun 2022, Eynsham Sep-Oct 2022; also Aylesbury 8 Sep - 14 Oct 2026 (not yet QC'd by the EA).
+Some short summer flags are probably local showers; a false flag only swaps the gauge for its
+neighbours. Over-reading isn't flagged (rare, and mostly summer storms); hourly rain is capped at 50 mm.
+
+**Effect on 17 Nov 10:45.** Model-gauge rain today 16.5 -> 17.8 mm; 10-day peak +0.005 m at each
+stretch. Page rain (history, today, 7 days, forecast bars) now averages the model's gauges with the
+same check, and names any gauge faulty now.
