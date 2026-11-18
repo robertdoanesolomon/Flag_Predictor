@@ -30,6 +30,6 @@ def test_pool_uses_only_residuals_known_at_t0():
     assert np.allclose(pool, residual_pool(s2, t0))
 
 
-def test_godstow_band_unchanged(tmp_path):
+def test_other_location_band_unchanged(tmp_path):
     samples = np.zeros((5, 3))
-    assert band_samples('godstow', samples, pd.Timestamp('2026-11-18'), tmp_path) is samples
+    assert band_samples('elsewhere', samples, pd.Timestamp('2026-11-18'), tmp_path) is samples
