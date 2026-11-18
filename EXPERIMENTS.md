@@ -1406,4 +1406,4 @@ Shorter windows (5 h, 13 h) catch less of the multi-hour held steps (Isis 3–12
 jumpy. Wallingford's long-lead shortfall is the low-flow high bias, not spread.
 
 **Main page too** (18 Nov 2026): the deployed model's payload (main page and `/preview`) and `/preview`'s trial-model
-bands (`hybrid_srh`) use `reading_noise=True`. `/combinedmodel`'s `hybrid_shared` band stays plain.
+bands (`hybrid_srh`) use `reading_noise=True`. `/combinedmodel`'s `hybrid_shared` band too (from the same evening).
