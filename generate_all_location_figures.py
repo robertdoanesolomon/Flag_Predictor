@@ -205,8 +205,16 @@ def build_location_payload(
     total_payload = None
     if total_samples is not None:
         total_samples = np.asarray(total_samples, dtype=float)
+        # The band also carries the wobble of single gauge readings (prediction/reading_noise.py);
+        # the flag-band chances below keep the outcomes without it.
+        band = total_samples
+        try:
+            from flag_predictor.prediction.reading_noise import band_samples
+            band = band_samples(location, total_samples, forecast_start_time, PROJECT_ROOT / "docs" / "archive")
+        except Exception as exc:   # the extra width is a refinement; never lose the band over it
+            print(f"  [reading noise] skipped ({type(exc).__name__}: {exc})")
         total_payload = {
-            name: _safe_float_list(np.round(_smooth_lead(np.nanpercentile(total_samples, q, axis=0)), 4))
+            name: _safe_float_list(np.round(_smooth_lead(np.nanpercentile(band, q, axis=0)), 4))
             for name, q in (("p10", 10), ("p25", 25), ("p50", 50), ("p75", 75), ("p90", 90))
         }
         total_payload["n_samples"] = int(total_samples.shape[0])
