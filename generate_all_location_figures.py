@@ -172,7 +172,6 @@ def build_location_payload(
     forecast_rain_members_hourly: Optional[pd.DataFrame] = None,
     now: Optional[pd.Timestamp] = None,
     reading_noise: bool = False,
-    store_noise_band: bool = False,
 ) -> dict:
     """Assemble a JSON-serialisable dict with everything the frontend needs.
 
@@ -216,19 +215,13 @@ def build_location_payload(
             return out
 
         total_payload = band_payload(total_samples)
-        # /preview only: the band also carries the wobble of single gauge readings
-        # (prediction/reading_noise.py). ``reading_noise``: this payload's band (a /preview trial
-        # model); ``store_noise_band``: kept in PREVIEW_NOISE_BANDS for write_preview, the payload
-        # itself (shared with the main page) unchanged. Flag-band chances keep the outcomes without it.
-        if reading_noise or store_noise_band:
+        # ``reading_noise``: the band also carries the wobble of single gauge readings
+        # (prediction/reading_noise.py); the flag-band chances below keep the outcomes without it.
+        if reading_noise:
             try:
                 from flag_predictor.prediction.reading_noise import band_samples
-                noisy = band_payload(band_samples(location, total_samples, forecast_start_time,
-                                                  PROJECT_ROOT / "docs" / "archive"))
-                if reading_noise:
-                    total_payload = noisy
-                else:
-                    PREVIEW_NOISE_BANDS[location] = noisy
+                total_payload = band_payload(band_samples(location, total_samples, forecast_start_time,
+                                                          PROJECT_ROOT / "docs" / "archive"))
             except Exception as exc:   # the extra width is a refinement; never lose the band over it
                 print(f"  [reading noise] skipped ({type(exc).__name__}: {exc})")
     if location != "wallingford":
@@ -694,7 +687,6 @@ def render_location_outputs(
     flag_outlook: Optional[dict] = None,
     extra: Optional[dict] = None,
     reading_noise: bool = False,
-    store_noise_band: bool = False,
 ) -> dict:
     """Figures and the JSON payload for one location's ensemble forecast (steps 5-7).
 
@@ -1143,7 +1135,6 @@ def render_location_outputs(
         flag_outlook=flag_outlook,
         extra=extra,
         reading_noise=reading_noise,
-        store_noise_band=store_noise_band,
     )
     # One of the stretch's gauges offline and another standing in for it (Isis: King's Mill from the
     # Botanic Gardens gauge, data/api.py): a note on the page, not an estimate.
@@ -1167,9 +1158,6 @@ def render_location_outputs(
 LIVE_MEMBER_RAIN: dict = {}
 # Preview page payloads (stepped forecast, flag-band outlook, official flag), per location.
 PREVIEW_PAYLOADS: dict = {}
-# /preview only: the likely-range band with live reading wobble, for the locations whose /preview
-# payload is PREVIEW_PAYLOADS (swapped in by write_preview; the main page keeps the plain band).
-PREVIEW_NOISE_BANDS: dict = {}
 # --preview-model: a trial model (hybrid_live.VARIANTS) shown on the preview page only; the main
 # page keeps PREVIEW_PAYLOADS from the deployed model.
 PREVIEW_MODEL: str | None = None
@@ -1490,7 +1478,7 @@ def generate_spaghetti_figure(
                         make_figures=False,
                         flag_outlook=live.flag_outlook,
                         extra=preview_extras(location, live),
-                        store_noise_band=True,
+                        reading_noise=True,   # main page and /preview
                     )
                     mark_estimated(PREVIEW_PAYLOADS[location], nowcast)
                 except Exception:
@@ -1668,12 +1656,7 @@ def write_preview(output_dir: Path, preview_dir: Path, locations: list, only_pay
     """Preview page: same page as the main one (it switches its preview features on from its
     path), its own forecast_data.json. Never affects the main page."""
     try:
-        base = dict(PREVIEW_PAYLOADS)
-        if only_payloads is None:   # /preview: its band carries live reading wobble (reading_noise.py)
-            for loc, band in PREVIEW_NOISE_BANDS.items():
-                if loc in base and (base[loc].get("ensemble") or {}).get("total"):
-                    base[loc] = {**base[loc], "ensemble": {**base[loc]["ensemble"], "total": band}}
-        payloads = {**base, **(PREVIEW_ONLY_PAYLOADS if only_payloads is None else only_payloads)}
+        payloads = {**PREVIEW_PAYLOADS, **(PREVIEW_ONLY_PAYLOADS if only_payloads is None else only_payloads)}
         failed = [loc for loc in locations if loc not in payloads]
         write_forecast_bundle(preview_dir, payloads, failed)
         page = output_dir / "index.html"
