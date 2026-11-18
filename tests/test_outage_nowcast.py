@@ -101,5 +101,4 @@ def test_nowcast_goes_by_reading_times_not_the_carried_forward_tail():
     merged.attrs['reading_time'] = {h.tz_localize(None) if h.tz else h: (min(h, stop) + pd.Timedelta(minutes=45)).tz_localize(None)
                                     if (min(h, stop)).tz else min(h, stop) + pd.Timedelta(minutes=45) for h in hours}
     out, info = hl.outage_nowcast('isis', merged, now=now)
-    # a gauge's last reading is held for GAUGE_HOLD_H (3 h), so the estimate starts that much later
-    assert info is not None and info['hours'] == 8 - hl.GAUGE_HOLD_H
+    assert info is not None and info['hours'] == 8

@@ -25,7 +25,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from ..data.api import GAUGE_HOLD_H, fetch_rainfall_data, get_rainfall_forecast_ensemble
+from ..data.api import fetch_rainfall_data, get_rainfall_forecast_ensemble
 from ..data.gauge_qc import COORDS as GAUGE_COORDS, clean_rain
 from ..data.loader import load_historical_rainfall
 from ..models.candidates import ensemble_predictor
@@ -356,14 +356,13 @@ def outage_nowcast(location: str, merged_df: pd.DataFrame, now: Optional[pd.Time
     now = now.tz_localize('UTC') if now.tz is None else now.tz_convert('UTC')
     diff = merged['differential']
     t_last = diff.last_valid_index()
-    # The differential frame carries a gauge's last reading forward up to GAUGE_HOLD_H (data/api.py), so its
+    # The differential frame carries a gauge's last reading forward up to 1 h, Osney downstream 3 h (data/api.py), so its
     # last row can be hours after the last real reading. Go by the reading times when they are kept:
     # the last hour whose own reading falls inside it.
-    rt = merged_df.attrs.get('reading_time') or {}
+    # reading_time_core leaves out the gauge held longer (Osney downstream), so its hold is not an estimate.
+    rt = merged_df.attrs.get('reading_time_core') or merged_df.attrs.get('reading_time') or {}
     if t_last is not None and rt:
-        # a gauge may be held up to GAUGE_HOLD_H (data/api.py): those hours still count as readings
-        hold = pd.Timedelta(hours=GAUGE_HOLD_H)
-        real = [pd.Timestamp(h).tz_localize('UTC') for h, r in rt.items() if pd.Timestamp(r) >= pd.Timestamp(h) - hold]
+        real = [pd.Timestamp(h).tz_localize('UTC') for h, r in rt.items() if pd.Timestamp(r) >= pd.Timestamp(h)]
         real = [h for h in real if h <= t_last]
         if real and max(real) < t_last:
             t_last = max(real)
