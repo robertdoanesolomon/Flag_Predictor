@@ -1149,6 +1149,19 @@
     const h = parseUtc(hourIso);
     return r && r >= h && r - h < 3600 * 1000 ? loc.latest_reading : hourIso;
   }
+  // The newest reading is normally ~35 min old (EA publishing lag) plus up to 15 min until the next
+  // run. Past READINGS_DELAYED_MIN the EA feed (or our runs) have stalled: say so, as on 18 Nov 2026
+  // when the EA published nothing after 13:45. Stale and estimated forecasts carry their own notes.
+  const READINGS_DELAYED_MIN = 75;
+  function readingsDelayedHtml(loc) {
+    if (!loc || loc.stale || loc.estimated || !loc.latest_reading) return '';
+    const age = (Date.now() - parseUtc(loc.latest_reading)) / 60000;
+    if (!(age > READINGS_DELAYED_MIN)) return '';
+    const mins = Math.round(age), h = Math.floor(mins / 60), m = mins % 60;
+    const ago = h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`;
+    return `<p class="stand-in-note rain-gauge-note">River readings delayed: none published since ${fmtShortDateTime(loc.latest_reading)} (${ago} ago), usually about 35 min. The forecast starts from that reading and updates as soon as new ones arrive.</p>`;
+  }
+
   function parseUtc(iso) {
     if (typeof iso === 'string' && iso.includes('T') && !/(Z|[+-]\d\d:?\d\d)$/i.test(iso)) {
       return new Date(iso + 'Z');
@@ -2008,6 +2021,7 @@
                 : '';
             })()}
             <p class="meta">Latest river reading <strong>${fmtShortDateTime(loc.latest_reading || loc.forecast_start)}</strong></p>
+            ${readingsDelayedHtml(loc)}
 
             <div class="chart-block">
               <div class="chart-legend" data-plot="plot-${key}">
