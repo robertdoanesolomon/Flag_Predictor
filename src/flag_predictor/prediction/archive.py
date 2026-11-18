@@ -367,7 +367,7 @@ def trial_payloads(payloads: Dict[str, dict]) -> Dict[str, dict]:
 def update_trial_archive(docs_dir: Path, payloads: Dict[str, dict], now: Optional[pd.Timestamp] = None,
                          subdir: str = TRIAL_SUBDIR) -> dict:
     """Add a trial page's model forecasts to docs/archive/<subdir> (same slots as the main archive):
-    'trial' for /preview, 'trial_preview2' for /preview2."""
+    'trial' for /preview, 'trial_preview2' for /combinedmodel (formerly /preview2)."""
     archive_dir = Path(docs_dir) / 'archive' / subdir
     now = pd.Timestamp.utcnow() if now is None else pd.Timestamp(now)
     payloads = trial_payloads(payloads)

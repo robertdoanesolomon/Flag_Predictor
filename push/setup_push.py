@@ -23,7 +23,7 @@ from cloudflare import Cloudflare  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIGS = [ROOT / 'docs' / 'push_config.json', ROOT / 'docs' / 'preview' / 'push_config.json',
-           ROOT / 'docs' / 'preview2' / 'push_config.json']
+           ROOT / 'docs' / 'combinedmodel' / 'push_config.json']
 
 
 def b64url(b: bytes) -> str:

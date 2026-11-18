@@ -202,7 +202,7 @@ def live() -> dict:
         out[loc] = res
     for d in sorted(Path(ROOT / 'docs' / 'archive').glob('trial*')):
         if (d / 'issues').is_dir():
-            out[d.name] = live_trial(obs, bins, d.name)    # 'trial' (/preview), 'trial_preview2' (/preview2)
+            out[d.name] = live_trial(obs, bins, d.name)    # 'trial' (/preview), 'trial_preview2' (/combinedmodel)
     print('live archive done', flush=True)
     return out
 

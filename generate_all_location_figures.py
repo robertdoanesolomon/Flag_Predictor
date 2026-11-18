@@ -1179,7 +1179,7 @@ DEFERRED_TRIALS: list = []
 # the previous forecast, marked stale with a "held" note (write_forecast_bundle).
 HELD_REASONS: dict = {}
 PREVIEW_ONLY_PAYLOADS: dict = {}
-# Trial pages: /preview (--preview-model) and /preview2 (--preview2-model). Each shows the main page's
+# Trial pages: /preview (--preview-model) and /combinedmodel (--preview2-dir docs/combinedmodel --preview2-model). Each shows the main page's
 # preview payloads with its trial model's forecast where that model runs, and has its own live archive
 # (docs/archive/<archive>/, scored against the main model by verification_report.py).
 TRIAL_PAGES: list = []
@@ -1601,7 +1601,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--preview2-dir",
         default=None,
-        help="With --primary hybrid: a second trial page (e.g. docs/preview2) for --preview2-model.",
+        help="With --primary hybrid: a second trial page (e.g. docs/combinedmodel) for --preview2-model.",
     )
     parser.add_argument(
         "--preview2-model",

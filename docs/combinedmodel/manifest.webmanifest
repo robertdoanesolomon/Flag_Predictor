@@ -1,5 +1,5 @@
 {
-  "name": "Flag Predictor (trial 2)",
+  "name": "Flag Predictor (combined model)",
   "short_name": "Flag Predictor",
   "description": "River differential and OURCs flag forecast for the Isis and Godstow, with flag alerts.",
   "start_url": "./",
