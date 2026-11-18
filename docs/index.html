@@ -1159,7 +1159,7 @@
     if (!(age > READINGS_DELAYED_MIN)) return '';
     const mins = Math.round(age), h = Math.floor(mins / 60), m = mins % 60;
     const ago = h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`;
-    return `<p class="stand-in-note rain-gauge-note">River readings delayed: none published since ${fmtShortDateTime(loc.latest_reading)} (${ago} ago), usually about 35 min. The forecast starts from that reading and updates as soon as new ones arrive.</p>`;
+    return `<p class="stand-in-note rain-gauge-note">River readings delayed: none published since ${fmtShortDateTime(loc.latest_reading)} (${ago} ago)</p>`;
   }
 
   function parseUtc(iso) {
