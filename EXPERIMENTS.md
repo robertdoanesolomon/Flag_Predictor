@@ -1382,3 +1382,29 @@ neighbours. Over-reading isn't flagged (rare, and mostly summer storms); hourly 
 **Effect on 17 Nov 10:45.** Model-gauge rain today 16.5 -> 17.8 mm; 10-day peak +0.005 m at each
 stretch. Page rain (history, today, 7 days, forecast bars) now averages the model's gauges with the
 same check, and names any gauge faulty now.
+
+## Reading noise in the likely-range band (18 Nov 2026, branch `reading-noise`)
+
+The band was far too narrow in the first day on the Isis (80 % band covered 31–38 % of readings at 1–12 h,
+13 Oct – 18 Nov 2026 archive) with no bias: the error library is built on hourly means, but the page starts
+from and plots single readings, which wobble by 1–2 cm (held steps of a few hours, lock/weir moves, spikes).
+
+`prediction/reading_noise.py`: each band outcome gets `r_h − r_0`, with `r_0` held per outcome (wobble in the
+start reading) and `r_h` fresh each hour, both drawn from the stretch's last 28 days of live readings minus their
+centred 25 h running median (only residuals known at t0; |r| < 10 cm; needs ≥ 200). On for Isis and Wallingford,
+off for Godstow (already covers). Band only: flag-band chances and the step layer are unchanged.
+
+`verify_reading_noise.py` (walk-forward on the archive), 80 % coverage at 1 / 3 / 6 / 12 / 24 / 72 / 120 h:
+
+| | Before | After |
+|---|---|---|
+| Isis | 31 / 31 / 32 / 38 / 55 / 70 / 80 % | 81 / 72 / 73 / 75 / 80 / 84 / 91 % |
+| Wallingford | 67 / 53 / 39 / 38 / 34 / 20 / 9 % | 90 / 72 / 63 / 50 / 39 / 20 / 10 % |
+| Godstow (off) | 82 / 87 / 84 / 77 / 83 / 91 / 92 % | — |
+
+Shorter windows (5 h, 13 h) catch less of the multi-hour held steps (Isis 3–12 h ≈ 60–70 %); a 14-day pool was too
+jumpy. Wallingford's long-lead shortfall is the low-flow high bias, not spread.
+
+**On `/preview` only** (18 Nov 2026): the main page and `/combinedmodel` keep the plain band. `/preview`'s
+bands from the deployed model (Isis) come from `PREVIEW_NOISE_BANDS`, swapped in by `write_preview`; its trial-model
+bands (`hybrid_srh`) get `reading_noise=True`.
