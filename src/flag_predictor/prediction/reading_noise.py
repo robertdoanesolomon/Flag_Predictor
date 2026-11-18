@@ -44,7 +44,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-LOCATIONS = ('isis', 'wallingford')
+LOCATIONS = ('isis', 'godstow', 'wallingford')
 WINDOW_H = 25          # centred running median the readings wobble around
 POOL_DAYS = 28         # recent record the wobble is drawn from
 MIN_POOL = 200         # fewer residuals than this (e.g. after an outage): no noise

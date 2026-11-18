@@ -1392,7 +1392,7 @@ from and plots single readings, which wobble by 1–2 cm (held steps of a few ho
 `prediction/reading_noise.py`: each band outcome gets `r_h − r_0`, with `r_0` held per outcome (wobble in the
 start reading) and `r_h` fresh each hour, both drawn from the stretch's last 28 days of live readings minus their
 centred 25 h running median (only residuals known at t0; |r| < 10 cm; needs ≥ 200). On for Isis and Wallingford,
-off for Godstow (already covers). Band only: flag-band chances and the step layer are unchanged.
+and for Godstow since 18 Nov 2026 (coverage 82 / 87 / 84 / 77 / 83 / 91 / 92 % → 88 / 93 / 86 / 82 / 84 / 92 / 91 %). Band only: flag-band chances and the step layer are unchanged.
 
 `verify_reading_noise.py` (walk-forward on the archive), 80 % coverage at 1 / 3 / 6 / 12 / 24 / 72 / 120 h:
 
