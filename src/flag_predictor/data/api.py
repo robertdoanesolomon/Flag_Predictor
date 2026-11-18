@@ -555,6 +555,88 @@ def _attach_15min(out: pd.DataFrame, raw: Dict[str, pd.Series], formula, stand_i
     }
 
 
+
+# --- Gauge glitches ---------------------------------------------------------------------------
+# EA 15-minute levels occasionally carry a reading that jumps and comes straight back (Iffley
+# upstream +26 cm at 12:45 on 18 Nov 2026; Osney downstream -54 m three times in Oct 2026). Taken as
+# the hour's last reading, one such value used to spoil the whole hour: an impossible differential
+# deleted the hour (good readings with it) and the stretch then looked offline. Screened here, per
+# reading, before the hourly step, so the hourly series, reading times and chart agree:
+#  1. A run of 1-2 readings that jumps GLITCH_JUMP_M or more and then returns to within
+#     GLITCH_RETURN_M of the reading before it is dropped. This needs the following reading, so a
+#     glitch in the newest reading is caught one run later; nothing real is ever held back.
+#     EA archive 2016-2026: lasting real steps this big are ~1-3 a year per gauge.
+#  2. A reading that makes the stretch's differential impossible (outside the location's
+#     min/max_differential, the bounds cleaning applies to the hourly series) is dropped on
+#     arrival, at every gauge of the stretch for that time, instead of the whole hour.
+GLITCH_JUMP_M = 0.15
+GLITCH_RETURN_M = 0.05
+GLITCH_MAX_RUN = 2
+
+
+def drop_level_glitches(level: pd.Series, name: str = "", verbose: bool = True) -> pd.Series:
+    """Readings with 1-2 reading jump-and-back glitches removed (rule 1 above)."""
+    s = _utc_series(level).dropna()
+    s = s[~s.index.duplicated(keep="last")]
+    v = s.to_numpy(dtype=float)
+    if len(v) < 3:
+        return s
+    bad = np.zeros(len(v), dtype=bool)
+    jumps = np.flatnonzero(np.abs(np.diff(v)) >= GLITCH_JUMP_M) + 1
+    for i in jumps:
+        if bad[i]:
+            continue
+        before = v[i - 1]
+        for run in range(1, GLITCH_MAX_RUN + 1):
+            j = i + run
+            if j >= len(v):
+                break
+            if abs(v[j] - before) <= GLITCH_RETURN_M:
+                if all(abs(v[k] - before) >= GLITCH_JUMP_M for k in range(i, j)):
+                    bad[i:j] = True
+                break
+    if bad.any() and verbose:
+        when = ", ".join(t.strftime("%d %b %H:%M") for t in s.index[bad][-5:])
+        print(f"  [glitch] {name}: dropped {int(bad.sum())} jump-and-back reading(s) (latest: {when})")
+    return s[~bad]
+
+
+def _screen_stretch(river_levels: Dict[str, pd.DataFrame], names, formula, lo: float, hi: float,
+                    label: str, extra=(), verbose: bool = True) -> Dict[str, pd.DataFrame]:
+    """river_levels with the stretch's gauges screened (rules 1 and 2 above). ``names``: the gauges in
+    ``formula`` (a function of a frame with those columns); ``extra``: gauges screened by rule 1 only."""
+    out = dict(river_levels)
+    clean = {}
+    for name in list(names) + list(extra):
+        df = river_levels.get(name)
+        if df is None or df.empty or "level" not in df.columns:
+            continue
+        clean[name] = drop_level_glitches(df["level"], name, verbose)
+    present = [n for n in names if n in clean and len(clean[n])]
+    if len(present) == len(list(names)):
+        m = pd.concat({n: clean[n].resample("15min").last() for n in present}, axis=1).sort_index()
+        m = m.ffill(limit=1).dropna(how="any")
+        d = formula(m)
+        out_of_range = d.index[(d <= lo) | (d > hi)]
+        if len(out_of_range):
+            for n in present:
+                s = clean[n]
+                clean[n] = s[~s.index.floor("15min").isin(out_of_range)]
+            if verbose:
+                when = ", ".join(t.strftime("%d %b %H:%M") for t in out_of_range[-5:])
+                print(f"  [glitch] {label}: dropped {len(out_of_range)} reading time(s) giving an impossible "
+                      f"differential (latest: {when})")
+    for name, s in clean.items():
+        out[name] = pd.DataFrame({"level": s})
+    return out
+
+
+def _bounds(location: str):
+    from ..config import get_location_config
+    cfg = get_location_config(location)
+    return float(cfg.min_differential), float(cfg.max_differential)
+
+
 def _level_series_hourly_last(level: pd.Series) -> pd.Series:
     """Resample irregular EA readings to hourly using the last value in each hour (UTC).
 
@@ -563,6 +645,18 @@ def _level_series_hourly_last(level: pd.Series) -> pd.Series:
     blends (Isis) are especially sensitive versus two-gauge stretches.
     """
     return _utc_series(level).resample("1h").last()
+
+
+def _has_level(river_levels, name) -> bool:
+    df = river_levels.get(name)
+    return df is not None and not df.empty and "level" in df.columns and df["level"].notna().any()
+
+
+def _isis_formula(m):
+    if "kings_mill_downstream" not in m:     # King's Mill offline (stand-in later): no range check
+        return pd.Series(np.nan, index=m.index)
+    return (0.71 * (m["osney_downstream"] - m["iffley_upstream"] - 2.14)
+            + 0.29 * (m["kings_mill_downstream"] - m["iffley_upstream"] - 0.73))
 
 
 def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.DataFrame:
@@ -579,6 +673,11 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
     Returns:
         DataFrame with 'differential' column
     """
+    lo, hi = _bounds("isis")
+    river_levels = _screen_stretch(
+        river_levels, [n for n in ("osney_downstream", "iffley_upstream", "kings_mill_downstream")
+                       if n != "kings_mill_downstream" or _has_level(river_levels, n)],
+        _isis_formula, lo, hi, "isis", extra=("cherwell_botanic",))
     gauges = {
         name: _require_level_series(river_levels, name)
         for name in ("osney_downstream", "iffley_upstream")
@@ -682,6 +781,10 @@ def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.
     Returns:
         DataFrame with 'differential' column
     """
+    lo, hi = _bounds("godstow")
+    river_levels = _screen_stretch(river_levels, ("godstow_downstream", "osney_upstream"),
+                                   lambda m: m["godstow_downstream"] - m["osney_upstream"] - 1.63,
+                                   lo, hi, "godstow")
     gauges = {
         name: _require_level_series(river_levels, name)
         for name in ("godstow_downstream", "osney_upstream")
@@ -713,6 +816,10 @@ def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) ->
     Returns:
         DataFrame with 'differential' column
     """
+    lo, hi = _bounds("wallingford")
+    river_levels = _screen_stretch(river_levels, ("benson_downstream", "cleeve_upstream"),
+                                   lambda m: m["benson_downstream"] - m["cleeve_upstream"] - 2.13,
+                                   lo, hi, "wallingford")
     gauges = {
         name: _require_level_series(river_levels, name)
         for name in ("benson_downstream", "cleeve_upstream")
