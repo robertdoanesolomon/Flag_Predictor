@@ -1404,3 +1404,7 @@ off for Godstow (already covers). Band only: flag-band chances and the step laye
 
 Shorter windows (5 h, 13 h) catch less of the multi-hour held steps (Isis 3–12 h ≈ 60–70 %); a 14-day pool was too
 jumpy. Wallingford's long-lead shortfall is the low-flow high bias, not spread.
+
+**On `/preview` only** (18 Nov 2026): the main page and `/combinedmodel` keep the plain band. `/preview`'s
+bands from the deployed model (Isis) come from `PREVIEW_NOISE_BANDS`, swapped in by `write_preview`; its trial-model
+bands (`hybrid_srh`) get `reading_noise=True`.
