@@ -1194,8 +1194,18 @@
   /** The forecast runs in whole hours from the hour that holds the latest reading (13:00 for a 13:15
       reading); its first point is that reading. Start it at the reading's own time. */
   function forecastOffsetMs(loc) {
-    if (!loc || loc.estimated || !loc.latest_reading || !loc.forecast_start) return 0;
-    const d = parseUtc(loc.latest_reading) - parseUtc(loc.forecast_start);
+    if (!loc || loc.estimated || !loc.forecast_start) return 0;
+    const fs = parseUtc(loc.forecast_start);
+    // The hour's value is its last reading, which is where the chart's 15-minute line ends. Go by that:
+    // latest_reading is the OLDEST gauge's reading, so it is earlier while a gauge is held (Osney
+    // downstream, 18 Nov 2026) and the forecast then started ahead of the line.
+    const h15 = loc.historical_15min;
+    if (h15 && h15.times && h15.times.length) {
+      const d15 = parseUtc(h15.times[h15.times.length - 1]) - fs;
+      if (d15 >= 0 && d15 < 3600 * 1000) return d15;
+    }
+    if (!loc.latest_reading) return 0;
+    const d = parseUtc(loc.latest_reading) - fs;
     return d >= 0 && d < 3600 * 1000 ? d : 0;
   }
   function fcTimes(loc, times) {
