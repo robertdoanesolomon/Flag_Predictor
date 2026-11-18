@@ -1138,6 +1138,9 @@ def render_location_outputs(
     )
     # One of the stretch's gauges offline and another standing in for it (Isis: King's Mill from the
     # Botanic Gardens gauge, data/api.py): a note on the page, not an estimate.
+    # A gauge held at its last level while the stretch's others report (data/api.py GAUGE_HOLD_H): a note.
+    if merged_df.attrs.get("gauge_hold"):
+        payload["gauge_hold"] = [dict(h) for h in merged_df.attrs["gauge_hold"]]
     if merged_df.attrs.get("gauge_stand_in"):
         payload["gauge_stand_in"] = dict(merged_df.attrs["gauge_stand_in"])
         split_stand_in_line(payload)

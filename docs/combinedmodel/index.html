@@ -1156,6 +1156,11 @@
   function readingsDelayedHtml(loc) {
     if (!loc || loc.stale) return '';
     const est = loc.estimated;
+    if (!est && loc.gauge_hold && loc.gauge_hold.length) {   // others report: the missing gauge is held
+      const names = loc.gauge_hold.map(h => h.label).join(' and ');
+      const since = fmtShortDateTime(loc.gauge_hold[0].since);
+      return `<p class="stand-in-note rain-gauge-note">${names} ${loc.gauge_hold.length > 1 ? 'have' : 'has'} not reported since ${since}: ${loc.gauge_hold.length > 1 ? 'their' : 'its'} last ${loc.gauge_hold.length > 1 ? 'levels are' : 'level is'} held until ${loc.gauge_hold.length > 1 ? 'they do' : 'it does'}.</p>`;
+    }
     if (est) {   // estimating from the neighbouring stretch; from 4 h the "Gauges offline" card says it
       if (est.hours >= 4) return '';
       const here = STRETCH_NAMES[loc.key] || loc.display_name || '';
