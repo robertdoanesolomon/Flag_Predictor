@@ -1405,6 +1405,5 @@ and for Godstow since 18 Nov 2026 (coverage 82 / 87 / 84 / 77 / 83 / 91 / 92 % �
 Shorter windows (5 h, 13 h) catch less of the multi-hour held steps (Isis 3–12 h ≈ 60–70 %); a 14-day pool was too
 jumpy. Wallingford's long-lead shortfall is the low-flow high bias, not spread.
 
-**On `/preview` only** (18 Nov 2026): the main page and `/combinedmodel` keep the plain band. `/preview`'s
-bands from the deployed model (Isis) come from `PREVIEW_NOISE_BANDS`, swapped in by `write_preview`; its trial-model
-bands (`hybrid_srh`) get `reading_noise=True`.
+**Main page too** (18 Nov 2026): the deployed model's payload (main page and `/preview`) and `/preview`'s trial-model
+bands (`hybrid_srh`) use `reading_noise=True`. `/combinedmodel`'s `hybrid_shared` band stays plain.
