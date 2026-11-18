@@ -36,11 +36,20 @@ _EA_LOOKBACK_DAYS = 28
 # succeed; a couple of days of fresh readings beats failing the whole publish.
 _EA_FALLBACK_LOOKBACK_DAYS = (7, 2)
 _EA_HTTP_TIMEOUT = (10, 30)
-# A gauge's last reading is carried forward this long when building a differential. Kept to one
-# missed hour: carrying one gauge forward while the other moves makes a false trend (Osney
-# downstream arriving hours late on 23 Oct 2026 pulled the Isis down 3 cm as Iffley rose). Longer
-# gaps are estimated (hybrid_live.outage_nowcast) and drawn dotted.
-GAUGE_HOLD_H = 1
+# A gauge's last reading is carried forward this long (hours) when building a differential while the
+# stretch's other gauges keep reporting. Tested on the last 28 days of EA readings (every gauge, held
+# 1-6 h): the differential's mean error is 0.1-0.7 cm after 1-3 h and about 1.0-1.4 cm after 4 h for the
+# worst gauges (Iffley, Godstow), about the error of estimating from the neighbouring stretch, so hold
+# for 3 h and estimate beyond (hybrid_live.outage_nowcast, drawn dotted). Holding the difference to a
+# gauge that is still reporting (Osney to Iffley) was worse (1.6-2.4 cm): the gauges do not move together.
+# Replaces the 1 h hold of 23 Oct 2026, when Osney downstream arriving hours late looked like a 3 cm fall.
+GAUGE_HOLD_H = 3
+GAUGE_LABELS = {
+    "osney_downstream": "Osney downstream", "iffley_upstream": "Iffley upstream",
+    "kings_mill_downstream": "King's Mill downstream", "godstow_downstream": "Godstow downstream",
+    "osney_upstream": "Osney upstream", "benson_downstream": "Benson downstream",
+    "cleeve_upstream": "Cleeve upstream",
+}
 
 
 def _requests_session_with_retries() -> requests.Session:
@@ -535,6 +544,27 @@ def _attach_reading_times(out: pd.DataFrame, gauges: Dict[str, pd.Series], n_hou
     return out
 
 
+def _attach_gauge_hold(out: pd.DataFrame, gauges: Dict[str, pd.Series]) -> None:
+    """Gauges held at their last level while the others report (more than an hour behind the newest
+    reading, within GAUGE_HOLD_H): ``out.attrs["gauge_hold"]`` = [{gauge, label, since, level}], for the page."""
+    last = {}
+    for name, level in gauges.items():
+        s = _utc_series(level).dropna()
+        if len(s):
+            last[name] = (s.index[-1], float(s.iloc[-1]))
+    if len(last) < 2:
+        return
+    newest = max(t for t, _ in last.values())
+    held = [
+        {"gauge": n, "label": GAUGE_LABELS.get(n, n),
+         "since": t.tz_convert("UTC").tz_localize(None).isoformat() + "Z", "level": round(v, 3)}
+        for n, (t, v) in last.items()
+        if pd.Timedelta(hours=1) < newest - t <= pd.Timedelta(hours=GAUGE_HOLD_H + 1)
+    ]
+    if held:
+        out.attrs["gauge_hold"] = held
+
+
 FIFTEEN_MIN_DAYS = 8
 
 
@@ -546,7 +576,8 @@ def _attach_15min(out: pd.DataFrame, raw: Dict[str, pd.Series], formula, stand_i
     m = pd.concat(cols, axis=1).sort_index()
     if m.empty:
         return
-    m = m.loc[m.index >= m.index.max() - pd.Timedelta(days=FIFTEEN_MIN_DAYS)].ffill(limit=1).dropna(how="any")
+    m = m.loc[m.index >= m.index.max() - pd.Timedelta(days=FIFTEEN_MIN_DAYS)].ffill(
+        limit=4 * GAUGE_HOLD_H).dropna(how="any")
     d = formula(m).astype(float)
     out.attrs["diff_15min"] = {
         "times": [t.tz_convert("UTC").tz_localize(None).isoformat() for t in d.index],
@@ -707,6 +738,7 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
         + 0.29 * (merged["k"] - merged["i"] - 0.73)
     )
     out = _attach_reading_times(pd.DataFrame({"differential": differential}), reading_gauges)
+    _attach_gauge_hold(out, {k: v for k, v in gauges.items()})
     k_raw = _utc_series(gauges["kings_mill_downstream"]).dropna()
     stand_in_from = None
     if stand_in is not None:
@@ -799,6 +831,7 @@ def calculate_godstow_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.
     differential = merged["godstow"] - merged["osney_us"] - 1.63
 
     out = _attach_reading_times(pd.DataFrame({'differential': differential}), gauges)
+    _attach_gauge_hold(out, gauges)
     _attach_15min(out, {"g": gauges["godstow_downstream"], "u": gauges["osney_upstream"]},
                   lambda m: m["g"] - m["u"] - 1.63)
     return out
@@ -832,6 +865,7 @@ def calculate_wallingford_differential(river_levels: Dict[str, pd.DataFrame]) ->
     differential = merged["benson"] - merged["cleeve"] - 2.13
 
     out = _attach_reading_times(pd.DataFrame({'differential': differential}), gauges)
+    _attach_gauge_hold(out, gauges)
     _attach_15min(out, {"b": gauges["benson_downstream"], "c": gauges["cleeve_upstream"]},
                   lambda m: m["b"] - m["c"] - 2.13)
     return out

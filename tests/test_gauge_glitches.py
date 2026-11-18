@@ -71,3 +71,29 @@ def test_godstow_and_wallingford_screened_too():
     w = api.calculate_wallingford_differential(lv)
     for d in (g, w):
         assert d.attrs['reading_time'][d.index[-1].tz_localize(None)] == pd.Timestamp('2026-11-18 12:30')
+
+
+def test_missing_gauge_is_held_for_a_few_hours_and_named():
+    """Osney downstream silent after 14:30 (18 Nov 2026) while Iffley and King's Mill report to 16:00."""
+    idx = pd.date_range('2026-11-17 00:00', '2026-11-18 16:00', freq='15min', tz='UTC')
+    lv = _isis(pd.Series(0.22, index=idx))
+    for k in lv:
+        lv[k] = lv[k].reindex(idx).ffill().bfill()
+    lv['osney_downstream'] = lv['osney_downstream'].loc[:'2026-11-18 14:30']
+    d = api.calculate_isis_differential(lv)
+    assert d.index[-1] == pd.Timestamp('2026-11-18 16:00', tz='UTC')           # held, not dropped
+    assert d.attrs['reading_time'][d.index[-1].tz_localize(None)] == pd.Timestamp('2026-11-18 14:30')
+    h = d.attrs['gauge_hold']
+    assert [x['gauge'] for x in h] == ['osney_downstream'] and h[0]['since'] == '2026-11-18T14:30:00Z'
+    assert d.attrs['diff_15min']['times'][-1] == '2026-11-18T16:00:00'           # chart and hourly agree
+
+
+def test_hold_ends_after_three_hours():
+    idx = pd.date_range('2026-11-17 00:00', '2026-11-18 20:00', freq='15min', tz='UTC')
+    lv = _isis(pd.Series(0.22, index=idx))
+    for k in lv:
+        lv[k] = lv[k].reindex(idx).ffill().bfill()
+    lv['osney_downstream'] = lv['osney_downstream'].loc[:'2026-11-18 14:30']
+    d = api.calculate_isis_differential(lv)
+    assert d.index[-1] <= pd.Timestamp('2026-11-18 17:00', tz='UTC')
+    assert 'gauge_hold' not in d.attrs
