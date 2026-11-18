@@ -1514,7 +1514,7 @@ def generate_spaghetti_figure(
                             make_figures=False,
                             flag_outlook=trial.flag_outlook,
                             extra=preview_extras(location, trial),
-                            reading_noise=page["archive"] == "trial",   # /preview only
+                            reading_noise=True,
                         )
                         mark_estimated(page["payloads"][location], nowcast)
                     except Exception:
