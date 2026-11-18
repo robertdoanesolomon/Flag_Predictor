@@ -37,13 +37,28 @@ _EA_LOOKBACK_DAYS = 28
 _EA_FALLBACK_LOOKBACK_DAYS = (7, 2)
 _EA_HTTP_TIMEOUT = (10, 30)
 # A gauge's last reading is carried forward this long (hours) when building a differential while the
-# stretch's other gauges keep reporting. Tested on the last 28 days of EA readings (every gauge, held
-# 1-6 h): the differential's mean error is 0.1-0.7 cm after 1-3 h and about 1.0-1.4 cm after 4 h for the
-# worst gauges (Iffley, Godstow), about the error of estimating from the neighbouring stretch, so hold
-# for 3 h and estimate beyond (hybrid_live.outage_nowcast, drawn dotted). Holding the difference to a
-# gauge that is still reporting (Osney to Iffley) was worse (1.6-2.4 cm): the gauges do not move together.
-# Replaces the 1 h hold of 23 Oct 2026, when Osney downstream arriving hours late looked like a 3 cm fall.
-GAUGE_HOLD_H = 3
+# stretch's other gauges keep reporting. One missed hour for every gauge: carrying one gauge forward while
+# the other moves makes a false trend (Osney downstream arriving hours late on 23 Oct 2026 looked like a
+# 3 cm fall of the Isis as Iffley rose).
+GAUGE_HOLD_H = 1
+# Osney downstream (Isis) is held for 3 h: it follows its own weir, not the pool Iffley sits in, so holding
+# it is better than estimating from Godstow. Tested on 28 days of EA readings (held 1-6 h, mean error of
+# the Isis differential): 0.25 / 0.40 / 0.54 / 0.67 / 0.89 cm after 1 / 2 / 3 / 4 / 6 h; holding the
+# Osney-Iffley difference instead was worse (1.6-2.4 cm). Iffley and Godstow are not held longer (1.2 cm
+# at 3 h, 1.4 at 4 h, about the estimate's own error). Beyond the hold the estimate from the neighbouring
+# stretch (hybrid_live.outage_nowcast) takes over.
+GAUGE_HOLD_OVERRIDE_H = {"osney_downstream": 3}
+
+
+def _hold_h(name: str) -> int:
+    return GAUGE_HOLD_OVERRIDE_H.get(name, GAUGE_HOLD_H)
+
+
+def _ffill_held(merged: pd.DataFrame, names: Dict[str, str]) -> pd.DataFrame:
+    """merged with each column carried forward by its gauge's hold (``names``: column -> gauge name)."""
+    return pd.concat({c: merged[c].ffill(limit=_hold_h(names.get(c, c))) for c in merged.columns}, axis=1)
+
+
 GAUGE_LABELS = {
     "osney_downstream": "Osney downstream", "iffley_upstream": "Iffley upstream",
     "kings_mill_downstream": "King's Mill downstream", "godstow_downstream": "Godstow downstream",
@@ -535,18 +550,26 @@ def _attach_reading_times(out: pd.DataFrame, gauges: Dict[str, pd.Series], n_hou
         s = _utc_series(level).dropna()
         stamps = pd.Series(s.index, index=s.index)
         times[name] = stamps.resample("1h").last()
-    as_of = pd.concat(times, axis=1).sort_index().ffill(limit=GAUGE_HOLD_H).min(axis=1)
-    as_of = as_of.reindex(out.index).dropna().iloc[-n_hours:]
-    out.attrs["reading_time"] = {
-        idx.tz_localize(None): pd.Timestamp(t).tz_convert("UTC").tz_localize(None)
-        for idx, t in as_of.items()
-    }
+    frame = pd.concat(times, axis=1).sort_index()
+    held = _ffill_held(frame, {n: n for n in frame.columns})
+
+    def naive(as_of):
+        as_of = as_of.reindex(out.index).dropna().iloc[-n_hours:]
+        return {idx.tz_localize(None): pd.Timestamp(t).tz_convert("UTC").tz_localize(None)
+                for idx, t in as_of.items()}
+
+    out.attrs["reading_time"] = naive(held.min(axis=1))
+    # Without the gauges held longer than the rest: the hours that still have a real reading from all of
+    # them (hybrid_live.outage_nowcast starts the estimate after the last of these).
+    core = [c for c in frame.columns if c not in GAUGE_HOLD_OVERRIDE_H]
+    if len(core) < len(frame.columns) and core:
+        out.attrs["reading_time_core"] = naive(held[core].min(axis=1))
     return out
 
 
 def _attach_gauge_hold(out: pd.DataFrame, gauges: Dict[str, pd.Series]) -> None:
     """Gauges held at their last level while the others report (more than an hour behind the newest
-    reading, within GAUGE_HOLD_H): ``out.attrs["gauge_hold"]`` = [{gauge, label, since, level}], for the page."""
+    reading, within its hold; only the gauges in GAUGE_HOLD_OVERRIDE_H): ``out.attrs["gauge_hold"]`` = [{gauge, label, since, level}], for the page."""
     last = {}
     for name, level in gauges.items():
         s = _utc_series(level).dropna()
@@ -559,7 +582,8 @@ def _attach_gauge_hold(out: pd.DataFrame, gauges: Dict[str, pd.Series]) -> None:
         {"gauge": n, "label": GAUGE_LABELS.get(n, n),
          "since": t.tz_convert("UTC").tz_localize(None).isoformat() + "Z", "level": round(v, 3)}
         for n, (t, v) in last.items()
-        if pd.Timedelta(hours=1) < newest - t <= pd.Timedelta(hours=GAUGE_HOLD_H + 1)
+        if n in GAUGE_HOLD_OVERRIDE_H
+        and pd.Timedelta(hours=GAUGE_HOLD_H) < newest - t <= pd.Timedelta(hours=_hold_h(n) + 1)
     ]
     if held:
         out.attrs["gauge_hold"] = held
@@ -568,7 +592,8 @@ def _attach_gauge_hold(out: pd.DataFrame, gauges: Dict[str, pd.Series]) -> None:
 FIFTEEN_MIN_DAYS = 8
 
 
-def _attach_15min(out: pd.DataFrame, raw: Dict[str, pd.Series], formula, stand_in_from: Optional[str] = None) -> None:
+def _attach_15min(out: pd.DataFrame, raw: Dict[str, pd.Series], formula, stand_in_from: Optional[str] = None,
+                  hold_steps: Optional[Dict[str, int]] = None) -> None:
     """The differential at every 15-minute reading over the last FIFTEEN_MIN_DAYS (for the page's chart:
     the models work hourly). A gauge may miss one reading; ``stand_in_from``: the time from which a
     stand-in gauge is part of it (drawn dotted)."""
@@ -576,8 +601,9 @@ def _attach_15min(out: pd.DataFrame, raw: Dict[str, pd.Series], formula, stand_i
     m = pd.concat(cols, axis=1).sort_index()
     if m.empty:
         return
-    m = m.loc[m.index >= m.index.max() - pd.Timedelta(days=FIFTEEN_MIN_DAYS)].ffill(
-        limit=4 * GAUGE_HOLD_H).dropna(how="any")
+    m = m.loc[m.index >= m.index.max() - pd.Timedelta(days=FIFTEEN_MIN_DAYS)]
+    hold_steps = hold_steps or {}
+    m = pd.concat({c: m[c].ffill(limit=hold_steps.get(c, 1)) for c in m.columns}, axis=1).dropna(how="any")
     d = formula(m).astype(float)
     out.attrs["diff_15min"] = {
         "times": [t.tz_convert("UTC").tz_localize(None).isoformat() for t in d.index],
@@ -730,7 +756,8 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
             stand_in["since"] = km_raw.index[-1].tz_convert("UTC").tz_localize(None).isoformat() + "Z"
     merged = pd.concat({"o": o, "i": i, "k": k}, axis=1).sort_index()
     # Allow small gaps—EA stations often miss occasional hours; avoids a frozen tail/hourly NaNs.
-    merged = merged.ffill(limit=GAUGE_HOLD_H).dropna(how="any")
+    merged = _ffill_held(merged, {"o": "osney_downstream", "i": "iffley_upstream",
+                                  "k": "kings_mill_downstream"}).dropna(how="any")
     if merged.empty:
         raise RuntimeError("ISIS differential is empty after aligning EA level series.")
     differential = (
@@ -748,7 +775,8 @@ def calculate_isis_differential(river_levels: Dict[str, pd.DataFrame]) -> pd.Dat
         k_raw = pd.concat([k_raw, after + stand_in["offset_m"]]).sort_index()
         stand_in_from = stand_in.get("since")
     _attach_15min(out, {"o": gauges["osney_downstream"], "i": gauges["iffley_upstream"], "k": k_raw},
-                  lambda m: 0.71 * (m["o"] - m["i"] - 2.14) + 0.29 * (m["k"] - m["i"] - 0.73), stand_in_from)
+                  lambda m: 0.71 * (m["o"] - m["i"] - 2.14) + 0.29 * (m["k"] - m["i"] - 0.73), stand_in_from,
+                  hold_steps={"o": 4 * _hold_h("osney_downstream")})
     return out
 
 

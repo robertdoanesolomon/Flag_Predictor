@@ -97,3 +97,36 @@ def test_hold_ends_after_three_hours():
     d = api.calculate_isis_differential(lv)
     assert d.index[-1] <= pd.Timestamp('2026-11-18 17:00', tz='UTC')
     assert 'gauge_hold' not in d.attrs
+
+
+def test_only_osney_downstream_is_held_longer():
+    """Iffley silent after 14:30 while the others report: held 1 h, as before, not 3 h."""
+    idx = pd.date_range('2026-11-17 00:00', '2026-11-18 16:00', freq='15min', tz='UTC')
+    lv = _isis(pd.Series(0.22, index=idx))
+    for k in lv:
+        lv[k] = lv[k].reindex(idx).ffill().bfill()
+    lv['iffley_upstream'] = lv['iffley_upstream'].loc[:'2026-11-18 14:30']
+    d = api.calculate_isis_differential(lv)
+    assert d.index[-1] == pd.Timestamp('2026-11-18 15:00', tz='UTC')
+    assert 'gauge_hold' not in d.attrs
+
+
+def test_godstow_gauge_not_held_longer():
+    idx = pd.date_range('2026-11-17 00:00', '2026-11-18 16:00', freq='15min', tz='UTC')
+    lv = {
+        'godstow_downstream': pd.DataFrame({'level': 1.70}, index=idx),
+        'osney_upstream': pd.DataFrame({'level': 0.03}, index=idx).loc[:'2026-11-18 14:30'],
+    }
+    d = api.calculate_godstow_differential(lv)
+    assert d.index[-1] == pd.Timestamp('2026-11-18 15:00', tz='UTC') and 'gauge_hold' not in d.attrs
+
+
+def test_nowcast_starts_when_a_core_gauge_stops_but_not_for_held_osney():
+    idx = pd.date_range('2026-11-17 00:00', '2026-11-18 16:00', freq='15min', tz='UTC')
+    lv = _isis(pd.Series(0.22, index=idx))
+    for k in lv:
+        lv[k] = lv[k].reindex(idx).ffill().bfill()
+    lv['osney_downstream'] = lv['osney_downstream'].loc[:'2026-11-18 14:30']
+    d = api.calculate_isis_differential(lv)
+    core = d.attrs['reading_time_core']
+    assert core[d.index[-1].tz_localize(None)] >= d.index[-1].tz_localize(None)    # Iffley/King's Mill current
