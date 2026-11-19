@@ -51,6 +51,7 @@ from flag_predictor.config import (  # type: ignore  # noqa: E402
     RAINFALL_STATION_NAMES,
     WALLINGFORD_RAINFALL_STATION_NAMES,
     get_flag_thresholds,
+    get_live_flag_thresholds,
 )
 from flag_predictor.data.api import (  # type: ignore  # noqa: E402
     get_rainfall_forecast_ensemble,
@@ -1314,7 +1315,7 @@ def generate_spaghetti_figure(
     print(f"{'=' * 80}")
 
     config = get_location_config(location)
-    flag_thresholds = get_flag_thresholds(location)
+    flag_thresholds = get_live_flag_thresholds(location)
 
     # ------------------------------------------------------------------
     # STEP 1: Historical data (matches notebook call)

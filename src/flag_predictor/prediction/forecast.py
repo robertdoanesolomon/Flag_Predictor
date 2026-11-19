@@ -716,7 +716,7 @@ def compute_flag_probabilities(ensemble_df: pd.DataFrame, location: str = 'isis'
     Returns:
         DataFrame with probability of each flag color at each timestep
     """
-    from ..config import get_flag_thresholds
+    from ..config import get_live_flag_thresholds
     
     # For Wallingford, return zero probabilities (white flags - no flags)
     if location.lower() == 'wallingford':
@@ -729,7 +729,7 @@ def compute_flag_probabilities(ensemble_df: pd.DataFrame, location: str = 'isis'
         return probs
     
     n_members = len(ensemble_df.columns)
-    thresholds = get_flag_thresholds(location)
+    thresholds = get_live_flag_thresholds(location)
     
     probs = pd.DataFrame(index=ensemble_df.index)
     

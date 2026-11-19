@@ -108,7 +108,9 @@ class OfficialFlagTests(unittest.TestCase):
             self.assertNotIn('black', out)
             out = OF.official_flag_payload('isis', live, now=t0 + pd.Timedelta(hours=1))
             self.assertNotIn('forecast_stale', out['official_flag'])
-            self.assertEqual(out['official_flag']['sync']['band'], names[names.index('dark_blue') - 1])
+            from flag_predictor.config import live_line_shift      # the live page's (shifted) Isis lines
+            self.assertEqual(out['official_flag']['sync']['band'],
+                             names[int(OF.band_rank('isis', [0.3], live_line_shift('isis'))[0])])
             self.assertIn('official_outlook', out)
             self.assertIn('black', out)
             self.assertLess(out['black']['windows']['tomorrow'], 0.01)      # Iffley far below the line

@@ -1407,3 +1407,29 @@ jumpy. Wallingford's long-lead shortfall is the low-flow high bias, not spread.
 
 **Main page too** (18 Nov 2026): the deployed model's payload (main page and `/preview`) and `/preview`'s trial-model
 bands (`hybrid_srh`) use `reading_noise=True`. `/combinedmodel`'s `hybrid_shared` band too (from the same evening).
+
+## Isis flag lines lowered 6 cm (19 Nov 2026)
+
+From spring 2025 the Isis differential reads low. At the same Farmoor daily flow its low-flow level (reference
+2023 - Feb 2025) was -3.4 cm in Apr 2025, -4 to -5 cm in summer 2025, -5.7 cm in Nov 2025 and -5 to -7 cm in
+2026; the floor fell from +0.02-0.04 to -0.05/-0.08, below the 0 a single pound (Osney tail = Iffley head at
+low water) allows. The Iffley upstream stage did not move, so it is Osney or King's Mill downstream (the EA
+hydrology archive keeps only upstream stages). The Nov 2025 - Jan 2026 OURCs flags fit the bands best with the
+lines ~7.5 cm lower and agree 70% with the deployed lines, against 84-91% in the three winters before. The
+offset has wandered before (-5 to -10 cm 2017-19, +-4 cm 2020-22), so it is worth re-checking.
+
+Deployed official-flag model on the Isis from 1 Apr 2025 (8 rises, 6 falls), lines lowered by c; chance of each
+change in the 24 h before it, log loss x1e-3:
+
+| c | up p | up ll | down p | down ll |
+|---|---|---|---|---|
+| 0 | 21% | 6.20 | 51% | 18.1 |
+| 4.5 cm | 36% | 5.50 | 42% | 16.3 |
+| 6 cm | 38% | 5.60 | 40% | 15.5 |
+| 7.5 cm | 43% | 5.72 | 38% | 14.7 |
+
+Deployed: `config.LIVE_LINE_SHIFT = {'isis': -0.06}`, used only for the live page
+(`get_live_flag_thresholds`: chart bands, flag-band chances, step-layer outlook; `official_flag_payload` ->
+`simulate(..., shift)` and `sync_note(..., shift)`). The differential is shown and modelled as measured. Fits,
+backtests and termly keep the historical lines; `official_flag.json` is not refitted. 19 Nov 08:00 run, 51 smooth
+members: official flag up by tomorrow 8% -> 20%.

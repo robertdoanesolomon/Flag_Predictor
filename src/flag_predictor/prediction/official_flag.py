@@ -64,12 +64,13 @@ def order(river: str) -> List[str]:
     return list(LINES[river])
 
 
-def lines(river: str) -> np.ndarray:
-    return np.array(list(LINES[river].values()))
+def lines(river: str, shift: float = 0.0) -> np.ndarray:
+    """Lower line of each flag (m); ``shift`` moves them all (the live page: config.LIVE_LINE_SHIFT)."""
+    return np.array(list(LINES[river].values())) + shift
 
 
-def band_rank(river: str, values) -> np.ndarray:
-    return np.searchsorted(lines(river)[1:], np.asarray(values, dtype=float), side='right')
+def band_rank(river: str, values, shift: float = 0.0) -> np.ndarray:
+    return np.searchsorted(lines(river, shift)[1:], np.asarray(values, dtype=float), side='right')
 
 
 def design(margin, run, local_hour, dow, since, trend6, river: str) -> np.ndarray:
@@ -130,11 +131,12 @@ def _run_length(past: np.ndarray) -> float:
 
 def simulate(params: FlagParams, river: str, flag0: int, since0: float, level_hist: np.ndarray,
              paths: np.ndarray, t0: pd.Timestamp, rng: Optional[np.random.Generator] = None,
-             horizon: int = 72) -> np.ndarray:
+             horizon: int = 72, shift: float = 0.0) -> np.ndarray:
     """Official flag (rank) along each outcome. paths (S, H+1) hourly differential, index 0 = t0.
-    level_hist: hourly observed differential ending at t0 (for how long the river has been past a line)."""
+    level_hist: hourly observed differential ending at t0 (for how long the river has been past a line).
+    shift: added to every line (live: config.LIVE_LINE_SHIFT); the hazard sees only the margins."""
     rng = rng or np.random.default_rng(0)
-    L = lines(river)
+    L = lines(river, shift)
     top = len(L) - 1
     S, H1 = paths.shape
     H = min(horizon, H1 - 1)
@@ -174,7 +176,7 @@ def simulate(params: FlagParams, river: str, flag0: int, since0: float, level_hi
         u = rng.random(S)
         up = u < pu
         dn = ~up & (u < pu + pd_)
-        band = band_rank(river, d)
+        band = band_rank(river, d, shift)
         new = np.clip(np.where(up, np.maximum(flag + 1, band), np.where(dn, flag - 1, flag)), 0, top)
         changed = new != flag
         flag = new
@@ -251,13 +253,13 @@ def current_status(river: str) -> Optional[dict]:
     return _STATUS[river]
 
 
-def sync_note(river: str, flag: str, level_hist: np.ndarray) -> dict:
+def sync_note(river: str, flag: str, level_hist: np.ndarray, shift: float = 0.0) -> dict:
     """Is the official flag where the band is? (and for how long it has not been)."""
     names = order(river)
     hist = pd.Series(np.asarray(level_hist, dtype=float)).ffill().to_numpy()
     if flag not in names or not np.isfinite(hist[-1]):
         return {'in_sync': None}
-    b = band_rank(river, hist)
+    b = band_rank(river, hist, shift)
     r = names.index(flag)
     if b[-1] == r:
         return {'in_sync': True, 'band': names[b[-1]]}
@@ -299,11 +301,13 @@ def official_flag_payload(location: str, live, models_dir: Optional[Path] = None
                 out['black'] = b
         except Exception as exc:
             print(f"  [official flag] black forecast skipped ({type(exc).__name__}: {exc})")
+    from ..config import live_line_shift
+    shift = live_line_shift(location)
     flag = status['flag']
     names = order(location)
     hist = getattr(live, 'level_hist', None)
     if hist is not None:
-        out['official_flag']['sync'] = sync_note(location, flag, hist)
+        out['official_flag']['sync'] = sync_note(location, flag, hist, shift)
     if flag not in names:            # grey (not monitored) or a flag this model does not know
         return out
     pfile = models_dir / PARAMS_FILE
@@ -314,7 +318,7 @@ def official_flag_payload(location: str, live, models_dir: Optional[Path] = None
     set_at = pd.Timestamp(status['set_at']) if status.get('set_at') else None
     since = (t0 - set_at).total_seconds() / 3600 if set_at is not None else 24 * 30
     flags = simulate(params, location, names.index(flag), max(since, 0.0), hist, np.asarray(paths), t0,
-                     rng=np.random.default_rng(seed))
+                     rng=np.random.default_rng(seed), shift=shift)
     out['official_outlook'] = outlook(location, flags, names.index(flag), t0)
     return out
 

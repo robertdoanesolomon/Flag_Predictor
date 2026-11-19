@@ -851,7 +851,7 @@ def iffley_upstream_level() -> Optional[pd.Series]:
 def step_forecast(location: str, frame: pd.DataFrame, members_df: pd.DataFrame, rain_df: pd.DataFrame,
                   total: Optional[np.ndarray], models_dir: Path):
     """(stepped members, stepped outcomes, flag-band outlook, triggers seen); Nones without parameters."""
-    from ..config import get_flag_thresholds
+    from ..config import get_live_flag_thresholds
     from .step_layer import apply_live
     t0 = members_df.index[0]
     gauges = [g for g in TRAINING_GAUGES[location] if g in frame.columns]
@@ -860,7 +860,7 @@ def step_forecast(location: str, frame: pd.DataFrame, members_df: pd.DataFrame, 
     grid = pd.date_range(t0 - pd.Timedelta(hours=11), t0, freq='1h')
     neighbours = {loc: ser.reindex(grid).to_numpy() for loc, ser in _all_differentials().items() if loc != location}
     out = apply_live(location, level_hist, rain_hist, members_df.to_numpy().T, rain_df.to_numpy().T, total, t0,
-                     get_flag_thresholds(location), models_dir, neighbour_hists=neighbours)
+                     get_live_flag_thresholds(location), models_dir, neighbour_hists=neighbours)
     if out is None:
         print(f"  [step layer] no parameters for {location}; no stepped copy")
         return None, None, None, None

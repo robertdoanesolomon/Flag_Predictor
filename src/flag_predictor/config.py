@@ -356,6 +356,33 @@ def get_flag_thresholds(location: str) -> dict:
     return LOCATION_FLAG_THRESHOLDS.get(location, FIXED_THRESHOLDS)
 
 
+# Live line shift (m), added to every flag line of a stretch for the live page only: the chart's bands,
+# the flag-band chances, the step-layer outlook and the official-flag panel. The differential itself
+# is shown and modelled as measured. Fits and backtests on the record keep the lines above.
+# Isis -6 cm: from spring 2025 the Isis differential reads low. At the same Farmoor flow its low-flow
+# level fell ~4.5 cm by Apr 2025 and ~5-7 cm by 2026 (floor -0.05, below the 0 a single pound allows);
+# the Iffley upstream stage did not move, so it is Osney or King's Mill downstream. The Nov 2025 -
+# Jan 2026 flags fit the bands best ~7.5 cm lower. Deployed official-flag model scored on the Isis
+# since 1 Apr 2025 with the lines 6 cm lower: the chance it gave each of the 8 rises in the 24 h
+# before it 21% -> 38%, log loss up 6.20 -> 5.60, down 18.1 -> 15.5 (x1e-3). EXPERIMENTS.md
+# "Isis flag lines lowered". 0 or missing = no shift.
+LIVE_LINE_SHIFT = {'isis': -0.06}
+
+
+def live_line_shift(location: str) -> float:
+    return float(LIVE_LINE_SHIFT.get(location.lower(), 0.0))
+
+
+def get_live_flag_thresholds(location: str) -> dict:
+    """get_flag_thresholds(location) with the live line shift (LIVE_LINE_SHIFT): for the live page."""
+    s = live_line_shift(location)
+    t = get_flag_thresholds(location)
+    if not s:
+        return t
+    mv = lambda v: v + s if v not in (float('inf'), -float('inf')) else v
+    return {k: (mv(lo), mv(hi)) for k, (lo, hi) in t.items()}
+
+
 # Backwards-compatible global thresholds (ISIS defaults).
 # NOTE: New code should prefer get_flag_thresholds(location).
 FLAG_THRESHOLDS = FIXED_THRESHOLDS
