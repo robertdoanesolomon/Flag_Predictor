@@ -394,7 +394,7 @@ def get_live_flag_thresholds(location: str) -> dict:
 # stops ~3-5 cm short on big rises). Used by the preview trial `hybrid_offset`, and on the main page
 # too once MODEL_INPUT_OFFSET_ON_MAIN is True.
 MODEL_INPUT_OFFSET = {'isis': 0.045}
-MODEL_INPUT_OFFSET_ON_MAIN = False
+MODEL_INPUT_OFFSET_ON_MAIN = True
 
 
 def model_input_offset(location: str) -> float:
