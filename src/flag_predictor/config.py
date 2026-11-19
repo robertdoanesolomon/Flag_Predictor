@@ -383,6 +383,24 @@ def get_live_flag_thresholds(location: str) -> dict:
     return {k: (mv(lo), mv(hi)) for k, (lo, hi) in t.items()}
 
 
+# Model input offset (m): added to the observed differential inside the hybrid only (its encoder
+# features and its start D(t0)) and taken off every forecast path again, so the page, the flag lines
+# and everything downstream stay on the measured scale. The hybrid turns D(t0) into a starting flow
+# through its rating curve; with the Isis reading low since spring 2025 it started from 0.65x Farmoor
+# flow (2023-24: 1.00-1.08x). Backtest, deployed models, rain that fell, 937 starts May 2025 - Jan 2026
+# (EXPERIMENTS.md "Isis model input offset"): +4.5 cm lowers MAE at every lead (-3% at 6 h, -4 to -5%
+# at 12-168 h, -7% at 10 days; 90% ranges exclude 0 at 6-24 h) and takes the bias to ~0 (+0.25 cm
+# at 12-48 h raw); +6 / +7.5 cm are worse beyond 2 days. Rise sizes barely change (the model still
+# stops ~3-5 cm short on big rises). Used by the preview trial `hybrid_offset`, and on the main page
+# too once MODEL_INPUT_OFFSET_ON_MAIN is True.
+MODEL_INPUT_OFFSET = {'isis': 0.045}
+MODEL_INPUT_OFFSET_ON_MAIN = False
+
+
+def model_input_offset(location: str) -> float:
+    return float(MODEL_INPUT_OFFSET.get(location.lower(), 0.0))
+
+
 # Backwards-compatible global thresholds (ISIS defaults).
 # NOTE: New code should prefer get_flag_thresholds(location).
 FLAG_THRESHOLDS = FIXED_THRESHOLDS

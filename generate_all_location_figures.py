@@ -1488,14 +1488,14 @@ def generate_spaghetti_figure(
                 except Exception:
                     print(f"\n[WARNING] Preview payload failed for '{location}':")
                     traceback.print_exc()
-            from flag_predictor.prediction.hybrid_live import is_joint, variant_available
+            from flag_predictor.prediction.hybrid_live import is_joint, pick_variant
             for page in TRIAL_PAGES:
-                if not variant_available(page["model"], location):
+                if pick_variant(page["model"], location) is None:
                     continue
 
                 def run_trial(page=page, location=location, hybrid_df=hybrid_df, nowcast=nowcast, config=config,
                               flag_thresholds=flag_thresholds):
-                    model = page["model"]
+                    model = pick_variant(page["model"], location)
                     try:
                         print(f"\n[preview model] {model} for {location.upper()} ({page['dir'].name})")
                         trial = forecast_with_uncertainty(location, hybrid_df, project_root, n_members=n_members,

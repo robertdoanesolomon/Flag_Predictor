@@ -50,19 +50,44 @@ VARIANTS: dict = {
     # + Hannington Bridge. Not the Isis by default: no better there than the deployed model (Oct 2026).
     'hybrid_srh': {'names': ['hybrid_srh'] + [f'hybrid_srh_s{i}' for i in range(1, 5)],
                    'locations': ['godstow', 'wallingford']},
+    # The deployed model with the differential raised by config.MODEL_INPUT_OFFSET inside the model only.
+    'hybrid_offset': {'names': HYBRID_MODELS, 'locations': ['isis'], 'input_offset': True},
     # One catchment model for all three stretches (models/shared_catchment.py, prediction/shared_live.py).
     # Needs every stretch's live frame, so generate_all_location_figures runs it after the main forecasts.
     'hybrid_shared': {'names': ['hybrid_shared'] + [f'hybrid_shared_s{i}' for i in range(1, 5)], 'joint': True},
 }
 
 
+def pick_variant(variant: Optional[str], location: str, models_dir: Optional[Path] = None) -> Optional[str]:
+    """The first of a comma-separated list of trial models that can run for ``location`` (or None)."""
+    for v in (variant or '').split(','):
+        v = v.strip()
+        if v and variant_available(v, location, models_dir):
+            return v
+    return None
+
+
+def input_offset(location: str, variant: Optional[str]) -> float:
+    """Model input offset (m) for this run: the trial `hybrid_offset`, or the main model once switched on."""
+    from ..config import MODEL_INPUT_OFFSET_ON_MAIN, model_input_offset
+    if variant:
+        return model_input_offset(location) if VARIANTS.get(variant, {}).get('input_offset') else 0.0
+    return model_input_offset(location) if MODEL_INPUT_OFFSET_ON_MAIN else 0.0
+
+
 def variant_available(variant: str, location: str, models_dir: Optional[Path] = None) -> bool:
+    if variant and ',' in variant:
+        return pick_variant(variant, location, models_dir) is not None
     models_dir = Path(models_dir) if models_dir else Path(__file__).resolve().parents[3] / 'models'
     v = VARIANTS.get(variant)
     if v and v.get('locations') and location not in v['locations']:
         return False
     if v and v.get('joint'):
         return any((models_dir / f'shared_{n}.pt').exists() for n in v['names'])
+    if v and v.get('input_offset'):
+        from ..config import model_input_offset
+        if not model_input_offset(location):
+            return False
     return bool(v) and any((models_dir / f'redesign_{n}_{location}.pt').exists() for n in v['names'])
 
 
@@ -643,7 +668,17 @@ def forecast_with_uncertainty(
     extra = None
     note = None
     simfeat = SIMFEAT_MODELS.get(location)
-    if variant:
+    off = input_offset(location, variant)
+    # The hybrid sees the differential raised by ``off`` (encoder and D(t0)); its paths are lowered again.
+    mframe = frame
+    if off:
+        mframe = frame.copy()
+        mframe['differential'] = frame['differential'] + off
+        note = f"model input +{off * 100:.1f} cm (config.MODEL_INPUT_OFFSET)"
+        print(f"  [model input] {location}: differential +{off * 100:.1f} cm inside the hybrid")
+    if variant and VARIANTS.get(variant, {}).get('input_offset'):
+        with_previous = False                 # the deployed model with the input offset only
+    elif variant:
         # A trial model with extra encoder inputs (VARIANTS); errors propagate, so a failed trial
         # never quietly shows the deployed model under the trial's name.
         v = VARIANTS[variant]
@@ -656,7 +691,7 @@ def forecast_with_uncertainty(
     if simfeat:
         try:
             from .continuous_live import simulation_features
-            extra = simulation_features(location, frame, project_root, models_dir, simfeat['core'])
+            extra = simulation_features(location, mframe, project_root, models_dir, simfeat['core'])
             names, tag = simfeat['names'], simfeat['tag']
         except Exception as exc:
             note = f"{simfeat['tag']} unavailable: {type(exc).__name__}: {exc}"[:300]
@@ -674,13 +709,13 @@ def forecast_with_uncertainty(
             continue
         member_rain = forecast[list(cols)].rename(columns=cols).reindex(fut_idx).fillna(0.0)
         if hasattr(predict, 'with_states'):
-            d_i, q_i, st_i = predict.with_states(frame, member_rain)
+            d_i, q_i, st_i = predict.with_states(mframe, member_rain)
             members[f'member_{i}'] = d_i
             state_runs.append((q_i, st_i))
         else:
-            members[f'member_{i}'] = predict(frame, member_rain)
+            members[f'member_{i}'] = predict(mframe, member_rain)
         if predict_previous is not None:
-            previous[f'member_{i}'] = predict_previous(frame, member_rain)
+            previous[f'member_{i}'] = predict_previous(mframe, member_rain)
         rain_means[f'member_{i}'] = member_rain.clip(lower=0).mean(axis=1).to_numpy()
     if not members:
         raise RuntimeError('no forecast-rain members available for the hybrid')
@@ -689,10 +724,15 @@ def forecast_with_uncertainty(
     previous_df = pd.DataFrame(previous, index=index) if previous else None
     rain_df = pd.DataFrame(rain_means, index=fut_idx)
     try:
-        total = model_error_samples(location, frame, members_df, rain_df, models_dir, tag=tag)
+        # matched on the model's own (offset) scale, then lowered with the members
+        total = model_error_samples(location, mframe, members_df, rain_df, models_dir, tag=tag)
     except Exception as exc:   # the spread is extra; never lose the forecast over it
         print(f"  [model error] failed ({exc}); showing rain spread only")
         total = None
+    if off:
+        members_df = members_df - off
+        previous_df = previous_df - off if previous_df is not None else None
+        total = total - off if total is not None else None
     if start_sd > 0:
         # Starting level estimated (gauges offline, outage_nowcast): every outcome is shifted by a
         # draw of that estimate's error, so the likely range and flag chances carry it.

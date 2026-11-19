@@ -1433,3 +1433,35 @@ Deployed: `config.LIVE_LINE_SHIFT = {'isis': -0.06}`, used only for the live pag
 `simulate(..., shift)` and `sync_note(..., shift)`). The differential is shown and modelled as measured. Fits,
 backtests and termly keep the historical lines; `official_flag.json` is not refitted. 19 Nov 08:00 run, 51 smooth
 members: official flag up by tomorrow 8% -> 20%.
+
+## Isis model input offset (19 Nov 2026)
+
+The hybrid turns the observed D(t0) into a starting flow through its rating curve (`rating.inverse(d0)`),
+and fills the channel and groundwater stores from it. With the Isis reading low since spring 2025 (section
+above) it started too low: model flow at +1 h / Farmoor at t0 (median) 1.00 in May 2023 - Jan 2024 and 1.08 in
+May 2024 - Jan 2025, but 0.65 in May 2025 - Jan 2026 (0.57 below 15 m3/s). On 19 Nov 2026 10:00 it ran from
+4.3 m3/s with Farmoor at 16.8. The rating is flattest at low water (5 cm per e-fold of flow at D = 0.02,
+8 cm at 0.08, 21 cm at 0.15), so a few cm there is a factor of 2-3 in flow.
+
+Test (`offset_backtest.py`-style, not committed): deployed five copies, rain that fell, starts every 6 h
+1 May 2025 - 10 Jan 2026 (937), differential + c from 1 Apr 2025 inside the model (encoder and d0), paths - c.
+MAE change against raw (90% range from resampling weeks) and bias:
+
+| c | 6 h | 12 h | 24 h | 48 h | 72 h | 120 h | 168 h | 240 h | bias 24 / 72 / 168 h | flow / Farmoor |
+|---|---|---|---|---|---|---|---|---|---|---|
+| raw | 0.73 cm | 0.98 | 1.10 | 1.31 | 1.67 | 2.00 | 2.33 | 2.90 | +0.25 / +0.32 / +0.83 cm | 0.65 |
+| 3 cm | -2.2% [-4,-1] | -3.4% | -3.8% | -3.5% | -3.1% | -2.5% | -1.0% | -1.5% | +0.11 / -0.01 / +0.11 | 1.07 |
+| 4.5 cm | -2.7% [-5,-1] | -4.3% [-7,-2] | -4.6% [-10,-1] | -4.1% | -4.0% | -4.1% | -4.1% | -7.0% | +0.05 / -0.13 / -0.08 | 1.53 |
+| 6 cm | -2.8% | -4.1% | -3.4% | -1.4% | +0.3% | +3.3% | +3.6% | -1.4% | -0.01 / -0.29 / -0.45 | 2.11 |
+| 7.5 cm | -3.1% | -4.1% | -3.0% | +0.7% | +3.3% | +9.3% | +11.0% | +6.4% | -0.05 / -0.41 / -0.78 | 2.78 |
+
+Rises of 10 cm+ in 72 h (62 starts): observed 25.2 cm, forecast 20.6 raw, 20.8 at 4.5 cm: the offset does not
+fix the hybrid stopping short on big rises. Next live line reached within 48 h (deterministic): Amber hits 15
+-> 17 of 25, Light Blue false alarms 5 -> 7, others within one. At low flow the offset overshoots Farmoor (1.9x
+at 4.5 cm below 15 m3/s; 0.86x above): the shift is not a clean constant in flow terms; 3 cm matches the
+flow best, 4.5 cm the forecast best.
+
+Deployed: `config.MODEL_INPUT_OFFSET = {'isis': 0.045}`, first as the preview trial `hybrid_offset`
+(update_figures.yml `--preview-model hybrid_srh,hybrid_offset`: the first that runs for each stretch), then on
+the main page with `MODEL_INPUT_OFFSET_ON_MAIN = True`. The page, flag lines (`LIVE_LINE_SHIFT`), step layer,
+official-flag model and archive stay on the measured scale; the error library is matched on the model's scale.
