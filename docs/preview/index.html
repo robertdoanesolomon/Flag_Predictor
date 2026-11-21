@@ -1017,7 +1017,7 @@
         card's chances come from a model fitted to the OURCs flag history. For the first three days the forecast moves in
         held levels and daytime jumps, as lock keepers adjust the weirs, rather than a smooth line. Black (Isis) is
         forecast from the Iffley Lock level (Black from about 0.42&nbsp;m, back to Red below 0.22&nbsp;m), and its card
-        appears only when Black is close. Since spring 2025 the Isis gauges have read about 6&nbsp;cm low against the
+        appears only when Black is close and the flag is Red or Grey. Since spring 2025 the Isis gauges have read about 6&nbsp;cm low against the
         flags and the river's low-water level, so the Isis bands are drawn 6&nbsp;cm lower than before; the differential
         itself is shown as measured.
 
@@ -1626,10 +1626,11 @@
   /**
    * Black flag card (Isis), from the Iffley Lock level forecast; null unless Black is close:
    * Black now (by the Iffley rule or the official flag), a 10%+ chance by the end of tomorrow,
-   * or Iffley within 6 cm of the line.
+   * or Iffley within 6 cm of the line. Shown only while the official flag is Red or Grey.
    */
   function blackCard(b, off, loc) {
     if (!b || !b.windows) return null;
+    if (!off || (off.flag !== 'red' && off.flag !== 'grey')) return null;
     const pT = b.windows.today || 0, pM = b.windows.tomorrow || 0;
     const isBlack = b.black_now || (off && off.flag === 'black');
     const near = !isBlack && b.level_m >= b.up_m - 0.06;
