@@ -141,6 +141,11 @@ class AlertTests(unittest.TestCase):
         self.assertIn('0.39 m', msgs[0]['body'])
         self.assertIn('If so, probably mid-morning today', msgs[0]['body'])
         self.assertEqual(decide(bundle(black=bk), st, NOW)[0], [])
+        grey = decide(bundle(flag='grey', black=bk), {'isis': {'flag': 'grey', 'sent': []}}, NOW)[0]
+        self.assertTrue(any('go Black' in m['body'] for m in grey))
+        for f in ('amber', 'dark_blue', 'black'):                             # other flags: no Black alert
+            ms = decide(bundle(flag=f, black=bk), {'isis': {'flag': f, 'sent': []}}, NOW)[0]
+            self.assertFalse(any('Black' in m['body'] for m in ms), f)
 
 
 if __name__ == '__main__':

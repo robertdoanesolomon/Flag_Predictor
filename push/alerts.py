@@ -223,7 +223,7 @@ def decide(bundle: dict, state: dict, now: Optional[datetime] = None) -> Tuple[L
                 up_top = likely_top
 
         bk = loc.get('black') if river == 'isis' else None
-        if bk and bk.get('windows'):
+        if bk and bk.get('windows') and flag in ('red', 'grey'):     # Black alerts only while the flag is Red or Grey
             p_tom = bk['windows'].get('tomorrow', 0.0) or 0.0
             is_black = bk.get('black_now') or flag == 'black'
             key = 'black:to_red' if is_black else 'black:to_black'
