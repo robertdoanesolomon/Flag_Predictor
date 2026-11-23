@@ -2025,7 +2025,7 @@
 
       const probPlotHtml = isWallingford ? '' : `
         <div class="chart-block">
-          <h3 class="chart-title">${probSource(loc, key).official ? `Chance of each OURCs flag (next ${FLAG_FORECAST_HOURS[key]} h), then each band` : PREVIEW ? 'Chance the differential is in each band' : 'Forecast flag probability'}${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
+          <h3 class="chart-title">${probSource(loc, key).official ? 'Chance of each OURCs flag <small style="font-weight:500;color:var(--text-muted);">(may be slightly different to the differential forecast above)</small>' : `${PREVIEW ? 'Chance the differential is in each band' : 'Forecast flag probability'}${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}`}</h3>
           ${renderProbLegendHtml(key)}
           <div id="prob-${key}" class="plot prob"></div>
         </div>`;
@@ -2420,16 +2420,16 @@
     };
   }
 
-  // /preview only: the chance of each OURCs flag (official_probability) for the first
-  // FLAG_FORECAST_HOURS of the forecast, where it beat the bands in the Feb 2025 replay, then the
-  // chance of each differential band. Otherwise, and on the main page, the bands throughout.
+  // The chance of each OURCs flag (official_probability) for the first FLAG_FORECAST_HOURS of the
+  // forecast, where it beat the bands in the Feb 2025 replay, then the chance of each differential
+  // band. With no flag forecast (e.g. Grey), the bands throughout.
   const FLAG_FORECAST_HOURS = { isis: 24, godstow: 72 };
   function probSource(loc, key) {
     const f = loc.flag_probability || {};
     const band = { official: false, times: f.times || [], probabilities: f.probabilities || {}, splitAt: null };
     const o = loc.official_probability;
     const limit = FLAG_FORECAST_HOURS[key];
-    if (!ON_PREVIEW_PAGE || !limit || !o || !o.times || o.times.length < 2 || !band.times.length) return band;
+    if (!limit || !o || !o.times || o.times.length < 2 || !band.times.length) return band;
     const at = {};
     o.times.forEach((t, i) => { at[t] = i; });
     const t0 = parseUtc(band.times[0]).getTime();
