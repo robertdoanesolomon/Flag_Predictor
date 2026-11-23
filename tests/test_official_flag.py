@@ -113,7 +113,7 @@ class OfficialFlagTests(unittest.TestCase):
                              names[int(OF.band_rank('isis', [0.3], live_line_shift('isis'))[0])])
             self.assertIn('official_outlook', out)
             prob = out['official_probability']
-            self.assertEqual(len(prob['times']), 73)
+            self.assertEqual(len(prob['times']), 73)       # the whole forecast (73 h in this test)
             self.assertEqual(prob['times'][0], '2026-10-13T20:00:00')
             self.assertEqual(prob['probabilities']['green'][0], 1.0)
             self.assertAlmostEqual(sum(v[40] for v in prob['probabilities'].values()), 1.0, places=2)
