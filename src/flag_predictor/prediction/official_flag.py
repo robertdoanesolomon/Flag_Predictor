@@ -317,10 +317,30 @@ def official_flag_payload(location: str, live, models_dir: Optional[Path] = None
     params = FlagParams.load(pfile)
     set_at = pd.Timestamp(status['set_at']) if status.get('set_at') else None
     since = (t0 - set_at).total_seconds() / 3600 if set_at is not None else 24 * 30
-    flags = simulate(params, location, names.index(flag), max(since, 0.0), hist, np.asarray(paths), t0,
-                     rng=np.random.default_rng(seed), shift=shift)
-    out['official_outlook'] = outlook(location, flags, names.index(flag), t0)
+    paths = np.asarray(paths)
+    # Run along the whole forecast (10 days) for the hourly chances; the first 72 h are the same
+    # draws as a 72 h run, so the outlook (today / tomorrow) is unchanged.
+    flags = simulate(params, location, names.index(flag), max(since, 0.0), hist, paths, t0,
+                     rng=np.random.default_rng(seed), horizon=paths.shape[1] - 1, shift=shift)
+    out['official_outlook'] = outlook(location, flags[:, :73], names.index(flag), t0)
+    out['official_probability'] = hourly_probabilities(location, flags, t0)
     return out
+
+
+def hourly_probabilities(river: str, flags: np.ndarray, t0: pd.Timestamp) -> dict:
+    """Chance of each official flag at every hour of the simulation (index 0 = t0, the flag flying
+    now), for the preview chart, the outings sheet and the archive. Not recalibrated: the simulated flag comes down
+    somewhat too late (see DOWN_RECALIBRATION), so these lean towards the flag flying now."""
+    names = order(river)
+    S, H1 = flags.shape
+    t0 = pd.Timestamp(t0)
+    t0 = t0.tz_convert('UTC').tz_localize(None) if t0.tzinfo else t0
+    times = pd.date_range(t0, periods=H1, freq='1h')
+    return {
+        'times': [t.strftime('%Y-%m-%dT%H:%M:%S') for t in times],
+        'probabilities': {n: [round(float(v), 3) for v in np.mean(flags == i, axis=0)]
+                          for i, n in enumerate(names)},
+    }
 
 
 def black_payload(live, t0: pd.Timestamp, now: pd.Timestamp, models_dir: Path) -> Optional[dict]:

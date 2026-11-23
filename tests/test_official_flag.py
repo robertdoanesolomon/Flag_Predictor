@@ -112,6 +112,17 @@ class OfficialFlagTests(unittest.TestCase):
             self.assertEqual(out['official_flag']['sync']['band'],
                              names[int(OF.band_rank('isis', [0.3], live_line_shift('isis'))[0])])
             self.assertIn('official_outlook', out)
+            prob = out['official_probability']
+            self.assertEqual(len(prob['times']), 73)       # the whole forecast (73 h in this test)
+            self.assertEqual(prob['times'][0], '2026-10-13T20:00:00')
+            self.assertEqual(prob['probabilities']['green'][0], 1.0)
+            self.assertAlmostEqual(sum(v[40] for v in prob['probabilities'].values()), 1.0, places=2)
+            from flag_predictor.prediction.archive import summarise_payload
+            ens = {'members': [[0.3] * 73] * 3}
+            s = summarise_payload({'ensemble': ens, 'forecast_start': '2026-10-13T20:00:00', **out})
+            self.assertEqual(s['official']['t0'], '2026-10-13T20:00:00')
+            self.assertEqual(s['official']['flag_now'], 'green')
+            self.assertIn('green', s['official']['probabilities'])
             self.assertIn('black', out)
             self.assertLess(out['black']['windows']['tomorrow'], 0.01)      # Iffley far below the line
         finally:

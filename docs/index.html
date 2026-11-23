@@ -2025,7 +2025,7 @@
 
       const probPlotHtml = isWallingford ? '' : `
         <div class="chart-block">
-          <h3 class="chart-title">${PREVIEW ? 'Chance the differential is in each band' : 'Forecast flag probability'}${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
+          <h3 class="chart-title">${probSource(loc).official ? 'Chance of each OURCs flag' : PREVIEW ? 'Chance the differential is in each band' : 'Forecast flag probability'}${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
           ${renderProbLegendHtml(key)}
           <div id="prob-${key}" class="plot prob"></div>
         </div>`;
@@ -2420,17 +2420,27 @@
     };
   }
 
+  // /preview only: the official-flag forecast (official_probability) when there is one; otherwise,
+  // and always on the main page, the chance of each differential band.
+  function probSource(loc) {
+    const o = loc.official_probability;
+    if (ON_PREVIEW_PAGE && o && o.times && o.times.length > 1) return { official: true, times: o.times, probabilities: o.probabilities };
+    const f = loc.flag_probability || {};
+    return { official: false, times: f.times || [], probabilities: f.probabilities || {} };
+  }
+
   function buildProbTracesAndLayout(loc, key, T) {
     if (key === 'wallingford') return null;
     const order = key === 'godstow'
       ? ['green', 'amber', 'red']
       : ['green', 'light_blue', 'dark_blue', 'amber', 'red'];
-    const x = fcTimes(loc, loc.flag_probability.times);
-    const traces = order.map(k => ({
+    const src = probSource(loc);
+    const x = fcTimes(loc, src.times);
+    const traces = order.filter(k => src.probabilities[k]).map(k => ({
       type: 'scatter',
       mode: 'lines',
       x,
-      y: loc.flag_probability.probabilities[k],
+      y: src.probabilities[k],
       name: FLAG_LABELS[k],
       stackgroup: 'one',
       fillcolor: FLAG_COLORS[k],
