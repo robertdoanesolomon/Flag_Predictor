@@ -69,14 +69,14 @@ def main() -> None:
         fc = run(HYBRID_MODELS, loc, data, pos, rains)
         lib = ErrorLibrary.load(ROOT / 'models' / ERROR_LIBRARY.format(tag=MODEL_TAG, location=loc))
         rows, strip = [], {}
-        set_times = hist['start'].to_numpy()
+        hist = hist.sort_values('start').reset_index(drop=True)
         for j, i in enumerate(pos):
             t0 = idx[i]
             d24 = d[i - 24] if np.isfinite(d[i - 24]) else np.nan
             feats = start_features(d[i], d24, rains[j], float(np.nansum(data.rain[i - 167:i + 1])), t0)[None, :]
             samples = total_uncertainty(np.r_[d[i], fc[j]][None, :], feats, lib, seed=j)[:, :H + 1]
             band_p = np.stack([(of.band_rank(loc, samples) == k).mean(axis=0) for k in range(len(names))])
-            k_set = np.searchsorted(set_times, np.datetime64(t0.tz_localize(None)), side='right') - 1
+            k_set = int(hist['start'].searchsorted(t0, side='right')) - 1
             since = (t0 - hist['start'].iloc[k_set]).total_seconds() / 3600 if k_set >= 0 else 24 * 30
             lvl = pd.Series(d[i - 48:i + 1]).ffill().bfill().to_numpy()
             flags = of.simulate(params, loc, int(rank[i]), max(since, 0.0), lvl, samples, t0,
