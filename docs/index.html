@@ -2025,7 +2025,7 @@
 
       const probPlotHtml = isWallingford ? '' : `
         <div class="chart-block">
-          <h3 class="chart-title">${probSource(loc).official ? 'Chance of each OURCs flag' : PREVIEW ? 'Chance the differential is in each band' : 'Forecast flag probability'}${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
+          <h3 class="chart-title">${probSource(loc, key).official ? `Chance of each OURCs flag (next ${FLAG_FORECAST_HOURS[key]} h), then each band` : PREVIEW ? 'Chance the differential is in each band' : 'Forecast flag probability'}${loc.flag_probability && loc.flag_probability.source === 'rain+model' ? ' <small style="font-weight:500;color:var(--text-muted);">(rain + model error)</small>' : ''}</h3>
           ${renderProbLegendHtml(key)}
           <div id="prob-${key}" class="plot prob"></div>
         </div>`;
@@ -2420,13 +2420,30 @@
     };
   }
 
-  // /preview only: the official-flag forecast (official_probability) when there is one; otherwise,
-  // and always on the main page, the chance of each differential band.
-  function probSource(loc) {
-    const o = loc.official_probability;
-    if (ON_PREVIEW_PAGE && o && o.times && o.times.length > 1) return { official: true, times: o.times, probabilities: o.probabilities };
+  // /preview only: the chance of each OURCs flag (official_probability) for the first
+  // FLAG_FORECAST_HOURS of the forecast, where it beat the bands in the Feb 2025 replay, then the
+  // chance of each differential band. Otherwise, and on the main page, the bands throughout.
+  const FLAG_FORECAST_HOURS = { isis: 24, godstow: 72 };
+  function probSource(loc, key) {
     const f = loc.flag_probability || {};
-    return { official: false, times: f.times || [], probabilities: f.probabilities || {} };
+    const band = { official: false, times: f.times || [], probabilities: f.probabilities || {}, splitAt: null };
+    const o = loc.official_probability;
+    const limit = FLAG_FORECAST_HOURS[key];
+    if (!ON_PREVIEW_PAGE || !limit || !o || !o.times || o.times.length < 2 || !band.times.length) return band;
+    const at = {};
+    o.times.forEach((t, i) => { at[t] = i; });
+    const t0 = parseUtc(band.times[0]).getTime();
+    let splitAt = null;
+    const probabilities = {};
+    Object.keys(band.probabilities).forEach((k) => {
+      probabilities[k] = band.times.map((t, i) => {
+        const j = at[t];
+        const useFlag = j !== undefined && (parseUtc(t).getTime() - t0) / 3600000 <= limit;
+        if (!useFlag && splitAt === null && i > 0) splitAt = t;
+        return useFlag ? ((o.probabilities[k] || [])[j] || 0) : band.probabilities[k][i];
+      });
+    });
+    return { official: true, times: band.times, probabilities, splitAt, limit };
   }
 
   function buildProbTracesAndLayout(loc, key, T) {
@@ -2434,7 +2451,7 @@
     const order = key === 'godstow'
       ? ['green', 'amber', 'red']
       : ['green', 'light_blue', 'dark_blue', 'amber', 'red'];
-    const src = probSource(loc);
+    const src = probSource(loc, key);
     const x = fcTimes(loc, src.times);
     const traces = order.filter(k => src.probabilities[k]).map(k => ({
       type: 'scatter',
@@ -2469,7 +2486,19 @@
         x0: ukWall(new Date()), x1: ukWall(new Date()),
         yref: 'paper', y0: 0, y1: 1,
         line: { color: T.nowLine, width: 2, dash: 'dash' }
-      }],
+      }].concat(src.splitAt ? [{
+        type: 'line',
+        x0: fcTimes(loc, [src.splitAt])[0], x1: fcTimes(loc, [src.splitAt])[0],
+        yref: 'paper', y0: 0, y1: 1,
+        line: { color: T.font, width: 1.5, dash: 'dot' }
+      }] : []),
+      annotations: src.splitAt ? [{
+        x: fcTimes(loc, [src.splitAt])[0], xanchor: 'left', xshift: 4,
+        yref: 'paper', y: 1, yanchor: 'top',
+        text: 'Bands from here', showarrow: false,
+        font: { size: compact ? 10 : 12, color: T.font },
+        bgcolor: 'rgba(255,255,255,0.75)'
+      }] : [],
       xaxis: {
         ...sharedX,
         showspikes: false
