@@ -1,0 +1,41 @@
+name: Flag vs band replay (Feb 2025)
+# Verification only: runs compare_flag_vs_band_feb2025.py on pushes to this branch and uploads
+# the result. Commits nothing.
+on:
+  push:
+    branches: [flag-vs-band]
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Restore cached EA rainfall CSVs
+        uses: actions/cache/restore@v4
+        with:
+          path: data/rainfall_training_data
+          key: ea-rain-${{ runner.os }}-v2-preview
+          restore-keys: |
+            ea-rain-${{ runner.os }}-v2-
+            ea-rain-${{ runner.os }}-v1-
+      - name: Populate rainfall_training_data when cache miss
+        run: |
+          mkdir -p data/rainfall_training_data
+          COUNT="$(find data/rainfall_training_data -maxdepth 1 -type f -name '*.csv' | wc -l | tr -d ' ')"
+          echo "cache: ${COUNT} files"
+          if [ "${COUNT:-0}" -lt 15 ]; then
+            python src/flag_predictor/data/download_rainfall.py --min-date 2024-09-01 --delay 1.5
+          fi
+      - name: Replay
+        run: python compare_flag_vs_band_feb2025.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flag_vs_band_feb2025
+          path: figures/eval/flag_vs_band_feb2025.json
