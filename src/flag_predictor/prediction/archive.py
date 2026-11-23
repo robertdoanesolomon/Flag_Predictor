@@ -181,6 +181,15 @@ def summarise_payload(payload: dict) -> dict:
         for k in ('p10', 'p25', 'p50', 'p75', 'p90'):
             if k in total:
                 out[f'total_{k}'] = _round(total[k])
+    official = payload.get('official_probability')
+    if official and official.get('times'):
+        # hourly chance of each official OURCs flag (official_flag.hourly_probabilities), from t0 of
+        # its own; only flags with any chance are kept
+        out['official'] = {
+            't0': official['times'][0],
+            'flag_now': (payload.get('official_flag') or {}).get('flag'),
+            'probabilities': {k: v for k, v in official['probabilities'].items() if any(v)},
+        }
     return out
 
 
