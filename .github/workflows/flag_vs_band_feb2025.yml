@@ -33,6 +33,8 @@ jobs:
           if [ "${COUNT:-0}" -lt 15 ]; then
             python src/flag_predictor/data/download_rainfall.py --min-date 2024-09-01 --delay 1.5
           fi
+      - name: Download flow
+        run: python src/flag_predictor/data/download_flow.py --min-date 2024-06-01 --delay 1.0
       - name: Replay
         run: python compare_flag_vs_band_feb2025.py
       - uses: actions/upload-artifact@v4
