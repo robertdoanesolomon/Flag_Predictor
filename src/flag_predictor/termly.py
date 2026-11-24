@@ -503,20 +503,26 @@ ERA5_DAILY = Path('data') / 'termly' / 'era5_daily_rain.csv'
 MIN_EFFECTIVE_YEARS = 15
 
 
-def forecast_year_weights(ens: 'Ensemble', root: Path, days: pd.DatetimeIndex, rain: np.ndarray) -> tuple[np.ndarray, dict]:
+def forecast_year_weights(ens: 'Ensemble', root: Path, days: pd.DatetimeIndex, rain: np.ndarray,
+                          lw0: Optional[np.ndarray] = None, after: Optional[pd.Timestamp] = None,
+                          skill: tuple = EC46_SKILL) -> tuple[np.ndarray, dict]:
     """Weight each member year by how well its rain (ERA5) over the next three weeks fits the EC46 forecast.
 
     For each week ahead: the forecast's ensemble-mean total is ranked among that week's totals in every year since
     1993 (a normal score z_f), and so is each member year's own total (z_y). With skill r for that week, the
     weight is the likelihood ratio p(z_y | forecast) / p(z_y) = N(z_y; r z_f, 1 - r^2) / N(z_y; 0, 1), multiplied
-    over the weeks. Never fewer than MIN_EFFECTIVE_YEARS years' worth of weight (flattened if needed)."""
+    over the weeks. Never fewer than MIN_EFFECTIVE_YEARS years' worth of weight (flattened if needed).
+    ``lw0``: log-weights from another forecast (the 10-day flow forecast) added before flattening; ``after``: the
+    first EC46 week starts the day after this (the end of that forecast), with ``skill`` for its weeks."""
     from scipy.special import ndtri
     obs = pd.read_csv(Path(root) / ERA5_DAILY, index_col=0, parse_dates=True).iloc[:, 0]
     acad0 = academic_year(ens.t0)
     years = np.array(ens.years)
-    lw, weeks = np.zeros(len(years)), []
+    lw, weeks = (np.zeros(len(years)) if lw0 is None else np.array(lw0, float)), []
     start = max(days[0], ens.t0 + pd.Timedelta(days=1))
-    for k, r in enumerate(EC46_SKILL):
+    if after is not None:
+        start = max(start, after + pd.Timedelta(days=1))
+    for k, r in enumerate(skill):
         a = start + pd.Timedelta(days=7 * k)
         sel = (days >= a) & (days < a + pd.Timedelta(days=7))
         if sel.sum() < 7 or r <= 0:
@@ -535,6 +541,62 @@ def forecast_year_weights(ens: 'Ensemble', root: Path, days: pd.DatetimeIndex, r
         lw += -0.5 * (zy - r * zf) ** 2 / (1 - r * r) + 0.5 * zy ** 2
         weeks.append({'from': f'{a:%Y-%m-%d}', 'forecast_mm': round(fc, 1), 'normal_mm': round(float(np.median(clim)), 1),
                       'z': round(zf, 2), 'skill': r})
+    w, lam = flatten_weights(lw)
+    return w, {'weeks': weeks, 'effective_years': round(float(1 / np.sum(w ** 2)), 1), 'flattened': round(lam, 2),
+               'top_years': [int(years[i]) for i in np.argsort(-w)[:5]]}
+
+
+# The site's own 10-day forecast (Godstow differential, docs/forecast_data.json) as a third weather input. Godstow is
+# the stretch just below Farmoor and its noon differential follows Farmoor flow closely (scatter ~0.05-0.1 m). Each
+# member year's flow over the forecast days is turned into a differential through that curve, and the year is
+# weighted by how well it fits the forecast's mean over those days (Gaussian likelihood: forecast spread, rain + model
+# error, plus the curve's scatter). The curve is offset to today's measured differential first, so weed, gauge or
+# datum drift doesn't count as a forecast. EC46 then covers only the days after the 10-day forecast.
+FLOW_FC_WEIGHTING = True
+FLOW_FC_LOC = 'godstow'
+FLOW_FC_MIN_SD = 0.04           # m: floor on the forecast's 10-day-mean error (archive Oct-Nov 2026: 0.04-0.05 m)
+EC46_SKILL_AFTER_FC = (0.3, 0.15)   # EC46 weeks starting the day after the 10-day forecast ends
+
+
+def differential_curve(root: Path, q: pd.Series, loc: str = FLOW_FC_LOC, exclude: int | None = None):
+    """(log-flow knots, median noon differential, scatter of 10-day means) for Farmoor flow -> differential, from
+    every day since 2017 (academic year ``exclude`` left out). Monotone in flow."""
+    d = pd.read_csv(Path(root) / 'data' / 'termly' / f'differential_noon_{loc}.csv', index_col=0,
+                    parse_dates=True).iloc[:, 0]
+    j = pd.concat([q, d], axis=1, keys=['q', 'd']).dropna()
+    if exclude is not None:
+        a = np.where(j.index.month >= 9, j.index.year, j.index.year - 1)
+        j = j[a != exclude]
+    lq = np.log(j.q.clip(lower=MIN_FLOW))
+    edges = np.quantile(lq, np.linspace(0, 1, 26))
+    b = np.clip(np.searchsorted(edges, lq, 'right') - 1, 0, 24)
+    knots = np.array([lq[b == k].median() for k in range(25)])
+    med = np.maximum.accumulate(np.array([j.d[b == k].median() for k in range(25)]))
+    fit = pd.Series(np.interp(lq, knots, med), j.index)
+    r = (j.d - fit).rolling(10, min_periods=8).mean()
+    return knots, med, float(r.std())
+
+
+def to_differential(curve, flow: np.ndarray) -> np.ndarray:
+    knots, med, _ = curve
+    return np.interp(np.log(np.clip(flow, MIN_FLOW, None)), knots, med)
+
+
+def flow_forecast_lw(ens: 'Ensemble', curve, fc_days: pd.DatetimeIndex, fc_mean: float, fc_sd: float,
+                     d0: float, q0: float) -> np.ndarray:
+    """Log-likelihood of each member year given the 10-day forecast: the forecast mean differential over
+    ``fc_days`` against each year's (conditioned) flow over those days, through the curve offset to today."""
+    sel = np.isin(ens.days, fc_days)
+    if sel.sum() == 0:
+        return np.zeros(len(ens.years))
+    bias = d0 - float(to_differential(curve, np.array([q0]))[0])
+    x = to_differential(curve, ens.members[:, sel]).mean(axis=1) + bias
+    s2 = max(fc_sd, FLOW_FC_MIN_SD) ** 2 + curve[2] ** 2
+    return -0.5 * (x - fc_mean) ** 2 / s2
+
+
+def flatten_weights(lw: np.ndarray) -> tuple[np.ndarray, float]:
+    """Weights from log-weights, flattened until worth at least MIN_EFFECTIVE_YEARS years."""
     lam = 1.0
     for _ in range(30):
         w = np.exp(lam * (lw - lw.max()))
@@ -542,8 +604,38 @@ def forecast_year_weights(ens: 'Ensemble', root: Path, days: pd.DatetimeIndex, r
         if 1 / np.sum(w ** 2) >= MIN_EFFECTIVE_YEARS:
             break
         lam *= 0.8
-    return w, {'weeks': weeks, 'effective_years': round(float(1 / np.sum(w ** 2)), 1), 'flattened': round(lam, 2),
-               'top_years': [int(years[i]) for i in np.argsort(-w)[:5]]}
+    return w, lam
+
+
+def site_forecast(root: Path, loc: str = FLOW_FC_LOC) -> Optional[dict]:
+    """The site's latest 10-day forecast for ``loc`` (docs/forecast_data.json): days it covers (whole UTC days with
+    at least 18 forecast hours), its mean differential over them, the spread of that mean, and today's reading."""
+    p = Path(root) / 'docs' / 'forecast_data.json'
+    try:
+        L = json.loads(p.read_text())['locations'][loc]
+    except (FileNotFoundError, KeyError, json.JSONDecodeError):
+        return None
+    if L.get('stale'):
+        return None
+    e = L['ensemble']
+    t = pd.DatetimeIndex(pd.to_datetime(e['times']))
+    t = t.tz_convert('UTC').tz_localize(None) if t.tz is not None else t
+    mem = np.array(e['members'], float)
+    tot = e.get('total') or {}
+    day = t.normalize()
+    keep = pd.Series(1, t).groupby(day).count()
+    days = pd.DatetimeIndex(keep.index[keep >= 18])
+    sel = np.isin(day, days) & (t > t[0])
+    if not sel.any():
+        return None
+    m = float(np.nanmean(mem[:, sel]))
+    sd_rain = float(np.nanstd(np.nanmean(mem[:, sel], axis=1)))
+    if 'p90' in tot and 'p10' in tot:
+        sd_tot = float(np.nanmean((np.array(tot['p90'], float) - np.array(tot['p10'], float))[sel]) / 2.563)
+    else:
+        sd_tot = sd_rain
+    return {'days': days, 'mean': m, 'sd': max(sd_tot, sd_rain), 'd0': float(L['current']['differential']),
+            'issued': f"{t[0]:%Y-%m-%d %H:%M}"}
 
 
 def ec46_run_date(timeout: int = 30) -> Optional[str]:

@@ -129,13 +129,15 @@
 
   <section class="panel">
     <h2>How it works</h2>
-    <p style="margin:0">This uses only the river's own flow at Farmoor since 1993, with no weather forecast. A river that
+    <p style="margin:0">This starts from the river's own flow at Farmoor since 1993. A river that
       has been high or low tends to stay that way for weeks, because the ground and groundwater take time to fill or
       drain. So we take today's flow and see how each of the last 33 years carried on from a similar starting point. For
       periods more than a few weeks off, "today's flow" means the last month rather than the last week, so a brief rise
       after a day of rain doesn't swing the odds for a term that is still months away.
       That gives 33 possible futures, and the odds come from counting them. For the next few weeks, the years
-      whose rain best matches ECMWF's three-week forecast count for more; this fades out for periods further off.
+      whose river best matches this site's <a href="../">10-day forecast</a>, and after that whose rain best matches
+      ECMWF's forecast for the following weeks, count for more; this fades out for periods further off. For a term
+      or Vac already under way, the odds are for the days still to come, against the same days in other years.
       The monthly seasonal forecast was tested this way and made it worse, so it is shown for information only. Each past year was forecast from the others to
       check it works.</p>
   </section>
@@ -185,7 +187,7 @@
     const seg = (x, cls, col) => `<div class="${cls}" style="width:${P(x)}%;background:${col}">${P(x) >= 9 ? P(x) + '%' : ''}</div>`;
     document.getElementById('periods').innerHTML = D.terms.isis.map((t) => {
       const c = t.tercile;
-      const left = t.days_done > 0 ? `${t.days - t.days_done} days left` : `${d8(t.start)} – ${d8(t.end)}`;
+      const left = t.days_done > 0 ? `rest of ${/Vac/.test(t.label) ? 'Vac' : 'term'}: ${t.days - t.days_done} days left` : `${d8(t.start)} – ${d8(t.end)}`;
       return `<div class="prow"><div class="pname">${t.label}<small>${left}</small></div><div>
         <div class="say">${sentence(c)}</div>
         <div class="tbar">${seg(c.lower, '', 'var(--lower)')}${seg(c.usual, 'u', 'var(--usual)')}${seg(c.higher, '', 'var(--higher)')}</div>

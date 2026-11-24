@@ -1465,3 +1465,32 @@ Deployed: `config.MODEL_INPUT_OFFSET = {'isis': 0.045}`, first as the preview tr
 (update_figures.yml `--preview-model hybrid_srh,hybrid_offset`: the first that runs for each stretch), then on
 the main page with `MODEL_INPUT_OFFSET_ON_MAIN = True`. The page, flag lines (`LIVE_LINE_SHIFT`), step layer,
 official-flag model and archive stay on the measured scale; the error library is matched on the model's scale.
+
+## Long-range page: rest-of-period odds and the 10-day forecast (24 Nov 2026)
+
+**Rest of period.** For a term or Vac under way, lower / usual / higher is now for the days still to come, against
+the same days (from the same day of the period) in other years. Before, it was the whole period, measured days
+included, so late in a term it mostly reported what had already happened (Michaelmas 2026 on 23 Nov: 69% lower
+whole-term; rest of term 25 / 53 / 22% river only).
+
+**10-day forecast weighting.** Member years are weighted by how well their flow over the 10-day forecast's days fits
+the site's Godstow differential forecast (`docs/forecast_data.json`): flow -> differential through the 2017-2026
+noon curve (`termly.differential_curve`, monotone, binned medians), offset to today's measured differential;
+Gaussian likelihood with sd = forecast spread (total quantiles, floor 0.04 m) and the curve's 10-day scatter;
+flattened to at least 15 effective years. EC46 now covers the weeks after the forecast ends (skill 0.3 / 0.15).
+Fades for periods 3-10 weeks off as before. Off for `--date` and `--rebuild` runs.
+
+**Check (`test_flow_forecast.py`).** Leave-one-year-out 2016/17-2025/26 (2018/19 has no Godstow record), every
+3 days Sep-Jun. Only ~2 months of real archived forecasts exist, so the forecast is the measured 10-day mean
+differential plus noise. RPS skill vs a usual year (%):
+
+| | River only | Error 0.05 m | 0.10 m | 0.04 + 0.15 d | Over-confident |
+|---|---|---|---|---|---|
+| Rest of period, during | 35.7 | 49.0 | 47.4 | 47.6 | 46.5 |
+| Rest of period, last 3 weeks | 50.5 | 68.2 | 66.6 | 64.6 | 66.0 |
+| Up to 1 month ahead | 25.1 | 30.4 | 30.1 | 30.4 | 29.5 |
+| Whole period, during | 63.7 | 70.3 | 70.0 | 69.6 | 69.4 |
+
+Year-resampled 95% intervals of the gain (proportional error): rest of period during +7.5 to +16.3, up to 1 month
++0.6 to +10.0. Real-forecast errors in the archive (Oct-Nov 2026, 115 issues): 10-day mean bias +0.02 m, sd 0.04 m.
+To redo on real forecasts once a wet winter is archived.
