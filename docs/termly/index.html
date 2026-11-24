@@ -269,6 +269,7 @@
     return live ? `Before ${d8(live[0])}: worked out afterwards from the river record, without the three-week weather forecast.`
       : 'Worked out afterwards from the river record, without the three-week weather forecast.';
   }
+  const REST_FROM = '2026-11-23';
   let histItem = null;
   function renderHistory() {
     const per = (H && H.periods) || {};
@@ -285,10 +286,16 @@
     const t = D.terms.isis.find((u) => u.label === histItem);
     const shapes = t && t.start <= x[x.length - 1] && t.start >= x[0]
       ? [{ type: 'line', x0: t.start, x1: t.start, y0: 0, y1: 100, line: { color: cssv('--text-muted'), width: 1, dash: 'dot' } }] : [];
+    // from REST_FROM, a period under way is scored on the days still to come (before: the whole period)
+    const restSwitch = t && t.start < REST_FROM && REST_FROM > x[0] && REST_FROM <= x[x.length - 1];
+    if (restSwitch) shapes.push({ type: 'line', x0: REST_FROM, x1: REST_FROM, y0: 0, y1: 100,
+      line: { color: cssv('--text-muted'), width: 1, dash: 'dash' } });
     Plotly.react('history', [tr(1, 'Lower', cssv('--lower')), tr(2, 'About usual', cssv('--usual')), tr(3, 'Higher', cssv('--higher'))],
       plotLayout({ shapes, hovermode: 'x unified' }), { displayModeBar: false, responsive: true });
     document.getElementById('history-note').textContent = `The odds for ${histItem} as the page gave them each day` +
-      (shapes.length ? ' (dotted line: when it started). ' : '. ') + rebuiltNote(rows, 4);
+      (shapes.length > (restSwitch ? 1 : 0) ? ' (dotted line: when it started). ' : '. ') +
+      (restSwitch ? `From ${d8(REST_FROM)} (dashed line) the odds are for the rest of the period only, not the whole of it, so the line jumps there. ` : '') +
+      rebuiltNote(rows, 4);
   }
   function renderTorpidsHistory() {
     const t = D.torpids, box = document.getElementById('torpids-history');
