@@ -171,7 +171,20 @@
     if (hi >= 0.5) return 'Likely higher than usual.';
     if (lo >= 0.4 && hi <= 0.2) return 'Leaning lower than usual.';
     if (hi >= 0.4 && lo <= 0.2) return 'Leaning higher than usual.';
+    // hindcasts (test_flow_forecast.py): at 60%+ "about usual" the rest of the period was usual 60-65% of the time
+    if (c.usual >= 0.6) return 'Likely about usual.';
     return 'No clear signal.';
+  }
+
+  // A period under way whose remaining days are mostly inside the 10-day forecast: say the odds come from it
+  function fromForecast(t) {
+    const f = D.flow_forecast_weighting;
+    if (!f || !(t.days_done > 0)) return '';
+    const left = t.days - t.days_done;
+    const end = t.end < f.to ? t.end : f.to;
+    const inFc = Math.max(0, Math.round((Date.parse(end) - Date.parse(f.from)) / 864e5) + 1);
+    if (inFc < left / 2) return '';
+    return ` <span class="nudge">Mostly from the <a href="../">10-day forecast</a>, which covers ${inFc} of the ${left} days left.</span>`;
   }
 
   function nudge(t) {
@@ -189,7 +202,7 @@
       const c = t.tercile;
       const left = t.days_done > 0 ? `rest of ${/Vac/.test(t.label) ? 'Vac' : 'term'}: ${t.days - t.days_done} days left` : `${d8(t.start)} – ${d8(t.end)}`;
       return `<div class="prow"><div class="pname">${t.label}<small>${left}</small></div><div>
-        <div class="say">${sentence(c)}</div>
+        <div class="say">${sentence(c)}${fromForecast(t)}</div>
         <div class="tbar">${seg(c.lower, '', 'var(--lower)')}${seg(c.usual, 'u', 'var(--usual)')}${seg(c.higher, '', 'var(--higher)')}</div>
       </div></div>`;
     }).join('');
