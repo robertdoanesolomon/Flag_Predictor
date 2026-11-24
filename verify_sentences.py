@@ -34,6 +34,7 @@ def sentence(lo, hi):
     if hi >= 0.5: return 'Likely higher'
     if lo >= 0.4 and hi <= 0.2: return 'Leaning lower'
     if hi >= 0.4 and lo <= 0.2: return 'Leaning higher'
+    if 1 - lo - hi >= 0.6: return 'Likely about usual'
     return 'No clear signal'
 
 
@@ -128,7 +129,7 @@ out.mkdir(parents=True, exist_ok=True)
 df.to_csv(out / 'termly_sentences.csv', index=False)
 tp.to_csv(out / 'termly_sentences_torpids.csv', index=False)
 df['when'] = pd.cut(df.lead, [-1, 0, 31, 92, 1000], labels=['during', 'up to 1 month', '1-3 months', '3+ months'])
-order = ['Very likely lower', 'Likely lower', 'Leaning lower', 'No clear signal', 'Leaning higher', 'Likely higher', 'Very likely higher']
+order = ['Very likely lower', 'Likely lower', 'Leaning lower', 'Likely about usual', 'No clear signal', 'Leaning higher', 'Likely higher', 'Very likely higher']
 names = {0: 'lower', 1: 'usual', 2: 'higher'}
 print('\nWhat happened after each sentence (%), all leads:')
 t = df.groupby('say').cat.value_counts(normalize=True).unstack(fill_value=0).rename(columns=names).mul(100).round()
