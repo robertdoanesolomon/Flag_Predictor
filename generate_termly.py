@@ -63,6 +63,22 @@ def skill_lookup(ver: dict, loc: str, period: str, flag: str, lead: str):
     return None
 
 
+def rest_tercile_inputs(q: pd.Series, ens: T.Ensemble, samples: np.ndarray, term: str, acad: int,
+                        s_: pd.Timestamp, w1: pd.Timestamp) -> tuple[np.ndarray, float, float]:
+    """(each sample's mean flow from s_ to w1, lower and upper tercile of that mean in past years). For a period
+    under way, only the days still to come count: past years are taken over the same days (from the same day
+    of the period), so the odds say how the rest of the term compares, not the term so far."""
+    w0 = T.term_window(term, acad)[0]
+    off, n = (s_ - w0).days, (w1 - s_).days + 1
+    usual = []
+    for y in range(T.FIRST_YEAR, acad):
+        a0 = T.term_window(term, y)[0] + pd.Timedelta(days=off)
+        usual.append(float(q.loc[a0:a0 + pd.Timedelta(days=n - 1)].mean()))
+    lo_t, hi_t = np.nanpercentile(usual, [100 / 3, 200 / 3])
+    sel = (ens.days >= s_) & (ens.days <= w1)
+    return samples[:, sel].mean(1), float(lo_t), float(hi_t)
+
+
 def term_summary(q: pd.Series, ens: T.Ensemble, term: str, acad: int, loc: str, actual: pd.Series,
                  rebuilt_all: pd.Series, ver: dict, analogs: list) -> dict:
     t0 = ens.t0
@@ -105,19 +121,10 @@ def term_summary(q: pd.Series, ens: T.Ensemble, term: str, acad: int, loc: str, 
                     'normal_p90': _q(normal[:, k], 90),
                     'skill': skill_lookup(ver, loc, term, n, lead)}
     worst = tot[:, -1]
-    # higher or lower than usual: mean flow over the period against the past years' terciles
-    usual = []
-    for y in range(T.FIRST_YEAR, acad):
-        a0, a1 = T.term_window(term, y)
-        usual.append(float(q.loc[a0:a1].mean()))
-    lo_t, hi_t = np.percentile(usual, [100 / 3, 200 / 3])
-    if w1 > t0:
-        s_ = max(w0, t0 + pd.Timedelta(days=1))
-        sel = (ens.days >= s_) & (ens.days <= w1)
-        past = q.loc[w0:t0].to_numpy() if w0 <= t0 else np.array([])
-        pm = (samples[:, sel].sum(1) + past.sum()) / (sel.sum() + len(past))
-    else:
-        pm = np.full(len(samples), float(q.loc[w0:w1].mean()))
+    # higher or lower than usual: mean flow over the rest of the period (all of it, if it hasn't started) against
+    # the past years' terciles for the same days
+    s_ = max(w0, t0 + pd.Timedelta(days=1))
+    pm, lo_t, hi_t = rest_tercile_inputs(q, ens, samples, term, acad, s_, w1)
     tercile = {'lower': round(float(np.sum(wts * (pm < lo_t))), 2), 'higher': round(float(np.sum(wts * (pm > hi_t))), 2)}
     tercile['usual'] = round(1 - tercile['lower'] - tercile['higher'], 2)
     tercile = T.calibrate_tercile(ROOT, tercile, max(0, (w0 - t0).days))
@@ -206,11 +213,36 @@ def main() -> None:
     ens = model.ensemble(t0)
     # weather forecasts: weight the member years by how well their rain fits EC46's next three weeks
     fetched, weighting = None, None
+    # and by how well their flow over the next 10 days fits the site's own differential forecast
+    lw_fc, fc_end, flow_fc = None, None, None
+    try:
+        if args.rebuild or args.date or not T.FLOW_FC_WEIGHTING:
+            raise RuntimeError('river only' if args.rebuild else 'not for this run')
+        fc = T.site_forecast(ROOT)
+        if fc is None:
+            raise RuntimeError('no current forecast')
+        fc_days = fc['days'][fc['days'] > t0]
+        curve = T.differential_curve(ROOT, qk)
+        lw_fc = T.flow_forecast_lw(ens, curve, fc_days, fc['mean'], fc['sd'], fc['d0'], float(qk.dropna().iloc[-1]))
+        fc_end = fc_days[-1]
+        w_fc, _ = T.flatten_weights(lw_fc)
+        flow_fc = {'issued': fc['issued'], 'loc': T.FLOW_FC_LOC, 'from': f'{fc_days[0]:%Y-%m-%d}',
+                   'to': f'{fc_end:%Y-%m-%d}', 'mean_m': round(fc['mean'], 3), 'sd_m': round(fc['sd'], 3),
+                   'effective_years': round(float(1 / np.sum(w_fc ** 2)), 1),
+                   'top_years': [int(ens.years[i]) for i in np.argsort(-w_fc)[:5]]}
+        ens.year_w = w_fc
+        print(f"  10-day forecast weighting on: {flow_fc['effective_years']} effective years")
+    except Exception as e:              # noqa: BLE001
+        print(f'  10-day forecast weighting off: {e}')
     try:
         if args.rebuild:
             raise RuntimeError('rebuilding the history: river only')
         fetched = T.ec46_fetch()
-        yw, weighting = T.forecast_year_weights(ens, ROOT, *fetched)
+        if lw_fc is not None:
+            yw, weighting = T.forecast_year_weights(ens, ROOT, *fetched, lw0=lw_fc, after=fc_end,
+                                                    skill=T.EC46_SKILL_AFTER_FC)
+        else:
+            yw, weighting = T.forecast_year_weights(ens, ROOT, *fetched)
         if T.EC46_WEIGHTING:
             ens.year_w = yw
         print(f"  EC46 weighting {'on' if T.EC46_WEIGHTING else 'OFF (logged only)'}: {weighting['effective_years']} effective years")
@@ -334,7 +366,7 @@ def main() -> None:
               'lines': T.LINES, 'names': T.NAMES, 'torpids_flow': T.TORPIDS_FLOW,
               'terms': out_terms, 'weekly': {loc: weekly(ens, loc, prev) for loc in ('isis', 'godstow')},
               'torpids': torpids, 'seasonal': seasonal, 'ec46': ec46, 'ec46_run': ec46_run,
-              'forecast_weighting': weighting}
+              'forecast_weighting': weighting, 'flow_forecast_weighting': flow_fc}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=1))
     if args.date is None:
