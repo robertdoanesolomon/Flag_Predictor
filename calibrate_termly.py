@@ -1,6 +1,6 @@
-"""Bias-correct the long-range page's percentages (lower / usual / higher odds and the Torpids chance) from the
-leave-one-year-out hindcasts written by verify_sentences.py. For each lead group: logit p' = a + b logit p, fitted
-on all years, checked leave-one-year-out. Writes data/termly/calibration.json (read by termly.calibrate_*).
+"""Bias-correct the long-range page's lower / usual / higher odds from the leave-one-year-out hindcasts written
+by verify_sentences.py (the Torpids chance is no longer corrected: see verify_torpids.py). For each lead group:
+logit p' = a + b logit p, fitted on all years, checked leave-one-year-out. Writes data/termly/calibration.json (read by termly.calibrate_*).
 
     python verify_sentences.py && python calibrate_termly.py
 """
@@ -20,7 +20,6 @@ from flag_predictor import termly as T  # noqa: E402
 
 EV = ROOT / 'figures' / 'eval'
 df = pd.read_csv(EV / 'termly_sentences.csv')
-tp = pd.read_csv(EV / 'termly_sentences_torpids.csv')
 
 
 def lg(p):
@@ -42,8 +41,7 @@ def apply(b, p):
 
 
 df['group'] = df.lead.map(T.calibration_group)
-tp['group'] = tp.before.map(T.calibration_group_torpids)
-out = {'terms': {}, 'torpids': {}, 'check': {}}
+out = {'terms': {}, 'check': {}}
 
 
 def rps3(lo, hi, cat):
@@ -64,24 +62,9 @@ for g, d in df.groupby('group'):
     out['check'][f'terms {g}'] = {'skill_before': round(100 * (1 - rps3(d.p_lo, d.p_hi, d.cat.to_numpy()).mean() / clim), 1),
                                   'skill_after': round(100 * (1 - rps3(lo2, hi2, d.cat.to_numpy()).mean() / clim), 1),
                                   'n': len(d)}
-for g, d in tp.groupby('group'):
-    out['torpids'][g] = list(fit(d.go, d.raced))
-    p2 = np.zeros(len(d))
-    for Y in d.Y.unique():
-        tr, te = d[d.Y != Y], (d.Y == Y).to_numpy()
-        p2[te] = apply(fit(tr.go, tr.raced), d.go[te])
-    clim = ((d.raced.mean() - d.raced) ** 2).mean()
-    out['check'][f'torpids {g}'] = {'skill_before': round(100 * (1 - ((d.go - d.raced) ** 2).mean() / clim), 1),
-                                    'skill_after': round(100 * (1 - ((p2 - d.raced) ** 2).mean() / clim), 1),
-                                    'mean_forecast_before': round(float(d.go.mean()), 2), 'mean_after': round(float(p2.mean()), 2),
-                                    'raced': round(float(d.raced.mean()), 2), 'n': len(d)}
-# keep a correction only where the leave-one-year-out check shows it helps; where even the corrected Torpids
-# chance is worse than the record, the page shows the record ('too early to tell')
+# keep a correction only where the leave-one-year-out check shows it helps
 keep = lambda k: out['check'][k]['skill_after'] > out['check'][k]['skill_before']  # noqa: E731
 out['terms'] = {g: {k: [round(float(v), 3) for v in b] for k, b in d.items()} for g, d in out['terms'].items()
                 if keep(f'terms {g}')}
-out['torpids_record_only'] = [g for g in out['torpids'] if max(out['check'][f'torpids {g}']['skill_after'],
-                                                               out['check'][f'torpids {g}']['skill_before']) < 0]
-out['torpids'] = {g: [round(float(v), 3) for v in b] for g, b in out['torpids'].items() if keep(f'torpids {g}')}
 (ROOT / T.CALIBRATION_FILE).write_text(json.dumps(out, indent=1))
 print(json.dumps(out, indent=1))

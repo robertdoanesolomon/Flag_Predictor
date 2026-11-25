@@ -322,20 +322,17 @@ def main() -> None:
                                                     * (rf >= T.TORPIDS_FLOW))), 2),
                    'flow_median': _wq(rf, wts, 50), 'flow_p10': _wq(rf, wts, 10), 'flow_p90': _wq(rf, wts, 90),
                    'lead': lead, 'skill': sk}
-        # bias correction (calibrate_termly.py): the record when the forecast has shown no skill this far out;
-        # in the last weeks from 1 January, the rain-since-January adjustment (itself fitted on outcomes)
+        # More than TORPIDS_TOO_EARLY days off: no skill, so 'too early to tell' and an average year for these dates.
+        # No bias correction: the model's average year matches every late-February window since 1994 (the actual
+        # Torpids were wetter than the weeks around them, by luck at the threshold; see verify_torpids.py).
+        # In the last weeks from 1 January, the rain-since-January adjustment is faded in (termly.torpids_rain_blend).
         torpids['chance_raw'] = torpids['chance']
-        cal = T._calibration(ROOT) or {}
-        adj, info = T.torpids_rain_adjust(ROOT, torpids['chance'], t0, race[0])
-        if T.calibration_group_torpids(tb) in cal.get('torpids_record_only', []) and ver.get('torpids_climatology') is not None:
-            torpids['chance'], torpids['too_early'] = ver['torpids_climatology'], True
+        if tb > T.TORPIDS_TOO_EARLY:
+            torpids['chance'], torpids['too_early'] = torpids['chance_clim'], True
         else:
-            river = 1 - T.calibrate_torpids(ROOT, 1 - torpids['chance'], tb)
-            if info:                    # faded in over the last weeks (termly.torpids_rain_blend)
-                info['chance_river_only_calibrated'] = round(river, 2)
-                torpids['chance'], torpids['rain_since_jan1'] = round(T.torpids_rain_blend(river, adj, tb), 2), info
-            else:
-                torpids['chance'] = round(river, 2)
+            adj, info = T.torpids_rain_adjust(ROOT, torpids['chance'], t0, race[0])
+            if info:
+                torpids['chance'], torpids['rain_since_jan1'] = round(T.torpids_rain_blend(torpids['chance'], adj, tb), 2), info
 
     if args.rebuild:
         record_history({'issued': f'{t0:%Y-%m-%d}', 'terms': out_terms, 'torpids': torpids}, 'rebuilt')
