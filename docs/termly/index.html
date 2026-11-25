@@ -321,20 +321,22 @@
     }
     box.style.display = '';
     const usual = V ? 1 - V.torpids_climatology : null;
-    const x = rows.map((r) => r[0]);
-    const y = (early) => rows.map((r) => (r[2] === early ? Math.round(100 * r[1]) : null));
+    // start on the first day the page gave a chance (the 'too early' days before are just the record),
+    // and run the axis to the first day of Torpids so the line fills in towards it
+    const shown = rows.slice(rows.findIndex((r) => !r[2]));
+    const x = shown.map((r) => r[0]);
     const traces = [
-      { type: 'scatter', mode: 'lines', x, y: y(false), name: 'Goes ahead', line: { color: cssv('--accent-soft'), width: 2.5 },
-        hovertemplate: '%{y}%<extra></extra>', connectgaps: false },
-      { type: 'scatter', mode: 'lines', x, y: y(true), name: 'Too early to tell', line: { color: cssv('--text-muted'), width: 2, dash: 'dot' },
-        hovertemplate: 'too early: %{y}%<extra></extra>' },
+      { type: 'scatter', mode: shown.length < 3 ? 'lines+markers' : 'lines', x, y: shown.map((r) => Math.round(100 * r[1])),
+        name: 'Goes ahead', line: { color: cssv('--accent-soft'), width: 2.5 }, marker: { size: 7 }, cliponaxis: false,
+        hovertemplate: '%{y}%<extra></extra>' },
     ];
     const shapes = usual != null ? [{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 100 * usual, y1: 100 * usual,
       line: { color: cssv('--text-muted'), width: 1, dash: 'dash' } }] : [];
-    Plotly.react('torpids-history', traces.filter((tr) => tr.y.some((v) => v != null)),
-      plotLayout({ shapes, hovermode: 'x unified' }), { displayModeBar: false, responsive: true });
-    note.textContent = 'What the page said each day' +
-      (usual != null ? ` (dashed: usual, ${pct(usual)}). ` : '. ') + rebuiltNote(rows, 3);
+    const xaxis = Object.assign({}, plotLayout().xaxis, { range: [x[0], t.first_day] });
+    Plotly.react('torpids-history', traces,
+      plotLayout({ shapes, hovermode: 'x unified', showlegend: false, xaxis }), { displayModeBar: false, responsive: true });
+    note.textContent = `What the page said each day from ${d8(x[0])}, the first day it gave a chance` +
+      (usual != null ? ` (dashed: usual, ${pct(usual)}). ` : '. ') + rebuiltNote(shown, 3);
   }
 
   let H = null;
