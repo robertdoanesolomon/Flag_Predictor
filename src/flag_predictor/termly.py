@@ -675,18 +675,27 @@ def ec46_rain(root: Path, timeout: int = 60, fetched=None) -> list[dict]:
 
 # Torpids in its last five weeks: the outlook's chance adjusted by the rain since 1 January (Anu Dudhia's
 # observation that a wet January and February loses Torpids). logit p' = a + b logit p + c z (days so far / 60),
-# z = this year's mean rain since 1 Jan against the same days in every year since 1994 (ERA5). Fitted
-# leave-one-year-out on hindcasts 1994-2026 (Brier skill vs the record: last week 36 -> 52%, 1-3 weeks 22 -> 27%,
-# 3-5 weeks 18 -> 22%; worse beyond five weeks, so not used then).
-TORPIDS_RAIN_COEF = (0.38, 0.82, 1.29)
+# p the river-only chance of a cancellation-level river, z = this year's mean rain since 1 Jan against the same days
+# in every year since 1994 (ERA5).
+# Fitted by verify_torpids.py on every 4-day window from 16 Feb to 6 Mar, 1994-2026 ('pseudo-Torpids'), not on the
+# 32 actual Torpids alone. Those were wetter than the weeks either side of them in the same winters (10 over 42 m3/s
+# against 5.8 on average with the dates shifted by 1-7 days; level by 50 m3/s, 4 against 4.4), so a fit on them
+# alone took a +0.4 intercept from what was luck at the threshold. Leave-one-year-out Brier skill on the pseudo
+# weeks against an average year for the dates: last week 46 -> 55%, 1-3 weeks 24 -> 32%, 3-5 weeks 9 -> 10%.
+# Was (0.38, 0.82, 1.29), fitted on the actual Torpids, until Nov 2026.
+TORPIDS_RAIN_COEF = (-0.70, 0.79, 1.54)
 TORPIDS_RAIN_DAYS = 35
 # Faded in rather than switched on: from TORPIDS_RAIN_DAYS before Torpids the page's chance moves smoothly from the
-# river-only chance (with its bias correction) to the rain-adjusted one, all of it from TORPIDS_RAIN_FULL days before
-# (log-odds blend, torpids_rain_blend). Daily leave-one-year-out hindcasts with both corrections refitted each
-# year (Brier skill vs the record): last 5 weeks 19.4% (switched on at 5 weeks) -> 21.2%; 3-5 weeks 3.5 -> 7.5%,
+# river-only chance to the rain-adjusted one, all of it from TORPIDS_RAIN_FULL days before
+# (log-odds blend, torpids_rain_blend). Still the best on the pseudo weeks (starting at 49 or 63 days, or full
+# at 14, made no difference or was slightly worse). Earlier check, with the old fit and the since-dropped bias
+# correction, daily leave-one-year-out (Brier skill vs the record): last 5 weeks 19.4% (switched on at 5 weeks) -> 21.2%; 3-5 weeks 3.5 -> 7.5%,
 # last week 41.7% either way; biggest one-day change 27 -> 16 points. Starting the fade earlier (6+ weeks) was
 # worse: before about 4 weeks the rain so far says less than the river does.
 TORPIDS_RAIN_FULL = 7
+# Further ahead than this the forecast has no skill: the page says 'too early to tell' and gives the record (how
+# often Torpids has gone ahead) (verify_torpids.py: Brier skill about 1% beyond, 2-8% at 5 weeks - 3 months).
+TORPIDS_TOO_EARLY = 92
 
 
 def torpids_rain_blend(p_river: float, p_rain: float, days_before: int) -> float:
@@ -755,10 +764,6 @@ def calibration_group(lead_days: int) -> str:
     return 'during' if lead_days <= 0 else 'up to 1 month' if lead_days <= 31 else '1-3 months' if lead_days <= 92 else '3+ months'
 
 
-def calibration_group_torpids(days_before: int) -> str:
-    return 'last 5 weeks' if days_before <= 35 else '5 weeks-3 months' if days_before <= 92 else '3+ months'
-
-
 def _calibration(root: Path) -> Optional[dict]:
     f = Path(root) / CALIBRATION_FILE
     return json.loads(f.read_text()) if f.exists() else None
@@ -779,9 +784,3 @@ def calibrate_tercile(root: Path, t: dict, lead_days: int) -> dict:
     s = max(1.0, lo + hi)
     lo, hi = round(lo / s, 2), round(hi / s, 2)
     return {'lower': lo, 'higher': hi, 'usual': round(1 - lo - hi, 2)}
-
-
-def calibrate_torpids(root: Path, p_go: float, days_before: int) -> float:
-    c = _calibration(root)
-    b = c and c['torpids'].get(calibration_group_torpids(days_before))
-    return _cal(b, p_go) if b else p_go

@@ -2180,7 +2180,7 @@
   "first_day": "2027-02-24",
   "last_day": "2027-02-27",
   "days_away": 92,
-  "chance": 0.36,
+  "chance": 0.22,
   "chance_state_only": 0.21,
   "chance_clim": 0.24,
   "chance_record": 0.312,
