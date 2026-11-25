@@ -693,8 +693,8 @@ TORPIDS_RAIN_DAYS = 35
 # last week 41.7% either way; biggest one-day change 27 -> 16 points. Starting the fade earlier (6+ weeks) was
 # worse: before about 4 weeks the rain so far says less than the river does.
 TORPIDS_RAIN_FULL = 7
-# Further ahead than this the forecast has no skill: the page says 'too early to tell' and gives an average year
-# for the race dates (verify_torpids.py: Brier skill about 1% beyond, 2-8% at 5 weeks - 3 months).
+# Further ahead than this the forecast has no skill: the page says 'too early to tell' and gives the record (how
+# often Torpids has gone ahead) (verify_torpids.py: Brier skill about 1% beyond, 2-8% at 5 weeks - 3 months).
 TORPIDS_TOO_EARLY = 92
 
 

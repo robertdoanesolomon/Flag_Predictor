@@ -143,9 +143,10 @@
     <p style="margin:10px 0 0">For Torpids, it is the chance of Farmoor averaging under 42 m³/s over the four racing days.
       Every Torpids since 1993 at a higher river was cancelled or cut short, except 2025. From five weeks before,
       how wet it has been since 1 January counts too. More than three months ahead the forecast is no better than an
-      average year, so the page says so. Since 1994 the river has been that high for 10 of 32 Torpids, more than the
-      1 in 5 that is usual for those dates. Nothing about Torpids week makes it wetter: in the same winters the weeks
-      either side were over the line much less often, so this was mostly bad luck.</p>
+      average year, so the page says so. "Usual" is how often Torpids has actually gone ahead since 1994: the river was
+      that high for 10 of 32. That is more than the weeks either side of Torpids in the same winters (about 6 of 32), which
+      looks like bad luck rather than anything about Torpids week, so the chance isn't pulled down to match it. An
+      ordinary year can therefore read a little above "usual".</p>
   </section>
 
   <footer>Flow: Environment Agency. Flags: OURCs. Rainfall: ECMWF via Copernicus and Open-Meteo; CRU TS (UEA).
@@ -217,10 +218,10 @@
   function renderTorpids() {
     const t = D.torpids;
     if (!t) { document.getElementById('torpids').textContent = 'Too far ahead.'; return; }
-    const avg = t.chance_clim;    // an average year for these dates
+    const avg = V ? V.torpids_climatology : t.chance_record;    // the record: how often Torpids has actually gone ahead
     let h = t.too_early
-      ? `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): too early to tell. In an average year it goes ahead ${pct(1 - avg)} of the time on these dates.`
-      : `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): <b>${pct(1 - t.chance)}</b> chance it goes ahead (usual for these dates ${pct(1 - avg)}).`;
+      ? `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): too early to tell. It usually goes ahead (${pct(1 - avg)} of years).`
+      : `Torpids ${t.year} (${d8(t.first_day)} – ${d8(t.last_day)}): <b>${pct(1 - t.chance)}</b> chance it goes ahead (usual ${pct(1 - avg)}).`;
     if (t.days_away <= 12) h += ` Torpids is now inside the <a href="../">10-day forecast</a>: use that for the flags on each day.`;
     else if (t.days_away <= 45) h += ` From ${d8(new Date(Date.parse(t.first_day) - 10 * 864e5).toISOString().slice(0, 10))} it will be inside the <a href="../">10-day forecast</a>.`;
     document.getElementById('torpids').innerHTML = h;
@@ -326,7 +327,7 @@
       return;
     }
     box.style.display = '';
-    const usual = t.chance_clim != null ? 1 - t.chance_clim : null;
+    const usual = V ? 1 - V.torpids_climatology : null;
     // start on the first day the page gave a chance (the 'too early' days before are just the record),
     // and run the axis to the first day of Torpids so the line fills in towards it
     const shown = rows.slice(rows.findIndex((r) => !r[2]));

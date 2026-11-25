@@ -322,13 +322,13 @@ def main() -> None:
                                                     * (rf >= T.TORPIDS_FLOW))), 2),
                    'flow_median': _wq(rf, wts, 50), 'flow_p10': _wq(rf, wts, 10), 'flow_p90': _wq(rf, wts, 90),
                    'lead': lead, 'skill': sk}
-        # More than TORPIDS_TOO_EARLY days off: no skill, so 'too early to tell' and an average year for these dates.
-        # No bias correction: the model's average year matches every late-February window since 1994 (the actual
+        # More than TORPIDS_TOO_EARLY days off: no skill, so 'too early to tell' and the record (how often Torpids has
+        # gone ahead); the page also shows the record as 'usual' alongside the forecast. No bias correction: the model's average year matches every late-February window since 1994 (the actual
         # Torpids were wetter than the weeks around them, by luck at the threshold; see verify_torpids.py).
         # In the last weeks from 1 January, the rain-since-January adjustment is faded in (termly.torpids_rain_blend).
         torpids['chance_raw'] = torpids['chance']
         if tb > T.TORPIDS_TOO_EARLY:
-            torpids['chance'], torpids['too_early'] = torpids['chance_clim'], True
+            torpids['chance'], torpids['too_early'] = (ver.get('torpids_climatology') or torpids['chance_clim']), True
         else:
             adj, info = T.torpids_rain_adjust(ROOT, torpids['chance'], t0, race[0])
             if info:
