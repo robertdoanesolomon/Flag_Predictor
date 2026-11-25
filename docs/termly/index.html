@@ -81,18 +81,15 @@
 <body>
 <div class="page">
   <a href="../">← 10-day forecast</a>
-  <header>
+  <header style="margin-bottom:16px">
     <h1>Long-range river forecast</h1>
     <span class="muted" id="issued"></span>
   </header>
-  <p class="lede">How high the river is likely to be this term and over the next few, compared with a usual year.
-    Updated daily.</p>
 
   <section class="panel">
     <h2>Torpids</h2>
     <p id="torpids" style="margin:0"></p>
     <div id="torpids-history" class="chart short" style="margin-top:10px"></div>
-    <p class="muted" id="torpids-history-note" style="margin:4px 0 0"></p>
   </section>
 
   <section class="panel">
@@ -302,7 +299,7 @@
     document.querySelectorAll('#history-chips .chip').forEach((b) => b.onclick = () => { histItem = b.dataset.l; renderHistory(); });
     const rows = per[histItem], x = rows.map((r) => r[0]);
     const tr = (i, name, c) => ({ type: 'scatter', mode: 'lines', x, y: rows.map((r) => Math.round(100 * r[i])), name,
-      stackgroup: 'odds', line: { width: 0.5, color: c }, fillcolor: c, hovertemplate: `${name.toLowerCase()} %{y}%<extra></extra>` });
+      stackgroup: 'odds', line: { width: 0.5, color: c }, fillcolor: c, hovertemplate: `${name.toLowerCase()} %{y}<extra></extra>` });
     const t = D.terms.isis.find((u) => u.label === histItem);
     const shapes = t && t.start <= x[x.length - 1] && t.start >= x[0]
       ? [{ type: 'line', x0: t.start, x1: t.start, y0: 0, y1: 100, line: { color: cssv('--text-muted'), width: 1, dash: 'dot' } }] : [];
@@ -320,10 +317,8 @@
   function renderTorpidsHistory() {
     const t = D.torpids, box = document.getElementById('torpids-history');
     const rows = t && H && H.torpids ? H.torpids[`Torpids ${t.year}`] : null;
-    const note = document.getElementById('torpids-history-note');
     if (!rows || !rows.some((r) => !r[2])) {        // nothing but 'too early' so far: no chart yet
       box.style.display = 'none';
-      note.textContent = rows ? 'A day-by-day chart of the chance appears here once the page gives one, about three months before.' : '';
       return;
     }
     box.style.display = '';
@@ -335,15 +330,13 @@
     const traces = [
       { type: 'scatter', mode: shown.length < 3 ? 'lines+markers' : 'lines', x, y: shown.map((r) => Math.round(100 * r[1])),
         name: 'Goes ahead', line: { color: cssv('--accent-soft'), width: 2.5 }, marker: { size: 7 }, cliponaxis: false,
-        hovertemplate: '%{y}%<extra></extra>' },
+        hovertemplate: '%{y}<extra></extra>' },
     ];
     const shapes = usual != null ? [{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 100 * usual, y1: 100 * usual,
       line: { color: cssv('--text-muted'), width: 1, dash: 'dash' } }] : [];
     const xaxis = Object.assign({}, plotLayout().xaxis, { range: [x[0], t.first_day] });
     Plotly.react('torpids-history', traces,
       plotLayout({ shapes, hovermode: 'x unified', showlegend: false, xaxis }), { displayModeBar: false, responsive: true });
-    note.textContent = `What the page said each day from ${d8(x[0])}, the first day it gave a chance` +
-      (usual != null ? ` (dashed: usual, ${pct(usual)}). ` : '. ') + rebuiltNote(shown, 3);
   }
 
   let H = null;
