@@ -25,7 +25,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from ..data.api import fetch_rainfall_data, get_rainfall_forecast_ensemble
+from ..data.api import N_ENSEMBLE_MEMBERS, fetch_rainfall_data, get_rainfall_forecast_ensemble
 from ..data.gauge_qc import COORDS as GAUGE_COORDS, clean_rain
 from ..data.loader import load_historical_rainfall
 from ..models.candidates import ensemble_predictor
@@ -606,7 +606,7 @@ def forecast_ensemble(
     location: str,
     merged_df: pd.DataFrame,
     project_root: Path,
-    n_members: int = 51,
+    n_members: int = N_ENSEMBLE_MEMBERS,
     models_dir: Optional[Path] = None,
 ) -> pd.DataFrame:
     """(241, members) hybrid-ensemble forecast from the last observed hour."""
@@ -643,7 +643,7 @@ def forecast_with_uncertainty(
     location: str,
     merged_df: pd.DataFrame,
     project_root: Path,
-    n_members: int = 51,
+    n_members: int = N_ENSEMBLE_MEMBERS,
     models_dir: Optional[Path] = None,
     with_previous: bool = True,
     start_sd: float = 0.0,
