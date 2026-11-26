@@ -544,6 +544,10 @@
       min-height: 460px;
     }
     .plot.prob { min-height: 240px; }
+    /* Fixed heights, matched by layout.height in buildMainLayout / buildProbTracesAndLayout: charts
+       first drawn in a hidden pane otherwise come out at Plotly's default 450 px (other tabs taller). */
+    .plot.main { min-height: 0; height: 460px; }
+    .plot.prob { min-height: 0; height: 240px; }
 
     .pane { display: none; }
     .pane.active { display: block; }
@@ -856,6 +860,8 @@
       .chart-title { font-size: 14px; }
       .plot { min-height: 320px; }
       .plot.prob { min-height: 200px; }
+      .plot.main { height: 320px; }
+      .plot.prob { height: 200px; }
       details.about { padding: 16px 14px; }
     }
 
@@ -2059,7 +2065,7 @@
                 <button type="button" class="item" data-target="Historical Rainfall"><span class="swatch square" style="background:#999;opacity:0.5;"></span>Historical Rainfall</button>
                 <button type="button" class="item" data-target="Forecast Rainfall"><span class="swatch square" style="background:#6495ed;opacity:0.6;"></span>Forecast Rainfall (mean &plusmn; P10&ndash;P90)</button>
               </div>
-              <div id="plot-${key}" class="plot"></div>
+              <div id="plot-${key}" class="plot main"></div>
             </div>
 
             ${probPlotHtml}
@@ -2368,6 +2374,7 @@
     loc.__xEnd = xEndIso;
 
     return {
+      height: compact ? 320 : 460,          // = the .plot.main box (CSS)
       paper_bgcolor: T.paper,
       plot_bgcolor: T.plot,
       font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
@@ -2471,6 +2478,7 @@
     const sharedX = loc.__xAxisShared || {};
     const compact = isCompactChartLayout();
     const layout = {
+      height: compact ? 200 : 240,          // = the .plot.prob box (CSS)
       paper_bgcolor: T.paper,
       plot_bgcolor: T.plot,
       font: { family: 'Inter, sans-serif', color: T.font, size: compact ? 11 : 13 },
