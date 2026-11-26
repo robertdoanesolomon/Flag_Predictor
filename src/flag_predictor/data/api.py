@@ -970,66 +970,25 @@ def get_rainfall_forecast(
         return pd.DataFrame()
 
 
-# Rain-forecast ensembles pooled into one set of members, in this order: ECMWF AIFS
-# (51 members, numbered 0-50) then UK Met Office MOGREPS-G (18 members, 51-68).
-# Every member counts equally, so MOGREPS-G carries 18/69 = 26% of the weight.
-# The first model is the anchor: a later model's member that ends before the
-# forecast horizon (MOGREPS-G runs ~8-10 days) continues with the anchor member of
-# the same number modulo its size, so no member has a dry tail.
-ENSEMBLE_MODELS: Tuple[str, ...] = ('ecmwf_aifs025', 'ukmo_global_ensemble_20km')
-ENSEMBLE_MODEL_MEMBERS: Dict[str, int] = {'ecmwf_aifs025': 51, 'ukmo_global_ensemble_20km': 18}
-N_ENSEMBLE_MEMBERS = sum(ENSEMBLE_MODEL_MEMBERS[m] for m in ENSEMBLE_MODELS)
-
-
-def _fetch_ensemble_model(session: requests.Session, url: str, params: dict, model: str,
-                          location_names: List[str]) -> List[pd.DataFrame]:
-    """One Open-Meteo ensemble model: per station, an hourly frame of its members
-    (columns in member order, control first)."""
-    response = session.get(
-        url,
-        params={**params, "models": model},
-        timeout=_DEFAULT_HTTP_TIMEOUT,
-        headers={"User-Agent": "Flag_Predictor/1.0 (+GitHubActions)"},
-    )
-    response.raise_for_status()
-    data = response.json()
-    if isinstance(data, dict):           # a single location comes back as one object
-        data = [data]
-    out = []
-    for location_data in data:
-        df = pd.DataFrame(location_data['hourly'])
-        df['timestamp'] = pd.to_datetime(df['time'])
-        df = df.set_index('timestamp')
-        cols = [c for c in df.columns if c.startswith('precipitation')]
-        out.append(df[cols].astype(float))
-    if len(out) != len(location_names):
-        raise KeyError(f"{model}: {len(out)} locations returned for {len(location_names)} requested")
-    return out
-
-
 def get_rainfall_forecast_ensemble(
     locations: Optional[Dict] = None,
     location: Optional[str] = None,
-    ensemble_model: Optional[object] = None,
+    ensemble_model: str = 'ecmwf_aifs025',
     n_members: Optional[int] = None,
     forecast_days: int = 10
 ) -> pd.DataFrame:
     """
     Fetch ensemble rainfall forecast from Open-Meteo Ensemble API.
-
-    Returns ALL ensemble members for probabilistic forecasting. With several
-    models (the default, ``ENSEMBLE_MODELS``) their members are pooled and numbered
-    consecutively in model order; a model that fails to download is left out and
-    the rest are still returned.
-
+    
+    Returns ALL ensemble members for probabilistic forecasting.
+    
     Args:
         locations: Dictionary of location names and coordinates
         location: Location name ('wallingford' uses additional stations)
-        ensemble_model: One Open-Meteo model ('ecmwf_aifs025'), a comma-separated
-            string or a list of them (default: ENSEMBLE_MODELS)
-        n_members: Number of pooled members to return (None = all)
+        ensemble_model: Model to use ('ecmwf_ifs', 'ecmwf_aifs025',)
+        n_members: Number of members to return (None = all)
         forecast_days: Number of days to forecast (default 10)
-
+        
     Returns:
         DataFrame with columns like 'Osney_member_0', 'Osney_member_1', etc.
     """
@@ -1039,18 +998,11 @@ def get_rainfall_forecast_ensemble(
             locations = {**RAINFALL_STATION_COORDINATES, **WALLINGFORD_RAINFALL_STATION_COORDINATES}
         elif location and location.lower() == 'godstow':
             # Exclude Bicester and Grimsbury for Godstow
-            locations = {k: v for k, v in RAINFALL_STATION_COORDINATES.items()
+            locations = {k: v for k, v in RAINFALL_STATION_COORDINATES.items() 
                         if k not in {'Bicester', 'Grimsbury'}}
         else:
             locations = RAINFALL_STATION_COORDINATES
-
-    if ensemble_model is None:
-        models = list(ENSEMBLE_MODELS)
-    elif isinstance(ensemble_model, str):
-        models = [m.strip() for m in ensemble_model.split(',') if m.strip()]
-    else:
-        models = list(ensemble_model)
-
+    
     location_names = list(locations.keys())
     latitudes = [loc['latitude'] for loc in locations.values()]
     longitudes = [loc['longitude'] for loc in locations.values()]
@@ -1061,48 +1013,50 @@ def get_rainfall_forecast_ensemble(
         "longitude": longitudes,
         "hourly": "precipitation",
         "forecast_days": forecast_days,
+        "models": ensemble_model
     }
 
-    session = _requests_session_with_retries()
-    fetched = []                          # (model, per-station frames)
-    for model in models:
-        try:
-            fetched.append((model, _fetch_ensemble_model(session, url, params, model, location_names)))
-        except requests.exceptions.RequestException as e:
-            print(f"✗ API request failed for {model}: {e}")
-        except (KeyError, TypeError, ValueError) as e:
-            print(f"✗ Failed to parse API response for {model}: {e}")
-    if not fetched:
+    try:
+        session = _requests_session_with_retries()
+        response = session.get(
+            url,
+            params=params,
+            timeout=_DEFAULT_HTTP_TIMEOUT,
+            headers={"User-Agent": "Flag_Predictor/1.0 (+GitHubActions)"},
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        all_dfs = []
+        for i, location_data in enumerate(data):
+            df = pd.DataFrame(location_data['hourly'])
+            df['timestamp'] = pd.to_datetime(df['time'])
+            df = df.set_index('timestamp')
+            
+            # Get precipitation columns (ensemble members)
+            precip_cols = [col for col in df.columns if col.startswith('precipitation')]
+            
+            if n_members is not None:
+                precip_cols = precip_cols[:n_members]
+            
+            # Rename columns to station_member_N format
+            df_members = df[precip_cols].copy()
+            df_members.columns = [
+                f"{location_names[i]}_member_{j}" 
+                for j in range(len(precip_cols))
+            ]
+            all_dfs.append(df_members)
+        
+        combined_df = pd.concat(all_dfs, axis=1)
+        
+        n_actual_members = len([c for c in combined_df.columns if '_member_0' in c or c.endswith('_member_0')])
+        print(f"✓ Successfully fetched ensemble forecast: {len(location_names)} stations × {len(precip_cols)} members")
+        
+        return combined_df
+
+    except requests.exceptions.RequestException as e:
+        print(f"✗ API request failed: {e}")
         return pd.DataFrame()
-
-    index = fetched[0][1][0].index
-    for _, frames in fetched[1:]:
-        index = index.union(frames[0].index)
-    if len(fetched[0][1][0].index):
-        index = index[index <= fetched[0][1][0].index[-1]]   # the anchor model sets the horizon
-
-    all_dfs = []
-    counts = []
-    for i, name in enumerate(location_names):
-        anchor = fetched[0][1][i].reindex(index)
-        pieces = []
-        for k, (model, frames) in enumerate(fetched):
-            df = frames[i].reindex(index)
-            if k > 0:
-                # Past this model's last step, carry on with the anchor's member of the same number.
-                for j, col in enumerate(df.columns):
-                    df[col] = df[col].fillna(anchor.iloc[:, j % anchor.shape[1]])
-            pieces.append(df.to_numpy())
-            if i == 0:
-                counts.append(f"{model} {df.shape[1]}")
-        block = np.concatenate(pieces, axis=1)
-        if n_members is not None:
-            block = block[:, :n_members]
-        all_dfs.append(pd.DataFrame(block, index=index,
-                                    columns=[f"{name}_member_{j}" for j in range(block.shape[1])]))
-
-    combined_df = pd.concat(all_dfs, axis=1)
-    n_total = all_dfs[0].shape[1]
-    print(f"✓ Successfully fetched ensemble forecast: {len(location_names)} stations × {n_total} members "
-          f"({', '.join(counts)})")
-    return combined_df
+    except (KeyError, TypeError) as e:
+        print(f"✗ Failed to parse API response: {e}")
+        return pd.DataFrame()

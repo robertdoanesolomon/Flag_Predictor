@@ -54,7 +54,6 @@ from flag_predictor.config import (  # type: ignore  # noqa: E402
     get_live_flag_thresholds,
 )
 from flag_predictor.data.api import (  # type: ignore  # noqa: E402
-    N_ENSEMBLE_MEMBERS,
     get_rainfall_forecast_ensemble,
 )
 from flag_predictor.models import load_model  # type: ignore  # noqa: E402
@@ -1291,7 +1290,7 @@ def preview_extras(location: str, live) -> dict:
 def generate_spaghetti_figure(
     location: str,
     output_dir: Path,
-    n_members: int = N_ENSEMBLE_MEMBERS,
+    n_members: int = 51,
     project_root: Path | None = None,
     beta_dir: Path | None = None,
     live_title_suffix: str = "",
@@ -1559,8 +1558,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--n-members",
         type=int,
-        default=N_ENSEMBLE_MEMBERS,
-        help="Number of pooled rain-forecast members to use (default: all, AIFS 51 + MOGREPS-G 18).",
+        default=51,
+        help="Number of ensemble members to use for the forecast.",
     )
     parser.add_argument(
         "--beta-dir",
