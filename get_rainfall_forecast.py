@@ -45,8 +45,8 @@ def main() -> None:
     parser.add_argument(
         "--n-members",
         type=int,
-        default=None,
-        help="Number of pooled members to fetch (default: all; AIFS 51 + MOGREPS-G 18).",
+        default=51,
+        help="Number of ensemble members to fetch (default 51: control + 50).",
     )
     parser.add_argument(
         "--forecast-days",
@@ -57,8 +57,8 @@ def main() -> None:
     parser.add_argument(
         "--model",
         type=str,
-        default=None,
-        help="Open-Meteo ensemble model(s), comma-separated (default: ecmwf_aifs025,ukmo_global_ensemble_20km).",
+        default="ecmwf_aifs025",
+        help="Open-Meteo ensemble model: ecmwf_aifs025 (default), ecmwf_ifs, etc.",
     )
     parser.add_argument(
         "--output",
