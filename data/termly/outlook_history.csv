@@ -515,3 +515,9 @@ issued,item,kind,lower,usual,higher,source,go,too_early
 2026-11-25,Michaelmas 2026,period,0.16,0.57,0.27,live,,
 2026-11-25,Torpids 2027,torpids,,,,live,0.78,False
 2026-11-25,Trinity 2027,period,0.34,0.37,0.29,live,,
+2026-11-26,Christmas Vac 2026,period,0.24,0.63,0.13,live,,
+2026-11-26,Easter Vac 2027,period,0.39,0.4,0.21,live,,
+2026-11-26,Hilary 2027,period,0.57,0.29,0.14,live,,
+2026-11-26,Michaelmas 2026,period,0.37,0.55,0.08,live,,
+2026-11-26,Torpids 2027,torpids,,,,live,0.81,False
+2026-11-26,Trinity 2027,period,0.34,0.37,0.29,live,,
